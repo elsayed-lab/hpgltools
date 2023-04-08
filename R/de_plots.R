@@ -8,13 +8,24 @@
 #'
 #' @param pairwise The result from all_pairwise(), which should be changed to
 #'  handle other invocations too.
+#' @param combined Result from one of the combine_de_table functions.
 #' @param type Type of table to use: deseq, edger, limma, basic.
-#' @param table Result from edger to use, left alone it chooses the first.
-#' @param logfc What logFC to use for the MA plot horizontal lines.
-#' @param p_type Adjusted or raw pvalues?
-#' @param p Cutoff to define 'significant' by p-value.
 #' @param invert Invert the plot?
-#' @param ... Extra arguments are passed to arglist.
+#' @param invert_colors vector of new colors.
+#' @param numerator Use this factor as the numerator.
+#' @param denominator Use this factor as the denominator.
+#' @param alpha Use this transparency.
+#' @param z z-score cutoff for coefficient significance.
+#' @param logfc What logFC to use for the MA plot horizontal lines.
+#' @param pval Cutoff to define 'significant' by p-value.
+#' @param found_table Result from edger to use, left alone it chooses the first.
+#' @param p_type Adjusted or raw pvalues?
+#' @param color_high Color to use for the 'high' genes.
+#' @param color_low Color to use for the 'low' genes.
+#' @param loess Add a loess estimator to the coefficient plot?
+#' @param z_lines Add the z-score lines?
+#' @param label Label this number of top-diff genes.
+#' @param label_columns Use this column for labelling genes.
 #' @return a plot!
 #' @seealso [plot_ma_de()] [plot_volcano_de()]
 #' @examples
@@ -27,7 +38,7 @@ extract_de_plots <- function(pairwise, combined, type = "edger",
                              numerator = NULL, denominator = NULL, alpha = 0.4, z = 1.5,
                              logfc = 1, pval = 0.05, found_table = NULL, p_type = "adj",
                              color_high = NULL, color_low = NULL, loess = FALSE,
-                             z_lines = FALSE, label = label, label_column = "hgncsymbol") {
+                             z_lines = FALSE, label = 10, label_column = "hgncsymbol") {
 
   #if (type %in% invert_colors) {
   #  tmp_color <- color_high
@@ -62,7 +73,7 @@ extract_de_plots <- function(pairwise, combined, type = "edger",
       input = input, table_name = found_table,
       fc_col = fc_col, p_col = p_col,
       color_high = color_high, color_low = color_low,
-      invert = invert, logfc = logfc, pval = pval, label = 5,
+      invert = invert, logfc = logfc, pval = pval,
       label = label, label_column = label_column)
   }
 
@@ -87,18 +98,15 @@ retlist <- list(
 #' @param y The y-axis column to use.
 #' @param z Define the range of genes to color (FIXME: extend this to p-value
 #'  and fold-change).
-#' @param p Set a p-value cutoff for coloring the scatter plot (currently not
-#'  supported).
-#' @param lfc Set a fold-change cutoff for coloring points in the scatter plot
+#' @param logfc Set a fold-change cutoff for coloring points in the scatter plot
 #'  (currently not supported.)
 #' @param n Set a top-n fold-change for coloring the points in the scatter plot
 #'  (this should work, actually).
+#' @param z_lines Add lines to show the z-score demarcations.
 #' @param loess Add a loess estimation (This is slow.)
 #' @param alpha How see-through to make the dots.
 #' @param color_low Color for the genes less than the mean.
 #' @param color_high Color for the genes greater than the mean.
-#' @param z_lines Add lines to show the z-score demarcations.
-#' @param ... More arguments are passed to arglist.
 #' @seealso [plot_linear_scatter()]
 #' @examples
 #' \dontrun{
@@ -296,6 +304,12 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
 #' so that I can come back to it and strip it down to something a bit
 #' more legible.  Eventually I want to dispatch this logic off to
 #' separate functions depending on the class of the input.
+#'
+#' This function should die in a fire.
+#'
+#' @param data Data structure in which to hunt columns/data.
+#' @param type Type of method used to make the data.
+#' @param p_type Use adjusted p-values?
 get_plot_columns <- function(data, type, p_type = "adj") {
   ret <- list(
     "p_col" = "P.Val",
@@ -316,6 +330,7 @@ get_plot_columns <- function(data, type, p_type = "adj") {
 
   ## If the user did not ask for a specific table, assume the first one
   wanted_table <- NULL
+  found_table <- NULL
   if (is.null(found_table)) {
     wanted_table <- 1
   } else {
@@ -342,7 +357,7 @@ get_plot_columns <- function(data, type, p_type = "adj") {
     ## essentially convert the input by extracting the relevant type.
     table_source <- glue("{type}_pairwise")
     data <- data[[type]]
-  } else if (!is.null(pairwise[["method"]])) {
+  } else if (!is.null(data[["method"]])) {
     table_source <- glue("{data[['method']]}_pairwise")
   } else {
     stop("Unable to determine the source of this data.")
@@ -738,7 +753,7 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
 #' @param expr_col Column showing the average expression across genes.
 #' @param fc_col Column showing the logFC for each gene.
 #' @param p_col Column containing the relevant p values.
-#' @param p Name of the pvalue column to use for cutoffs.
+#' @param pval Name of the pvalue column to use for cutoffs.
 #' @param alpha How transparent to make the dots.
 #' @param logfc Fold change cutoff.
 #' @param label_numbers Show how many genes were 'significant', 'up', and 'down'?
@@ -1135,7 +1150,7 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
 #'  adjusted p-value.
 #' @param alpha How transparent to make the dots.
 #' @param color_by By p-value something else?
-#' @param p_color_list List of colors for significance.
+#' @param color_list List of colors for significance.
 #' @param fc_col Which column contains the fc data?
 #' @param fc_name Name of the fold-change to put on the plot.
 #' @param line_color What color for the significance lines?
@@ -1332,8 +1347,8 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
 #'
 #' I therefore took a modified copy of her implementation and added it here.
 #'
-#' @param de_result Table of DE values, likely from combine_de_tables().
-#' @param de_table Which table from the result to use?
+#' @param input Table of DE values, likely from combine_de_tables().
+#' @param table_name Name the table!
 #' @param alpha Make see-through.
 #' @param fc_col Column containing the fold-change values.
 #' @param fc_name Axis label.
@@ -1342,13 +1357,14 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
 #' @param logfc Demarcation line for fold-change significance.
 #' @param p_col Column containing the significance information.
 #' @param p_name Axis label for the significance.
-#' @param p Demarcation for (in)significance.
+#' @param pval Demarcation for (in)significance.
 #' @param shapes_by_state Change point shapes according to their states?
+#' @param color_high Color for the ups.
+#' @param color_low and the downs.
 #' @param size Point size
 #' @param invert Flip the plot?
 #' @param label Label some points?
 #' @param label_column Using this column in the data.
-#' @param ... Extra arguments.
 #' @export
 plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
                                       fc_col = "logFC", fc_name = "log2 fold change",

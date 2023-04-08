@@ -11,13 +11,12 @@
 #'
 #' @param apr Output from all_pairwise().
 #' @param extra_annot Add some annotation information?
-#' @param excel Filename for the excel workbook, or null if not printed.
-#' @param excel_title Title for the excel sheet(s).  If it has the
-#'  string 'YYY', that will be replaced by the contrast name.
 #' @param keepers List of reformatted table names to explicitly keep
 #'  certain contrasts in specific orders and orientations.
-#' @param excludes List of columns and patterns to use for excluding genes.
-#' @param adjp Perhaps you do not want the adjusted p-values for plotting?
+#' @param excludes List of columns and patterns to use for excluding
+#'  genes.
+#' @param adjp Perhaps you do not want the adjusted p-values for
+#'  plotting?
 #' @param include_limma Include limma analyses in the table?
 #' @param include_deseq Include deseq analyses in the table?
 #' @param include_edger Include edger analyses in the table?
@@ -28,14 +27,29 @@
 #' @param loess Add time intensive loess estimation to plots?
 #' @param plot_dim Number of inches squared for the plot if added.
 #' @param compare_plots Add some plots comparing the results.
-#' @param fancy Save a set of fancy plots along with the xlsx file?
 #' @param padj_type Add a consistent p adjustment of this type.
+#' @param fancy Save a set of fancy plots along with the xlsx file?
 #' @param lfc_cutoff In this context, only used for plotting volcano/MA plots.
 #' @param p_cutoff In this context, used for volcano/MA plots.
 #' @param de_types Used for plotting pvalue/logFC cutoffs.
+#' @param excel_title Title for the excel sheet(s).  If it has the
+#'  string 'YYY', that will be replaced by the contrast name.
 #' @param rda Write a rda file of the results.
-#' @param start_worksheet This will now increment worksheet titles from this point forward.
-#' @param ... Arguments passed to significance and abundance tables.
+#' @param start_worksheet This will now increment worksheet titles
+#'  from this point forward.
+#' @param label Label this number of top-n genes on the plots?
+#' @param label_column Use this column for gene labelling.
+#' @param format_sig Use this many significant digits for printing
+#'  wacky numbers.
+#' @param excel Filename for the excel workbook, or null if not
+#'  printed.
+#' @param plot_columns A guesstimate of how wide plots are with
+#'  respect to 'normally' sized columns in excel.
+#' @param alpha Use the alpha channel with this transparency when
+#'  plotting.
+#' @param z Use this z-score for defining significant in coefficient
+#'  plots.
+#' @param z_lines Add z-score lines to coefficient plots?
 #' @return Table combining limma/edger/deseq outputs.
 #' @seealso [all_pairwise()] [extract_significant_genes()]
 #' @examples
@@ -337,17 +351,27 @@ Contrast denominator: {denominators[x]}.")
 #' @param denominator Name of the denominator coefficient.
 #' @param numerator Name of the numerator coefficient.
 #' @param plot_inputs The individual outputs from limma etc.
-#' @param include_basic Add basic data?
-#' @param include_deseq Add deseq data?
-#' @param include_edger Add edger data?
-#' @param include_limma Add limma data?
-#' @param include_ebseq Add ebseq data?
+#' @param plot_basic Add basic data?
+#' @param plot_deseq Add deseq data?
+#' @param plot_edger Add edger data?
+#' @param plot_limma Add limma data?
+#' @param plot_ebseq Add ebseq data?
 #' @param loess Add a loess estimation?
 #' @param logfc For Volcano/MA plot lines.
-#' @param p For Volcano/MA plot lines.
-#' @param do_inverse Flip the numerator/denominator?
+#' @param pval For Volcano/MA plot lines.
 #' @param found_table The table name actually used.
-#' @param p_type Use this/these methods' p-value for determining significance.
+#' @param p_type Use this/these methods' p-value for determining
+#'  significance.
+#' @param plot_colors Use these colors for numerators/denominators.
+#' @param fancy Include fancy pdf/svg versions of plots for publication?
+#' @param do_inverse Flip the numerator/denominator?
+#' @param invert_colors Conversely, keep the values the same, but flip
+#'  the colors.  I think these invert parameters are not needed anymore.
+#' @param z Use a z-score cutoff for coefficient plots.
+#' @param alpha Add some transparency to the plots.
+#' @param z_lines Add lines for zscore cutoffs?
+#' @param label Label this number of the top genes.
+#' @param label_column Label the top genes with this column.
 combine_extracted_plots <- function(name, combined, denominator, numerator, plot_inputs,
                                     plot_basic = TRUE, plot_deseq = TRUE,
                                     plot_edger = TRUE, plot_limma = TRUE,
@@ -482,6 +506,32 @@ check_single_de_table <- function(pairwise, table_name, wanted_numerator,
   return(ret)
 }
 
+#' Combine data taken from map_keepers() into a single large table.
+#'
+#' This is part of an ongoing attempt to simplify and clean up the
+#' combine_de_tables() function.  I am hoping that map_keepers and
+#' this will be able to take over all the logic currently held in the
+#' various extract_keepers_xxx() functions.
+#'
+#' @param entry Single entry from map_keepers() which provides
+#'  orientation information about the table from all_pairwise(), along
+#'  with the actual data.
+#' @param include_basic Include basic in the final output?  I want to
+#'  get rid of all these include_ arguments.
+#' @param include_deseq Include deseq?
+#' @param include_edger Include edger?
+#' @param include_ebseq Include ebseq?
+#' @param include_limma Include limma?
+#' @param adjp Used adjusted pvalues when defining 'significant.?
+#' @param padj_type Perform this type of pvalue adjustment.
+#' @param annot_df Include these annotations in the result tables.
+#' @param excludes When provided, exclude these genes.
+#' @param lfc_cutoff Use this value for a log2FC significance cutoff.
+#' @param p_cutoff Use this value for a(n adjusted) pvalue
+#'  significance cutoff.
+#' @param format_sig Use this many significant digits for some of the
+#'  unwieldy numbers.
+#' @param sheet_count Start with these sheet number and increment for excel.
 combine_mapped_table <- function(entry, include_basic = TRUE, include_deseq = TRUE,
                                  include_edger = TRUE, include_ebseq = TRUE,
                                  include_limma = TRUE, adjp = TRUE, padj_type = "fdr",
@@ -768,8 +818,8 @@ Defaulting to fdr.")
 
   up_fc <- lfc_cutoff
   down_fc <- -1.0 * lfc_cutoff
-  summary_table_name <- table_name
-  if (isTRUE(do_inverse)) {
+  summary_table_name <- entry[["string"]]
+  if (entry[["orientation"]] == "reverse") {
     summary_table_name <- glue("{summary_table_name}-inverted")
   }
   limma_p_column <- "limma_adjp"
@@ -805,8 +855,12 @@ Defaulting to fdr.")
 #' @param ba Basic output table.
 #' @param table_name Name of the table to merge.
 #' @param final_table_names Vector of the final table names.
+#' @param wanted_numerator The numerator we would like to find.
+#' @param wanted_denominator The denominator we would like to find.
+#' @param invert_table Boolean to see if we already think we should
+#'  switch n/d
+#' @param invert_plots Conversely, we can invert the plots.
 #' @param annot_df Add some annotation information?
-#' @param do_inverse Invert the fold changes?
 #' @param adjp Use adjusted p-values?
 #' @param padj_type Add this consistent p-adjustment.
 #' @param include_deseq Include tables from deseq?
@@ -818,6 +872,7 @@ Defaulting to fdr.")
 #' @param p_cutoff Preferred pvalue cutoff.
 #' @param format_sig How many significant digits to print?  Set it to something not
 #'  numeric to not use any significant digit formatting.
+#' @param do_inverse Dead parameter? invert the data?
 #' @param excludes Set of genes to exclude from the output.
 #' @param sheet_count What sheet is being written?
 #' @return List containing a) Dataframe containing the merged
@@ -833,7 +888,7 @@ combine_single_de_table <- function(li = NULL, ed = NULL, eb = NULL, de = NULL, 
                                     include_deseq = TRUE, include_edger = TRUE,
                                     include_ebseq = TRUE, include_limma = TRUE,
                                     include_basic = TRUE, lfc_cutoff = 1,
-                                    p_cutoff = 0.05, format_sig = 4,
+                                    p_cutoff = 0.05, format_sig = 4, do_inverse = FALSE,
                                     excludes = NULL, sheet_count = 0) {
   if (padj_type[1] != "ihw" && (!padj_type %in% p.adjust.methods)) {
     warning("The p adjustment ", padj_type, " is not in the set of p.adjust.methods.
@@ -1241,6 +1296,11 @@ Defaulting to fdr.")
 #' @param p_cutoff Passed for volcano/MA plots.
 #' @param sheet_prefix Prefix for this worksheet id.
 #' @param sheet_number Which sheet is this?
+#' @param format_sig Use this number of significant digits.
+#' @param plot_colors Use these colors for plots.
+#' @param z Use this z-score as a coefficient significance cutoff.
+#' @param alpha Use this transparency for plots?
+#' @param z_lines Add lines for z-score on coefficient plots?
 extract_keepers_all <- function(extracted, keepers, table_names,
                                 all_coefficients,
                                 limma, edger, ebseq, deseq, basic,
@@ -1426,12 +1486,22 @@ map_keepers <- function(keepers, table_names, data) {
 #' @param include_basic Whether or not to include the basic data.
 #' @param excludes Set of genes to exclude.
 #' @param padj_type Choose a specific p adjustment.
+#' @param fancy Include larger pdf/svg plots with the xlsx output?
 #' @param loess Add a loess to plots?
-#' @param lfc_cutoff Passed for volcano/MA plots.
-#' @param p_cutoff Passed for volcano/MA plots.
+#' @param lfc_cutoff Passed for volcano/MA plots and defining 'significant'
+#' @param p_cutoff Passed for volcano/MA plots and defining 'significant'
 #' @param sheet_prefix Prefix for this worksheet id.
 #' @param sheet_number Which sheet is this?
-#' @param format_sig Number of significant digits for stuff like pvalues.
+#' @param format_sig Number of significant digits for stuff like
+#'  pvalues.
+#' @param plot_colors Define what colors should be used for
+#'  'up'/'down'
+#' @param z Define significantly away from the identity line in a
+#'  coefficient plot.
+#' @param alpha Use this alpha transparency for plots.
+#' @param z_lines Include lines denoting significant z-scores?
+#' @param label When not NULL, label this many genes.
+#' @param label_column Try using this column for labeling genes.
 extract_keepers_lst <- function(extracted, keepers, table_names,
                                 all_coefficients,
                                 limma, edger, ebseq, deseq, basic,
@@ -1513,7 +1583,7 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
     }
     extracted[["data"]][[entry_name]] <- combined[["data"]]
     extracted[["table_names"]][[entry_name]] <- combined[["summary"]][["table"]]
-    extracted[["kept"]] <- kept_tables
+    ## extracted[["kept"]] <- kept_tables
     extracted[["keepers"]] <- keepers
     plot_inputs <- list()
     plot_basic <- combined[["includes"]][["basic"]]
@@ -1557,8 +1627,8 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
       label = label, label_column = label_column)
     extracted[["summaries"]] <- rbind(extracted[["summaries"]],
                                       as.data.frame(combined[["summary"]]))
-    extracted[["numerators"]] <- numerators
-    extracted[["denominators"]] <- denominators
+    #extracted[["numerators"]] <- numerators
+    #extracted[["denominators"]] <- denominators
   } ## Ending the for loop of elements in the keepers list.
   return(extracted)
 }
@@ -1592,6 +1662,10 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
 #' @param format_sig If numeric, reformat and use this number of significant digits.
 #' @param sheet_prefix Prefix for this sheet id.
 #' @param sheet_number Which worksheet is this?
+#' @param plot_colors Use these colors on plots.
+#' @param z Use this z-score cutoff.
+#' @param alpha Use this transparency.
+#' @param z_lines Add z-score lines?
 extract_keepers_single <- function(extracted, keepers, table_names,
                                    all_coefficients,
                                    limma, edger, ebseq, deseq, basic,
@@ -1819,8 +1893,9 @@ extract_siggenes <- function(...) {
 #' @param sig_bar Add bar plots describing various cutoffs of 'significant'?
 #' @param z Z-score to define 'significant'.
 #' @param n Take the top/bottom-n genes.
+#' @param min_mean_exprs Add a minimum expression value.
+#' @param exprs_column Use this column to define expression.
 #' @param top_percent Use a percentage to get the top-n genes.
-#' @param ma Add ma plots to the sheets of 'up' genes?
 #' @param p_type use an adjusted p-value?
 #' @param invert_barplots Invert the significance barplots as per Najib's request?
 #' @param excel Write the results to this excel file, or NULL.
@@ -3323,7 +3398,19 @@ write_venns_de_xlsx <- function(written_table, tab, wb, sheetname,
   return(ret)
 }
 
-summarize_combined <- function(comb, up_fc, down_fc, p_cutoff) {
+summarize_combined <- function(comb, up_fc, down_fc, p_cutoff, adjp = TRUE) {
+  limma_p_column <- "limma_p"
+  deseq_p_column <- "deseq_p"
+  edger_p_column <- "edger_p"
+  basic_p_column <- "basic_p"
+  ebseq_p_column <- "ebseq_p"
+  if (isTRUE(adjp)) {
+    limma_p_column <- "limma_adjp"
+    deseq_p_column <- "deseq_adjp"
+    edger_p_column <- "edger_adjp"
+    basic_p_column <- "basic_adjp"
+    ebseq_p_column <- "ebseq_adjp"
+  }
   ret <- list(
     "total" = nrow(comb),
     "limma_up" = sum(comb[["limma_logfc"]] >= up_fc),

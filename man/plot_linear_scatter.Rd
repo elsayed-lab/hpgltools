@@ -38,7 +38,17 @@ plot_linear_scatter(
 
 \item{loess}{Add a loess estimation?}
 
+\item{xcol}{Column name of x-values}
+
+\item{ycol}{Column name of y-values#'}
+
+\item{text_col}{Column containing text annotations.}
+
+\item{logfc}{Point out genes with a specific logfc.}
+
 \item{identity}{Add the identity line?}
+
+\item{z}{Use this z-score cutoff.}
 
 \item{z_lines}{Include lines defining the z-score boundaries.}
 

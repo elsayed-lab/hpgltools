@@ -34,6 +34,8 @@ adjusted p-value.}
 
 \item{color_by}{By p-value something else?}
 
+\item{color_list}{List of colors for significance.}
+
 \item{fc_col}{Which column contains the fc data?}
 
 \item{fc_name}{Name of the fold-change to put on the plot.}
@@ -67,8 +69,6 @@ low and that is messing with the interpretation of the data.}
 \item{label_column}{Use this column of annotations for labels instead of rownames?}
 
 \item{...}{I love parameters!}
-
-\item{p_color_list}{List of colors for significance.}
 }
 \value{
 Ggplot2 volcano scatter plot.  This is defined as the -log10(p-value)

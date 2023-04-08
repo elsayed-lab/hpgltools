@@ -97,6 +97,12 @@ circos_arc <- function(cfg, df, first_col = "seqnames", second_col = "seqnames.2
 #' This is mostly intended to stop things early if I accidently use
 #' the wrong reference genome, but it currently does return the number
 #' of observed chrosomes.
+#'
+#' @param cfg circos configuration object.
+#' @param df dataframe of chromsome information.
+#' @param annot_chr_column Column containing the chromosome names.
+#' @param annot_gene_column Column containing the gene IDs.
+#' @param df_chr_column Column in the cfg df containing the chromosome names.
 circos_check_chromosomes <- function(cfg, df, annot_chr_column = "chr",
                                      annot_gene_column = "rownames", df_chr_column = "names",
                                      df_gene_column = NULL) {
@@ -112,7 +118,6 @@ circos_check_chromosomes <- function(cfg, df, annot_chr_column = "chr",
     message("Not all chromosomes are in the annotations, this might be ok if there are lots of contigs.")
   }
 
-
   if (!is.null(df_gene_column)) {
     if (df_gene_column[1] == "rownames") {
       df_gene_names <- rownames(df)
@@ -120,7 +125,7 @@ circos_check_chromosomes <- function(cfg, df, annot_chr_column = "chr",
       df_gene_names <- df[[df_gene_column]]
     }
 
-  found_genes <- sum(df_gene_names %in% annot_gene_names)
+    found_genes <- sum(df_gene_names %in% annot_gene_names)
     if (found_genes == 0) {
       message("The genes in the provided data do not match the annotations.")
       message("Here are the first few of each, annotation: ")
@@ -137,8 +142,8 @@ circos_check_chromosomes <- function(cfg, df, annot_chr_column = "chr",
   }
 
   retlist <- list(
-      "found_chromosomes" = found_chromosomes,
-      "found_genes" = found_genes)
+    "found_chromosomes" = found_chromosomes,
+    "found_genes" = found_genes)
   return(retlist)
 }
 
@@ -226,7 +231,7 @@ circos_heatmap <- function(cfg, input, tablename = NULL, colname = "logFC",
     conditions <- levels(as.factor(full_table[[colname]]))
     num_colors <- length(conditions)
     colors <- sm(grDevices::colorRampPalette(
-                                RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
+      RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
     names(colors) <- conditions
   } else {
     num_colors <- length(conditions)
@@ -596,8 +601,8 @@ circos_karyotype <- function(cfg, segments = 6, color = "white", fasta = NULL,
   message("Wrote karyotype to ", outfile)
   message("This should match the karyotype= line in ", name, ".conf")
   retlist <- list(
-      "outfile" = outfile,
-      "size_df" = chr_df
+    "outfile" = outfile,
+    "size_df" = chr_df
   )
   return(retlist)
 }
@@ -658,9 +663,9 @@ clean:
   }
   result <- system(make_command)
   retlist <- list(
-      "output_png" = make_target_png,
-      "output_svg" = make_target_svg,
-      "make_result" = result)
+    "output_png" = make_target_png,
+    "output_svg" = make_target_svg,
+    "make_result" = result)
   return(retlist)
 }
 
@@ -1066,7 +1071,7 @@ circos_prefix <- function(annotation, name = "mgas", base_dir = "circos",
     minus_string <- -1
   }
   if (is.null(annotation[[start_column]]) | is.null(annotation[[stop_column]]) |
-      is.null(annotation[[strand_column]])) {
+        is.null(annotation[[strand_column]])) {
     stop("This function assumes columns for start, stop, strand, chromosome names, and cog.")
   }
   plus_cfg_file <- cfgout
@@ -1158,7 +1163,7 @@ circos_prefix <- function(annotation, name = "mgas", base_dir = "circos",
     created <- suppressWarnings(dir.create(ideogram_dir, recursive = TRUE))
   }
 
-  etc_file <- file.path(path.package('hpgltools'), "share", "circos", "circos_etc.tar.xz")
+  etc_file <- file.path(path.package("hpgldata"), "share", "circos", "circos_etc.tar.xz")
   etc_cmd <- glue::glue("tar -C {dirname(conf_dir)} -xavf {etc_file} 2>/dev/null 1>&2")
   system(command = etc_cmd)
 
@@ -1498,7 +1503,7 @@ circos_tile <- function(cfg, df, colname = "logFC", basename = "", colors = NULL
     conditions <- levels(as.factor(full_table[[colname]]))
     num_colors <- length(conditions)
     colors <- sm(grDevices::colorRampPalette(
-                                RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
+      RColorBrewer::brewer.pal(num_colors, "Dark2"))(num_colors))
     names(colors) <- conditions
   } else {
     num_colors <- length(colors)

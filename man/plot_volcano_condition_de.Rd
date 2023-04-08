@@ -26,6 +26,10 @@ plot_volcano_condition_de(
 )
 }
 \arguments{
+\item{input}{Table of DE values, likely from combine_de_tables().}
+
+\item{table_name}{Name the table!}
+
 \item{alpha}{Make see-through.}
 
 \item{fc_col}{Column containing the fold-change values.}
@@ -42,7 +46,13 @@ plot_volcano_condition_de(
 
 \item{p_name}{Axis label for the significance.}
 
+\item{pval}{Demarcation for (in)significance.}
+
 \item{shapes_by_state}{Change point shapes according to their states?}
+
+\item{color_high}{Color for the ups.}
+
+\item{color_low}{and the downs.}
 
 \item{size}{Point size}
 
@@ -51,14 +61,6 @@ plot_volcano_condition_de(
 \item{label}{Label some points?}
 
 \item{label_column}{Using this column in the data.}
-
-\item{de_result}{Table of DE values, likely from combine_de_tables().}
-
-\item{de_table}{Which table from the result to use?}
-
-\item{p}{Demarcation for (in)significance.}
-
-\item{...}{Extra arguments.}
 }
 \description{
 I therefore took a modified copy of her implementation and added it here.

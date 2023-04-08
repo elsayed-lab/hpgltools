@@ -27,6 +27,7 @@ combine_single_de_table(
   lfc_cutoff = 1,
   p_cutoff = 0.05,
   format_sig = 4,
+  do_inverse = FALSE,
   excludes = NULL,
   sheet_count = 0
 )
@@ -45,6 +46,15 @@ combine_single_de_table(
 \item{table_name}{Name of the table to merge.}
 
 \item{final_table_names}{Vector of the final table names.}
+
+\item{wanted_numerator}{The numerator we would like to find.}
+
+\item{wanted_denominator}{The denominator we would like to find.}
+
+\item{invert_table}{Boolean to see if we already think we should
+switch n/d}
+
+\item{invert_plots}{Conversely, we can invert the plots.}
 
 \item{annot_df}{Add some annotation information?}
 
@@ -69,11 +79,11 @@ combine_single_de_table(
 \item{format_sig}{How many significant digits to print?  Set it to something not
 numeric to not use any significant digit formatting.}
 
+\item{do_inverse}{Dead parameter? invert the data?}
+
 \item{excludes}{Set of genes to exclude from the output.}
 
 \item{sheet_count}{What sheet is being written?}
-
-\item{do_inverse}{Invert the fold changes?}
 }
 \value{
 List containing a) Dataframe containing the merged

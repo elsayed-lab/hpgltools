@@ -1592,6 +1592,8 @@ plot_pcload <- function(expt, genes = 40, desired_pc = 1, which_scores = "high",
 #' @param rug Include the rugs on the sides of the plot?
 #' @param max_overlaps Increase overlapping label tolerance.
 #' @param cis What (if any) confidence intervals to include.
+#' @param ellipse_type Choose the kernel for the ellipse.
+#' @param ellipse_geom Use this ggplot geometry.
 #' @param label_size The text size of the labels.
 #' @param ... Extra arguments dropped into arglist
 #' @return gplot2 PCA plot

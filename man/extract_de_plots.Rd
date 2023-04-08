@@ -22,7 +22,7 @@ extract_de_plots(
   color_low = NULL,
   loess = FALSE,
   z_lines = FALSE,
-  label = label,
+  label = 10,
   label_column = "hgncsymbol"
 )
 }
@@ -30,19 +30,41 @@ extract_de_plots(
 \item{pairwise}{The result from all_pairwise(), which should be changed to
 handle other invocations too.}
 
+\item{combined}{Result from one of the combine_de_table functions.}
+
 \item{type}{Type of table to use: deseq, edger, limma, basic.}
 
 \item{invert}{Invert the plot?}
 
+\item{invert_colors}{vector of new colors.}
+
+\item{numerator}{Use this factor as the numerator.}
+
+\item{denominator}{Use this factor as the denominator.}
+
+\item{alpha}{Use this transparency.}
+
+\item{z}{z-score cutoff for coefficient significance.}
+
 \item{logfc}{What logFC to use for the MA plot horizontal lines.}
+
+\item{pval}{Cutoff to define 'significant' by p-value.}
+
+\item{found_table}{Result from edger to use, left alone it chooses the first.}
 
 \item{p_type}{Adjusted or raw pvalues?}
 
-\item{table}{Result from edger to use, left alone it chooses the first.}
+\item{color_high}{Color to use for the 'high' genes.}
 
-\item{p}{Cutoff to define 'significant' by p-value.}
+\item{color_low}{Color to use for the 'low' genes.}
 
-\item{...}{Extra arguments are passed to arglist.}
+\item{loess}{Add a loess estimator to the coefficient plot?}
+
+\item{z_lines}{Add the z-score lines?}
+
+\item{label}{Label this number of top-diff genes.}
+
+\item{label_columns}{Use this column for labelling genes.}
 }
 \value{
 a plot!

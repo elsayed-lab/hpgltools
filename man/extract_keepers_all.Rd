@@ -84,6 +84,16 @@ experimental metadata.}
 
 \item{sheet_number}{Which sheet is this?}
 
+\item{format_sig}{Use this number of significant digits.}
+
+\item{plot_colors}{Use these colors for plots.}
+
+\item{z}{Use this z-score as a coefficient significance cutoff.}
+
+\item{alpha}{Use this transparency for plots?}
+
+\item{z_lines}{Add lines for z-score on coefficient plots?}
+
 \item{apr}{Result from all_pairwise().}
 }
 \description{

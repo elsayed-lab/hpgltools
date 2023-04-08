@@ -12,6 +12,8 @@ read_snp_columns(samples, file_lst, column = "diff_count", verbose = FALSE)
 \item{file_lst}{Set of files to read.}
 
 \item{column}{Column from the bcf file to read.}
+
+\item{verbose}{Print information about the input data.}
 }
 \value{
 A big honking data table.

@@ -8,9 +8,19 @@ input types.}
 \usage{
 get_plot_columns(data, type, p_type = "adj")
 }
+\arguments{
+\item{data}{Data structure in which to hunt columns/data.}
+
+\item{type}{Type of method used to make the data.}
+
+\item{p_type}{Use adjusted p-values?}
+}
 \description{
 I split this function away from the main body of extract_de_plots()
 so that I can come back to it and strip it down to something a bit
 more legible.  Eventually I want to dispatch this logic off to
 separate functions depending on the class of the input.
+}
+\details{
+This function should die in a fire.
 }

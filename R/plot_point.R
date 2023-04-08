@@ -146,8 +146,13 @@ plot_dist_scatter <- function(df, size = 2, xlab = NULL, ylab = NULL) {
 #' @param df Dataframe likely containing two columns.
 #' @param cormethod What type of correlation to check?
 #' @param size Size of the dots on the plot.
-#' @param identity Add the identity line?
 #' @param loess Add a loess estimation?
+#' @param xcol Column name of x-values
+#' @param ycol Column name of y-values#'
+#' @param text_col Column containing text annotations.
+#' @param logfc Point out genes with a specific logfc.
+#' @param identity Add the identity line?
+#' @param z Use this z-score cutoff.
 #' @param z_lines  Include lines defining the z-score boundaries.
 #' @param first First column to plot.
 #' @param second Second column to plot.

@@ -34,6 +34,12 @@ output directories and want to be able to switch between them.}
 
 \item{separate}{When true, this function should return a list
 comprised of the individual sample objects.}
+
+\item{types}{Types of data to add to the scd.}
+
+\item{mito_pattern}{Pattern used to find mitochondrial genes.}
+
+\item{ribo_pattern}{Pattern used to find ribosomal proteins.}
 }
 \value{
 Either a list or merged seurat object(s).

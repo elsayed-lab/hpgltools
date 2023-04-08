@@ -5,6 +5,9 @@
 #' identity to all others; so I imagine it would be nice to see a
 #' dimplot or something of each state vs. all others as a binary pair
 #' rather than as n separate groups.
+#'
+#' @param scd Seurat single cell dataset.
+#' @param column Get identities from this metadata column.
 add_binary_states <- function(scd, column = NULL) {
   identity_levels <- levels(as.factor(Seurat::Idents(object = scd)))
   if (!is.null(column)) {
@@ -59,7 +62,18 @@ add_clonotype_annotations <- function(scd, start_path, type = "t") {
   return(scd)
 }
 
-#' Add a df of clonotype observations by cell cluster to the @misc slot of the Seurat data.
+#' Add a df of clonotype observations by cell cluster to @misc of a
+#' Seurat datastructure.
+#'
+#' This seeks to count up and provide a couple of metric of how many
+#' B/T cells are in each cluster of a VDJ single cell dataset.
+#'
+#' @param scd Seurat single cell datastructure.
+#' @param column Cluster column in the metadata.
+#' @param clono_column Column containing VDJ annotations.
+#' @param add_sum Add sums of the clusters to the metadata?
+#' @return The scd with some new metadata.
+#' @export
 count_clonotype_by_cluster <- function(scd, column = "res0p2_clusters",
                                        clono_column = "raw_clonotype_id", add_sum = TRUE) {
   meta <- scd@meta.data
@@ -108,6 +122,9 @@ count_clonotype_by_cluster <- function(scd, column = "res0p2_clusters",
 #'  output directories and want to be able to switch between them.
 #' @param separate When true, this function should return a list
 #'  comprised of the individual sample objects.
+#' @param types Types of data to add to the scd.
+#' @param mito_pattern Pattern used to find mitochondrial genes.
+#' @param ribo_pattern Pattern used to find ribosomal proteins.
 #' @return Either a list or merged seurat object(s).
 #' @export
 create_scd <- function(metadata, expression_column = "gexfile",
@@ -196,10 +213,12 @@ create_scd <- function(metadata, expression_column = "gexfile",
 #' @param scd Single Cell Dataset to filter.
 #' @param min_num_rna Drop cells with fewer than this number of
 #'  observed RNA species.
+#' @param max_num_rna An unlikely filter for maximum number of RNAs.
 #' @param min_pct_ribo Drop cells with less than this percentage of
 #'  ribosomal protein RNAs observed.
 #' @param max_pct_ribo Drop cells with more than this percentage of
 #'  ribosomal protein RNAs observed.
+#' @param remerge Merge the data back if there are multiple assays.
 #' @param max_pct_mito Drop cells with more than this percentage of
 #'  mitochondrial RNA observed.
 #' @param min_pct_mito Drop cells with less than this percentage of
@@ -210,6 +229,7 @@ create_scd <- function(metadata, expression_column = "gexfile",
 #'  ribosomal protein species.
 #' @param min_gene_counts Drop genes across cells which are observed
 #'  less than this number of times, I don't expect many of these.
+#' @param verbose Be chatty about what you are doing?
 #' @return Filtered scd
 #' @export
 filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
@@ -399,6 +419,11 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
   return(filt_scd)
 }
 
+#' Extract the proportions of each group/sample in a scd.
+#'
+#' @param scd Seurat single cell dataset.
+#' @param group_factor Set of groups to examine.
+#' @param sample_factor Column defining the samples.
 proportions_by_factors <- function(scd, group_factor = "res0p1_clusters",
                                    sample_factor = "gexcells") {
   raw_df <- scd@misc[["Idents_metadata"]][, c("sampleid", sample_factor)]
@@ -407,7 +432,7 @@ proportions_by_factors <- function(scd, group_factor = "res0p1_clusters",
   ## But I would like to create an easy table to normalize this information
   ## by cell group/sample.
   identity_vector <- scd@meta.data[["Idents"]]
-  cluster_vector <- as.character(fnorm_scd@meta.data[[group_factor]])
+  cluster_vector <- as.character(scd@meta.data[[group_factor]])
   cluster_names <- levels(as.factor(cluster_vector))
   cluster_df_names <- paste0("cluster_", cluster_names)
   concatenated_vector <- paste0(identity_vector, "_", cluster_vector)
@@ -459,6 +484,8 @@ proportions_by_factors <- function(scd, group_factor = "res0p1_clusters",
 #' @param column_name Name for the new column.
 #' @param column_prefix Prefix added to the new column.
 #' @param verbose Print the summaries to screen?
+#' @param group Could up the data by this column.
+#' @param assay Use this assay. (might be useful if you have antibody data)
 #' @return Give back the SCD with some new information.
 #' @export
 record_seurat_samples <- function(scd, type = "num_cells", pattern = NULL,
@@ -579,6 +606,8 @@ plot_seurat_scatter <- function(scd, set = NULL) {
 #'  are exceedingly long with often a consistent prefix.
 #' @param min_mean Currently unused, but intended to filter out gsc
 #'  which are not observed to any significant degree.
+#' @importFrom dplyr vars
+#' @importFrom tidyselect all_of
 summarize_scd_clusters <- function(scd, fx = "mean", column_prefix = "descartes",
                                    column_range = NULL, cluster_column = "cluster_sample",
                                    real_column_names = NULL, abbreviate = TRUE,
@@ -685,13 +714,13 @@ skim_seurat_metadata <- function(sample_meta, obj_meta, meta_query = "nCount_RNA
       group_by(!!rlang::sym(group_column)) %>%
       skimr::skim_tee(meta_query) %>%
       skimr::skim(meta_query) %>%
-      dplyr::select(all_of(summary_query)) %>%
+      dplyr::select(tidyselect::all_of(summary_query)) %>%
       unlist()
   } else {
     sample_meta[[column_name]] <- obj_meta %>%
       group_by(!!rlang::sym(group_column)) %>%
       skim(meta_query) %>%
-      dplyr::select(all_of(summary_query)) %>%
+      dplyr::select(tidyselect::all_of(summary_query)) %>%
       unlist()
   }
   return(sample_meta)

@@ -7,6 +7,9 @@ flag, and it is driving me nuts.  Hopefully this will make it less frustrating f
 \usage{
 sp(...)
 }
+\arguments{
+\item{...}{The set of functions to silence.}
+}
 \description{
 Some ggplot2 stats functions have not yet implemented the new dropped_aes
 flag, and it is driving me nuts.  Hopefully this will make it less frustrating for me.

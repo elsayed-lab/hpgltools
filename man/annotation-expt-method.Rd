@@ -6,6 +6,17 @@
 \usage{
 \S4method{annotation}{expt}(object)
 }
+\arguments{
+\item{object}{One of my various expressionset analogs, expt,
+expressionSet, or summarizedExperiment.}
+
+\item{value}{New value to add to the object.}
+
+\item{x}{I absoluately do not understand why R explicitly requires
+this.}
+
+\item{i}{Nor this.}
+}
 \description{
 A series of setMethods for expts, ExpressionSets, and SummarizedExperiments.
 }

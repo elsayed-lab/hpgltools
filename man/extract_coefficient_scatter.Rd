@@ -35,6 +35,9 @@ combine_de_tables().}
 \item{z}{Define the range of genes to color (FIXME: extend this to p-value
 and fold-change).}
 
+\item{logfc}{Set a fold-change cutoff for coloring points in the scatter plot
+(currently not supported.)}
+
 \item{n}{Set a top-n fold-change for coloring the points in the scatter plot
 (this should work, actually).}
 
@@ -47,14 +50,6 @@ and fold-change).}
 \item{color_low}{Color for the genes less than the mean.}
 
 \item{color_high}{Color for the genes greater than the mean.}
-
-\item{p}{Set a p-value cutoff for coloring the scatter plot (currently not
-supported).}
-
-\item{lfc}{Set a fold-change cutoff for coloring points in the scatter plot
-(currently not supported.)}
-
-\item{...}{More arguments are passed to arglist.}
 }
 \description{
 Plot the gene abundances for two coefficients in a differential expression

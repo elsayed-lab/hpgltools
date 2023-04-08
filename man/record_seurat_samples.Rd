@@ -28,6 +28,10 @@ Cell-annotation table to query.}
 \item{column_prefix}{Prefix added to the new column.}
 
 \item{verbose}{Print the summaries to screen?}
+
+\item{group}{Could up the data by this column.}
+
+\item{assay}{Use this assay. (might be useful if you have antibody data)}
 }
 \value{
 Give back the SCD with some new information.

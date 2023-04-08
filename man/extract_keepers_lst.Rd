@@ -76,17 +76,34 @@ experimental metadata.}
 
 \item{padj_type}{Choose a specific p adjustment.}
 
+\item{fancy}{Include larger pdf/svg plots with the xlsx output?}
+
 \item{loess}{Add a loess to plots?}
 
-\item{lfc_cutoff}{Passed for volcano/MA plots.}
+\item{lfc_cutoff}{Passed for volcano/MA plots and defining 'significant'}
 
-\item{p_cutoff}{Passed for volcano/MA plots.}
+\item{p_cutoff}{Passed for volcano/MA plots and defining 'significant'}
 
 \item{sheet_prefix}{Prefix for this worksheet id.}
 
 \item{sheet_number}{Which sheet is this?}
 
-\item{format_sig}{Number of significant digits for stuff like pvalues.}
+\item{format_sig}{Number of significant digits for stuff like
+pvalues.}
+
+\item{plot_colors}{Define what colors should be used for
+'up'/'down'}
+
+\item{z}{Define significantly away from the identity line in a
+coefficient plot.}
+
+\item{alpha}{Use this alpha transparency for plots.}
+
+\item{z_lines}{Include lines denoting significant z-scores?}
+
+\item{label}{When not NULL, label this many genes.}
+
+\item{label_column}{Try using this column for labeling genes.}
 }
 \description{
 This is the most interesting of the extract_keeper functions.  It must check

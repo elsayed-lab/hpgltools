@@ -227,14 +227,14 @@ concatenate_runs <- function(expt, column = "replicate") {
 #'  [set_expt_conditions()] [set_expt_batches()] [set_expt_samplenames()] [subset_expt()]
 #'  [set_expt_colors()] [set_expt_genenames()] [tximport] [load_annotations()]
 #' @examples
-#'  cdm_expt_rda <- system.file("share", "cdm_expt.rda", package = "hpgltools")
+#'  cdm_expt_rda <- system.file("share", "cdm_expt.rda", package = "hpgldata")
 #'  load(file = cdm_expt_rda)
 #'  head(cdm_counts)
 #'  head(cdm_metadata)
 #'  ## The gff file has differently labeled locus tags than the count tables, also
 #'  ## the naming standard changed since this experiment was performed, therefore I
 #'  ## downloaded a new gff file.
-#'  example_gff <- system.file("share", "gas.gff", package = "hpgltools")
+#'  example_gff <- system.file("share", "gas.gff", package = "hpgldata")
 #'  gas_gff_annot <- load_gff_annotations(example_gff)
 #'  rownames(gas_gff_annot) <- make.names(gsub(pattern = "(Spy)_", replacement = "\\1",
 #'                                             x = gas_gff_annot[["locus_tag"]]), unique = TRUE)
@@ -242,12 +242,12 @@ concatenate_runs <- function(expt, column = "replicate") {
 #'                           count_dataframe = cdm_counts)
 #'  head(pData(mgas_expt))
 #'  ## An example using count tables referenced in the metadata.
-#'  sb_annot <- system.file("share", "sb", "trinotate_head.csv.xz", package = "hpgltools")
+#'  sb_annot <- system.file("share", "sb", "trinotate_head.csv.xz", package = "hpgldata")
 #'  sb_annot <- load_trinotate_annotations(trinotate = sb_annot)
 #'  sb_annot <- as.data.frame(sb_annot)
 #'  rownames(sb_annot) <- make.names(sb_annot[["transcript_id"]], unique = TRUE)
 #'  sb_annot[["rownames"]] <- NULL
-#'  sb_data <- system.file("share", "sb", "preprocessing.tar.xz", package = "hpgltools")
+#'  sb_data <- system.file("share", "sb", "preprocessing.tar.xz", package = "hpgldata")
 #'  untarred <- utils::untar(tarfile = sb_data)
 #'  sb_expt <- create_expt(metadata = "preprocessing/kept_samples.xlsx",
 #'                         gene_info = sb_annot)
@@ -1734,6 +1734,10 @@ set_expt_batches <- function(expt, fact, ids = NULL, ...) {
 #' Usually we give a vector of all samples by colors.  This just
 #' simplifies that to one element each.  Currently only used in
 #' combine_de_tables() but I think it will have use elsewhere.
+#'
+#' @param expt Expression from which to gather colors.
+#' @return List of colors by condition.
+#' @export
 get_expt_colors <- function(expt) {
   all_colors <- expt[["colors"]]
   condition_fact <- as.character(pData(expt)[["condition"]])
@@ -3370,6 +3374,13 @@ expt_set <- setOldClass("expt")
 ## x="SummarizedExperiment", i="numeric"
 
 #' A series of setMethods for expts, ExpressionSets, and SummarizedExperiments.
+#'
+#' @param object One of my various expressionset analogs, expt,
+#'  expressionSet, or summarizedExperiment.
+#' @param value New value to add to the object.
+#' @param x I absoluately do not understand why R explicitly requires
+#'  this.
+#' @param i Nor this.
 #' @importFrom SummarizedExperiment assay assay<- colData colData<- rowData rowData<-
 #' @importFrom Biobase annotation annotation<-
 setMethod("annotation", signature = "expt",
@@ -3462,11 +3473,6 @@ setMethod("rowData<-", signature = "expt",
             Biobase::fData(x[["expressionset"]]) <- value
             return(x)
           })
-##setMethod("rowData<-", signature = "Expressionset",
-##          function(x, i, withDimnames = TRUE, ..., value) {
-##            Biobase::fData(x) <- value
-##            return(x)
-##          })
 setMethod("sampleNames", signature = "expt",
           function(object) {
             Biobase::sampleNames(object[["expressionset"]])

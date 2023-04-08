@@ -13,6 +13,17 @@ circos_check_chromosomes(
   df_gene_column = NULL
 )
 }
+\arguments{
+\item{cfg}{circos configuration object.}
+
+\item{df}{dataframe of chromsome information.}
+
+\item{annot_chr_column}{Column containing the chromosome names.}
+
+\item{annot_gene_column}{Column containing the gene IDs.}
+
+\item{df_chr_column}{Column in the cfg df containing the chromosome names.}
+}
 \description{
 This is mostly intended to stop things early if I accidently use
 the wrong reference genome, but it currently does return the number

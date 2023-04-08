@@ -42,27 +42,45 @@ combine_extracted_plots(
 
 \item{plot_inputs}{The individual outputs from limma etc.}
 
+\item{plot_basic}{Add basic data?}
+
+\item{plot_deseq}{Add deseq data?}
+
+\item{plot_edger}{Add edger data?}
+
+\item{plot_limma}{Add limma data?}
+
+\item{plot_ebseq}{Add ebseq data?}
+
 \item{loess}{Add a loess estimation?}
 
 \item{logfc}{For Volcano/MA plot lines.}
 
+\item{pval}{For Volcano/MA plot lines.}
+
 \item{found_table}{The table name actually used.}
 
-\item{p_type}{Use this/these methods' p-value for determining significance.}
+\item{p_type}{Use this/these methods' p-value for determining
+significance.}
+
+\item{plot_colors}{Use these colors for numerators/denominators.}
+
+\item{fancy}{Include fancy pdf/svg versions of plots for publication?}
 
 \item{do_inverse}{Flip the numerator/denominator?}
 
-\item{include_basic}{Add basic data?}
+\item{invert_colors}{Conversely, keep the values the same, but flip
+the colors.  I think these invert parameters are not needed anymore.}
 
-\item{include_deseq}{Add deseq data?}
+\item{z}{Use a z-score cutoff for coefficient plots.}
 
-\item{include_edger}{Add edger data?}
+\item{alpha}{Add some transparency to the plots.}
 
-\item{include_limma}{Add limma data?}
+\item{z_lines}{Add lines for zscore cutoffs?}
 
-\item{include_ebseq}{Add ebseq data?}
+\item{label}{Label this number of the top genes.}
 
-\item{p}{For Volcano/MA plot lines.}
+\item{label_column}{Label the top genes with this column.}
 }
 \description{
 It should be possible to significantly simplify the arguments passed to this
