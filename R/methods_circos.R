@@ -54,37 +54,6 @@ setClass("circos",
              minus_df = "data.frame"),
          validity = check_circos)
 
-#' Generic method to input data to iDA
-#'
-#' @param object The object to run iDA on
-#' @param ... Additonal arguments passed to object constructors
-#' @return iDA output with clustering, gene weights, and cell weights
-#' @export
-setGeneric("iDA", signature = c("object"),
-           function(object, ...) {
-             standardGeneric("iDA")
-           })
-
-#' Set method for matrix to input data to iDA
-#'
-#' @param object The object to run iDA on
-#' @param ... Additonal arguments passed to object constructors
-#' @return iDA output with clustering, gene weights, and cell weights
-#' @export
-setMethod("iDA", "matrix",
-          function(object, ...) {
-            iDAoutput <- iDA::iDA_core(object, ...)
-            return(iDAoutput)
-          })
-
-## Methods for plotting functions.
-##setGeneric("plot_libsize",
-##           valueClass = "matrix",
-##           function(data, ...) {
-##             standardGeneric("plot_libsize")
-##             ## plot_libsize(data, ...)
-##           })
-
 #' Send a SummarizedExperiment to plot_libsize().
 #'
 #' @param data SummarizedExperiment presumably created by create_se().

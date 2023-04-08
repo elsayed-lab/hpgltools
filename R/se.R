@@ -49,6 +49,7 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
   ## An expressionset needs to have a Biobase::annotation() in order for
   ## GSEABase to work with it. Reading the documentation, these are primarily
   ## used for naming the type of microarray chip used.
+  ## I do not know if any work will need to be done for a SE
 
   ## Palette for colors when auto-chosen
   file_suffix <- ".count.gz"
@@ -217,7 +218,7 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
         x = rownames(tximport_data[["scaled"]][["length"]]))
   }
 
-  ## Try a couple different ways of getting gene-level annotations into the expressionset.
+  ## Try a couple different ways of getting gene-level annotations into the se.
   annotation <- NULL
   if (is.null(gene_info)) {
     ## Including, if all else fails, just grabbing the gene names from the count tables.
@@ -456,20 +457,20 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
   metadata(se)[["colors"]] <- chosen_colors
   metadata(se)[["tximport"]] <- tximport_data
 
-  ## Save an rdata file of the expressionset.
+  ## Save an rdata file of the se.
   if (is.null(savefile)) {
     if ("character" %in% class(metadata)) {
       name <- paste0(gsub(x = basename(metadata), pattern = "^(.*)\\..*", replacement = "\\1"), ".rda")
     } else {
-      message("Saving the expressionset to 'expt.rda'.")
-      savefile <- "expt.rda"
+      message("Saving the summarized experiment to 'se.rda'.")
+      savefile <- "se.rda"
     }
   }
   save_result <- try(save(expt, file = savefile), silent = TRUE)
   if (class(save_result) == "try-error") {
-    warning("Saving the expt object failed, perhaps you do not have permissions?")
+    warning("Saving the summarized experiment object failed, perhaps you do not have permissions?")
   }
-  message("The final expressionset has ", nrow(assays(se)),
+  message("The final summarized experiment has ", nrow(assays(se)),
           " rows and ", ncol(colData(se)), " columns.")
   return(se)
 }
