@@ -120,7 +120,7 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
   }
 
   data_class <- class(expt_data)[1]
-  if (data_class == "expt") {
+  if (data_class == "expt" || data_class == "SummarizedExperiment") {
     expt_design <- pData(expt_data)
     expt_colors <- expt_data[["colors"]]
     if (is.null(expt_names)) {
@@ -139,15 +139,14 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
   if (is.null(expt_colors)) {
     num_cols <- ncol(expt_data)
     expt_colors <- sm(grDevices::colorRampPalette(
-                                     RColorBrewer::brewer.pal(
-                                                       num_cols, chosen_palette))(num_cols))
+      RColorBrewer::brewer.pal(num_cols, chosen_palette))(num_cols))
   }
   expt_colors <- as.character(expt_colors)
 
   if (is.null(expt_names)) {
     expt_names <- colnames(expt_data)
   } else {
-    if (class(expt_names) == "character" & length(expt_names) == 1) {
+    if (class(expt_names) == "character" && length(expt_names) == 1) {
       ## Then this refers to an experimental metadata column.
       expt_names <- expt_design[[expt_names]]
     }

@@ -118,47 +118,27 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
   new_expt <- expt
   type <- ""
   current_exprs <- expt[["expressionset"]]
-  if (!is.null(arglist[["filter_low"]])) {
-    ## I changed the name of this argument.
-    warning("This argument has been changed to 'filter'.")
-    filter <- arglist[["filter"]]
-  }
-  if (is.null(filter)) {
-    filter <- "raw"
-  }
-  if (filter == FALSE) {
+  if (is.null(filter) || isFALSE(filter)) {
     filter <- "raw"
   } else if (isTRUE(filter)) {
     filter <- "cbcb"
   }
-  if (is.null(convert)) {
-    convert <- "raw"
-  }
-  if (convert == FALSE) {
+  if (is.null(convert) || isFALSE(convert)) {
     convert <- "raw"
   } else if (isTRUE(convert)) {
     convert <- "cbcbcpm"
   }
-  if (is.null(norm)) {
-    norm <- "raw"
-  }
-  if (norm == FALSE) {
+  if (is.null(norm) || isFALSE(norm)) {
     norm <- "raw"
   } else if (isTRUE(norm)) {
     norm <- "tmm"
   }
-  if (is.null(transform)) {
-    transform <- "raw"
-  }
-  if (transform == FALSE) {
+  if (is.null(transform) || isFALSE(transform)) {
     transform <- "raw"
   } else if (isTRUE(transform)) {
     transform <- "log2"
   }
-  if (is.null(batch)) {
-    batch <- "raw"
-  }
-  if (batch == FALSE) {
+  if (is.null(batch) || isFALSE(batch)) {
     batch <- "raw"
   } else if (isTRUE(batch)) {
     batch <- "sva"

@@ -26,3 +26,30 @@ setMethod("plot_libsize",
                          expt_names = expt_names, label_chars = label_chars,
                          ...)
           })
+setMethod("exprs", signature = "SummarizedExperiment",
+          function(object) {
+            SummarizedExperiment::assay(object)
+          })
+setMethod("exprs<-", signature = "SummarizedExperiment",
+          function(object, value) {
+            SummarizedExperiment::assay(object) <- value
+            return(object)
+          })
+setMethod("fData", signature = "SummarizedExperiment",
+          function(object) {
+            SummarizedExperiment::rowData(object)
+          })
+setMethod("fData<-", signature = "SummarizedExperiment",
+          function(object, value) {
+            SummarizedExperiment::rowData(object) <- value
+            return(object)
+          })
+setMethod("pData", signature = "SummarizedExperiment",
+          function(object) {
+            SummarizedExperiment::colData(object)
+          })
+setMethod("pData<-", signature = "SummarizedExperiment",
+          function(object, value) {
+            SummarizedExperiment::rowData(object) <- value
+            return(object)
+          })

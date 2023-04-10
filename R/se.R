@@ -232,7 +232,7 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
       annotation <- load_gff_annotations(gff = include_gff, type = gff_type)
       gene_info <- data.table::as.data.table(annotation, keep.rownames = "rownames")
     }
-  } else if (class(gene_info)[[1]] == "list" & !is.null(gene_info[["genes"]])) {
+  } else if (class(gene_info)[[1]] == "list" && !is.null(gene_info[["genes"]])) {
     ## In this case, it is using the output of reading a OrgDB instance
     gene_info <- data.table::as.data.table(gene_info[["genes"]], keep.rownames = "rownames")
   } else if (class(gene_info)[[1]] == "data.table" || class(gene_info)[[1]] == "tbl_df") {
@@ -242,7 +242,7 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
     ## And sometimes the rownames were never set.
     ## Therefore I will use rownames(dt) as the master, dt$rownames as secondary, and
     ## as a fallback take the first column in the data.
-    if (is.null(rownames(gene_info)) & is.null(gene_info[["rownames"]])) {
+    if (is.null(rownames(gene_info)) && is.null(gene_info[["rownames"]])) {
       gene_info[["rownames"]] <- make.names(rownames[[1]], unique = TRUE)
       message("Both rownames() and $rownames were null.")
     }
@@ -283,8 +283,8 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
     ## While we are looping through the columns,
     ## Make certain that no columns in gene_info are lists or factors.
     ## FIXME: 202104: I am no longer sure why I changed factors.
-    if (class(gene_info[[col]]) == "factor" |
-        class(gene_info[[col]]) == "AsIs" |
+    if (class(gene_info[[col]]) == "factor" ||
+        class(gene_info[[col]]) == "AsIs" ||
         class(gene_info[[col]]) == "list") {
       gene_info[[col]] <- as.character(gene_info[[col]])
     }
@@ -297,7 +297,7 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
   ## Maybe I will copy/move this to my annotation collection toys?
   ## This temporary id number will be used to ensure that the order of features in everything
   ## will remain consistent, as we will call order() using it later.
-  all_count_tables[["temporary_id_number"]] <- 1:nrow(all_count_tables)
+  all_count_tables[["temporary_id_number"]] <- seq_len(nrow(all_count_tables))
   message("Bringing together the count matrix and gene information.")
   ## The method here is to create a data.table of the counts and annotation data,
   ## merge them, then split them apart.
@@ -460,7 +460,8 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
   ## Save an rdata file of the se.
   if (is.null(savefile)) {
     if ("character" %in% class(metadata)) {
-      name <- paste0(gsub(x = basename(metadata), pattern = "^(.*)\\..*", replacement = "\\1"), ".rda")
+      name <- paste0(gsub(x = basename(metadata), pattern = "^(.*)\\..*",
+                          replacement = "\\1"), ".rda")
     } else {
       message("Saving the summarized experiment to 'se.rda'.")
       savefile <- "se.rda"
@@ -517,31 +518,3 @@ make_pombe_se <- function(annotation = TRUE) {
   detach("package:fission")
   return(pombe_se)
 }
-
-setMethod("exprs", signature = "SummarizedExperiment",
-          function(object) {
-            SummarizedExperiment::assay(object)
-          })
-setMethod("exprs<-", signature = "SummarizedExperiment",
-          function(object, value) {
-            SummarizedExperiment::assay(object) <- value
-            return(object)
-          })
-setMethod("fData", signature = "SummarizedExperiment",
-          function(object) {
-            SummarizedExperiment::rowData(object)
-          })
-setMethod("fData<-", signature = "SummarizedExperiment",
-          function(object, value) {
-            SummarizedExperiment::rowData(object) <- value
-            return(object)
-          })
-setMethod("pData", signature = "SummarizedExperiment",
-          function(object) {
-            SummarizedExperiment::colData(object)
-          })
-setMethod("pData<-", signature = "SummarizedExperiment",
-          function(object, value) {
-            SummarizedExperiment::rowData(object) <- value
-            return(object)
-          })
