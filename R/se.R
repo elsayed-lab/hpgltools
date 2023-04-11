@@ -518,3 +518,105 @@ make_pombe_se <- function(annotation = TRUE) {
   detach("package:fission")
   return(pombe_se)
 }
+
+subset_se <- function(se, subset = NULL, ids = NULL,
+                      nonzero = NULL, coverage = NULL) {
+  starting_se <- se
+  starting_metadata <- pData(se)
+  starting_samples <- sampleNames(se)
+
+  if (!is.null(ids)) {
+    string <- ""
+    for (id in ids) {
+      string <- glue("{string}|sampleid=='{id}'")
+    }
+    ## Remove the leading |
+    subset <- substring(string, 2)
+  }
+
+  note_appended <- NULL
+  subset_design <- NULL
+  if (is.null(coverage) && is.null(nonzero)) {
+    if (is.null(subset)) {
+      subset_design <- starting_metadata
+    } else {
+      mesg("Using a subset expression.")
+
+      r_expression <- glue("subset(starting_metadata, {subset})")
+      subset_design <- eval(parse(text = r_expression))
+      note_appended <- glue("Subsetted with {subset} on {date()}.
+")
+    }
+    if (nrow(subset_design) == 0) {
+      stop("When the subset was taken, the resulting design has 0 members.")
+    }
+    subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
+  } else if (is.null(nonzero)) {
+    ## If coverage is defined, then use it to subset based on the minimal desired coverage
+    ## Perhaps in a minute I will make this work for strings like '1z' to get the lowest
+    ## standard deviation or somesuch...
+    mesg("Subsetting given a minimal number of counts/sample.")
+    coverages <- colSums(exprs(se))
+
+    if (is.null(pData(se)[["sample_coverage"]])) {
+      pData(se)[["sample_coverage"]] <- coverages
+    }
+    subset_idx <- coverages >= as.numeric(coverage) ## In case I quote it on accident.
+    subset_design <- starting_metadata[subset_idx, ]
+    subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
+    message("The samples removed (and read coverage) when filtering samples with less than ",
+            coverage, " reads are: ")
+    print(colSums(exprs(se))[!subset_idx])
+  } else if (is.null(coverage)) {
+    ## Remove samples with less than this number of non-zero genes.
+    nonzero_idx <- exprs(se) != 0
+    num_nonzero <- colSums(nonzero_idx)
+    if (is.null(pData(se)[["num_nonzero"]])) {
+      pData(se)[["num_nonzero"]] <- num_nonzero
+    }
+    remove_idx <- num_nonzero < nonzero
+    if (sum(remove_idx) == 0) {
+      message("No samples have fewer than ", nonzero, " observed genes.")
+      return(se)
+    }
+    samples_dropped <- num_nonzero[remove_idx]
+    subset_design <- starting_metadata[!remove_idx, ]
+    subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
+    message("The samples (and read coverage) removed when filtering ",
+            nonzero, " non-zero genes are: ")
+    print(colSums(exprs(se))[remove_idx])
+    print(num_nonzero[remove_idx])
+  } else {
+    stop("Unable to determine what is being subset.")
+  }
+
+  ## This is to get around stupidity with respect to needing all factors to be
+  ## in a DESeqDataSet
+  starting_ids <- rownames(starting_metadata)
+  subset_ids <- rownames(subset_design)
+  subset_positions <- starting_ids %in% subset_ids
+  starting_colors <- se[["colors"]]
+  subset_colors <- starting_colors[subset_positions, drop = TRUE]
+  starting_conditions <- se[["conditions"]]
+  subset_conditions <- starting_conditions[subset_positions, drop = TRUE]
+  starting_batches <- se[["batches"]]
+  subset_batches <- starting_batches[subset_positions, drop = TRUE]
+  current_libsize <- se[["libsize"]]
+  subset_current_libsize <- current_libsize[subset_positions, drop = TRUE]
+  subset_expressionset <- starting_expressionset[, subset_positions]
+
+  notes <- se[["notes"]]
+  if (!is.null(note_appended)) {
+    notes <- glue("{notes}{note_appended}")
+  }
+
+  current_pd <- pData(subset_expressionset)
+  for (col in seq_len(ncol(current_pd))) {
+    if (class(current_pd[[col]]) == "factor") {
+      pData(subset_expressionset)[[col]] <- droplevels(
+        pData(subset_expressionset)[[col]])
+    }
+  }
+  ## pData(subset_expressionset) <- subset_design
+  return(new_se)
+}

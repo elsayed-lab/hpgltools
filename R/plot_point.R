@@ -16,11 +16,11 @@
 #' @export
 plot_bcv <- function(data) {
   data_class <- class(data)[1]
-  if (data_class == "expt") {
+  if (data_class == "expt" || data_class == "SummarizedExperiment") {
     data <- exprs(data)
   } else if (data_class == "ExpressionSet") {
     data <- exprs(data)
-  } else if (data_class == "matrix" | data_class == "data.frame") {
+  } else if (data_class == "matrix" || data_class == "data.frame") {
     data <- as.data.frame(data)
     ## some functions prefer matrix, so I am keeping this explicit for the moment
   } else {
@@ -59,7 +59,7 @@ plot_bcv <- function(data) {
     ggplot2::theme_bw(base_size = base_size) +
     ggplot2::theme(legend.position = "none",
                    axis.text = ggplot2::element_text(size = base_size, colour = "black"))
-  ret <- list("data"=disp_df, "plot"=disp_plot)
+  ret <- list("data" = disp_df, "plot" = disp_plot)
   return(ret)
 }
 
@@ -96,10 +96,10 @@ plot_dist_scatter <- function(df, size = 2, xlab = NULL, ylab = NULL) {
   df_x_axis <- df_columns[1]
   df_y_axis <- df_columns[2]
   if (is.null(xlab)) {
-    xlab <- glue::glue("Expression of {df_x_axis}")
+    xlab <- glue("Expression of {df_x_axis}")
   }
   if (is.null(ylab)) {
-    ylab <- glue::glue("Expression of {df_y_axis}")
+    ylab <- glue("Expression of {df_y_axis}")
   }
   colnames(df) <- c("first", "second")
   first_median <- summary(df[, 1])["Median"]
@@ -121,15 +121,15 @@ plot_dist_scatter <- function(df, size = 2, xlab = NULL, ylab = NULL) {
     ggplot2::xlab(xlab) +
     ggplot2::ylab(ylab) +
     ggplot2::geom_vline(
-      color = "grey", xintercept=(first_median - first_mad), size = line_size) +
+      color = "grey", xintercept = (first_median - first_mad), size = line_size) +
     ggplot2::geom_vline(
-      color = "grey", xintercept=(first_median + first_mad), size = line_size) +
+      color = "grey", xintercept = (first_median + first_mad), size = line_size) +
     ggplot2::geom_vline(
       color = "darkgrey", xintercept = first_median, size = line_size) +
     ggplot2::geom_hline(
-      color = "grey", yintercept=(second_median - second_mad), size = line_size) +
+      color = "grey", yintercept = (second_median - second_mad), size = line_size) +
     ggplot2::geom_hline(
-      color = "grey", yintercept=(second_median + second_mad), size = line_size) +
+      color = "grey", yintercept = (second_median + second_mad), size = line_size) +
     ggplot2::geom_hline(color = "darkgrey", yintercept = second_median, size = line_size) +
     ggplot2::geom_point(
       colour = grDevices::hsv(mydist[["dist"]], 1, mydist[["dist"]]),
@@ -183,8 +183,9 @@ plot_dist_scatter <- function(df, size = 2, xlab = NULL, ylab = NULL) {
 #' @export
 plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FALSE,
                                 xcol = NULL, ycol = NULL, text_col = NULL, logfc = 2.0,
-                                identity = FALSE, z = 1.5, z_lines = FALSE, first = NULL, second = NULL,
-                                base_url = NULL, pretty_colors = TRUE, xlab = NULL, ylab = NULL,
+                                identity = FALSE, z = 1.5, z_lines = FALSE,
+                                first = NULL, second = NULL, base_url = NULL,
+                                pretty_colors = TRUE, xlab = NULL, ylab = NULL,
                                 color_high = NULL, color_low = NULL, alpha = 0.4, ...) {
   ## At this time, one might expect arglist to contain
   ## z, p, fc, n and these will therefore be passed to get_sig_genes()
@@ -195,8 +196,6 @@ plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FAL
   if (isTRUE(color_low)) {
     color_low <- "#7B9F35"
   }
-
-
   if (is.null(xcol)) {
     xcol <- colnames(df)[1]
     ycol <- colnames(df)[2]
@@ -208,10 +207,10 @@ plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FAL
   }
   df_columns <- colnames(df)
   if (is.null(xlab)) {
-    xlab <- glue::glue("Expression of {xcol}")
+    xlab <- glue("Expression of {xcol}")
   }
   if (is.null(ylab)) {
-    ylab <- glue::glue("Expression of {ycol}")
+    ylab <- glue("Expression of {ycol}")
   }
   test_formula <- as.formula(paste0(ycol, " ~ ", xcol))
   model_test <- try(robustbase::lmrob(formula = test_formula,
@@ -269,13 +268,13 @@ plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FAL
     ggplot2::xlab(xlab) +
     ggplot2::ylab(ylab) +
     ggplot2::geom_vline(
-      color = "grey", xintercept=(first_median - first_mad), size = line_size) +
+      color = "grey", xintercept = (first_median - first_mad), size = line_size) +
     ggplot2::geom_vline(
-      color = "grey", xintercept=(first_median + first_mad), size = line_size) +
+      color = "grey", xintercept = (first_median + first_mad), size = line_size) +
     ggplot2::geom_hline(
-      color = "grey", yintercept=(second_median - second_mad), size = line_size) +
+      color = "grey", yintercept = (second_median - second_mad), size = line_size) +
     ggplot2::geom_hline(
-      color = "grey", yintercept=(second_median + second_mad), size = line_size) +
+      color = "grey", yintercept = (second_median + second_mad), size = line_size) +
     ggplot2::geom_hline(
       color = "darkgrey", yintercept = second_median, size = line_size) +
     ggplot2::geom_vline(
@@ -323,8 +322,8 @@ plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FAL
   if (isTRUE(pretty_colors)) {
     first_vs_second <- first_vs_second +
       ggplot2::geom_point(size = size, alpha = alpha,
-                          colour = grDevices::hsv(linear_model_weights * 9/20,
-                                                  linear_model_weights/20 + 19/20,
+                          colour = grDevices::hsv(linear_model_weights * (9 / 20),
+                                                  linear_model_weights / 20 + (19 / 20),
                                                   (1.0 - linear_model_weights)))
   } else {
     first_vs_second <- first_vs_second +
@@ -425,14 +424,14 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
   arglist <- list(...)
   names <- NULL
   data_class <- class(data)[1]
-  if (data_class == "expt") {
+  if (data_class == "expt" || data_class == "SummarizedExperiment") {
     design <- pData(data)
     colors <- data[["colors"]]
     names <- data[["samplenames"]]
     data <- exprs(data)
   } else if (data_class == "ExpressionSet") {
     data <- exprs(data)
-  } else if (data_class == "matrix" | data_class == "data.frame") {
+  } else if (data_class == "matrix" || data_class == "data.frame") {
     ## some functions prefer matrix, so I am keeping this explicit for the moment
     data <- as.data.frame(data)
   } else {
@@ -441,14 +440,14 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
 
   condition <- design[["condition"]]
   batch <- design[["batch"]]
-  if (!is.null(expt_names) & class(expt_names)[1] == "character") {
+  if (!is.null(expt_names) && class(expt_names)[1] == "character") {
     if (length(expt_names) == 1) {
       colnames(data) <- make.names(design[[expt_names]], unique = TRUE)
     } else {
       colnames(data) <- expt_names
     }
   }
-  if (!is.null(label_chars) & is.numeric(label_chars)) {
+  if (!is.null(label_chars) && is.numeric(label_chars)) {
     colnames(data) <- abbreviate(colnames(data), minlength = label_chars)
   }
   nz_df <- data.frame(
@@ -579,13 +578,13 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
 #' @export
 plot_pairwise_ma <- function(data, log = NULL, ...) {
   data_class <- class(data)[1]
-  if (data_class == "expt") {
-    design <- data[["design"]]
+  if (data_class == "expt" || data_class == "SummarizedExperiment") {
+    design <- pData(data)
     colors <- data[["colors"]]
     data <- exprs(data)
   } else if (data_class == "ExpressionSet") {
     data <- exprs(data)
-  } else if (data_class == "matrix" | data_class == "data.frame") {
+  } else if (data_class == "matrix" || data_class == "data.frame") {
     ## some functions prefer matrix, so I am keeping this explicit for the moment
     data <- as.data.frame(data)
   } else {
@@ -662,10 +661,10 @@ plot_scatter <- function(df, color = "black", xlab = NULL,
   df_x_axis <- df_columns[1]
   df_y_axis <- df_columns[2]
   if (is.null(xlab)) {
-    xlab <- glue::glue("Expression of {df_x_axis}")
+    xlab <- glue("Expression of {df_x_axis}")
   }
   if (is.null(ylab)) {
-    ylab <- glue::glue("Expression of {df_y_axis}")
+    ylab <- glue("Expression of {df_y_axis}")
   }
   colnames(df) <- c("first", "second")
   df[["label"]] <- rownames(df)

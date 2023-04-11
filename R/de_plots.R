@@ -40,23 +40,18 @@ extract_de_plots <- function(pairwise, combined, type = "edger",
                              color_high = NULL, color_low = NULL, loess = FALSE,
                              z_lines = FALSE, label = 10, label_column = "hgncsymbol") {
 
-  #if (type %in% invert_colors) {
-  #  tmp_color <- color_high
-  #  color_high <- color_low
-  #  color_low <- tmp_color
-  #}
-  coef_result <- try(extract_coefficient_scatter(
-    pairwise, type = type, x = denominator, y = numerator,
-    z = z, n = n, loess = loess, alpha = alpha / 2.0,
-    color_low = color_low, color_high = color_high,
-    z_lines = z_lines))
   source_info <- get_plot_columns(combined, type, p_type = p_type)
-
   input <- source_info[["the_table"]]
   expr_col <- source_info[["expr_col"]]
   fc_col <- source_info[["fc_col"]]
   p_col <- source_info[["p_col"]]
   invert <- source_info[["invert"]]
+
+  coef_result <- try(extract_coefficient_scatter(
+    pairwise, type = type, x = denominator, y = numerator,
+    z = z, n = n, loess = loess, alpha = alpha / 2.0,
+    color_low = color_low, color_high = color_high,
+    z_lines = z_lines))
 
   ma_material <- NULL
   vol_material <- NULL
@@ -258,20 +253,31 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
     edger_p <- "edger_adjp"
   }
 
-  limma_sig <- sm(get_sig_genes(table, lfc = lfc,
-                                column = "limma_logfc", p_column = limma_p, p = p))
-  edger_sig <- sm(get_sig_genes(table, lfc = lfc,
-                                column = "edger_logfc", p_column = edger_p, p = p))
-  deseq_sig <- sm(get_sig_genes(table, lfc = lfc,
-                                column = "deseq_logfc", p_column = deseq_p, p = p))
-  up_venn_lst <- list(
-    "deseq" = rownames(deseq_sig[["up_genes"]]),
-    "edger" = rownames(edger_sig[["up_genes"]]),
-    "limma" = rownames(limma_sig[["up_genes"]]))
-  down_venn_lst <- list(
-    "deseq" = rownames(deseq_sig[["down_genes"]]),
-    "edger" = rownames(edger_sig[["down_genes"]]),
-    "limma" = rownames(limma_sig[["down_genes"]]))
+  sig_data <- list()
+  up_venn_lst <- list()
+  down_venn_lst <- list()
+  if (!is.null(table[["limma_logfc"]])) {
+    sig_data[["limma"]] <- sm(get_sig_genes(
+      table, lfc = lfc,
+      column = "limma_logfc", p_column = limma_p, p = p))
+    up_venn_lst[["limma"]] <- rownames(sig_data[["limma"]][["up_genes"]])
+    down_venn_lst[["limma"]] <- rownames(sig_data[["limma"]][["down_genes"]])
+
+  }
+  if (!is.null(table[["deseq_logfc"]])) {
+    sig_data[["deseq"]] <- sm(get_sig_genes(
+      table, lfc = lfc,
+      column = "deseq_logfc", p_column = deseq_p, p = p))
+    up_venn_lst[["deseq"]] <- rownames(sig_data[["deseq"]][["up_genes"]])
+    down_venn_lst[["deseq"]] <- rownames(sig_data[["deseq"]][["down_genes"]])
+  }
+  if (!is.null(table[["edger_logfc"]])) {
+    sig_data[["edger"]] <- sm(get_sig_genes(
+      table, lfc = lfc,
+      column = "edger_logfc", p_column = edger_p, p = p))
+    up_venn_lst[["edger"]] <- rownames(sig_data[["edger"]][["up_genes"]])
+    down_venn_lst[["edger"]] <- rownames(sig_data[["edger"]][["down_genes"]])
+  }
 
   up_venn <- Vennerable::Venn(Sets = up_venn_lst)
   down_venn <- Vennerable::Venn(Sets = down_venn_lst)
@@ -458,7 +464,7 @@ get_plot_columns <- function(data, type, p_type = "adj") {
     } else {
       p_col <- glue("{type}_p")
     }
-    all_tables <- pairwise[["data"]]
+    all_tables <- data[["data"]]
   } else {
     stop("Something went wrong, we should have only _pairwise and combined here.")
   }
@@ -494,7 +500,7 @@ get_plot_columns <- function(data, type, p_type = "adj") {
   } else if (length(wanted_table) == 1) {
     ## One might request a name from the keepers list
     ## If so, figure that out here.
-    table_parts <- pairwise[["keepers"]][[table]]
+    table_parts <- data[["keepers"]][[table]]
     if (is.null(table_parts)) {
       message("Unable to find the table in the set of possible tables.")
       message("The possible tables are: ", toString(possible_tables))
@@ -506,7 +512,7 @@ get_plot_columns <- function(data, type, p_type = "adj") {
     the_table <- glue::glue("{wanted_table[[1]]}_vs_{wanted_table[[2]]}")
     revname <- strsplit(x = the_table, split = "_vs_")
     revname <- glue::glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
-    possible_tables <- names(pairwise[["data"]])
+    possible_tables <- names(data[["data"]])
     if (!(the_table %in% possible_tables) && revname %in% possible_tables) {
       mesg("Trey you doofus, you reversed the name of the table.")
       the_table <- all_tables[[revname]]
@@ -528,7 +534,7 @@ get_plot_columns <- function(data, type, p_type = "adj") {
 
   ## Check that the wanted table is numeric
   if (is.numeric(wanted_table)) {
-    wanted_table <- names(pairwise[["all_tables"]])[wanted_table]
+    wanted_table <- names(data[["all_tables"]])[wanted_table]
   }
 
   ret[["the_table"]] <- the_table
@@ -778,7 +784,8 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
 #' @export
 plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qvalue",
                        pval = 0.05, alpha = 0.4, logfc = 1.0, label_numbers = TRUE,
-                       size = 2, shapes = TRUE, invert = FALSE, label = NULL, ...) {
+                       size = 2, shapes = TRUE, invert = FALSE, label = NULL,
+                       label_column = "hgncsymbol", ...) {
   ## Set up the data frame which will describe the plot
   arglist <- list(...)
   ## I like dark blue and dark red for significant and insignificant genes respectively.
@@ -832,7 +839,13 @@ plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qv
   newdf <- data.frame("avg" = table[[expr_col]],
                       "logfc" = table[[fc_col]],
                       "pval" = table[[p_col]])
-  rownames(newdf) <- rownames(table)
+  if (!is.null(table[[label_column]])) {
+    newdf[["label"]] <- table[[label_column]]
+    rownames(newdf) <- make.names(rownames(table), unique = TRUE)
+  } else {
+    newdf[["label"]] <- rownames(table)
+    rownames(newdf) <- rownames(table)
+  }
   if (isTRUE(invert)) {
     newdf[["logfc"]] <- newdf[["logfc"]] * -1.0
   }
@@ -992,23 +1005,23 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
     "logfc" = c(0, 0, 0),
     "pval" = c(0, 0, 0),
     "pcut" = c(FALSE, FALSE, FALSE),
-    "state" = c("a_upsig", "b_downsig", "c_insig"), stringsAsFactors = TRUE)
-
-  ## Get rid of rows which will be annoying.
-  ## If somehow a list got into the data table, this will fail, lets fix that now.
-  tmp_table <- input
-  for (c in seq_len(ncol(tmp_table))) {
-    tmp_table[[c]] <- as.character(input[[c]])
-  }
-  rows_without_na <- complete.cases(tmp_table)
-  rm(tmp_table)
-  input <- input[rows_without_na, ]
+    "state" = c("a_upsig", "b_downsig", "c_insig"),
+    "label" = c("", "", ""),
+    stringsAsFactors = TRUE)
 
   ## Extract the information of interest from my original table
   newdf <- data.frame("avg" = input[[expr_col]],
                       "logfc" = input[[fc_col]],
                       "pval" = input[[p_col]])
+  if (!is.null(label_column)) {
+    newdf[["label"]] <- input[[label_column]]
+  } else {
+    newdf[["label"]] <- rownames(newdf)
+  }
   rownames(newdf) <- rownames(input)
+  rows_without_na <- complete.cases(newdf)
+  newdf <- newdf[rows_without_na, ]
+
   if (isTRUE(invert)) {
     newdf[["logfc"]] <- newdf[["logfc"]] * -1.0
   }
@@ -1041,12 +1054,6 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
   df[["pval"]] <- as.numeric(df[["pval"]])
   df[["pcut"]] <- as.factor(df[["pcut"]])
   df[["state"]] <- as.factor(df[["state"]])
-
-  if (!is.null(label_column) && !is.null(table[[label_column]])) {
-    df[["label"]] <- table[[label_column]]
-  } else {
-    df[["label"]] <- rownames(df)
-  }
 
   ## Set up the labels for the legend by significance.
   ## 4 states, 4 shapes -- these happen to be the 4 best shapes in R because they may be filled.
@@ -1208,17 +1215,17 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
     low_idx <- df[["yaxis"]] < minimum_p
     df[low_idx, "yaxis"] <- minimum_p
   }
-
-  if (isTRUE(invert)) {
-    df[["xaxis"]] <- df[["xaxis"]] * -1.0
-  }
-
   ## Add the label column if it exists.
   if (!is.null(label_column) && !is.null(table[[label_column]])) {
     df[["label"]] <- table[[label_column]]
   } else {
     df[["label"]] <- rownames(table)
   }
+
+  if (isTRUE(invert)) {
+    df[["xaxis"]] <- df[["xaxis"]] * -1.0
+  }
+
 
   ## This might have been converted to a string
   df[["logyaxis"]] <- -1.0 * log10(as.numeric(df[["yaxis"]]))
@@ -1384,7 +1391,6 @@ plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
   if (! p_col %in% colnames(input)) {
     stop("Column: ", p_col, " is not in the table.")
   }
-
   df <- data.frame("xaxis" = as.numeric(input[[fc_col]]),
                    "yaxis" = as.numeric(input[[p_col]]))
   rownames(df) <- rownames(input)
@@ -1392,7 +1398,6 @@ plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
   if (isTRUE(invert)) {
     df[["xaxis"]] <- df[["xaxis"]] * -1.0
   }
-
   ## Add the label column if it exists.
   if (!is.null(label_column) & !is.null(input[[label_column]])) {
     df[["label"]] <- input[[label_column]]
@@ -1521,21 +1526,19 @@ rank_order_scatter <- function(first, second = NULL, first_type = "limma",
   if (class(test)[1] == "try-error") {
     ## They are not equal.
     if (is.null(first_table)) {
-      message("The two inputs are not equivalent and no first table was provided, setting it to the first table.")
+      message("No first table was provided, setting it to the first table.")
       first_table <- 1
     }
     if (is.null(second_table)) {
-      message("The two inputs are not equivalent and no second table was provided, setting it to the first table.")
+      message("No second table was provided, setting it to the first table.")
       second_table <- 1
     }
   } else {
     ## Two different de results.
     if (is.null(first_table)) {
-      message("The two inputs are equivalent and no first table was provided, setting it to the first table.")
       first_table <- 1
     }
     if (is.null(second_table)) {
-      message("The two inputs are equivalent and no second table was provided, setting it to the second table.")
       second_table <- 2
     }
   }

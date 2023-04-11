@@ -193,10 +193,10 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
  batch effects this is a good parameter to play with.
 ")
   }
-  if (convert == "cpm" & transform == "tmm") {
+  if (convert == "cpm" && transform == "tmm") {
     warning("Cpm and tmm perform similar purposes. They should not be applied to the same data.")
   }
-  if (norm == "quant" & isTRUE(grepl(x = batch, pattern = "sva"))) {
+  if (norm == "quant" && isTRUE(grepl(x = batch, pattern = "sva"))) {
     warning("Quantile normalization and sva do not always play well together.")
   }
 
@@ -325,6 +325,305 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 ")
   new_expt[["notes"]] <- toString(current_notes)
   return(new_expt)
+}
+
+#' Normalize a SummarizedExperiment and think about how I want to reimplement some of this.
+#' @export
+normalize_se <- function(se, ## The expt class passed to the normalizer
+                         ## choose the normalization strategy
+                         transform = "raw", norm = "raw", convert = "raw",
+                         batch = "raw", filter = FALSE,
+                         ## annotations used for rpkm/cpseqm, original may be
+                         ## used to ensure double-normalization isn't
+                         ## performed.
+                         annotations = NULL, fasta = NULL, entry_type = "gene",
+                         use_original = FALSE, batch1 = "batch", batch2 = NULL, batch_step = 4,
+                         low_to_zero = TRUE, ## extra parameters for batch correction
+                         thresh = 2, min_samples = 2, p = 0.01, A = 1, k = 1,
+                         cv_min = 0.01, cv_max = 1000,  ## extra parameters for low-count filtering
+                         na_to_zero = FALSE, adjust_method = "ruv", verbose = TRUE,
+                         ...) {
+  arglist <- list(...)
+
+  ## I need to go through and rewrite how these get set:
+  adjust_performed <- "none"
+  batch_performed <- "none"
+  convert_performed <- "none"
+  filter_performed <- "none"
+  transform_performed <- "none"
+
+  meta <- metadata(se)
+  se_state <- meta[["state"]]
+  current_state <- se_state
+  original_libsize <- meta[["libsize"]]
+  if (is.null(original_libsize)) {
+    original_libsize <- colSums(data)
+  }
+  if (is.null(annotations)) {
+    annotations <- fData(se)
+  }
+  data <- exprs(se)
+  design <- pData(se)
+  original_counts <- data
+
+  type <- ""
+  if (is.null(filter) || isFALSE(filter)) {
+    filter <- "raw"
+  } else if (isTRUE(filter)) {
+    filter <- "cbcb"
+  }
+  if (is.null(convert) || isFALSE(convert)) {
+    convert <- "raw"
+  } else if (isTRUE(convert)) {
+    convert <- "cbcbcpm"
+  }
+  if (is.null(norm) || isFALSE(norm)) {
+    norm <- "raw"
+  } else if (isTRUE(norm)) {
+    norm <- "tmm"
+  }
+  if (is.null(transform) || isFALSE(transform)) {
+    transform <- "raw"
+  } else if (isTRUE(transform)) {
+    transform <- "log2"
+  }
+  if (is.null(batch) || isFALSE(batch)) {
+    batch <- "raw"
+  } else if (isTRUE(batch)) {
+    batch <- "sva"
+  }
+
+  mesg("This will normalize the data via:")
+  operations <- what_happened(transform = transform, batch = batch, convert = convert,
+                              norm = norm, filter = filter)
+  mesg(operations)
+
+  if (filter == "raw") {
+    mesg("Filter is false, this should likely be set to something, good
+ choices include cbcb, kofa, pofa (anything but FALSE).  If you want this to
+ stay FALSE, keep in mind that if other normalizations are performed, then the
+ resulting libsizes are likely to be strange (potentially negative!)
+")
+  }
+  if (transform == "raw") {
+    mesg("Leaving the data in its current base format, keep in mind that
+ some metrics are easier to see when the data is log2 transformed, but
+ EdgeR/DESeq do not accept transformed data.
+")
+  }
+  if (convert == "raw") {
+    mesg("Leaving the data unconverted.  It is often advisable to cpm/rpkm
+ the data to normalize for sampling differences, keep in mind though that rpkm
+ has some annoying biases, and voom() by default does a cpm (though hpgl_voom()
+ will try to detect this).
+")
+  }
+  if (norm == "raw") {
+    mesg("Leaving the data unnormalized.  This is necessary for DESeq, but
+ EdgeR/limma might benefit from normalization.  Good choices include quantile,
+ size-factor, tmm, etc.
+")
+  }
+  if (batch == "raw") {
+    mesg("Not correcting the count-data for batch effects.  If batch is
+ included in EdgerR/limma's model, then this is probably wise; but in extreme
+ batch effects this is a good parameter to play with.
+")
+  }
+  if (convert == "cpm" && transform == "tmm") {
+    warning("Cpm and tmm perform similar purposes. They should not be applied to the same data.")
+  }
+  if (norm == "quant" && isTRUE(grepl(x = batch, pattern = "sva"))) {
+    warning("Quantile normalization and sva do not always play well together.")
+  }
+
+  count_table <- list(
+    "count_table" = data,
+    "libsize" = original_libsize)
+  current_libsize <- original_libsize
+  current_mtrx <- data
+
+  batched_counts <- NULL
+  sv_df <- NULL
+  if (batch_step == 1) {
+    batch_data <- do_batch(count_table, method = batch,
+                           current_design = design,
+                           ...)
+    current_libsize <- batch_data[["libsize"]]
+    count_table <- batch_data[["batched_counts"]]
+    batched_counts <- count_table
+    batch_performed <- batch_data[["batch_performed"]]
+    sv_df <- batch_data[["result"]][["result"]][["model_adjust"]]
+  }
+
+  ## Step 1: count filtering
+  mesg("Step 1: performing count filter with option: ", filter)
+  ## All the other intermediates have a libsize slot, perhaps this should too
+  if (filter == "raw") {
+    mesg("Step 1: not filtering the data.")
+  } else {
+    mesg("Step 1: filtering the data with ", filter, ".")
+    filtered_counts <- filter_counts(count_table, method = filter, ...)
+    ## filtered_counts <- filter_counts(count_table, method = filter)
+    current_libsize <- filtered_counts[["libsize"]]
+    count_table <- filtered_counts[["count_table"]]
+    # FIXME: lter_performed <- filter
+    current_state[["filter"]] <- filter
+  }
+
+  if (batch_step == 2) {
+    batch_data <- do_batch(count_table, method = batch,
+                           expt_design = expt_design,
+                           current_state = current_state,
+                           ...)
+    count_table <- batch_data[["count_table"]]
+    current_libsize <- batch_data[["libsize"]]
+    batched_counts <- count_table
+    batch_performed <- batch_data[["batch_performed"]]
+    sv_df <- batch_data[["result"]][["result"]][["model_adjust"]]
+  }
+
+  normalized <- count_table
+  if (norm == "raw") {
+    mesg("Step 2: not normalizing the data.")
+  } else {
+    mesg("Step 2: Normalizing the data with ", norm, ".")
+    normalized_counts <- normalize_counts(data = count_table, method = norm,
+                                          ...)
+    current_libsize <- normalized_counts[["libsize"]]
+    count_table <- normalized_counts[["count_table"]]
+    norm_performed <- norm
+    current_state[["normalization"]] <- norm
+  }
+
+  ## Step 3: Convert the data to (likely) cpm
+  ## The following stanza handles the three possible output types
+  ## cpm and rpkm are both from edgeR
+  ## They have nice ways of handling the log2 which I should consider
+  if (batch_step == 3) {
+    batch_data <- do_batch(count_table, method = batch,
+                           expt_design = expt_design,
+                           current_state = current_state,
+                           ...)
+    current_libsize <- batch_data[["libsize"]]
+    count_table <- batch_data[["count_table"]]
+    batched_counts <- count_table
+    batch_performed <- batch_data[["batch_performed"]]
+    sv_df <- batch_data[["result"]][["result"]][["model_adjust"]]
+  }
+
+  converted_counts <- count_table
+  if (convert == "raw") {
+    mesg("Step 3: not converting the data.")
+  } else {
+    mesg("Step 3: converting the data with ", convert, ".")
+    converted_counts <- convert_counts(count_table, method = convert, annotations = annotations,
+                                       ...)
+    ## converted_counts <- convert_counts(count_table, method = convert, annotations = annotations)
+    current_libsize <- converted_counts[["libsize"]]
+    count_table <- converted_counts[["count_table"]]
+    convert_performed <- convert
+    current_state[["conversion"]] <- convert
+  }
+
+  ## Step 4: Transformation
+  ## Finally, this considers whether to log2 the data or no
+  if (batch_step == 4) {
+    batch_data <- do_batch(count_table, method = batch,
+                           expt_design = expt_design,
+                           current_state = current_state,
+                           ...)
+    current_libsize <- batch_data[["libsize"]]
+    count_table <- batch_data[["batched_counts"]]
+    batched_counts <- count_table
+    batch_performed <- batch_data[["batch_performed"]]
+    sv_df <- batch_data[["result"]][["result"]][["model_adjust"]]
+    ## count_table <- do_batch(count_table, method = batch,
+    ##                         expt_design = expt_design, current_state = current_state)
+  }
+
+  transformed_counts <- count_table
+  if (transform == "raw") {
+    mesg("Step 4: not transforming the data.")
+  } else {
+    mesg("Step 4: transforming the data with ", transform, ".")
+    transformed_counts <- transform_counts(count_table, method = transform,
+                                           ...)
+    ## transformed_counts <- transform_counts(count_table, transform = transform)
+    current_libsize <- transformed_counts[["libsize"]]
+    count_table <- transformed_counts[["count_table"]]
+    if (transform == "round") {
+      transform_performed <- "raw"
+      transform <- "raw"
+      current_state[["rounded"]] <- TRUE
+    } else {
+      transform_performed <- transform
+    }
+    current_state[["transform"]] <- transform
+  }
+
+  if (batch_step == 5) {
+    batch_data <- do_batch(count_table, method = batch,
+                           expt_design = expt_design,
+                           current_state = current_state,
+                           ...)
+    current_libsize <- batch_data[["libsize"]]
+    count_table <- batch_data[["count_table"]]
+    batched_counts <- count_table
+    batch_performed <- batch_data[["batch_performed"]]
+    sv_df <- batch_data[["result"]][["result"]][["model_adjust"]]
+    ## count_table <- do_batch(count_table, arglist)
+  }
+
+  impute <- "raw"
+  if (!is.null(arglist[["impute"]])) {
+    impute <- arglist[["impute"]]
+  }
+  if (impute != "raw") {
+    imputed_counts <- impute_counts(count_table)
+    current_libsize <- imputed_counts[["libsize"]]
+    count_table <- imputed_counts[["count_table"]]
+    current_state[["impute"]] <- impute
+  }
+
+  ## This list provides the list of operations performed on the data in order
+  ## they were done.
+  actions <- list(
+      "filter" = filter_performed,
+      "normalization" = norm_performed,
+      "conversion" = convert_performed,
+      "batch" = batch_performed,
+      "adjust" = adjust_performed,
+      "transform" = transform_performed)
+  ## This list contains the intermediate count tables generated at each step
+  ## This may be useful if there is a problem in this process.
+  ## Each of them also contains the libsize at that point in the process.
+  intermediate_counts <- list(
+      "original" = original_counts, ## The original count table, should never
+      ## change from iteration to iteration
+      "input" = as.matrix(data),  ## The input provided to this function, this may
+      ## diverge from original
+      "filter" = filtered_counts,  ## After filtering
+      "normalization" = normalized_counts,  ## and normalization
+      "conversion" = converted_counts,  ## and conversion
+      "batch" = batched_counts,  ## and batch correction
+      "transform" = transformed_counts)  ## and finally, transformation.
+
+  meta[["libsize"]] <- current_libsize
+  ## meta[["state"]] <- actions_performed
+  meta[["SVs"]] <- NULL
+  if (!is.null(sv_df)) {
+    meta[["SVs"]] <- sv_df
+  }
+
+  kept_genes <- rownames(annotations) %in% rownames(count_table)
+  annotations <- annotations[kept_genes, ]
+
+  se <- SummarizedExperiment(assays = count_table,
+    rowData = annotations,
+    colData = design)
+  metadata(se) <- meta
+  return(se)
 }
 
 #' Normalize a dataframe/expt, express it, and/or transform it

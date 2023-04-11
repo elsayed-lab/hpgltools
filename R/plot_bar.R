@@ -68,17 +68,18 @@ plot_libsize <- function(data, condition = NULL, colors = NULL,
                            "sum" = colSums(mtrx),
                            "condition" = condition,
                            "colors" = as.character(colors))
-  summary_df <- data.table::setDT(libsize_df)[, list("min" = min(sum),
-                                                     "1st" = quantile(x = sum, probs = 0.25),
-                                                     "median" = median(x = sum),
-                                                     "mean" = mean(sum),
-                                                     "3rd" = quantile(x = sum, probs = 0.75),
-                                                     "max" = max(sum)),
-                                              by = "condition"]
-  libsize_plot <- plot_sample_bars(libsize_df, condition = condition, colors = colors,
-                                   text = text, order = order, plot_title = plot_title, integerp = integerp,
-                                   yscale = yscale,
-                                   ...)
+  summary_df <- data.table::setDT(libsize_df)[, list(
+    "min" = min(sum),
+    "1st" = quantile(x = sum, probs = 0.25),
+    "median" = median(x = sum),
+    "mean" = mean(sum),
+    "3rd" = quantile(x = sum, probs = 0.75),
+    "max" = max(sum)),
+    by = "condition"]
+  libsize_plot <- plot_sample_bars(
+    libsize_df, condition = condition, colors = colors,
+    text = text, order = order, plot_title = plot_title, integerp = integerp,
+    yscale = yscale, ...)
   retlist <- list(
     "plot" = libsize_plot,
     "table" = libsize_df,
@@ -109,10 +110,8 @@ plot_libsize_prepost <- function(expt, low_limit = 2, filter = TRUE, ...) {
   ## Gather the number of genes which are <= the low limit, before and after filtering
   lt_min_start <- colSums(exprs(expt) <= low_limit)
   lt_min_end <- colSums(exprs(norm) <= low_limit)
-
   start_tab <- as.data.frame(start[["table"]])
   end_tab <- as.data.frame(end[["table"]])
-
   ## Get the number of counts in each samples.
   start_tab[["sum"]] <- as.numeric(start_tab[["sum"]])
   start_tab[["colors"]] <- as.character(start_tab[["colors"]])
@@ -142,7 +141,7 @@ plot_libsize_prepost <- function(expt, low_limit = 2, filter = TRUE, ...) {
                                               subtract_gene_sums, " genes.")
   all_tab <- rbind(start_tab, end_tab)
 
-  count_title <- glue::glue("Counts remaining after filtering less than {low_limit} reads,
+  count_title <- glue("Counts remaining after filtering less than {low_limit} reads,
 labeled by counts/genes removed.")
   count_columns <- ggplot(all_tab,
                           aes(x = .data[["id"]], y = .data[["sum"]])) +
@@ -159,7 +158,7 @@ labeled by counts/genes removed.")
     ggplot2::scale_y_continuous(trans = "log10", labels = scales::scientific) +
     ggplot2::ggtitle(count_title)
 
-  low_title <- glue::glue("Genes with less than {low_limit} reads before/after filtering, labeled by delta.")
+  low_title <- glue("Genes with less than {low_limit} reads, labeled by delta.")
   low_columns <- ggplot(all_tab, aes(x = .data[["id"]], y = .data[["low"]])) +
     ggplot2::geom_col(position = "identity", color = "black",
                       aes(alpha = .data[["alpha"]], fill = .data[["colors"]])) +
@@ -206,7 +205,7 @@ plot_pct_kept <- function(data, row = "pct_kept", condition = NULL, colors = NUL
                           names = NULL, text = TRUE, plot_title = NULL, yscale = NULL, ...) {
   arglist <- list(...)
   table <- data
-  if (class(data) == "expt") {
+  if (class(data) == "expt" || class(data) == "SummarizedExperiment") {
     table <- data[["summary_table"]]
   }
   ## In response to Keith's recent comment when there are more than 8 factors
@@ -216,8 +215,8 @@ plot_pct_kept <- function(data, row = "pct_kept", condition = NULL, colors = NUL
   }
 
   data_class <- class(data)[1]
-  if (data_class == "expt") {
-    condition <- data[["design"]][["condition"]]
+  if (data_class == "expt" || data_class == "SummarizedExperiment") {
+    condition <- pData(data)[["condition"]]
     colors <- data[["colors"]]
     names <- data[["names"]]
     data <- exprs(data)  ## Why does this need the simplifying
@@ -225,7 +224,7 @@ plot_pct_kept <- function(data, row = "pct_kept", condition = NULL, colors = NUL
     ## that is _really_ weird!
   } else if (data_class == "ExpressionSet") {
     data <- exprs(data)
-  } else if (data_class == "matrix" | data_class == "data.frame") {
+  } else if (data_class == "matrix" || data_class == "data.frame") {
     data <- as.data.frame(data)
   } else {
     stop("This function understands types: expt, ExpressionSet, data.frame, and matrix.")
@@ -532,7 +531,7 @@ plot_significant_bar <- function(ups, downs, maximum = NULL, text = TRUE,
       upstring <- as.character(up_sums[[comp_name]])
       downstring <- as.character(down_sums[[comp_name]])
       sigbar_plot <- sigbar_plot +
-        ggplot2::annotate("text", x = comp, y = maximum, label = upstring, angle=-90) +
+        ggplot2::annotate("text", x = comp, y = maximum, label = upstring, angle = -90) +
         ggplot2::annotate("text", x = comp, y = maximum * -1, label = downstring, angle = 90)
     }
   }

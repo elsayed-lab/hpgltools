@@ -114,7 +114,7 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
     plot_title <- what_happened(expt_data)
   } else if (!is.null(plot_title)) {
     data_title <- what_happened(expt_data)
-    plot_title <- glue::glue("{plot_title}; {data_title}")
+    plot_title <- glue("{plot_title}; {data_title}")
   } else {
     ## Leave the title blank.
   }
@@ -129,7 +129,7 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
     expt_data <- exprs(expt_data)
   } else if (data_class == "ExpressionSet") {
     expt_data <- exprs(expt_data)
-  } else if (data_class == "matrix" | data_class == "data.frame") {
+  } else if (data_class == "matrix" || data_class == "data.frame") {
     ## some functions prefer matrix, so I am keeping this explicit for the moment
     expt_data <- as.data.frame(expt_data)
   } else {
@@ -151,7 +151,7 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
       expt_names <- expt_design[[expt_names]]
     }
   }
-  if (!is.null(label_chars) & is.numeric(label_chars)) {
+  if (!is.null(label_chars) && is.numeric(label_chars)) {
     expt_names <- abbreviate(expt_names, minlength = label_chars)
   }
 
@@ -251,7 +251,8 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
 #' @seealso [Heatplus] [fastcluster]
 #' @export
 plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_columns = "batch",
-                          annot_rows = "condition", cutoff = 1.0, cluster_colors = NULL, scale = "none",
+                          annot_rows = "condition", cutoff = 1.0,
+                          cluster_colors = NULL, scale = "none",
                           cluster_width = 2.0, cluster_function = NULL, heatmap_colors = NULL) {
   data <- exprs(expt)
   if (type == "correlation") {
@@ -299,15 +300,15 @@ plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_
     num_clusters <- max(first_map[["cluster"]][["Row"]][["grp"]])
     chosen_palette <- "Dark2"
     new_colors <- sm(grDevices::colorRampPalette(
-                                    RColorBrewer::brewer.pal(
-                                                      num_clusters, chosen_palette))(num_clusters))
+      RColorBrewer::brewer.pal(
+        num_clusters, chosen_palette))(num_clusters))
   }
   myclust <- list("cuth" = 1.0,
                   "col" = new_colors)
 
   final_map <- Heatplus::annHeatmap2(
-                             data, dendrogram = mydendro, annotation = myannot,
-                             cluster = myclust, labels = mylabs, scale = scale, col = heatmap_colors)
+    data, dendrogram = mydendro, annotation = myannot,
+    cluster = myclust, labels = mylabs, scale = scale, col = heatmap_colors)
 
   tmp_file <- tempfile(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
@@ -317,13 +318,13 @@ plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_
   dev.off()
   removed <- file.remove(tmp_file)
   retlist <- list(
-      "annotations" = myannot,
-      "clusters" = myclust,
-      "labels" = mylabs,
-      "colors" = heatmap_colors,
-      "first_map" = first_map,
-      "map" = final_map,
-      "plot" = rec_plot)
+    "annotations" = myannot,
+    "clusters" = myclust,
+    "labels" = mylabs,
+    "colors" = heatmap_colors,
+    "first_map" = first_map,
+    "map" = final_map,
+    "plot" = rec_plot)
   return(retlist)
 }
 
@@ -354,7 +355,7 @@ plot_sample_heatmap <- function(data, colors = NULL, design = NULL,
                                 row_label = NA, plot_title = NULL, Rowv = TRUE,
                                 Colv = TRUE, label_chars = 10, filter = TRUE, ...) {
   data_class <- class(data)[1]
-  if (data_class == "expt") {
+  if (data_class == "expt" || data_class == "SummarizedExperiment") {
     if (isTRUE(filter)) {
       data <- sm(normalize_expt(data, filter = TRUE))
     }
@@ -363,7 +364,7 @@ plot_sample_heatmap <- function(data, colors = NULL, design = NULL,
     data <- exprs(data)
   } else if (data_class == "ExpressionSet") {
     data <- exprs(data)
-  } else if (data_class == "matrix" | data_class == "data.frame") {
+  } else if (data_class == "matrix" || data_class == "data.frame") {
     ## some functions prefer matrix, so I am keeping this explicit for the moment
     data <- as.data.frame(data)
   } else {
@@ -378,19 +379,18 @@ plot_sample_heatmap <- function(data, colors = NULL, design = NULL,
   if (is.null(expt_names)) {
     expt_names <- colnames(data)
   } else {
-    if (class(expt_names) == "character" & length(expt_names) == 1) {
+    if (class(expt_names) == "character" && length(expt_names) == 1) {
       ## Then this refers to an experimental metadata column.
       expt_names <- design[[expt_names]]
     }
   }
-  if (!is.null(label_chars) & is.numeric(label_chars)) {
+  if (!is.null(label_chars) && is.numeric(label_chars)) {
     expt_names <- abbreviate(expt_names, minlength = label_chars)
   }
 
   ## drop NAs to help hclust()
   na_idx <- is.na(data)
   data[na_idx] <- -20
-
   tmp_file <- tempfile(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
@@ -427,8 +427,6 @@ plot_sample_cvheatmap <- function(expt, fun = "mean", fact = "condition",
                                   Colv = TRUE, label_chars = 10, dendrogram = "column",
                                   min_delta = 0.5, x_factor = 1, y_factor = 2, min_cvsd = NULL,
                                   cv_min = 1, cv_max = Inf, remove_equal = TRUE) {
-
-
   ## I am certain there is a better way to do this, but I am tired and not thinking well.
   colors <- c()
   expt_colors <- expt[["colors"]]
@@ -444,7 +442,6 @@ plot_sample_cvheatmap <- function(expt, fun = "mean", fact = "condition",
     expt <- normalize_expt(expt, filter = "cv", cv_min = 1, cv_max = Inf)
   }
   cvs <- as.matrix(median_by_factor(expt, fun = fun, fact = fact)[["cvs"]])
-
   if (!is.null(min_cvsd)) {
     cv_sds <- matrixStats::rowSds(cvs)
     if (is.numeric(min_cvsd)) {

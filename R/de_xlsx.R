@@ -72,8 +72,8 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
                               lfc_cutoff = 1, p_cutoff = 0.05,
                               de_types = c("limma", "deseq", "edger"),
                               excel_title = "Table SXXX: Combined Differential Expression of YYY",
-                              rda = NULL, start_worksheet = "S02",
-                              label = 10, label_column = "hgncsymbol",
+                              increment_start = "SXXX", start_worksheet_num = 2,
+                              rda = NULL, label = 10, label_column = "hgncsymbol",
                               format_sig = 4, excel = NULL, plot_columns = 10,
                               alpha = 0.4, z = 1.5, z_lines = FALSE) {
   xlsx <- init_xlsx(excel)
@@ -85,22 +85,6 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
   }
 
   plot_colors <- get_expt_colors(apr[["input"]])
-  ## Add a little logic to fill in table numbers in the worksheets.
-  ## To do this, replace the default SXXX with something, either a number or
-  ## a prefix followed by a number, and increment the number for each sheet.
-  sheet_prefix <- NULL
-  sheet_number <- NULL
-  if (!is.null(start_worksheet)) {
-    captured <- utils::strcapture(
-      pattern = "^([A-Za-z]*)([0-9]+)", x = start_worksheet,
-      proto = list(prefix = character(), number = integer()))
-    if (stringr::str_length(captured[["prefix"]]) > 0) {
-      sheet_prefix <- captured[["prefix"]]
-    }
-    if (stringr::str_length(captured[["number"]]) > 0) {
-      sheet_number <- captured[["number"]]
-    }
-  }
 
   ## Create a list of image files so that they may be properly cleaned up
   ## after writing the xlsx file.
@@ -113,34 +97,20 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
   ebseq <- apr[["ebseq"]]
   basic <- apr[["basic"]]
 
-  ## If any of the tools failed, then we cannot plot stuff with confidence.
-  if (!isTRUE(include_limma) || !isTRUE(include_deseq) ||
-        !isTRUE(include_edger) || !isTRUE(include_basic)) {
-    add_plots <- FALSE
-    mesg("One or more methods was excluded.  Not adding the plots.")
-  }
   if ("try-error" %in% class(limma) || is.null(limma)) {
     include_limma <- FALSE
-    add_plots <- FALSE
-    mesg("Not adding plots, limma had an error.")
   }
   if ("try-error" %in% class(deseq) || is.null(deseq)) {
     include_deseq <- FALSE
-    add_plots <- FALSE
-    mesg("Not adding plots, deseq had an error.")
   }
   if ("try-error" %in% class(edger) || is.null(edger)) {
     include_edger <- FALSE
-    add_plots <- FALSE
-    mesg("Not adding plots, edger had an error.")
   }
   if ("try-error" %in% class(ebseq) || is.null(ebseq)) {
     include_ebseq <- FALSE
   }
   if ("try-error" %in% class(basic) || is.null(basic)) {
     include_basic <- FALSE
-    add_plots <- FALSE
-    mesg("Not adding plots, basic had an error.")
   }
 
   ## A common request is to have the annotation data added to the table.  Do that here.
@@ -217,7 +187,6 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
   ## various tools performed with some venn diagrams, and finally dump the plots
   ## from above into the sheet.
   comp <- list()
-
   ## The following if() is too long and should be split into its own function.
   if (isTRUE(do_excel)) {
     ## Starting a new counter of sheets.
@@ -225,9 +194,9 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
     ## Then check to see if the slopes/intercepts are duplicated across any
     ## of the contrasts, if this is true, then it is highly likely a mistake was made
     ## when setting up the contrasts such that something got duplicated.
+    worksheet_number <- start_worksheet_num
     tnames <- names(extracted[["table_names"]])
     ## tsources <- as.character(extracted[["table_names"]])
-    sheet_increment <- 0
     for (x in seq_along(tnames)) {
       tab <- tnames[x]
       written_table <- extracted[["data"]][[tab]]
@@ -236,25 +205,15 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
         next
       }
       final_excel_title <- gsub(pattern = "YYY", replacement = tab, x = excel_title)
-      final_excel_title <- glue("{final_excel_title}; Contrast numerator: {numerators[x]}.  \\
-Contrast denominator: {denominators[x]}.")
-
+      final_excel_title <- paste0(final_excel_title, "; Contrast numerator: ",
+        numerators[[x]], ".", " Contrast denominator: ",
+        denominators[[x]], ".")
       ## Replace the excel table name with the incrementing value
-      sheet_increment_start <- "SXXX"
-      sheet_increment_string <- sheet_increment_start
-      sheet_increment_number <- sheet_number + sheet_increment
-      if (is.null(sheet_prefix)) {
-        if (!is.null(sheet_number)) {
-          sheet_increment_string <- as.character(sheet_number)
-        }
-      } else {
-        sheet_increment_string <- glue("{sheet_prefix}{sheet_increment_number}")
-      }
-      sheet_increment <- sheet_increment + 1
-      final_excel_title <- gsub(pattern = sheet_increment_start,
+      sheet_increment_string <- glue("S{worksheet_number}")
+      worksheet_number <- worksheet_number + 1
+      final_excel_title <- gsub(pattern = increment_start,
                                 replacement = sheet_increment_string,
                                 x = final_excel_title)
-
       ## Dump each table to the appropriate excel sheet
       xls_result <- write_xlsx(data = written_table, wb = wb, sheet = tab,
                                title = final_excel_title, rownames = rownames)
@@ -266,7 +225,7 @@ Contrast denominator: {denominators[x]}.")
       current_column <- xls_result[["end_col"]] + 2
       if (isTRUE(add_plots)) {
         ## Text on row 1, plots from 2-17 (15 rows)
-        mesg("Adding venn plots for ", tnames[x], ".")
+        message("Adding venn plots for ", tnames[x], ".")
         venn_info <- write_venns_de_xlsx(
           written_table, tab, wb, sheetname, current_row, current_column, excel_basename,
           plot_dim, image_files, lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff,
@@ -381,7 +340,6 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
                                     do_inverse = FALSE, invert_colors = FALSE,
                                     z = 1.5, alpha = 0.4, z_lines = FALSE,
                                     label = 10, label_column = "hgncsymbol") {
-  mesg("Starting combine_extracted_plots() with do_inverse as: ", do_inverse, ".")
   combined_data <- combined[["data"]]
   plots <- list()
   types <- c()
@@ -427,7 +385,6 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
       color_high <- "darkred"
       color_low <- "darkblue"
     }
-    message("TESTME: ", found_table, " high_color: ", color_high, " low_color: ", color_low)
 
     ## The invert parameter only flips the volcano x-axis
     ma_vol_cof <- list()
@@ -1437,7 +1394,7 @@ map_keepers <- function(keepers, table_names, data) {
     individual_tables <- list()
     for (type in names(data)) {
       if (!is.null(data[[type]])) {
-        message("Checking ", type, " all_tables index ", idx, " for ", keeper_table_map[[name]][["string"]])
+        ## mesg("Checking ", type, " all_tables index ", idx, " for ", keeper_table_map[[name]][["string"]])
         test_name <- names(data[[type]][["all_tables"]])[idx]
         data_key <- paste0(type, "_data")
         data_orientation_key <- paste0(type, "_orientation")
@@ -1552,6 +1509,8 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
                                   list("basic" = basic, "deseq" = deseq,
                                        "ebseq" = ebseq, "edger" = edger,
                                        "limma" = limma))
+  numerators <- c()
+  denominators <- c()
   mapped <- length(keeper_table_map)
   for (en in seq_len(mapped)) {
     entry <- keeper_table_map[[en]]
@@ -1559,7 +1518,8 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
     found_table <- entry[["string"]]
     wanted_numerator <- entry[["wanted_numerator"]]
     wanted_denominator <- entry[["wanted_denominator"]]
-    mesg("Beginning extraction of table: ", entry_name, ".")
+    numerators <- c(wanted_numerator, numerators)
+    denominators <- c(wanted_denominator, denominators)
     if (isFALSE(entry[["string"]])) {
       warning("The table for ", entry_name, " does not appear in the pairwise data.")
       next
@@ -1627,9 +1587,9 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
       label = label, label_column = label_column)
     extracted[["summaries"]] <- rbind(extracted[["summaries"]],
                                       as.data.frame(combined[["summary"]]))
-    #extracted[["numerators"]] <- numerators
-    #extracted[["denominators"]] <- denominators
   } ## Ending the for loop of elements in the keepers list.
+  extracted[["numerators"]] <- numerators
+  extracted[["denominators"]] <- denominators
   return(extracted)
 }
 
@@ -3118,6 +3078,7 @@ write_plots_de_xlsx <- function(de_types, extracted, sheetname, current_row, cur
   ## Now add the coefficients, ma, and volcanoes below the venns.
   ## Text on row 18, plots from 19-49 (30 rows)
   for (t in seq_along(de_types)) {
+    num_plotted <- 0
     type <- de_types[t]
     sc <- paste0(type, "_scatter_plots")
     ma <- paste0(type, "_ma_plots")
@@ -3131,6 +3092,7 @@ write_plots_de_xlsx <- function(de_types, extracted, sheetname, current_row, cur
     p_plt <- extracted[["plots"]][[sheetname]][[pp]]
     current_row <- current_row + 2
     current_column <- xls_result[["end_col"]] + 2
+
     ## Note that these are lists now.
     if (class(plt)[1] != "try-error" && length(plt) > 0) {
       printme <- as.character(
@@ -3145,10 +3107,14 @@ write_plots_de_xlsx <- function(de_types, extracted, sheetname, current_row, cur
         plt[["scatter"]], wb = wb, sheet = sheetname,
         width = plot_dim, height = plot_dim, start_col = current_column,
         plotname = plotname, savedir = excel_basename, start_row = current_row + 1)
-      if (! "try-error" %in% class(try_result)) {
+      if (!"try-error" %in% class(try_result)) {
         image_files <- c(image_files, try_result[["filename"]])
+        num_plotted <- num_plotted + 1
+        current_column <- current_column + plot_columns
       }
-      current_column <- current_column + plot_columns
+    }
+
+    if (class(ma_plt)[1] != "try-error" && length(ma_plt) > 0) {
       xl_result <- openxlsx::writeData(
         wb = wb, sheet = sheetname, x = paste0(type, " MA plot"),
         startRow = current_row, startCol = current_column)
@@ -3158,10 +3124,14 @@ write_plots_de_xlsx <- function(de_types, extracted, sheetname, current_row, cur
         ma_plt, wb = wb, sheet = sheetname, width = plot_dim,
         height = plot_dim, start_col = current_column, plotname = plotname,
         savedir = excel_basename, start_row = current_row + 1)
-      if (! "try-error" %in% class(try_ma_result)) {
+      if (!"try-error" %in% class(try_ma_result)) {
         image_files <- c(image_files, try_ma_result[["filename"]])
+        num_plotted <- num_plotted + 1
+        current_column <- current_column + plot_columns
       }
-      current_column <- current_column + plot_columns
+    }
+
+    if (class(vol_plt)[1] != "try-error" && length(vol_plt) > 0) {
       xl_result <- openxlsx::writeData(
         wb = wb, sheet = sheetname, x = paste0(type, " volcano plot"),
         startRow = current_row, startCol = current_column)
@@ -3170,10 +3140,14 @@ write_plots_de_xlsx <- function(de_types, extracted, sheetname, current_row, cur
         vol_plt, wb = wb, sheet = sheetname, width = plot_dim,
         height = plot_dim, start_col = current_column, pltname = plotname,
         savedir = excel_basename, start_row = current_row + 1)
-      if (! "try-error" %in% class(try_vol_result)) {
+      if (!"try-error" %in% class(try_vol_result)) {
         image_files <- c(image_files, try_vol_result[["filename"]])
+        num_plotted <- num_plotted + 1
+        current_column <- current_column + plot_columns
       }
-      current_column <- current_column + plot_columns
+    }
+
+    if (class(p_plt)[1] != "try-error" && length(p_plt) > 0) {
       xl_result <- openxlsx::writeData(
         wb = wb, sheet = sheetname, x = paste0(type, " p-value plot"),
         startRow = current_row, startCol = current_column)
@@ -3182,11 +3156,17 @@ write_plots_de_xlsx <- function(de_types, extracted, sheetname, current_row, cur
         p_plt, wb = wb, sheet = sheetname, width = plot_dim,
         height = plot_dim, start_col = current_column, pltname = plotname,
         savedir = excel_basename, start_row = current_row + 1)
-      if (! "try-error" %in% class(try_p_result)) {
+      if (!"try-error" %in% class(try_p_result)) {
         image_files <- c(image_files, try_p_result[["filename"]])
+        num_plotted <- num_plotted + 1
+        current_column <- current_column + plot_columns
       }
+    }
+
+    if (num_plotted > 0) {
       current_row <- current_row + plot_rows
     }
+
   } ## End adding limma, deseq, and edger plots.
   ret <- list(
     "image_files" = image_files,
@@ -3205,16 +3185,6 @@ write_venns_de_xlsx <- function(written_table, tab, wb, sheetname,
   ## Make some venn diagrams comparing deseq/limma/edger!
   venns <- list()
   starting_column <- current_column
-  if (is.null(written_table[["deseq_logfc"]]) |
-        is.null(written_table[["edger_logfc"]]) |
-        is.null(written_table[["limma_logfc"]])) {
-    ret <- list(
-      "image_files" = image_files,
-      "wb" = wb,
-      "current_row" = current_row,
-      "current_column" = current_column)
-    return(ret)
-  }
   venn_nop_lfc0 <- try(de_venn(written_table, lfc = 0, adjp = FALSE, p = 1.0))
   venn_nop <- try(de_venn(written_table, lfc = lfc_cutoff, adjp = FALSE, p = 1.0))
   venn_list <- try(de_venn(written_table, lfc = 0, adjp = p_cutoff))

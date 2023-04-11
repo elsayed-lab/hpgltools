@@ -273,7 +273,7 @@ plot_epitrochoid <- function(radius_a = 7, radius_b = 2, dist_b = 6,
 ggplotly_url <- function(plot, filename = "ggplotly_url.html", id_column = "id", plot_title = NULL,
                          url_info = NULL, tooltip = "all", url_column = "url") {
   first_tooltip_column <- "label"
-  if (is.null(tooltip) | tooltip == "all") {
+  if (is.null(tooltip) || tooltip == "all") {
     tooltip_columns <- "label"
   } else {
     first_tooltip_column <- tooltip[1]
@@ -282,17 +282,17 @@ ggplotly_url <- function(plot, filename = "ggplotly_url.html", id_column = "id",
   if (is.null(plot[["data"]][[id_column]])) {
     plot[["data"]][[id_column]] <- rownames(plot[["data"]])
   }
-  if (is.null(url_info) & is.null(url_column)) {
+  if (is.null(url_info) && is.null(url_column)) {
     warning("No url information was provided.")
-  } else if ("character" %in% class(url_info) & length(url_info) > 1) {
+  } else if ("character" %in% class(url_info) && length(url_info) > 1) {
     message("url_info has multiple entries, assuming it is a character vector with 1 url/entry.")
     ## Then this should contain all the URLs
     plot[["data"]][[url_column]] <- url_info
-  } else if ("glue" %in% class(url_info) & length(url_info) == 1) {
+  } else if ("glue" %in% class(url_info) && length(url_info) == 1) {
     message("url_info has length 1, assuming it is a glue specification including {ids}.")
     ## Assuming url_data looks like: 'http://useast.ensembl.org/Mus_musculus/Gene/Summary?q={ids}'
     ids <- plot[["data"]][[id_column]]
-    plot[["data"]][[url_column]] <- glue::glue(url_info)
+    plot[["data"]][[url_column]] <- glue(url_info)
   } else if ("data.frame" %in% class(url_info)) {
     ## This assumes url data has a column named whatever is url_column
     message("Merging the url data with the plot data.")

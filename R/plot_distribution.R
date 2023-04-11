@@ -37,7 +37,7 @@ plot_boxplot <- function(data, colors = NULL, plot_title = NULL, order = NULL,
                          ...) {
   arglist <- list(...)
   data_class <- class(data)[1]
-  if (data_class == "expt") {
+  if (data_class == "expt" || data_class == "SummarizedExperiment") {
     design <- pData(data)
     colors <- data[["colors"]]
     data <- as.data.frame(exprs(data))
@@ -164,20 +164,20 @@ plot_boxplot <- function(data, colors = NULL, plot_title = NULL, order = NULL,
 #'  funkytown <- plot_density(data)
 #' }
 #' @export
-plot_density <- function(data, colors = NULL, expt_names = NULL, position = "identity", direct = TRUE,
-                         fill = NULL, plot_title = NULL, scale = NULL, colors_by = "condition",
-                         label_chars = 10, ...) {
+plot_density <- function(data, colors = NULL, expt_names = NULL, position = "identity",
+                         direct = TRUE, fill = NULL, plot_title = NULL, scale = NULL,
+                         colors_by = "condition", label_chars = 10, ...) {
   ## also position='stack'
   data_class <- class(data)[1]
   design <- NULL
-  if (data_class == "expt") {
+  if (data_class == "expt" || data_class == "SummarizedExperiment") {
     design <- pData(data)
     colors <- data[["colors"]]
     data <- exprs(data)
   } else if (data_class == "ExpressionSet") {
     data <- exprs(data)
     design <- pData(data)
-  } else if (data_class == "matrix" | data_class == "data.frame") {
+  } else if (data_class == "matrix" || data_class == "data.frame") {
     ## some functions prefer matrix, so I am keeping this explicit for the moment
     data <- as.matrix(data)
   } else {
@@ -207,14 +207,14 @@ plot_density <- function(data, colors = NULL, expt_names = NULL, position = "ide
   }
 
   if (!is.null(expt_names)) {
-    if (class(expt_names) == "character" & length(expt_names) == 1) {
+    if (class(expt_names) == "character" && length(expt_names) == 1) {
       ## Then this refers to an experimental metadata column.
       colnames(data) <- design[[expt_names]]
     } else {
       colnames(data) <- expt_names
     }
   }
-  if (!is.null(label_chars) & is.numeric(label_chars)) {
+  if (!is.null(label_chars) && is.numeric(label_chars)) {
     colnames(data) <- abbreviate(colnames(data), minlength = label_chars)
   }
 
@@ -280,33 +280,36 @@ plot_density <- function(data, colors = NULL, expt_names = NULL, position = "ide
   if (!is.null(design)) {
     if (!is.null(design[["condition"]])) {
       melted[, "condition" := design[sample, "condition"]]
-      condition_summary <- data.table::setDT(melted)[, list("min"=min(counts),
-                                                            "1st"=quantile(x = counts, probs = 0.25),
-                                                            "median"=median(x = counts),
-                                                            "mean"=mean(counts),
-                                                            "3rd"=quantile(x = counts, probs = 0.75),
-                                                            "max"=max(counts)),
-                                                     by = "condition"]
+      condition_summary <- data.table::setDT(melted)[, list(
+        "min" = min(counts),
+        "1st" = quantile(x = counts, probs = 0.25),
+        "median" = median(x = counts),
+        "mean" = mean(counts),
+        "3rd" = quantile(x = counts, probs = 0.75),
+        "max" = max(counts)),
+        by = "condition"]
     }
     if (!is.null(design[["batch"]])) {
       melted[, "batch" := design[sample, "batch"]]
-      batch_summary <- data.table::setDT(melted)[, list("min"=min(counts),
-                                                        "1st"=quantile(x = counts, probs = 0.25),
-                                                        "median"=median(x = counts),
-                                                        "mean"=mean(counts),
-                                                        "3rd"=quantile(x = counts, probs = 0.75),
-                                                        "max"=max(counts)),
-                                                 by = "batch"]
+      batch_summary <- data.table::setDT(melted)[, list(
+        "min" = min(counts),
+        "1st" = quantile(x = counts, probs = 0.25),
+        "median" = median(x = counts),
+        "mean" = mean(counts),
+        "3rd" = quantile(x = counts, probs = 0.75),
+        "max" = max(counts)),
+        by = "batch"]
     }
   }
 
-  sample_summary <- data.table::setDT(melted)[, list("min"=min(counts),
-                                                     "1st"=quantile(x = counts, probs = 0.25),
-                                                     "median"=median(x = counts),
-                                                     "mean"=mean(counts),
-                                                     "3rd"=quantile(x = counts, probs = 0.75),
-                                                     "max"=max(counts)),
-                                              by = "sample"]
+  sample_summary <- data.table::setDT(melted)[, list(
+    "min" = min(counts),
+    "1st" = quantile(x = counts, probs = 0.25),
+    "median" = median(x = counts),
+    "mean" = mean(counts),
+    "3rd" = quantile(x = counts, probs = 0.75),
+    "max" = max(counts)),
+    by = "sample"]
   retlist <- list(
     "plot" = densityplot,
     "condition_summary" = condition_summary,
@@ -334,14 +337,14 @@ plot_density <- function(data, colors = NULL, expt_names = NULL, position = "ide
 plot_qq_all <- function(data, labels = "short", ...) {
   arglist <- list(...)
   data_class <- class(data)[1]
-  if (data_class == "expt") {
+  if (data_class == "expt" || data_class == "SummarizedExperiment") {
     design <- pData(data)
     colors <- data[["colors"]]
     data <- as.data.frame(exprs(data))
   } else if (data_class == "ExpressionSet") {
     data <- exprs(data)
     design <- pData(data)
-  } else if (data_class == "matrix" | data_class == "data.frame") {
+  } else if (data_class == "matrix" || data_class == "data.frame") {
     data <- as.data.frame(data)
   } else {
     stop("This understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
@@ -361,8 +364,8 @@ plot_qq_all <- function(data, labels = "short", ...) {
   for (i in seq_len(comparisons)) {
     ith <- colnames(data)[i]
     message("Making plot of ", ith, "(", i, ") vs. a sample distribution.")
-    tmpdf <- data.frame("ith"=data[, i],
-                        "mean"=sample_data[["mean"]])
+    tmpdf <- data.frame("ith" = data[, i],
+                        "mean" = sample_data[["mean"]])
     colnames(tmpdf) <- c(ith, "mean")
     tmpqq <- plot_single_qq(tmpdf, x = 1, y = 2, labels = labels)
     logs[[count]] <- tmpqq[["log"]]
@@ -405,7 +408,7 @@ plot_qq_all <- function(data, labels = "short", ...) {
 #' @export
 plot_single_qq <- function(data, x = 1, y = 2, labels = TRUE) {
   data_class <- class(data)[1]
-  if (data_class == "expt") {
+  if (data_class == "expt" || data_class == "SummarizedExperiment") {
     design <- pData(data)
     colors <- data[["colors"]]
     names <- data[["names"]]
@@ -413,7 +416,7 @@ plot_single_qq <- function(data, x = 1, y = 2, labels = TRUE) {
   } else if (data_class == "ExpressionSet") {
     data <- exprs(data)
     design <- pData(data)
-  } else if (data_class == "matrix" | data_class == "data.frame") {
+  } else if (data_class == "matrix" || data_class == "data.frame") {
     data <- as.data.frame(data)
   } else {
     stop("This understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
@@ -432,7 +435,7 @@ plot_single_qq <- function(data, x = 1, y = 2, labels = TRUE) {
   ratio_df <- ratio_df[!na_idx, ]
   nan_idx <- is.infinite(ratio_df[["ratio"]])
   ratio_df <- ratio_df[!nan_idx, ]
-  ratio_df[["increment"]] <- as.vector(1:nrow(ratio_df))
+  ratio_df[["increment"]] <- as.vector(seq_len(nrow(ratio_df)))
 
   if (labels == "short") {
     y_string <- glue("{xlabel} : {ylabel}")
@@ -562,14 +565,14 @@ plot_topn <- function(data, plot_title = NULL, num = 100, expt_names = NULL,
                       plot_labels = "direct", label_chars = 10, plot_legend = FALSE, ...) {
   arglist <- list(...)
   data_class <- class(data)
-  if (data_class == "expt") {
+  if (data_class == "expt" || data_class == "SummarizedExperiment") {
     design <- pData(data)
     colors <- data[["colors"]]
     data <- exprs(data)
   } else if (data_class == "ExpressionSet") {
     data <- exprs(data)
     design <- pData(data)
-  } else if (data_class == "matrix" | data_class == "data.frame") {
+  } else if (data_class == "matrix" || data_class == "data.frame") {
     data <- as.matrix(data)
   } else {
     stop("This understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
@@ -577,7 +580,7 @@ plot_topn <- function(data, plot_title = NULL, num = 100, expt_names = NULL,
 
   columns <- colSums(data)
   testing <- data / columns
-  newdf <- data.frame(row.names = 1:nrow(testing))
+  newdf <- data.frame(row.names = seq_len(nrow(testing)))
   for (col in colnames(testing)) {
     ranked <- order(testing[, col], decreasing = TRUE)
     newdf[, col] <- testing[ranked, col]
@@ -587,7 +590,7 @@ plot_topn <- function(data, plot_title = NULL, num = 100, expt_names = NULL,
     newdf <- head(newdf, n = num)
   }
   if (num < 0) {
-    newdf <- tail(newdf, n=-1 * num)
+    newdf <- tail(newdf, n = (-1 * num))
   }
   newdf[["rank"]] <- rownames(newdf)
 
@@ -601,7 +604,7 @@ plot_topn <- function(data, plot_title = NULL, num = 100, expt_names = NULL,
     smoother <- arglist[["smoother"]]
   }
 
-  if (!is.null(expt_names) & class(expt_names) == "character") {
+  if (!is.null(expt_names) && class(expt_names) == "character") {
     if (length(expt_names) == 1) {
       colnames(newdf) <- make.names(design[[expt_names]], unique = TRUE)
     } else {
@@ -609,7 +612,7 @@ plot_topn <- function(data, plot_title = NULL, num = 100, expt_names = NULL,
     }
     colnames(newdf)[ncol(newdf)] <- "rank"
   }
-  if (!is.null(label_chars) & is.numeric(label_chars)) {
+  if (!is.null(label_chars) && is.numeric(label_chars)) {
     colnames(newdf) <- abbreviate(colnames(newdf), minlength = label_chars)
   }
 
@@ -672,7 +675,7 @@ plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL
   }
 
   data_class <- class(data)
-  if (data_class == "expt") {
+  if (data_class == "expt" || data_class == "SummarizedExperiment") {
     design <- pData(data)
 
     colors <- data[["colors"]]
@@ -680,7 +683,7 @@ plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL
   } else if (data_class == "ExpressionSet") {
     data <- exprs(data)
     design <- pData(data)
-  } else if (data_class == "matrix" | data_class == "data.frame") {
+  } else if (data_class == "matrix" || data_class == "data.frame") {
     data <- as.matrix(data)
   } else {
     stop("This understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
@@ -776,7 +779,7 @@ plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL
       ggplot2::scale_fill_manual(values = color_list, name = x_axis) +
       ggplot2::stat_summary(fun.data = get_mean_cv, geom = "text",
                             position = ggplot2::position_fill(vjust=-0.1)) +
-      ggplot2::annotate("text", x = 1:length(sample_numbers),
+      ggplot2::annotate("text", x = seq_len(length(sample_numbers)),
                         y = max(cv_data[[type]] + (0.05 * max(cv_data[[type]]))),
                         label = as.character(sample_numbers)) +
       ggplot2::theme_bw(base_size = base_size) +
