@@ -4,6 +4,7 @@
 #' @param according_to Use this result type for the gprofiler searches.
 #' @param together Concatenate the up/down genes into one set?
 #' @param ... Arguments to pass to simple_gprofiler().
+#' @export
 all_gprofiler <- function(sig, according_to = "deseq", together = FALSE, ...) {
   ret <- list()
   input_up <- list()

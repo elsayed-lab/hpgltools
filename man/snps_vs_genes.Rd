@@ -27,6 +27,8 @@ snps_vs_genes(
 \item{snp_name_col}{Name of the column in the metadata with the sequence names.}
 
 \item{expt_name_col}{Name of the metadata column with the chromosome names.}
+
+\item{ignore_strand}{Ignore strand information when returning?}
 }
 \value{
 List with some information by gene.

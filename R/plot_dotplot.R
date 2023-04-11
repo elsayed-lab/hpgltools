@@ -125,7 +125,6 @@ plot_batchsv <- function(expt, svs, sv = 1, batch_column = "batch", factor_type 
     ggplot2::theme(axis.text = ggplot2::element_text(size = base_size, colour = "black"),
                    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5))
   ##, hjust = 1.5, vjust = 0.5))
-
   factor_svs <- ggplot(factor_df,
                        aes(x = .data[["factor"]],
                            y = .data[["svs"]],
@@ -269,16 +268,16 @@ plot_sm <- function(data, colors = NULL, method = "pearson", plot_legend = FALSE
   arglist <- list(...)
   data_class <- class(data)[1]
   conditions <- NULL
-  if (data_class == "expt") {
-    design <- data[["design"]]
+  if (data_class == "expt" || data_class == "SummarizedExperiment") {
+    design <- pData(data)
     colors <- data[["colors"]]
-    conditions <- data[["conditions"]]
+    conditions <- pData(data)[["conditions"]]
     data <- exprs(data)
   } else if (data_class == "ExpressionSet") {
     design <- pData(data)
     conditions <- pData(data)[["conditions"]]
     data <- exprs(data)
-  } else if (data_class == "matrix" | data_class == "data.frame") {
+  } else if (data_class == "matrix" || data_class == "data.frame") {
     data <- as.data.frame(data)
     ## some functions prefer matrix, so I am keeping this explicit for the moment
   } else {
@@ -298,7 +297,7 @@ plot_sm <- function(data, colors = NULL, method = "pearson", plot_legend = FALSE
   colors <- as.character(colors)
 
   properties <- NULL
-  if (method == "pearson" | method == "spearman" | method == "robust") {
+  if (method == "pearson" || method == "spearman" || method == "robust") {
     message("Performing correlation.")
     properties <- hpgl_cor(data, method = method)
   } else {
@@ -314,7 +313,7 @@ plot_sm <- function(data, colors = NULL, method = "pearson", plot_legend = FALSE
   outer_limit <- NULL
   ylimit <- NULL
   type <- "unknown"
-  if (method == "pearson" | method == "spearman" | method == "robust") {
+  if (method == "pearson" || method == "spearman" || method == "robust") {
     outer_limit <- prop_spread[1] - (1.5 * prop_iqr)
     ylimit <- c(pmin(min(prop_median), outer_limit), max(prop_median))
     ylimit <- ylimit[[1]]
@@ -340,7 +339,7 @@ plot_sm <- function(data, colors = NULL, method = "pearson", plot_legend = FALSE
   color_listing <- unique(color_listing)
   color_list <- as.character(color_listing[["color"]])
   names(color_list) <- as.character(color_listing[["condition"]])
-  sm_df[["num"]] <- 1:nrow(sm_df)
+  sm_df[["num"]] <- seq_len(nrow(sm_df))
   if (is.null(design[["batch"]])) {
     sm_df[["batch"]] <- "undefined"
   } else {
@@ -348,11 +347,11 @@ plot_sm <- function(data, colors = NULL, method = "pearson", plot_legend = FALSE
   }
   num_batches <- nlevels(sm_df[["batch"]])
 
-  if (class(expt_names) == "character" & length(expt_names) == 1) {
+  if (class(expt_names) == "character" && length(expt_names) == 1) {
     ## Then this refers to an experimental metadata column.
     sm_df[["sample"]] <- design[[expt_names]]
   }
-  if (!is.null(label_chars) & is.numeric(label_chars)) {
+  if (!is.null(label_chars) && is.numeric(label_chars)) {
     sm_df[["sample"]] <- abbreviate(sm_df[["sample"]], minlength = label_chars)
   }
 

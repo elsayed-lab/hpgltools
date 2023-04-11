@@ -43,6 +43,7 @@ old_options <- options(digits = 4,
 ggplot2::theme_set(ggplot2::theme_bw(base_size = 10))
 set.seed(1)
 rmd_file <- "b-02_fission_data_exploration.Rmd"
+library(testthat)
 ```
 
 # Example hpgltool usage with a real data set (fission)
@@ -97,6 +98,7 @@ fission_data <- fission@assays$data$counts
 ## an ExpressionSet along with any arbitrary additional information one might want to include.
 ## Along the way it writes a Rdata file which is by default called 'expt.Rdata'
 fission_expt <- create_expt(metadata = meta, count_dataframe = fission_data)
+fission_se <- create_se(metadata = meta, count_dataframe = fission_data)
 ```
 
 ## Normalizing and exploring data
@@ -114,10 +116,13 @@ chance to explain the graphs as I generate them.
 ## be maintained throughout this process
 fis_libsize <- plot_libsize(fission_expt)
 fis_libsize$plot
+libsize_se <- plot_libsize(fission_se)
+expect_equal(fis_libsize$plot$data, libsize_se$plot$data)
 ## Here we see that the wild type replicate 3 sample for 15 minutes has
 ## fewer non-zero genes than all its friends.
 fis_nonzero <- plot_nonzero(fission_expt, labels = "boring", title = "nonzero vs. cpm")
 fis_nonzero$plot
+se_nonzero <- plot_nonzero(fission_se, labels = "boring", title = "nonzero vs. cpm")
 
 fis_density <- plot_density(fission_expt)
 fis_density$plot

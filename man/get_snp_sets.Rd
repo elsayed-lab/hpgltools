@@ -14,16 +14,17 @@ get_snp_sets(
 )
 }
 \arguments{
-\item{snp_expt}{The result of count_expt_snps()}
+\item{snp_expt}{Expressionset of variants.}
 
-\item{factor}{Experimental factor to use for cutting and splicing the data.}
+\item{factor}{Use this metadata factor to split the data.}
 
-\item{do_save}{Save the result?}
+\item{stringency}{Allow for some wiggle room in the calls.}
 
-\item{savefile}{Prefix for a savefile if one chooses to save the result.}
+\item{do_save}{Save the results to an rda fil.}
 
-\item{limit}{Minimum median number of hits / factor to define a position as
-a hit.}
+\item{savefile}{This is redundant with do_save.}
+
+\item{proportion}{Used with stringency to finetune the calls.}
 }
 \value{
 A funky list by chromosome containing:  'medians', the median number

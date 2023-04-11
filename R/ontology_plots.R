@@ -1005,6 +1005,12 @@ cluster_trees <- function(de_genes, cpdata, goid_map = "id2go.map", go_db = NULL
 }
 
 #' Collapse the logic for collecting topgo trees into one little function.
+#'
+#' @param tg TopGO result.
+#' @param score_column Use this column for the topgo scores.
+#' @param node_data and this column for the cateogyr names.
+#' @param score_limit The scores must be better than this.
+#' @param sigforall Calculate significance for all categories.
 single_topgo_tree <- function(tg, score_column = "mf_fisher", node_data = "fmf_godata",
                               score_limit = 0.1, sigforall = TRUE) {
   sig_results <- topGO::score(tg[["results"]][[score_column]]) <= score_limit

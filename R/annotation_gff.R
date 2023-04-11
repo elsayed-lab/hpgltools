@@ -27,7 +27,7 @@
 #' @seealso [rtracklayer] [load_gff_annotations()]
 #'  \code{\link[rtracklayer]{import.gff}}
 #' @examples
-#'  example_gff <- system.file("share", "gas.gff", package = "hpgltools")
+#'  example_gff <- system.file("share", "gas.gff", package = "hpgldata")
 #'  gas_iranges <- gff2irange(example_gff)
 #'  colnames(as.data.frame(gas_iranges))
 #' @export
@@ -75,7 +75,7 @@ gff2irange <- function(gff, type = NULL) {
 #' @return Dataframe of the annotation information found in the gff file.
 #' @seealso [rtracklayer] [GenomicRanges]
 #' @examples
-#'  example_gff <- system.file("share", "gas.gff", package = "hpgltools")
+#'  example_gff <- system.file("share", "gas.gff", package = "hpgldata")
 #'  gas_gff_annot <- load_gff_annotations(example_gff)
 #'  dim(gas_gff_annot)
 #' @export

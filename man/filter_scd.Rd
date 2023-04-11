@@ -25,11 +25,15 @@ filter_scd(
 \item{min_num_rna}{Drop cells with fewer than this number of
 observed RNA species.}
 
+\item{max_num_rna}{An unlikely filter for maximum number of RNAs.}
+
 \item{min_pct_ribo}{Drop cells with less than this percentage of
 ribosomal protein RNAs observed.}
 
 \item{max_pct_ribo}{Drop cells with more than this percentage of
 ribosomal protein RNAs observed.}
+
+\item{remerge}{Merge the data back if there are multiple assays.}
 
 \item{max_pct_mito}{Drop cells with more than this percentage of
 mitochondrial RNA observed.}
@@ -45,6 +49,8 @@ ribosomal protein species.}
 
 \item{min_gene_counts}{Drop genes across cells which are observed
 less than this number of times, I don't expect many of these.}
+
+\item{verbose}{Be chatty about what you are doing?}
 }
 \value{
 Filtered scd

@@ -18,6 +18,44 @@ snps_vs_genes_padded(
   ignore_strand = TRUE
 )
 }
+\arguments{
+\item{expt}{The original expressionset.}
+
+\item{snp_result}{The result from get_snp_sets().}
+
+\item{start_col}{Which column provides the start of each gene?}
+
+\item{end_col}{and the end column of each gene?}
+
+\item{strand_col}{Define strands.}
+
+\item{padding}{Add this amount to each CDS.}
+
+\item{normalize}{Normalize the returns to the length of the putative CDS.}
+
+\item{snp_name_col}{Name of the column in the metadata with the sequence names.}
+
+\item{expt_name_col}{Name of the metadata column with the chromosome names.}
+
+\item{observed_in}{Print some information about how many variants were observed.}
+
+\item{ignore_strand}{Ignore the strand information when returning?}
+}
+\value{
+List with some information by gene.
+}
 \description{
 A copy of the above function with padding for species without defined UTRs
+}
+\examples{
+ \dontrun{
+ expt <- create_expt(metadata, gene_information)
+ snp_expt <- count_expt_snps(expt)
+ snp_result <- get_snp_sets(snp_expt)
+ gene_intersections <- snps_vs_genes(expt, snp_result)
+}
+}
+\seealso{
+[GenomicRanges::makeGRangesFromDataFrame()] [IRanges::subsetByOverlaps()]
+ [IRanges::mergeByOverlaps()] [IRanges::countOverlaps()]
 }

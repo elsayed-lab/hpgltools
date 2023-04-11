@@ -50,6 +50,10 @@ the deseq, edger, limma, basic, meta, or all.}
 
 \item{n}{Take the top/bottom-n genes.}
 
+\item{min_mean_exprs}{Add a minimum expression value.}
+
+\item{exprs_column}{Use this column to define expression.}
+
 \item{top_percent}{Use a percentage to get the top-n genes.}
 
 \item{p_type}{use an adjusted p-value?}
@@ -84,8 +88,6 @@ genes via logfc/p-value.}
 \item{min_gmt_genes}{Define the minimum number of genes in a gene set for writing a gmt file.}
 
 \item{...}{Arguments passed into arglist.}
-
-\item{ma}{Add ma plots to the sheets of 'up' genes?}
 }
 \value{
 The set of up-genes, down-genes, and numbers therein.

@@ -169,13 +169,13 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
   colors_chosen <- NULL
   exprs_data <- NULL
   data_class <- class(expt)[1]
-  if (data_class == "expt") {
+  if (data_class == "expt" || data_class == "Summarized_Experiment") {
     expt_design <- expt[["design"]]
     colors_chosen <- expt[["colors"]]
     exprs_data <- exprs(expt)
   } else if (data_class == "ExpressionSet") {
     exprs_data <- exprs(expt)
-  } else if (data_class == "matrix" | data_class == "data.frame") {
+  } else if (data_class == "matrix" || data_class == "data.frame") {
     exprs_data <- as.matrix(expt)
   } else {
     stop("This understands types: expt, ExpressionSet, data.frame, and matrix.")
@@ -313,7 +313,7 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
       finally={
       }
       ) ## End of the tryCatch
-      if (class(cor_test) == "try-error" | is.null(cor_test)) {
+      if (class(cor_test) == "try-error" || is.null(cor_test)) {
         cor_df[fact, pc] <- 0
       } else {
         cor_df[fact, pc] <- cor_test$estimate
@@ -599,7 +599,7 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
   ## to function is counts, it will make up the rest if it cannot find them.
   data_class <- class(data)[1]
   mtrx <- NULL
-  if (data_class == "expt") {
+  if (data_class == "expt" || data_class == "SummarizedExperiment") {
     design <- pData(data)
     if (cond_column == "condition") {
       plot_colors <- data[["colors"]]
@@ -615,7 +615,7 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
     if (is.null(data)) {
       stop("The list provided contains no count_table element.")
     }
-  } else if (data_class == "matrix" | data_class == "data.frame") {
+  } else if (data_class == "matrix" || data_class == "data.frame") {
     ## some functions prefer matrix, so I am keeping this explicit for the moment
     mtrx <- as.data.frame(data)
   } else {
@@ -664,9 +664,9 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
   ## Different folks like different labels.  I prefer hpglxxxx, but others have asked for
   ## condition_batch; this handles that as eloquently as I am able.
   label_list <- NULL
-  if (is.null(arglist[["label_list"]]) & is.null(expt_names)) {
+  if (is.null(arglist[["label_list"]]) && is.null(expt_names)) {
     label_list <- design[["sampleid"]]
-  } else if (class(expt_names) == "character" & length(expt_names) == 1) {
+  } else if (class(expt_names) == "character" && length(expt_names) == 1) {
     label_list <- design[[expt_names]]
   } else if (is.null(arglist[["label_list"]])) {
     label_list <- given_samples
@@ -1109,7 +1109,7 @@ plot_pca_genes <- function(data, design = NULL, plot_colors = NULL, plot_title =
   ## to function is counts, it will make up the rest if it cannot find them.
   data_class <- class(data)[1]
   mtrx <- NULL
-  if (data_class == "expt") {
+  if (data_class == "expt" || data_class == "SummarizedExperiment") {
     design <- pData(data)
     if (cond_column == "condition") {
       plot_colors <- data[["colors"]]
@@ -1125,7 +1125,7 @@ plot_pca_genes <- function(data, design = NULL, plot_colors = NULL, plot_title =
     if (is.null(data)) {
       stop("The list provided contains no count_table element.")
     }
-  } else if (data_class == "matrix" | data_class == "data.frame") {
+  } else if (data_class == "matrix" || data_class == "data.frame") {
     ## some functions prefer matrix, so I am keeping this explicit for the moment
     mtrx <- as.data.frame(data)
   } else {
@@ -1169,9 +1169,9 @@ plot_pca_genes <- function(data, design = NULL, plot_colors = NULL, plot_title =
   ## Different folks like different labels.  I prefer hpglxxxx, but others have asked for
   ## condition_batch; this handles that as eloquently as I am able.
   label_list <- NULL
-  if (is.null(arglist[["label_list"]]) & is.null(expt_names)) {
+  if (is.null(arglist[["label_list"]]) && is.null(expt_names)) {
     label_list <- design[["sampleid"]]
-  } else if (class(expt_names) == "character" & length(expt_names) == 1) {
+  } else if (class(expt_names) == "character" && length(expt_names) == 1) {
     label_list <- design[[expt_names]]
   } else if (is.null(arglist[["label_list"]])) {
     label_list <- given_samples
@@ -1592,6 +1592,8 @@ plot_pcload <- function(expt, genes = 40, desired_pc = 1, which_scores = "high",
 #' @param rug Include the rugs on the sides of the plot?
 #' @param max_overlaps Increase overlapping label tolerance.
 #' @param cis What (if any) confidence intervals to include.
+#' @param ellipse_type Choose the kernel for the ellipse.
+#' @param ellipse_geom Use this ggplot geometry.
 #' @param label_size The text size of the labels.
 #' @param ... Extra arguments dropped into arglist
 #' @return gplot2 PCA plot

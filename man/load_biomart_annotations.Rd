@@ -58,6 +58,10 @@ false stops that.}
 \item{length_requests}{Set of columns to query for location-ish annotations.}
 
 \item{include_lengths}{Also perform a search on structural elements in the genome?}
+
+\item{do_load}{Load the data?}
+
+\item{savefile}{Use this savefile.}
 }
 \value{
 List containing: a data frame of the found annotations, a copy of

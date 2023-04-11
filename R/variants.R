@@ -113,12 +113,12 @@ get_individual_snps <- function(retlist) {
 #' I like this function.  It generates an exhaustive catalog of the snps by
 #' chromosome for all the various categories as defined by factor.
 #'
-#' @param snp_expt The result of count_expt_snps()
-#' @param factor Experimental factor to use for cutting and splicing the data.
-#' @param limit Minimum median number of hits / factor to define a position as
-#'  a hit.
-#' @param do_save Save the result?
-#' @param savefile Prefix for a savefile if one chooses to save the result.
+#' @param snp_expt Expressionset of variants.
+#' @param factor Use this metadata factor to split the data.
+#' @param stringency Allow for some wiggle room in the calls.
+#' @param do_save Save the results to an rda fil.
+#' @param savefile This is redundant with do_save.
+#' @param proportion Used with stringency to finetune the calls.
 #' @return A funky list by chromosome containing:  'medians', the median number
 #'   of hits / position by sample type; 'possibilities', the;
 #'  'intersections', the groupings as detected by Vennerable;
@@ -146,7 +146,7 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
     message("The samples represent the following categories: ")
     print(table(pData(snp_expt)[[factor]]))
   }
-  if (isTRUE(do_save) &  file.exists(glue("{savefile}_{factor}.rda"))) {
+  if (isTRUE(do_save) && file.exists(glue("{savefile}_{factor}.rda"))) {
     retlist <- new.env()
     loaded <- load(savefile, envir = retlist)
     retlist <- retlist[["retlist"]]
@@ -314,6 +314,7 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
 #' @param samples Sample names to read.
 #' @param file_lst Set of files to read.
 #' @param column Column from the bcf file to read.
+#' @param verbose Print information about the input data.
 #' @seealso [readr]
 #' @return A big honking data table.
 read_snp_columns <- function(samples, file_lst, column = "diff_count", verbose = FALSE) {
@@ -624,6 +625,7 @@ snp_subset_genes <- function(expt, snp_expt, start_col = "start", end_col = "end
 #' @param end_col and the end column of each gene?
 #' @param snp_name_col Name of the column in the metadata with the sequence names.
 #' @param expt_name_col Name of the metadata column with the chromosome names.
+#' @param ignore_strand Ignore strand information when returning?
 #' @return List with some information by gene.
 #' @seealso [GenomicRanges::makeGRangesFromDataFrame()] [IRanges::subsetByOverlaps()]
 #'  [IRanges::mergeByOverlaps()] [IRanges::countOverlaps()]
@@ -635,7 +637,7 @@ snp_subset_genes <- function(expt, snp_expt, start_col = "start", end_col = "end
 #'  gene_intersections <- snps_vs_genes(expt, snp_result)
 #' }
 #' @export
-#' @importFrom S4Vectors mcols
+#' @importFrom S4Vectors mcols mcols<-
 snps_vs_genes <- function(expt, snp_result, start_col = "start", end_col = "end",
                           snp_name_col = "seqnames", observed_in = NULL,
                           expt_name_col = "chromosome", ignore_strand = TRUE) {
@@ -772,6 +774,31 @@ snps_vs_genes <- function(expt, snp_result, start_col = "start", end_col = "end"
 }
 
 #' A copy of the above function with padding for species without defined UTRs
+#'
+#' @param expt The original expressionset.
+#' @param snp_result The result from get_snp_sets().
+#' @param start_col Which column provides the start of each gene?
+#' @param end_col and the end column of each gene?
+#' @param strand_col Define strands.
+#' @param padding Add this amount to each CDS.
+#' @param normalize Normalize the returns to the length of the putative CDS.
+#' @param snp_name_col Name of the column in the metadata with the sequence names.
+#' @param expt_name_col Name of the metadata column with the chromosome names.
+#' @param observed_in Print some information about how many variants were observed.
+#' @param ignore_strand Ignore the strand information when returning?
+#' @return List with some information by gene.
+#' @seealso [GenomicRanges::makeGRangesFromDataFrame()] [IRanges::subsetByOverlaps()]
+#'  [IRanges::mergeByOverlaps()] [IRanges::countOverlaps()]
+#' @examples
+#'  \dontrun{
+#'  expt <- create_expt(metadata, gene_information)
+#'  snp_expt <- count_expt_snps(expt)
+#'  snp_result <- get_snp_sets(snp_expt)
+#'  gene_intersections <- snps_vs_genes(expt, snp_result)
+#' }
+#' @export
+#' @importFrom S4Vectors mcols mcols<-
+#' @importFrom IRanges %over%
 snps_vs_genes_padded <- function(expt, snp_result, start_col = "start", end_col = "end",
                           strand_col = "strand", padding = 200, normalize = TRUE,
                           snp_name_col = "seqnames", expt_name_col = "chromosome",

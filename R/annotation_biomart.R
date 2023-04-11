@@ -207,6 +207,8 @@ get_biomart_example_gene <- function(species = "mmusculus", attributes = "featur
 #' @param gene_requests Set of columns to query for description-ish annotations.
 #' @param length_requests Set of columns to query for location-ish annotations.
 #' @param include_lengths Also perform a search on structural elements in the genome?
+#' @param do_load Load the data?
+#' @param savefile Use this savefile.
 #' @return List containing: a data frame of the found annotations, a copy of
 #'  The mart instance to help with finding problems, the hostname queried, the
 #'  name of the mart queried, a vector of rows queried, vector of the available
@@ -612,6 +614,15 @@ load_biomart_orthologs <- function(gene_ids = NULL, first_species = "hsapiens",
 #' annotations then cross references the rownames against combinations
 #' of columns in the annotations to figure out the correct pairing.
 #' This helps when I have a combined transcriptome and get confused.
+#'
+#' This probably doesn't belong in this file.
+#'
+#' @param annotations Annoation database to merge.
+#' @param gene_column Column containing the gene IDs.
+#' @param transcript_column Column containing the transcript IDs.
+#' @param tx_version_column Salmon uses tx version numbers, find them here.
+#' @param new_column Add the new combined IDs here.
+#' @export
 make_tx_gene_map <- function(annotations, gene_column = "ensembl_gene_id",
                              transcript_column = "ensembl_transcript_id",
                              tx_version_column = "transcript_version",

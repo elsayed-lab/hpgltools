@@ -272,6 +272,7 @@ goseq_table <- function(df, file = NULL) {
 #' @param padjust_method Which method to use to adjust the pvalues.
 #' @param expand_categories Expand the GO categories to make the results more readable?
 #' @param excel Print the results to an excel file?
+#' @param enrich Convert the goseq result to the clusterProfiler format?
 #' @param ... Extra parameters which I do not recall
 #' @return Big list including:
 #'  the pwd:pwf function,

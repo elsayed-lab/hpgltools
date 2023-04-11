@@ -46,9 +46,11 @@ combine_de_tables(
 \item{keepers}{List of reformatted table names to explicitly keep
 certain contrasts in specific orders and orientations.}
 
-\item{excludes}{List of columns and patterns to use for excluding genes.}
+\item{excludes}{List of columns and patterns to use for excluding
+genes.}
 
-\item{adjp}{Perhaps you do not want the adjusted p-values for plotting?}
+\item{adjp}{Perhaps you do not want the adjusted p-values for
+plotting?}
 
 \item{include_limma}{Include limma analyses in the table?}
 
@@ -85,11 +87,29 @@ string 'YYY', that will be replaced by the contrast name.}
 
 \item{rda}{Write a rda file of the results.}
 
-\item{start_worksheet}{This will now increment worksheet titles from this point forward.}
+\item{start_worksheet}{This will now increment worksheet titles
+from this point forward.}
 
-\item{excel}{Filename for the excel workbook, or null if not printed.}
+\item{label}{Label this number of top-n genes on the plots?}
 
-\item{...}{Arguments passed to significance and abundance tables.}
+\item{label_column}{Use this column for gene labelling.}
+
+\item{format_sig}{Use this many significant digits for printing
+wacky numbers.}
+
+\item{excel}{Filename for the excel workbook, or null if not
+printed.}
+
+\item{plot_columns}{A guesstimate of how wide plots are with
+respect to 'normally' sized columns in excel.}
+
+\item{alpha}{Use the alpha channel with this transparency when
+plotting.}
+
+\item{z}{Use this z-score for defining significant in coefficient
+plots.}
+
+\item{z_lines}{Add z-score lines to coefficient plots?}
 }
 \value{
 Table combining limma/edger/deseq outputs.

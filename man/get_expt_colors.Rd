@@ -6,6 +6,12 @@
 \usage{
 get_expt_colors(expt)
 }
+\arguments{
+\item{expt}{Expression from which to gather colors.}
+}
+\value{
+List of colors by condition.
+}
 \description{
 Usually we give a vector of all samples by colors.  This just
 simplifies that to one element each.  Currently only used in

@@ -88,6 +88,14 @@ experimental metadata.}
 
 \item{sheet_number}{Which worksheet is this?}
 
+\item{plot_colors}{Use these colors on plots.}
+
+\item{z}{Use this z-score cutoff.}
+
+\item{alpha}{Use this transparency.}
+
+\item{z_lines}{Add z-score lines?}
+
 \item{apr}{Data from all_pairwise().}
 }
 \description{

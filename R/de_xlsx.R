@@ -11,13 +11,12 @@
 #'
 #' @param apr Output from all_pairwise().
 #' @param extra_annot Add some annotation information?
-#' @param excel Filename for the excel workbook, or null if not printed.
-#' @param excel_title Title for the excel sheet(s).  If it has the
-#'  string 'YYY', that will be replaced by the contrast name.
 #' @param keepers List of reformatted table names to explicitly keep
 #'  certain contrasts in specific orders and orientations.
-#' @param excludes List of columns and patterns to use for excluding genes.
-#' @param adjp Perhaps you do not want the adjusted p-values for plotting?
+#' @param excludes List of columns and patterns to use for excluding
+#'  genes.
+#' @param adjp Perhaps you do not want the adjusted p-values for
+#'  plotting?
 #' @param include_limma Include limma analyses in the table?
 #' @param include_deseq Include deseq analyses in the table?
 #' @param include_edger Include edger analyses in the table?
@@ -28,14 +27,29 @@
 #' @param loess Add time intensive loess estimation to plots?
 #' @param plot_dim Number of inches squared for the plot if added.
 #' @param compare_plots Add some plots comparing the results.
-#' @param fancy Save a set of fancy plots along with the xlsx file?
 #' @param padj_type Add a consistent p adjustment of this type.
+#' @param fancy Save a set of fancy plots along with the xlsx file?
 #' @param lfc_cutoff In this context, only used for plotting volcano/MA plots.
 #' @param p_cutoff In this context, used for volcano/MA plots.
 #' @param de_types Used for plotting pvalue/logFC cutoffs.
+#' @param excel_title Title for the excel sheet(s).  If it has the
+#'  string 'YYY', that will be replaced by the contrast name.
 #' @param rda Write a rda file of the results.
-#' @param start_worksheet This will now increment worksheet titles from this point forward.
-#' @param ... Arguments passed to significance and abundance tables.
+#' @param start_worksheet This will now increment worksheet titles
+#'  from this point forward.
+#' @param label Label this number of top-n genes on the plots?
+#' @param label_column Use this column for gene labelling.
+#' @param format_sig Use this many significant digits for printing
+#'  wacky numbers.
+#' @param excel Filename for the excel workbook, or null if not
+#'  printed.
+#' @param plot_columns A guesstimate of how wide plots are with
+#'  respect to 'normally' sized columns in excel.
+#' @param alpha Use the alpha channel with this transparency when
+#'  plotting.
+#' @param z Use this z-score for defining significant in coefficient
+#'  plots.
+#' @param z_lines Add z-score lines to coefficient plots?
 #' @return Table combining limma/edger/deseq outputs.
 #' @seealso [all_pairwise()] [extract_significant_genes()]
 #' @examples
@@ -58,8 +72,8 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
                               lfc_cutoff = 1, p_cutoff = 0.05,
                               de_types = c("limma", "deseq", "edger"),
                               excel_title = "Table SXXX: Combined Differential Expression of YYY",
-                              rda = NULL, start_worksheet = "S02",
-                              label = 10, label_column = "hgncsymbol",
+                              increment_start = "SXXX", start_worksheet_num = 2,
+                              rda = NULL, label = 10, label_column = "hgncsymbol",
                               format_sig = 4, excel = NULL, plot_columns = 10,
                               alpha = 0.4, z = 1.5, z_lines = FALSE) {
   xlsx <- init_xlsx(excel)
@@ -71,22 +85,6 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
   }
 
   plot_colors <- get_expt_colors(apr[["input"]])
-  ## Add a little logic to fill in table numbers in the worksheets.
-  ## To do this, replace the default SXXX with something, either a number or
-  ## a prefix followed by a number, and increment the number for each sheet.
-  sheet_prefix <- NULL
-  sheet_number <- NULL
-  if (!is.null(start_worksheet)) {
-    captured <- utils::strcapture(
-      pattern = "^([A-Za-z]*)([0-9]+)", x = start_worksheet,
-      proto = list(prefix = character(), number = integer()))
-    if (stringr::str_length(captured[["prefix"]]) > 0) {
-      sheet_prefix <- captured[["prefix"]]
-    }
-    if (stringr::str_length(captured[["number"]]) > 0) {
-      sheet_number <- captured[["number"]]
-    }
-  }
 
   ## Create a list of image files so that they may be properly cleaned up
   ## after writing the xlsx file.
@@ -99,34 +97,20 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
   ebseq <- apr[["ebseq"]]
   basic <- apr[["basic"]]
 
-  ## If any of the tools failed, then we cannot plot stuff with confidence.
-  if (!isTRUE(include_limma) || !isTRUE(include_deseq) ||
-        !isTRUE(include_edger) || !isTRUE(include_basic)) {
-    add_plots <- FALSE
-    mesg("One or more methods was excluded.  Not adding the plots.")
-  }
   if ("try-error" %in% class(limma) || is.null(limma)) {
     include_limma <- FALSE
-    add_plots <- FALSE
-    mesg("Not adding plots, limma had an error.")
   }
   if ("try-error" %in% class(deseq) || is.null(deseq)) {
     include_deseq <- FALSE
-    add_plots <- FALSE
-    mesg("Not adding plots, deseq had an error.")
   }
   if ("try-error" %in% class(edger) || is.null(edger)) {
     include_edger <- FALSE
-    add_plots <- FALSE
-    mesg("Not adding plots, edger had an error.")
   }
   if ("try-error" %in% class(ebseq) || is.null(ebseq)) {
     include_ebseq <- FALSE
   }
   if ("try-error" %in% class(basic) || is.null(basic)) {
     include_basic <- FALSE
-    add_plots <- FALSE
-    mesg("Not adding plots, basic had an error.")
   }
 
   ## A common request is to have the annotation data added to the table.  Do that here.
@@ -203,7 +187,6 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
   ## various tools performed with some venn diagrams, and finally dump the plots
   ## from above into the sheet.
   comp <- list()
-
   ## The following if() is too long and should be split into its own function.
   if (isTRUE(do_excel)) {
     ## Starting a new counter of sheets.
@@ -211,9 +194,9 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
     ## Then check to see if the slopes/intercepts are duplicated across any
     ## of the contrasts, if this is true, then it is highly likely a mistake was made
     ## when setting up the contrasts such that something got duplicated.
+    worksheet_number <- start_worksheet_num
     tnames <- names(extracted[["table_names"]])
     ## tsources <- as.character(extracted[["table_names"]])
-    sheet_increment <- 0
     for (x in seq_along(tnames)) {
       tab <- tnames[x]
       written_table <- extracted[["data"]][[tab]]
@@ -222,25 +205,15 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
         next
       }
       final_excel_title <- gsub(pattern = "YYY", replacement = tab, x = excel_title)
-      final_excel_title <- glue("{final_excel_title}; Contrast numerator: {numerators[x]}.  \\
-Contrast denominator: {denominators[x]}.")
-
+      final_excel_title <- paste0(final_excel_title, "; Contrast numerator: ",
+        numerators[[x]], ".", " Contrast denominator: ",
+        denominators[[x]], ".")
       ## Replace the excel table name with the incrementing value
-      sheet_increment_start <- "SXXX"
-      sheet_increment_string <- sheet_increment_start
-      sheet_increment_number <- sheet_number + sheet_increment
-      if (is.null(sheet_prefix)) {
-        if (!is.null(sheet_number)) {
-          sheet_increment_string <- as.character(sheet_number)
-        }
-      } else {
-        sheet_increment_string <- glue("{sheet_prefix}{sheet_increment_number}")
-      }
-      sheet_increment <- sheet_increment + 1
-      final_excel_title <- gsub(pattern = sheet_increment_start,
+      sheet_increment_string <- glue("S{worksheet_number}")
+      worksheet_number <- worksheet_number + 1
+      final_excel_title <- gsub(pattern = increment_start,
                                 replacement = sheet_increment_string,
                                 x = final_excel_title)
-
       ## Dump each table to the appropriate excel sheet
       xls_result <- write_xlsx(data = written_table, wb = wb, sheet = tab,
                                title = final_excel_title, rownames = rownames)
@@ -252,7 +225,7 @@ Contrast denominator: {denominators[x]}.")
       current_column <- xls_result[["end_col"]] + 2
       if (isTRUE(add_plots)) {
         ## Text on row 1, plots from 2-17 (15 rows)
-        mesg("Adding venn plots for ", tnames[x], ".")
+        message("Adding venn plots for ", tnames[x], ".")
         venn_info <- write_venns_de_xlsx(
           written_table, tab, wb, sheetname, current_row, current_column, excel_basename,
           plot_dim, image_files, lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff,
@@ -337,17 +310,27 @@ Contrast denominator: {denominators[x]}.")
 #' @param denominator Name of the denominator coefficient.
 #' @param numerator Name of the numerator coefficient.
 #' @param plot_inputs The individual outputs from limma etc.
-#' @param include_basic Add basic data?
-#' @param include_deseq Add deseq data?
-#' @param include_edger Add edger data?
-#' @param include_limma Add limma data?
-#' @param include_ebseq Add ebseq data?
+#' @param plot_basic Add basic data?
+#' @param plot_deseq Add deseq data?
+#' @param plot_edger Add edger data?
+#' @param plot_limma Add limma data?
+#' @param plot_ebseq Add ebseq data?
 #' @param loess Add a loess estimation?
 #' @param logfc For Volcano/MA plot lines.
-#' @param p For Volcano/MA plot lines.
-#' @param do_inverse Flip the numerator/denominator?
+#' @param pval For Volcano/MA plot lines.
 #' @param found_table The table name actually used.
-#' @param p_type Use this/these methods' p-value for determining significance.
+#' @param p_type Use this/these methods' p-value for determining
+#'  significance.
+#' @param plot_colors Use these colors for numerators/denominators.
+#' @param fancy Include fancy pdf/svg versions of plots for publication?
+#' @param do_inverse Flip the numerator/denominator?
+#' @param invert_colors Conversely, keep the values the same, but flip
+#'  the colors.  I think these invert parameters are not needed anymore.
+#' @param z Use a z-score cutoff for coefficient plots.
+#' @param alpha Add some transparency to the plots.
+#' @param z_lines Add lines for zscore cutoffs?
+#' @param label Label this number of the top genes.
+#' @param label_column Label the top genes with this column.
 combine_extracted_plots <- function(name, combined, denominator, numerator, plot_inputs,
                                     plot_basic = TRUE, plot_deseq = TRUE,
                                     plot_edger = TRUE, plot_limma = TRUE,
@@ -357,7 +340,6 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
                                     do_inverse = FALSE, invert_colors = FALSE,
                                     z = 1.5, alpha = 0.4, z_lines = FALSE,
                                     label = 10, label_column = "hgncsymbol") {
-  mesg("Starting combine_extracted_plots() with do_inverse as: ", do_inverse, ".")
   combined_data <- combined[["data"]]
   plots <- list()
   types <- c()
@@ -403,7 +385,6 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
       color_high <- "darkred"
       color_low <- "darkblue"
     }
-    message("TESTME: ", found_table, " high_color: ", color_high, " low_color: ", color_low)
 
     ## The invert parameter only flips the volcano x-axis
     ma_vol_cof <- list()
@@ -482,6 +463,32 @@ check_single_de_table <- function(pairwise, table_name, wanted_numerator,
   return(ret)
 }
 
+#' Combine data taken from map_keepers() into a single large table.
+#'
+#' This is part of an ongoing attempt to simplify and clean up the
+#' combine_de_tables() function.  I am hoping that map_keepers and
+#' this will be able to take over all the logic currently held in the
+#' various extract_keepers_xxx() functions.
+#'
+#' @param entry Single entry from map_keepers() which provides
+#'  orientation information about the table from all_pairwise(), along
+#'  with the actual data.
+#' @param include_basic Include basic in the final output?  I want to
+#'  get rid of all these include_ arguments.
+#' @param include_deseq Include deseq?
+#' @param include_edger Include edger?
+#' @param include_ebseq Include ebseq?
+#' @param include_limma Include limma?
+#' @param adjp Used adjusted pvalues when defining 'significant.?
+#' @param padj_type Perform this type of pvalue adjustment.
+#' @param annot_df Include these annotations in the result tables.
+#' @param excludes When provided, exclude these genes.
+#' @param lfc_cutoff Use this value for a log2FC significance cutoff.
+#' @param p_cutoff Use this value for a(n adjusted) pvalue
+#'  significance cutoff.
+#' @param format_sig Use this many significant digits for some of the
+#'  unwieldy numbers.
+#' @param sheet_count Start with these sheet number and increment for excel.
 combine_mapped_table <- function(entry, include_basic = TRUE, include_deseq = TRUE,
                                  include_edger = TRUE, include_ebseq = TRUE,
                                  include_limma = TRUE, adjp = TRUE, padj_type = "fdr",
@@ -768,8 +775,8 @@ Defaulting to fdr.")
 
   up_fc <- lfc_cutoff
   down_fc <- -1.0 * lfc_cutoff
-  summary_table_name <- table_name
-  if (isTRUE(do_inverse)) {
+  summary_table_name <- entry[["string"]]
+  if (entry[["orientation"]] == "reverse") {
     summary_table_name <- glue("{summary_table_name}-inverted")
   }
   limma_p_column <- "limma_adjp"
@@ -805,8 +812,12 @@ Defaulting to fdr.")
 #' @param ba Basic output table.
 #' @param table_name Name of the table to merge.
 #' @param final_table_names Vector of the final table names.
+#' @param wanted_numerator The numerator we would like to find.
+#' @param wanted_denominator The denominator we would like to find.
+#' @param invert_table Boolean to see if we already think we should
+#'  switch n/d
+#' @param invert_plots Conversely, we can invert the plots.
 #' @param annot_df Add some annotation information?
-#' @param do_inverse Invert the fold changes?
 #' @param adjp Use adjusted p-values?
 #' @param padj_type Add this consistent p-adjustment.
 #' @param include_deseq Include tables from deseq?
@@ -818,6 +829,7 @@ Defaulting to fdr.")
 #' @param p_cutoff Preferred pvalue cutoff.
 #' @param format_sig How many significant digits to print?  Set it to something not
 #'  numeric to not use any significant digit formatting.
+#' @param do_inverse Dead parameter? invert the data?
 #' @param excludes Set of genes to exclude from the output.
 #' @param sheet_count What sheet is being written?
 #' @return List containing a) Dataframe containing the merged
@@ -833,7 +845,7 @@ combine_single_de_table <- function(li = NULL, ed = NULL, eb = NULL, de = NULL, 
                                     include_deseq = TRUE, include_edger = TRUE,
                                     include_ebseq = TRUE, include_limma = TRUE,
                                     include_basic = TRUE, lfc_cutoff = 1,
-                                    p_cutoff = 0.05, format_sig = 4,
+                                    p_cutoff = 0.05, format_sig = 4, do_inverse = FALSE,
                                     excludes = NULL, sheet_count = 0) {
   if (padj_type[1] != "ihw" && (!padj_type %in% p.adjust.methods)) {
     warning("The p adjustment ", padj_type, " is not in the set of p.adjust.methods.
@@ -1241,6 +1253,11 @@ Defaulting to fdr.")
 #' @param p_cutoff Passed for volcano/MA plots.
 #' @param sheet_prefix Prefix for this worksheet id.
 #' @param sheet_number Which sheet is this?
+#' @param format_sig Use this number of significant digits.
+#' @param plot_colors Use these colors for plots.
+#' @param z Use this z-score as a coefficient significance cutoff.
+#' @param alpha Use this transparency for plots?
+#' @param z_lines Add lines for z-score on coefficient plots?
 extract_keepers_all <- function(extracted, keepers, table_names,
                                 all_coefficients,
                                 limma, edger, ebseq, deseq, basic,
@@ -1377,7 +1394,7 @@ map_keepers <- function(keepers, table_names, data) {
     individual_tables <- list()
     for (type in names(data)) {
       if (!is.null(data[[type]])) {
-        message("Checking ", type, " all_tables index ", idx, " for ", keeper_table_map[[name]][["string"]])
+        ## mesg("Checking ", type, " all_tables index ", idx, " for ", keeper_table_map[[name]][["string"]])
         test_name <- names(data[[type]][["all_tables"]])[idx]
         data_key <- paste0(type, "_data")
         data_orientation_key <- paste0(type, "_orientation")
@@ -1426,12 +1443,22 @@ map_keepers <- function(keepers, table_names, data) {
 #' @param include_basic Whether or not to include the basic data.
 #' @param excludes Set of genes to exclude.
 #' @param padj_type Choose a specific p adjustment.
+#' @param fancy Include larger pdf/svg plots with the xlsx output?
 #' @param loess Add a loess to plots?
-#' @param lfc_cutoff Passed for volcano/MA plots.
-#' @param p_cutoff Passed for volcano/MA plots.
+#' @param lfc_cutoff Passed for volcano/MA plots and defining 'significant'
+#' @param p_cutoff Passed for volcano/MA plots and defining 'significant'
 #' @param sheet_prefix Prefix for this worksheet id.
 #' @param sheet_number Which sheet is this?
-#' @param format_sig Number of significant digits for stuff like pvalues.
+#' @param format_sig Number of significant digits for stuff like
+#'  pvalues.
+#' @param plot_colors Define what colors should be used for
+#'  'up'/'down'
+#' @param z Define significantly away from the identity line in a
+#'  coefficient plot.
+#' @param alpha Use this alpha transparency for plots.
+#' @param z_lines Include lines denoting significant z-scores?
+#' @param label When not NULL, label this many genes.
+#' @param label_column Try using this column for labeling genes.
 extract_keepers_lst <- function(extracted, keepers, table_names,
                                 all_coefficients,
                                 limma, edger, ebseq, deseq, basic,
@@ -1482,6 +1509,8 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
                                   list("basic" = basic, "deseq" = deseq,
                                        "ebseq" = ebseq, "edger" = edger,
                                        "limma" = limma))
+  numerators <- c()
+  denominators <- c()
   mapped <- length(keeper_table_map)
   for (en in seq_len(mapped)) {
     entry <- keeper_table_map[[en]]
@@ -1489,7 +1518,8 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
     found_table <- entry[["string"]]
     wanted_numerator <- entry[["wanted_numerator"]]
     wanted_denominator <- entry[["wanted_denominator"]]
-    mesg("Beginning extraction of table: ", entry_name, ".")
+    numerators <- c(wanted_numerator, numerators)
+    denominators <- c(wanted_denominator, denominators)
     if (isFALSE(entry[["string"]])) {
       warning("The table for ", entry_name, " does not appear in the pairwise data.")
       next
@@ -1513,7 +1543,7 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
     }
     extracted[["data"]][[entry_name]] <- combined[["data"]]
     extracted[["table_names"]][[entry_name]] <- combined[["summary"]][["table"]]
-    extracted[["kept"]] <- kept_tables
+    ## extracted[["kept"]] <- kept_tables
     extracted[["keepers"]] <- keepers
     plot_inputs <- list()
     plot_basic <- combined[["includes"]][["basic"]]
@@ -1557,9 +1587,9 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
       label = label, label_column = label_column)
     extracted[["summaries"]] <- rbind(extracted[["summaries"]],
                                       as.data.frame(combined[["summary"]]))
-    extracted[["numerators"]] <- numerators
-    extracted[["denominators"]] <- denominators
   } ## Ending the for loop of elements in the keepers list.
+  extracted[["numerators"]] <- numerators
+  extracted[["denominators"]] <- denominators
   return(extracted)
 }
 
@@ -1592,6 +1622,10 @@ extract_keepers_lst <- function(extracted, keepers, table_names,
 #' @param format_sig If numeric, reformat and use this number of significant digits.
 #' @param sheet_prefix Prefix for this sheet id.
 #' @param sheet_number Which worksheet is this?
+#' @param plot_colors Use these colors on plots.
+#' @param z Use this z-score cutoff.
+#' @param alpha Use this transparency.
+#' @param z_lines Add z-score lines?
 extract_keepers_single <- function(extracted, keepers, table_names,
                                    all_coefficients,
                                    limma, edger, ebseq, deseq, basic,
@@ -1819,8 +1853,9 @@ extract_siggenes <- function(...) {
 #' @param sig_bar Add bar plots describing various cutoffs of 'significant'?
 #' @param z Z-score to define 'significant'.
 #' @param n Take the top/bottom-n genes.
+#' @param min_mean_exprs Add a minimum expression value.
+#' @param exprs_column Use this column to define expression.
 #' @param top_percent Use a percentage to get the top-n genes.
-#' @param ma Add ma plots to the sheets of 'up' genes?
 #' @param p_type use an adjusted p-value?
 #' @param invert_barplots Invert the significance barplots as per Najib's request?
 #' @param excel Write the results to this excel file, or NULL.
@@ -3043,6 +3078,7 @@ write_plots_de_xlsx <- function(de_types, extracted, sheetname, current_row, cur
   ## Now add the coefficients, ma, and volcanoes below the venns.
   ## Text on row 18, plots from 19-49 (30 rows)
   for (t in seq_along(de_types)) {
+    num_plotted <- 0
     type <- de_types[t]
     sc <- paste0(type, "_scatter_plots")
     ma <- paste0(type, "_ma_plots")
@@ -3056,6 +3092,7 @@ write_plots_de_xlsx <- function(de_types, extracted, sheetname, current_row, cur
     p_plt <- extracted[["plots"]][[sheetname]][[pp]]
     current_row <- current_row + 2
     current_column <- xls_result[["end_col"]] + 2
+
     ## Note that these are lists now.
     if (class(plt)[1] != "try-error" && length(plt) > 0) {
       printme <- as.character(
@@ -3070,10 +3107,14 @@ write_plots_de_xlsx <- function(de_types, extracted, sheetname, current_row, cur
         plt[["scatter"]], wb = wb, sheet = sheetname,
         width = plot_dim, height = plot_dim, start_col = current_column,
         plotname = plotname, savedir = excel_basename, start_row = current_row + 1)
-      if (! "try-error" %in% class(try_result)) {
+      if (!"try-error" %in% class(try_result)) {
         image_files <- c(image_files, try_result[["filename"]])
+        num_plotted <- num_plotted + 1
+        current_column <- current_column + plot_columns
       }
-      current_column <- current_column + plot_columns
+    }
+
+    if (class(ma_plt)[1] != "try-error" && length(ma_plt) > 0) {
       xl_result <- openxlsx::writeData(
         wb = wb, sheet = sheetname, x = paste0(type, " MA plot"),
         startRow = current_row, startCol = current_column)
@@ -3083,10 +3124,14 @@ write_plots_de_xlsx <- function(de_types, extracted, sheetname, current_row, cur
         ma_plt, wb = wb, sheet = sheetname, width = plot_dim,
         height = plot_dim, start_col = current_column, plotname = plotname,
         savedir = excel_basename, start_row = current_row + 1)
-      if (! "try-error" %in% class(try_ma_result)) {
+      if (!"try-error" %in% class(try_ma_result)) {
         image_files <- c(image_files, try_ma_result[["filename"]])
+        num_plotted <- num_plotted + 1
+        current_column <- current_column + plot_columns
       }
-      current_column <- current_column + plot_columns
+    }
+
+    if (class(vol_plt)[1] != "try-error" && length(vol_plt) > 0) {
       xl_result <- openxlsx::writeData(
         wb = wb, sheet = sheetname, x = paste0(type, " volcano plot"),
         startRow = current_row, startCol = current_column)
@@ -3095,10 +3140,14 @@ write_plots_de_xlsx <- function(de_types, extracted, sheetname, current_row, cur
         vol_plt, wb = wb, sheet = sheetname, width = plot_dim,
         height = plot_dim, start_col = current_column, pltname = plotname,
         savedir = excel_basename, start_row = current_row + 1)
-      if (! "try-error" %in% class(try_vol_result)) {
+      if (!"try-error" %in% class(try_vol_result)) {
         image_files <- c(image_files, try_vol_result[["filename"]])
+        num_plotted <- num_plotted + 1
+        current_column <- current_column + plot_columns
       }
-      current_column <- current_column + plot_columns
+    }
+
+    if (class(p_plt)[1] != "try-error" && length(p_plt) > 0) {
       xl_result <- openxlsx::writeData(
         wb = wb, sheet = sheetname, x = paste0(type, " p-value plot"),
         startRow = current_row, startCol = current_column)
@@ -3107,11 +3156,17 @@ write_plots_de_xlsx <- function(de_types, extracted, sheetname, current_row, cur
         p_plt, wb = wb, sheet = sheetname, width = plot_dim,
         height = plot_dim, start_col = current_column, pltname = plotname,
         savedir = excel_basename, start_row = current_row + 1)
-      if (! "try-error" %in% class(try_p_result)) {
+      if (!"try-error" %in% class(try_p_result)) {
         image_files <- c(image_files, try_p_result[["filename"]])
+        num_plotted <- num_plotted + 1
+        current_column <- current_column + plot_columns
       }
+    }
+
+    if (num_plotted > 0) {
       current_row <- current_row + plot_rows
     }
+
   } ## End adding limma, deseq, and edger plots.
   ret <- list(
     "image_files" = image_files,
@@ -3130,16 +3185,6 @@ write_venns_de_xlsx <- function(written_table, tab, wb, sheetname,
   ## Make some venn diagrams comparing deseq/limma/edger!
   venns <- list()
   starting_column <- current_column
-  if (is.null(written_table[["deseq_logfc"]]) |
-        is.null(written_table[["edger_logfc"]]) |
-        is.null(written_table[["limma_logfc"]])) {
-    ret <- list(
-      "image_files" = image_files,
-      "wb" = wb,
-      "current_row" = current_row,
-      "current_column" = current_column)
-    return(ret)
-  }
   venn_nop_lfc0 <- try(de_venn(written_table, lfc = 0, adjp = FALSE, p = 1.0))
   venn_nop <- try(de_venn(written_table, lfc = lfc_cutoff, adjp = FALSE, p = 1.0))
   venn_list <- try(de_venn(written_table, lfc = 0, adjp = p_cutoff))
@@ -3323,7 +3368,19 @@ write_venns_de_xlsx <- function(written_table, tab, wb, sheetname,
   return(ret)
 }
 
-summarize_combined <- function(comb, up_fc, down_fc, p_cutoff) {
+summarize_combined <- function(comb, up_fc, down_fc, p_cutoff, adjp = TRUE) {
+  limma_p_column <- "limma_p"
+  deseq_p_column <- "deseq_p"
+  edger_p_column <- "edger_p"
+  basic_p_column <- "basic_p"
+  ebseq_p_column <- "ebseq_p"
+  if (isTRUE(adjp)) {
+    limma_p_column <- "limma_adjp"
+    deseq_p_column <- "deseq_adjp"
+    edger_p_column <- "edger_adjp"
+    basic_p_column <- "basic_adjp"
+    ebseq_p_column <- "ebseq_adjp"
+  }
   ret <- list(
     "total" = nrow(comb),
     "limma_up" = sum(comb[["limma_logfc"]] >= up_fc),

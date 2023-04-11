@@ -12,6 +12,17 @@ single_topgo_tree(
   sigforall = TRUE
 )
 }
+\arguments{
+\item{tg}{TopGO result.}
+
+\item{score_column}{Use this column for the topgo scores.}
+
+\item{node_data}{and this column for the cateogyr names.}
+
+\item{score_limit}{The scores must be better than this.}
+
+\item{sigforall}{Calculate significance for all categories.}
+}
 \description{
 Collapse the logic for collecting topgo trees into one little function.
 }

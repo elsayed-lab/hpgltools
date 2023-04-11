@@ -49,6 +49,8 @@ simple_goseq(
 
 \item{excel}{Print the results to an excel file?}
 
+\item{enrich}{Convert the goseq result to the clusterProfiler format?}
+
 \item{...}{Extra parameters which I do not recall}
 }
 \value{

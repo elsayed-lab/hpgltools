@@ -387,7 +387,7 @@ make_gsc_from_ids <- function(first_ids, second_ids = NULL, annotation_name = "o
 #'
 #' @param pairwise A pairwise result, or combined de result, or extracted genes.
 #' @param according_to When getting significant genes, use this method.
-#' @param orgdb Annotation dataset.
+#' @param annotation_name Name of the annotation database for the data.
 #' @param pair_names Describe the contrasts of the GSC: up vs. down, high vs. low, etc.
 #' @param category_name What category does the GSC describe?
 #' @param phenotype_name When making color sets, use this phenotype name.

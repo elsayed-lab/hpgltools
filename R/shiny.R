@@ -5,12 +5,13 @@
 #' make a slideable threshold for cutting off significant genes in a DE table.
 #'
 #' @param de_table Table of DE results.
-#' @param control Which contrast to examine?
+#' @param contrast Use this contrast for visualization.
 #' @param lfc LogFC starting cutoff.
 #' @param p Starting pvalue cutoff.
 #' @param according_to Which method to deem the arbiter of truth?
 #' @import shiny
-slide_de_threshold <- function(de_table, contrast = 1, lfc = 1.0, p = 0.05, according_to = "deseq") {
+slide_de_threshold <- function(de_table, contrast = 1, lfc = 1.0, p = 0.05,
+                               according_to = "deseq") {
   df <- de_table[["data"]][[contrast]][, c("deseq_logfc", "deseq_adjp")]
   ui <- fluidPage(
     titlePanel(title = h4("Test", align = "center")),

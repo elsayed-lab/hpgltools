@@ -49,6 +49,7 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
   ## An expressionset needs to have a Biobase::annotation() in order for
   ## GSEABase to work with it. Reading the documentation, these are primarily
   ## used for naming the type of microarray chip used.
+  ## I do not know if any work will need to be done for a SE
 
   ## Palette for colors when auto-chosen
   file_suffix <- ".count.gz"
@@ -217,7 +218,7 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
         x = rownames(tximport_data[["scaled"]][["length"]]))
   }
 
-  ## Try a couple different ways of getting gene-level annotations into the expressionset.
+  ## Try a couple different ways of getting gene-level annotations into the se.
   annotation <- NULL
   if (is.null(gene_info)) {
     ## Including, if all else fails, just grabbing the gene names from the count tables.
@@ -231,7 +232,7 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
       annotation <- load_gff_annotations(gff = include_gff, type = gff_type)
       gene_info <- data.table::as.data.table(annotation, keep.rownames = "rownames")
     }
-  } else if (class(gene_info)[[1]] == "list" & !is.null(gene_info[["genes"]])) {
+  } else if (class(gene_info)[[1]] == "list" && !is.null(gene_info[["genes"]])) {
     ## In this case, it is using the output of reading a OrgDB instance
     gene_info <- data.table::as.data.table(gene_info[["genes"]], keep.rownames = "rownames")
   } else if (class(gene_info)[[1]] == "data.table" || class(gene_info)[[1]] == "tbl_df") {
@@ -241,7 +242,7 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
     ## And sometimes the rownames were never set.
     ## Therefore I will use rownames(dt) as the master, dt$rownames as secondary, and
     ## as a fallback take the first column in the data.
-    if (is.null(rownames(gene_info)) & is.null(gene_info[["rownames"]])) {
+    if (is.null(rownames(gene_info)) && is.null(gene_info[["rownames"]])) {
       gene_info[["rownames"]] <- make.names(rownames[[1]], unique = TRUE)
       message("Both rownames() and $rownames were null.")
     }
@@ -282,8 +283,8 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
     ## While we are looping through the columns,
     ## Make certain that no columns in gene_info are lists or factors.
     ## FIXME: 202104: I am no longer sure why I changed factors.
-    if (class(gene_info[[col]]) == "factor" |
-        class(gene_info[[col]]) == "AsIs" |
+    if (class(gene_info[[col]]) == "factor" ||
+        class(gene_info[[col]]) == "AsIs" ||
         class(gene_info[[col]]) == "list") {
       gene_info[[col]] <- as.character(gene_info[[col]])
     }
@@ -296,7 +297,7 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
   ## Maybe I will copy/move this to my annotation collection toys?
   ## This temporary id number will be used to ensure that the order of features in everything
   ## will remain consistent, as we will call order() using it later.
-  all_count_tables[["temporary_id_number"]] <- 1:nrow(all_count_tables)
+  all_count_tables[["temporary_id_number"]] <- seq_len(nrow(all_count_tables))
   message("Bringing together the count matrix and gene information.")
   ## The method here is to create a data.table of the counts and annotation data,
   ## merge them, then split them apart.
@@ -456,20 +457,21 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
   metadata(se)[["colors"]] <- chosen_colors
   metadata(se)[["tximport"]] <- tximport_data
 
-  ## Save an rdata file of the expressionset.
+  ## Save an rdata file of the se.
   if (is.null(savefile)) {
     if ("character" %in% class(metadata)) {
-      name <- paste0(gsub(x = basename(metadata), pattern = "^(.*)\\..*", replacement = "\\1"), ".rda")
+      name <- paste0(gsub(x = basename(metadata), pattern = "^(.*)\\..*",
+                          replacement = "\\1"), ".rda")
     } else {
-      message("Saving the expressionset to 'expt.rda'.")
-      savefile <- "expt.rda"
+      message("Saving the summarized experiment to 'se.rda'.")
+      savefile <- "se.rda"
     }
   }
   save_result <- try(save(expt, file = savefile), silent = TRUE)
   if (class(save_result) == "try-error") {
-    warning("Saving the expt object failed, perhaps you do not have permissions?")
+    warning("Saving the summarized experiment object failed, perhaps you do not have permissions?")
   }
-  message("The final expressionset has ", nrow(assays(se)),
+  message("The final summarized experiment has ", nrow(assays(se)),
           " rows and ", ncol(colData(se)), " columns.")
   return(se)
 }
@@ -517,30 +519,104 @@ make_pombe_se <- function(annotation = TRUE) {
   return(pombe_se)
 }
 
-setMethod("exprs", signature = "SummarizedExperiment",
-          function(object) {
-            SummarizedExperiment::assay(object)
-          })
-setMethod("exprs<-", signature = "SummarizedExperiment",
-          function(object, value) {
-            SummarizedExperiment::assay(object) <- value
-            return(object)
-          })
-setMethod("fData", signature = "SummarizedExperiment",
-          function(object) {
-            SummarizedExperiment::rowData(object)
-          })
-setMethod("fData<-", signature = "SummarizedExperiment",
-          function(object, value) {
-            SummarizedExperiment::rowData(object) <- value
-            return(object)
-          })
-setMethod("pData", signature = "SummarizedExperiment",
-          function(object) {
-            SummarizedExperiment::colData(object)
-          })
-setMethod("pData<-", signature = "SummarizedExperiment",
-          function(object, value) {
-            SummarizedExperiment::rowData(object) <- value
-            return(object)
-          })
+subset_se <- function(se, subset = NULL, ids = NULL,
+                      nonzero = NULL, coverage = NULL) {
+  starting_se <- se
+  starting_metadata <- pData(se)
+  starting_samples <- sampleNames(se)
+
+  if (!is.null(ids)) {
+    string <- ""
+    for (id in ids) {
+      string <- glue("{string}|sampleid=='{id}'")
+    }
+    ## Remove the leading |
+    subset <- substring(string, 2)
+  }
+
+  note_appended <- NULL
+  subset_design <- NULL
+  if (is.null(coverage) && is.null(nonzero)) {
+    if (is.null(subset)) {
+      subset_design <- starting_metadata
+    } else {
+      mesg("Using a subset expression.")
+
+      r_expression <- glue("subset(starting_metadata, {subset})")
+      subset_design <- eval(parse(text = r_expression))
+      note_appended <- glue("Subsetted with {subset} on {date()}.
+")
+    }
+    if (nrow(subset_design) == 0) {
+      stop("When the subset was taken, the resulting design has 0 members.")
+    }
+    subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
+  } else if (is.null(nonzero)) {
+    ## If coverage is defined, then use it to subset based on the minimal desired coverage
+    ## Perhaps in a minute I will make this work for strings like '1z' to get the lowest
+    ## standard deviation or somesuch...
+    mesg("Subsetting given a minimal number of counts/sample.")
+    coverages <- colSums(exprs(se))
+
+    if (is.null(pData(se)[["sample_coverage"]])) {
+      pData(se)[["sample_coverage"]] <- coverages
+    }
+    subset_idx <- coverages >= as.numeric(coverage) ## In case I quote it on accident.
+    subset_design <- starting_metadata[subset_idx, ]
+    subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
+    message("The samples removed (and read coverage) when filtering samples with less than ",
+            coverage, " reads are: ")
+    print(colSums(exprs(se))[!subset_idx])
+  } else if (is.null(coverage)) {
+    ## Remove samples with less than this number of non-zero genes.
+    nonzero_idx <- exprs(se) != 0
+    num_nonzero <- colSums(nonzero_idx)
+    if (is.null(pData(se)[["num_nonzero"]])) {
+      pData(se)[["num_nonzero"]] <- num_nonzero
+    }
+    remove_idx <- num_nonzero < nonzero
+    if (sum(remove_idx) == 0) {
+      message("No samples have fewer than ", nonzero, " observed genes.")
+      return(se)
+    }
+    samples_dropped <- num_nonzero[remove_idx]
+    subset_design <- starting_metadata[!remove_idx, ]
+    subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
+    message("The samples (and read coverage) removed when filtering ",
+            nonzero, " non-zero genes are: ")
+    print(colSums(exprs(se))[remove_idx])
+    print(num_nonzero[remove_idx])
+  } else {
+    stop("Unable to determine what is being subset.")
+  }
+
+  ## This is to get around stupidity with respect to needing all factors to be
+  ## in a DESeqDataSet
+  starting_ids <- rownames(starting_metadata)
+  subset_ids <- rownames(subset_design)
+  subset_positions <- starting_ids %in% subset_ids
+  starting_colors <- se[["colors"]]
+  subset_colors <- starting_colors[subset_positions, drop = TRUE]
+  starting_conditions <- se[["conditions"]]
+  subset_conditions <- starting_conditions[subset_positions, drop = TRUE]
+  starting_batches <- se[["batches"]]
+  subset_batches <- starting_batches[subset_positions, drop = TRUE]
+  current_libsize <- se[["libsize"]]
+  subset_current_libsize <- current_libsize[subset_positions, drop = TRUE]
+  subset_expressionset <- starting_expressionset[, subset_positions]
+
+  notes <- se[["notes"]]
+  if (!is.null(note_appended)) {
+    notes <- glue("{notes}{note_appended}")
+  }
+
+  current_pd <- pData(subset_expressionset)
+  for (col in seq_len(ncol(current_pd))) {
+    if (class(current_pd[[col]]) == "factor") {
+      pData(subset_expressionset)[[col]] <- droplevels(
+        pData(subset_expressionset)[[col]])
+    }
+  }
+  ## pData(subset_expressionset) <- subset_design
+  return(new_se)
+}

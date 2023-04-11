@@ -23,6 +23,8 @@ make_gsc_from_pairwise(
 
 \item{according_to}{When getting significant genes, use this method.}
 
+\item{annotation_name}{Name of the annotation database for the data.}
+
 \item{pair_names}{Describe the contrasts of the GSC: up vs. down, high vs. low, etc.}
 
 \item{category_name}{What category does the GSC describe?}
@@ -38,8 +40,6 @@ make_gsc_from_pairwise(
 \item{required_id}{gsva uses entrezids by default.}
 
 \item{...}{Extra arguments for extract_significant_genes().}
-
-\item{orgdb}{Annotation dataset.}
 }
 \value{
 List containing 3 GSCs, one containing both the ups/downs called

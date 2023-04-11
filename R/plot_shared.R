@@ -256,7 +256,7 @@ graph_metrics <- function(expt, cormethod = "pearson", distmethod = "euclidean",
     density <- list()
   }
   mesg("Plotting a CV plot.")
-  cv <- try(plot_variance_coefficients(expt, plot_title = dens_title,
+  cv <- try(plot_variance_coefficients(expt, plot_title = cv_title,
                                        ...))
   if ("try-error" %in% class(cv)) {
     cv <- list()

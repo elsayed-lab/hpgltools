@@ -26,7 +26,7 @@ plot_histogram <- function(df, binwidth = NULL, log = FALSE, bins = 500, adjust 
   } else if (class(df) == "list") {
     df <- data.frame(unlist(df))
     colnames(df) <- c("values")
-  } else if (class(df) == "numeric" | class(df) == "integer") {
+  } else if (class(df) == "numeric" || class(df) == "integer") {
     df <- data.frame(unlist(df))
     colnames(df) <- c("values")
   }
@@ -98,7 +98,7 @@ plot_multihistogram <- function(data, log = FALSE, binwidth = NULL, bins = NULL,
                                     play_all[["cond"]], p.adjust = "none")
   bon_t <- try(stats::pairwise.t.test(play_all[["expression"]], play_all[["cond"]],
                                       p.adjust = "bon", na.rm = TRUE))
-  if (is.null(bins) & is.null(binwidth)) {
+  if (is.null(bins) && is.null(binwidth)) {
     ##minval <- min(play_all[["expression"]], na.rm = TRUE)
     ##maxval <- max(play_all[["expression"]], na.rm = TRUE)
     ##bins <- 500

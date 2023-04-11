@@ -722,6 +722,8 @@ sm <- function(..., wrap = TRUE) {
 
 #' Some ggplot2 stats functions have not yet implemented the new dropped_aes
 #' flag, and it is driving me nuts.  Hopefully this will make it less frustrating for me.
+#'
+#' @param ... The set of functions to silence.
 #' @export
 sp <- function(...) {
   suppressWarnings(print(...))

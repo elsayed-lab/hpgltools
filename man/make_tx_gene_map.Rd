@@ -12,10 +12,24 @@ make_tx_gene_map(
   new_column = "salmon_transcript"
 )
 }
+\arguments{
+\item{annotations}{Annoation database to merge.}
+
+\item{gene_column}{Column containing the gene IDs.}
+
+\item{transcript_column}{Column containing the transcript IDs.}
+
+\item{tx_version_column}{Salmon uses tx version numbers, find them here.}
+
+\item{new_column}{Add the new combined IDs here.}
+}
 \description{
 Maybe this will help.  I have a smarter but much slower method in
 the tmrc3 data which first creates an expressionset without
 annotations then cross references the rownames against combinations
 of columns in the annotations to figure out the correct pairing.
 This helps when I have a combined transcriptome and get confused.
+}
+\details{
+This probably doesn't belong in this file.
 }

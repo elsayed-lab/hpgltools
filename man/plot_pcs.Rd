@@ -61,6 +61,10 @@ arbitrary information.}
 
 \item{cis}{What (if any) confidence intervals to include.}
 
+\item{ellipse_type}{Choose the kernel for the ellipse.}
+
+\item{ellipse_geom}{Use this ggplot geometry.}
+
 \item{label_size}{The text size of the labels.}
 
 \item{...}{Extra arguments dropped into arglist}

@@ -137,9 +137,7 @@ table_style <- "TableStyleMedium9"
 }
 
 getMaintainer <- "GenomicFeatures" %:::% ".getMaintainer"
-getMetaDataValue <- "GenomicFeatures" %:::% ".getMetaDataValue"
 getTxDbVersion <- "GenomicFeatures" %:::% ".getTxDbVersion"
-normAuthor <- "GenomicFeatures" %:::% ".normAuthor"
 sortCols <- "variancePartition" %:::% ".sortCols"
 aprior <- "sva" %:::% "aprior"
 bprior <- "sva" %:::% "bprior"

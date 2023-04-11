@@ -6,6 +6,11 @@
 \usage{
 add_binary_states(scd, column = NULL)
 }
+\arguments{
+\item{scd}{Seurat single cell dataset.}
+
+\item{column}{Get identities from this metadata column.}
+}
 \description{
 I am adding these only so that it is easier to visualize the cells
 compared when performing FindAllMarkers(); e.g. it compares each
