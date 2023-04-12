@@ -3375,4 +3375,159 @@ expt <- function(...) {
 }
 expt_set <- setOldClass("expt")
 
+## Put S4 dispatchers here.
+
+#' A series of setMethods for expts, ExpressionSets, and SummarizedExperiments.
+#'
+#' @param object One of my various expressionset analogs, expt,
+#'  expressionSet, or summarizedExperiment.
+#' @param value New value to add to the object.
+#' @param x I absoluately do not understand why R explicitly requires
+#'  this.
+#' @param i Nor this.
+#' @importFrom SummarizedExperiment assay assay<- colData colData<- rowData rowData<-
+#' @importFrom Biobase annotation annotation<-
+setMethod("annotation",
+          signature = "expt",
+          definition = function(object) {
+            Biobase::annotation(object[["expressionset"]])
+          })
+setMethod("annotation<-",
+          signature = "expt",
+          definition = function(object, value) {
+            fData(object[["expressionset"]]) <- value
+            return(object)
+          })
+setMethod("assay",
+          signature = "expt",
+          definition = function(x, withDimnames = TRUE, ...) {
+            mtrx <- Biobase::exprs(x[["expressionset"]])
+            return(mtrx)
+          })
+setMethod("assay",
+          signature = "ExpressionSet",
+          definition = function(x, withDimnames = TRUE, ...) {
+            Biobase::exprs(x)
+          })
+setMethod("assay<-",
+          signature = "expt",
+          definition = function(x, i, withDimnames = TRUE, ..., value) {
+            Biobase::exprs(x[["expressionset"]]) <- value
+            return(x)
+          })
+setMethod("assay<-",
+          signature = "ExpressionSet",
+          definition = function(x, i, withDimnames = TRUE, ..., value) {
+            Biobase::exprs(x) <- value
+            return(x)
+          })
+setMethod("colData",
+          signature = "expt",
+          definition = function(x, withDimnames = TRUE, ...) {
+            Biobase::pData(x[["expressionset"]])
+          })
+setMethod("colData",
+          signature = "ExpressionSet",
+          definition = function(x, withDimnames = TRUE, ...) {
+            Biobase::pData(x)
+          })
+setMethod("colData<-",
+          signature = "expt",
+          definition = function(x, i, withDimnames = TRUE, ..., value) {
+            Biobase::pData(x[["expressionset"]]) <- value
+            return(x)
+          })
+setMethod("colData<-",
+          signature = "ExpressionSet",
+          definition = function(x, i, withDimnames = TRUE, ..., value) {
+            Biobase::pData(x) <- value
+            return(x)
+          })
+setMethod("exprs",
+          signature = "expt",
+          definition = function(object) {
+            Biobase::exprs(object[["expressionset"]])
+          })
+setMethod("exprs<-",
+          signature = "expt",
+          definition = function(object, value) {
+            exprs(object[["expressionset"]]) <- value
+            return(object)
+          })
+setMethod("fData",
+          signature = "expt",
+          definition = function(object) {
+            Biobase::fData(object[["expressionset"]])
+          })
+setMethod("fData<-",
+          signature = "expt",
+          definition = function(object, value) {
+            fData(object[["expressionset"]]) <- value
+            return(object)
+          })
+setMethod("notes",
+          signature = "expt",
+          definition = function(object) {
+            Biobase::notes(object[["expressionset"]])
+          })
+setMethod("pData",
+          signature = "expt",
+          definition = function(object) {
+            Biobase::pData(object[["expressionset"]])
+          })
+setMethod("pData<-",
+          signature = "expt",
+          definition = function(object, value) {
+            pData(object[["expressionset"]]) <- value
+            return(object)
+          })
+setMethod("rowData",
+          signature = "expt",
+          definition = function(x, withDimnames = TRUE, ...) {
+            Biobase::fData(x[["expressionset"]])
+          })
+setMethod("rowData",
+          signature = "ExpressionSet",
+          definition = function(x, withDimnames = TRUE, ...) {
+            Biobase::fData(x)
+          })
+setMethod("rowData<-",
+          signature = "expt",
+          definition = function(x, i, withDimnames = TRUE, ..., value) {
+            Biobase::fData(x[["expressionset"]]) <- value
+            return(x)
+          })
+setMethod("sampleNames",
+          signature = "expt",
+          definition = function(object) {
+            Biobase::sampleNames(object[["expressionset"]])
+          })
+setMethod("sampleNames<-",
+          signature = "expt",
+          definition = function(object, value) {
+            set_expt_samplenames(object, value)
+          })
+setMethod("state",
+          signature = "expt",
+          definition = function(expt) {
+            expt[["state"]]
+          })
+setMethod("state<-",
+          signature = "expt",
+          definition = function(expt, value) {
+            expt[["state"]] <- value
+            return(expt)
+          })
+
+
+setMethod("subset_expt",
+          signature = signature(expt = "SummarizedExperiment"),
+          definition = function(expt, subset = NULL, ids = NULL,
+                                nonzero = NULL, coverage = NULL) {
+            subset_se(expt, subset = subset, ids = ids,
+                      nonzero = nonzero, coverage = coverage)
+          })
+
+
+
 ## EOF
