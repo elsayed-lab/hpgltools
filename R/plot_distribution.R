@@ -677,7 +677,6 @@ plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL
   data_class <- class(data)
   if (data_class == "expt" || data_class == "SummarizedExperiment") {
     design <- pData(data)
-
     colors <- data[["colors"]]
     data <- exprs(data)
   } else if (data_class == "ExpressionSet") {
@@ -688,6 +687,7 @@ plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL
   } else {
     stop("This understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
   }
+  design <- as.data.frame(design)
 
   melted <- data.table::as.data.table(reshape2::melt(data))
   if (ncol(melted) == 3) {
@@ -747,7 +747,7 @@ plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL
 
   color_list <- NULL
   if (x_axis == "condition") {
-    names(colors) <- design[, "condition"]
+    names(colors) <- design[["condition"]]
     color_list <- colors
   } else if (!is.null(arglist[["colors"]])) {
     color_list <- arglist[["colors"]]
@@ -763,11 +763,13 @@ plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL
   }
 
   ## Add the number of samples of each type to the top of the plot with this.
+  cv_data[["x_axis"]] <- droplevels(cv_data[[x_axis]])
   sample_numbers <- list()
-  for (l in levels(as.factor(cv_data[[x_axis]]))) {
+  ## I am cheating with the as.factor(as.character()) shenanigans.
+  for (l in levels(cv_data[["x_axis"]])) {
     sample_numbers[[l]] <- sum(design[[x_axis]] == l)
   }
-  cv_data[["x_axis"]] <- cv_data[[x_axis]]
+
   y_labels <- list(
     "bcv" = "Biological coefficient of variation",
     "cv" = "Coefficient of variation",

@@ -96,7 +96,6 @@ cdm_se <- create_se(metadata = cdm$cdm_metadata,
                     gene_info = cdm$gene_info,
                     count_dataframe = cdm$cdm_counts)
 
-
 knitr::kable(head(pData(cdm_se)))
 ```
 

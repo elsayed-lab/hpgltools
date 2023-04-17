@@ -34,7 +34,7 @@ combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, a
   exp2 <- expt2[["expressionset"]]
   fData(exp2) <- fData(exp1)
 
-  num_shared <- rownames(exp1) %in% rownames(exp2)
+  num_shared <- sum(rownames(exp1) %in% rownames(exp2))
   total_num <- nrow(exp1)
   if ((num_shared / total_num) < 0.8) {
     warning("There are many gene IDs which are not shared among the two datasets, this may fail.")
@@ -122,6 +122,15 @@ combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, a
   }
 
   return(expt1)
+}
+
+colors <- function(expt) {
+  expt[["colors"]]
+}
+
+`colors<-` <- function(expt, lst) {
+  expt[["colors"]] <- lst
+  return(expt)
 }
 
 #' Sum the reads/gene for multiple sequencing runs of a single condition/batch.
@@ -792,13 +801,17 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
 #'   only_ribosomes <- exclude_genes_expt(all_expt, method = "keep")
 #' }
 #' @export
-exclude_genes_expt <- function(expt, column = "txtype", method = "remove", ids = NULL,
-                               warning_cutoff = 90, meta_column = NULL,
-                               patterns = c("snRNA", "tRNA", "rRNA"), ...) {
+subset_genes <- function(expt, column = "txtype", method = "remove", ids = NULL,
+                         warning_cutoff = 90, meta_column = NULL,
+                         patterns = c("snRNA", "tRNA", "rRNA"), ...) {
   arglist <- list(...)
-  ex <- expt[["expressionset"]]
-  annotations <- Biobase::fData(ex)
-  expression <- Biobase::exprs(ex)
+  annotations <- Biobase::fData(expt)
+  expression <- Biobase::exprs(expt)
+  if (class(expt)[1] == "expt") {
+    ex <- expt[["expressionset"]]
+  } else {
+    ex <- expt
+  }
   if (is.null(ids) && is.null(annotations[[column]])) {
     message("The ", column, " column is null, doing nothing.")
     return(expt)
@@ -862,11 +875,11 @@ exclude_genes_expt <- function(expt, column = "txtype", method = "remove", ids =
   message("remove_genes_expt(), before removal, there were ",
           nrow(Biobase::fData(ex)), " genes, now there are ",
           nrow(Biobase::fData(kept)), ".")
-  all_tables <- Biobase::exprs(ex)
+  all_tables <- exprs(ex)
   all_sums <- colSums(all_tables)
-  kept_tables <- Biobase::exprs(kept)
+  kept_tables <- exprs(kept)
   kept_sums <- colSums(kept_tables)
-  removed_tables <- Biobase::exprs(removed)
+  removed_tables <- exprs(removed)
   removed_sums <- colSums(removed_tables)
   pct_kept <- (kept_sums / all_sums) * 100.0
   pct_na <- is.na(pct_kept)
@@ -880,11 +893,15 @@ exclude_genes_expt <- function(expt, column = "txtype", method = "remove", ids =
                                "pct_kept", "pct_removed")
   mesg("Percent of the counts kept after filtering: ",
        toString(sprintf(fmt = "%.3f", pct_kept)))
-
-  expt[["expressionset"]] <- kept
-  expt[["summary_table"]] <- summary_table
-  if (!is.null(meta_column)) {
-    pData(expt[["expressionset"]])[meta_column] <- summary_table["pct_removed", ]
+  if (class(expt)[1] == "expt") {
+    expt[["expressionset"]] <- kept
+    expt[["summary_table"]] <- summary_table
+    if (!is.null(meta_column)) {
+      pData(expt[["expressionset"]])[meta_column] <- summary_table["pct_removed", ]
+    }
+  } else {
+    expt <- kept
+    metadata(expt)[["summary_table"]] <- summary_table
   }
 
   warning_idx <- summary_table["pct_kept", ] < warning_cutoff
@@ -2213,6 +2230,15 @@ set_expt_samplenames <- function(expt, newnames) {
   return(new_expt)
 }
 
+state <- function(expt) {
+  return(expt[["state"]])
+}
+
+`state<-` <- function(expt, value) {
+  expt[["state"]] <- value
+  return(expt)
+}
+
 #' Extract a subset of samples following some rule(s) from an
 #' experiment class.
 #'
@@ -3442,6 +3468,17 @@ setMethod("colData<-",
           definition = function(x, i, withDimnames = TRUE, ..., value) {
             Biobase::pData(x) <- value
             return(x)
+          })
+setMethod("colors",
+          signature = "expt",
+          definition = function(expt) {
+            expt[["colors"]]
+          })
+setMethod("colors<-",
+          signature = "expt",
+          definition = function(expt, lst) {
+            expt[["colors"]] <- lst
+            return(expt)
           })
 setMethod("exprs",
           signature = "expt",

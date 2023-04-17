@@ -427,11 +427,11 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
 #' @export
 pca_highscores <- function(expt, n = 20, cor = TRUE, vs = "means", logged = TRUE) {
   if (isTRUE(logged)) {
-    if (expt[["state"]][["transform"]] == "raw") {
+    current <- state(expt)
+    if (current[["transform"]] == "raw") {
       expt <- sm(normalize_expt(expt, transform = "log2", filter = TRUE))
     }
   }
-
   data <- as.data.frame(exprs(expt))
   na_idx <- is.na(data)
   data[na_idx] <- 0
@@ -450,7 +450,6 @@ pca_highscores <- function(expt, n = 20, cor = TRUE, vs = "means", logged = TRUE
   plot(another_pca)
   pca_hist <- grDevices::recordPlot()
   dev.off()
-
   tmp_file <- tempfile(pattern = "biplot", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
@@ -1557,13 +1556,12 @@ plot_pcload <- function(expt, genes = 40, desired_pc = 1, which_scores = "high",
 
   comp_genes <- desired[, desired_pc]
   comp_genes <- gsub(pattern = "^\\d+\\.\\d+:", replacement = "", x = comp_genes)
-  comp_genes_subset <- sm(exclude_genes_expt(expt, ids = comp_genes, method = "keep"))
+  comp_genes_subset <- sm(subset_genes(expt, ids = comp_genes, method = "keep"))
   samples <- plot_sample_heatmap(comp_genes_subset, row_label = NULL)
-  sample_plot <- samples[["plot"]]
 
   retlist <- list(
     "comp_genes_expt" = comp_genes_subset,
-    "plot" = sample_plot)
+    "plot" = samples)
   return(retlist)
 }
 
@@ -1990,17 +1988,6 @@ setMethod("iDA", "matrix",
           function(object, ...) {
             iDAoutput <- iDA::iDA_core(object, ...)
             return(iDAoutput)
-          })
-
-setMethod("plot_libsize",
-          signature = signature(data = "data.frame", condition = "factor", colors = "character"),
-          definition = function(data, condition, colors, text = TRUE,
-                                order = NULL, plot_title = NULL, yscale = NULL,
-                                expt_names = NULL, label_chars = 10, ...) {
-            data <- as.matrix(data)
-            plot_libsize(data, condition = condition, colors = colors,
-                         text = text, order = order, plot_title = plot_title, yscale = yscale,
-                         expt_names = expt_names, label_chars = label_chars, ...) # , ...)
           })
 
 ## EOF

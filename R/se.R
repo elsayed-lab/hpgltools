@@ -43,7 +43,7 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
     title <- "This is a summarized experiment."
   }
   if (is.null(notes)) {
-    notes <- glue::glue("Created on {date()}.
+    notes <- glue("Created on {date()}.
 ")
   }
   ## An expressionset needs to have a Biobase::annotation() in order for
@@ -73,7 +73,6 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
   }
   file_column <- tolower(file_column)
   file_column <- gsub(pattern = "[[:punct:]]", replacement = "", x = file_column)
-
   ## Read in the metadata from the provided data frame, csv, or xlsx.
   message("Reading the sample metadata.")
   sample_definitions <- extract_metadata(metadata, id_column = id_column,
@@ -471,7 +470,7 @@ create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
   if (class(save_result) == "try-error") {
     warning("Saving the summarized experiment object failed, perhaps you do not have permissions?")
   }
-  message("The final summarized experiment has ", nrow(assays(se)),
+  message("The final summarized experiment has ", nrow(exprs(se)),
           " rows and ", ncol(colData(se)), " columns.")
   return(se)
 }
@@ -623,6 +622,17 @@ subset_se <- function(se, subset = NULL, ids = NULL,
 
 
 ## Put S4 dispatchers here.
+setMethod("colors",
+          signature = "SummarizedExperiment",
+          definition = function(expt) {
+            metadata(expt)[["colors"]]
+          })
+setMethod("colors<-",
+          signature = "SummarizedExperiment",
+          definition = function(expt, lst) {
+            metadata(expt)[["colors"]] <- lst
+            return(expt)
+          })
 setMethod("exprs",
           signature = "SummarizedExperiment",
           definition = function(object) {

@@ -5,7 +5,8 @@ Version: 1.0
 Date: 2018-03-01
 Author: Ashton Trey Belew, Keith Hughitt
 Authors@R: c(person("Ashton", "Belew", email="abelew@gmail.com", role=c("aut","cre")),
-             person("Keith", "Hughitt", email="khughitt@umd.edu", role=c("aut")))
+             person("Keith", "Hughitt", email="khughitt@umd.edu", role=c("aut")),
+             person("Jerry", "Zhao", email="zhaojerry123@gmail.com", role=c("aut")))
 Maintainer: Ashton Trey Belew <abelew@gmail.com>
 Description: This is a set of functions I have been using in my various analyses
              in the El-Sayed laboratory. The set of tasks included herein run a
@@ -132,7 +133,3 @@ Collate:
   'tnseq.R'
   'variants.R'
   'xlsx.R'
-  'z_methods_circos.R'
-  'z_methods_exp.R'
-  'z_methods_other.R'
-  'z_methods_se.R'

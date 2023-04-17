@@ -1183,7 +1183,7 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
   if (!is.null(excel)) {
     excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite = TRUE))
   }
-  message("Finished writing excel file.")
+  mesg("Finished writing excel file.")
   for (img in image_files) {
     removed <- file.remove(img)
   }

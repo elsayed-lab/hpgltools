@@ -308,7 +308,7 @@ graph_metrics <- function(expt, cormethod = "pearson", distmethod = "euclidean",
   gene_heatmap <- NULL
   if (isTRUE(gene_heat)) {
     mesg("gene heatmap!")
-    gene_heatmap <- try(suppressWarnings(plot_sample_heatmap(tmp_expt,
+    gene_heatmap <- try(suppressWarnings(plot_sample_heatmap(tmp_expt, filter = FALSE,
                                                              ...)))
     if ("try-error" %in% class(gene_heatmap)) {
       gene_heatmap <- NULL

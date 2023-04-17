@@ -1913,6 +1913,18 @@ overlap_groups <- function (lst, sort = TRUE) {
   ## save element list to facilitate access using an index in case rownames are not named
 }
 
+#' Mostly as a reminder of how to get the gene IDs from a specific group in an upset plot.
+#'
+#' Given a set of groups from upsetr, extract the elements from one of them.
+#' @param overlapping_groups Result from overlap_groups, which just makes an indexed
+#'  version of the genes by venn/upset group.
+#' @param group Name of the subset of interest, something like 'a:b' for the union of a:b.
+#' @export
+overlap_geneids <- function(overlapping_groups, group) {
+  gene_ids <- attr(overlapping_groups, "elements")[overlapping_groups[[group]]]
+  return(gene_ids)
+}
+
 #' Use UpSetR to compare significant gene lists.
 #'
 #' @param sig datastructure of significantly DE genes.
