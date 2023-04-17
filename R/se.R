@@ -620,3 +620,61 @@ subset_se <- function(se, subset = NULL, ids = NULL,
   ## pData(subset_expressionset) <- subset_design
   return(new_se)
 }
+
+
+## Put S4 dispatchers here.
+setMethod("exprs",
+          signature = "SummarizedExperiment",
+          definition = function(object) {
+            SummarizedExperiment::assay(object)
+          })
+setMethod("exprs<-",
+          signature = "SummarizedExperiment",
+          definition = function(object, value) {
+            SummarizedExperiment::assay(object) <- value
+            return(object)
+          })
+setMethod("fData",
+          signature = "SummarizedExperiment",
+          definition = function(object) {
+            SummarizedExperiment::rowData(object)
+          })
+setMethod("fData<-",
+          signature = "SummarizedExperiment",
+          definition = function(object, value) {
+            SummarizedExperiment::rowData(object) <- value
+            return(object)
+          })
+setMethod("pData",
+          signature = "SummarizedExperiment",
+          definition = function(object) {
+            SummarizedExperiment::colData(object)
+          })
+setMethod("pData<-",
+          signature = "SummarizedExperiment",
+          definition = function(object, value) {
+            SummarizedExperiment::colData(object) <- value
+            return(object)
+          })
+setMethod("sampleNames",
+          signature = "SummarizedExperiment",
+          definition = function(object) {
+            BiocGenerics::colnames(object)
+          })
+setMethod("sampleNames<-",
+          signature = "SummarizedExperiment",
+          definition = function(object, value) {
+            BiocGenerics::colnames(object) <- value
+          })
+
+setMethod("state",
+          signature = signature(expt = "SummarizedExperiment"),
+          definition = function(expt) {
+            metadata(expt)[["state"]]
+          })
+setMethod("state<-",
+          signature = signature(expt = "SummarizedExperiment"),
+          definition = function(expt, value) {
+            metadata(expt)[["state"]] <- value
+            return(expt)
+          })
