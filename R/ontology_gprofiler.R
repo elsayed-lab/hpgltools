@@ -26,6 +26,7 @@ all_gprofiler <- function(sig, according_to = "deseq", together = FALSE, ...) {
   for (i in seq_along(sig_names)) {
     slept <- Sys.sleep(1)
     name <- sig_names[i]
+    mesg("Starting ", name, ".")
     retname_up <- paste0(name, "_up")
     retname_down <- paste0(name, "_down")
     up <- input_up[[name]]
@@ -55,12 +56,12 @@ all_gprofiler <- function(sig, according_to = "deseq", together = FALSE, ...) {
       }
     }
     if (up_elements > 0) {
-      ret[[retname_up]] <- simple_gprofiler(up, ...)
+      ret[[retname_up]] <- sm(simple_gprofiler(up, ...))
     } else {
       ret[[retname_up]] <- NULL
     }
     if (down_elements > 0) {
-      ret[[retname_down]] <- simple_gprofiler(down, ...)
+      ret[[retname_down]] <- sm(simple_gprofiler(down, ...))
     } else {
       ret[[retname_down]] <- NULL
     }

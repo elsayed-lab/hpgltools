@@ -541,6 +541,17 @@ plot_significant_bar <- function(ups, downs, maximum = NULL, text = TRUE,
 ## S4 dispatchers below.
 
 setMethod("plot_libsize",
+          signature = signature(data = "data.frame", condition = "factor", colors = "character"),
+          definition = function(data, condition, colors, text = TRUE,
+                                order = NULL, plot_title = NULL, yscale = NULL,
+                                expt_names = NULL, label_chars = 10, ...) {
+            data <- as.matrix(data)
+            plot_libsize(data, condition = condition, colors = colors,
+                         text = text, order = order, plot_title = plot_title, yscale = yscale,
+                         expt_names = expt_names, label_chars = label_chars, ...) # , ...)
+          })
+
+setMethod("plot_libsize",
           signature = signature(data = "expt"),
           definition = function(data, condition = NULL, colors = NULL, text = TRUE,
                                 order = NULL, plot_title = NULL, yscale = NULL,
