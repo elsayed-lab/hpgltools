@@ -970,7 +970,7 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
                                  color_high = "red", color_low = "blue",
                                  pval = 0.05, alpha = 0.4, logfc = 1.0, label_numbers = TRUE,
                                  size = 2, shapes = TRUE, invert = FALSE,
-                                 label = NULL, label_column = "hgncsymbol", ...) {
+                                 label = 10, label_column = "hgncsymbol", ...) {
   ## Set up the data frame which will describe the plot
 
   ## Example caller:
@@ -1016,7 +1016,7 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
   if (!is.null(label_column)) {
     newdf[["label"]] <- input[[label_column]]
   } else {
-    newdf[["label"]] <- rownames(newdf)
+    newdf[["label"]] <- rownames(input)
   }
   rownames(newdf) <- rownames(input)
   rows_without_na <- complete.cases(newdf)
@@ -1399,7 +1399,7 @@ plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
     df[["xaxis"]] <- df[["xaxis"]] * -1.0
   }
   ## Add the label column if it exists.
-  if (!is.null(label_column) & !is.null(input[[label_column]])) {
+  if (!is.null(label_column) && !is.null(input[[label_column]])) {
     df[["label"]] <- input[[label_column]]
   } else {
     df[["label"]] <- rownames(input)

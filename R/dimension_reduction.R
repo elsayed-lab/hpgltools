@@ -1698,7 +1698,7 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
     maximum_size <- max(levels(pca_data[["size"]]))
   }
 
-  if (is.null(size_column) & num_batches <= 5) {
+  if (is.null(size_column) && num_batches <= 5) {
     pca_plot <- pca_plot +
       ggplot2::geom_point(size = plot_size, alpha = plot_alpha,
                           aes(shape = .data[["batch"]],
@@ -1726,7 +1726,7 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
         labels = levels(as.factor(pca_data[["batch"]])),
         guide = ggplot2::guide_legend(override.aes = list(size = plot_size, fill = "grey")),
         values = 21:25)
-  } else if (is.null(size_column) & num_batches > 5) {
+  } else if (is.null(size_column) && num_batches > 5) {
     pca_plot <- pca_plot +
       ggplot2::geom_point(size = plot_size, alpha = plot_alpha,
                           aes(shape = .data[["batch"]],
@@ -1744,7 +1744,7 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
                                   labels = levels(as.factor(pca_data[["batch"]])),
                                   guide = ggplot2::guide_legend(overwrite.aes = list(size = plot_size)),
                                   values = 1:num_batches)
-  } else if (!is.null(size_column) & num_batches <= 5) {
+  } else if (!is.null(size_column) && num_batches <= 5) {
     ## This will require the 6 steps above and one more
     pca_plot <- ggplot(data = as.data.frame(pca_data),
                        aes(x = .data[[first]], y = .data[[second]],
@@ -1781,7 +1781,7 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
       ggplot2::scale_size_manual(name = size_column,
                                  labels = levels(pca_data[[size_column]]),
                                  values = as.numeric(levels(pca_data[["size"]])))
-  } else if (!is.null(size_column) & num_batches > 5) {
+  } else if (!is.null(size_column) && num_batches > 5) {
     pca_plot <- pca_plot +
       ggplot2::geom_point(alpha = plot_alpha,
                           aes(shape = .data[["batch"]],

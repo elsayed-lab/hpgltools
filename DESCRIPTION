@@ -86,6 +86,7 @@ Collate:
   'de_xlsx.R'
   'dimension_reduction.R'
   'expt.R'
+  'expressionset.R'
   'gene_sets.R'
   'gsva.R'
   'helpers_misc.R'

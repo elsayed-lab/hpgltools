@@ -144,9 +144,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
     batch <- "sva"
   }
 
-  if (is.null(new_expt[["original_expressionset"]])) {
-    new_expt[["original_expressionset"]] <- new_expt[["expressionset"]]
-  }
+  new_expt <- backup_expression_data(new_expt)
 
   mesg("This function will replace the expt$expressionset slot with:")
   operations <- what_happened(transform = transform, batch = batch, convert = convert,

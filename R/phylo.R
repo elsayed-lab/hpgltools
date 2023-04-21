@@ -6,8 +6,9 @@
 #' @param directory Directory of fasta genomes.
 #' @param root Species ID to place at the root of the tree.
 #' @return List containing the phylogeny and some other stuff.
+#' @export
 genomic_sequence_phylo <- function(directory, root = NULL) {
-  files <- list.files(directory, pattern = "\\.fasta$")
+  files <- list.files(directory, pattern = "\\.fasta$|\\.fa$|\\.fsa$")
   sequence_vectors <- list()
   sequence_set <- c()
   count <- 0
@@ -34,7 +35,13 @@ genomic_sequence_phylo <- function(directory, root = NULL) {
   test_dist <- kmer::kdistance(dnastring_dnabin, k = 7)
   test_phy <- ape::nj(test_dist)
   if (!is.null(root)) {
-    test_phy <- ape::root(test_phy, root)
+    if (root %in% sequence_names) {
+      test_phy <- ape::root(test_phy, root)
+    } else {
+      warning("The provided root ", root, " is not in the dataset.")
+      message("Here are the available samples: ")
+      print(sequence_names)
+    }
   }
   test_phy <- ape::ladderize(test_phy)
 

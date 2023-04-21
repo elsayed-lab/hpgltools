@@ -3,6 +3,13 @@
 ## because I was having annoying problems creating expressionSets.  Thus, >90%
 ## of the logic here is intended to simplify and standardize that process.
 
+backup_expression_data <- function(expt) {
+  if (is.null(expt[["original_expressionset"]])) {
+    expt[["original_expressionset"]] <- expt[["expressionset"]]
+  }
+  return(expt)
+}
+
 #' Take two expressionsets and smoosh them together.
 #'
 #' Because of the extra sugar I added to expressionSets, the combine() function
@@ -1121,6 +1128,11 @@ generate_expt_colors <- function(sample_definitions, cond_column = "condition",
   ## Set the color names
   names(chosen_colors) <- sample_definitions[[by]]
   return(chosen_colors)
+}
+
+get_backup_expression_data <- function(expt) {
+  backup <- expt[["original_expressionset"]]
+  return(backup)
 }
 
 #' Small hack of limma's exampleData() to allow for arbitrary data set
@@ -3351,10 +3363,11 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
       "norm_qq" = nqq_plot,
       "norm_violin" = nvarpart_plot,
       "norm_pct" = npct_plot,
-      "medians" = median_data
+      "medians" = median_data,
+      "saved" = save_result
   )
   for (img in image_files) {
-    removed <- try(suppressWarnings(file.remove(img)), silent=TRUE)
+    removed <- try(suppressWarnings(file.remove(img)), silent = TRUE)
   }
   return(retlist)
 }
@@ -3430,21 +3443,10 @@ setMethod("assay",
             mtrx <- Biobase::exprs(x[["expressionset"]])
             return(mtrx)
           })
-setMethod("assay",
-          signature = "ExpressionSet",
-          definition = function(x, withDimnames = TRUE, ...) {
-            Biobase::exprs(x)
-          })
 setMethod("assay<-",
           signature = "expt",
           definition = function(x, i, withDimnames = TRUE, ..., value) {
             Biobase::exprs(x[["expressionset"]]) <- value
-            return(x)
-          })
-setMethod("assay<-",
-          signature = "ExpressionSet",
-          definition = function(x, i, withDimnames = TRUE, ..., value) {
-            Biobase::exprs(x) <- value
             return(x)
           })
 setMethod("colData",
@@ -3452,21 +3454,10 @@ setMethod("colData",
           definition = function(x, withDimnames = TRUE, ...) {
             Biobase::pData(x[["expressionset"]])
           })
-setMethod("colData",
-          signature = "ExpressionSet",
-          definition = function(x, withDimnames = TRUE, ...) {
-            Biobase::pData(x)
-          })
 setMethod("colData<-",
           signature = "expt",
           definition = function(x, i, withDimnames = TRUE, ..., value) {
             Biobase::pData(x[["expressionset"]]) <- value
-            return(x)
-          })
-setMethod("colData<-",
-          signature = "ExpressionSet",
-          definition = function(x, i, withDimnames = TRUE, ..., value) {
-            Biobase::pData(x) <- value
             return(x)
           })
 setMethod("colors",
@@ -3523,11 +3514,6 @@ setMethod("rowData",
           definition = function(x, withDimnames = TRUE, ...) {
             Biobase::fData(x[["expressionset"]])
           })
-setMethod("rowData",
-          signature = "ExpressionSet",
-          definition = function(x, withDimnames = TRUE, ...) {
-            Biobase::fData(x)
-          })
 setMethod("rowData<-",
           signature = "expt",
           definition = function(x, i, withDimnames = TRUE, ..., value) {
@@ -3555,16 +3541,4 @@ setMethod("state<-",
             expt[["state"]] <- value
             return(expt)
           })
-
-
-setMethod("subset_expt",
-          signature = signature(expt = "SummarizedExperiment"),
-          definition = function(expt, subset = NULL, ids = NULL,
-                                nonzero = NULL, coverage = NULL) {
-            subset_se(expt, subset = subset, ids = ids,
-                      nonzero = nonzero, coverage = coverage)
-          })
-
-
-
 ## EOF

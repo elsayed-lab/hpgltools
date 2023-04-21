@@ -26,8 +26,9 @@ combine_de_tables(
   p_cutoff = 0.05,
   de_types = c("limma", "deseq", "edger"),
   excel_title = "Table SXXX: Combined Differential Expression of YYY",
+  increment_start = "SXXX",
+  start_worksheet_num = 2,
   rda = NULL,
-  start_worksheet = "S02",
   label = 10,
   label_column = "hgncsymbol",
   format_sig = 4,
@@ -87,9 +88,6 @@ string 'YYY', that will be replaced by the contrast name.}
 
 \item{rda}{Write a rda file of the results.}
 
-\item{start_worksheet}{This will now increment worksheet titles
-from this point forward.}
-
 \item{label}{Label this number of top-n genes on the plots?}
 
 \item{label_column}{Use this column for gene labelling.}
@@ -110,6 +108,9 @@ plotting.}
 plots.}
 
 \item{z_lines}{Add z-score lines to coefficient plots?}
+
+\item{start_worksheet}{This will now increment worksheet titles
+from this point forward.}
 }
 \value{
 Table combining limma/edger/deseq outputs.
