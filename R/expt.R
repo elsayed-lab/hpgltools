@@ -3351,10 +3351,11 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
       "norm_qq" = nqq_plot,
       "norm_violin" = nvarpart_plot,
       "norm_pct" = npct_plot,
-      "medians" = median_data
+      "medians" = median_data,
+      "saved" = save_result
   )
   for (img in image_files) {
-    removed <- try(suppressWarnings(file.remove(img)), silent=TRUE)
+    removed <- try(suppressWarnings(file.remove(img)), silent = TRUE)
   }
   return(retlist)
 }

@@ -761,7 +761,7 @@ plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL
     data.frame("y" = mean(x),
                "label" = signif(mean(x, na.rm = TRUE), digits = 2))
   }
-
+  cv_data[[x_axis]] <- as.factor(cv_data[[x_axis]])
   ## Add the number of samples of each type to the top of the plot with this.
   cv_data[["x_axis"]] <- droplevels(cv_data[[x_axis]])
   sample_numbers <- list()
