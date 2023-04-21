@@ -622,6 +622,13 @@ subset_se <- function(se, subset = NULL, ids = NULL,
 
 
 ## Put S4 dispatchers here.
+setMethod("backup_expression_data",
+          signature = "SummarizedExperiment",
+          definition = function(expt) {
+            backup <- expt
+            metadata(expt)[["original_se"]] <- backup
+            return(expt)
+          })
 setMethod("colors",
           signature = "SummarizedExperiment",
           definition = function(expt) {
@@ -655,6 +662,12 @@ setMethod("fData<-",
             SummarizedExperiment::rowData(object) <- value
             return(object)
           })
+setMethod("get_backup_expression_data",
+          signature = "SummarizedExperiment",
+          definition = function(expt) {
+            backup <- metadata(expt)[["original_se"]]
+            return(backup)
+          })
 setMethod("pData",
           signature = "SummarizedExperiment",
           definition = function(object) {
@@ -687,4 +700,11 @@ setMethod("state<-",
           definition = function(expt, value) {
             metadata(expt)[["state"]] <- value
             return(expt)
+          })
+setMethod("subset_expt",
+          signature = signature(expt = "SummarizedExperiment"),
+          definition = function(expt, subset = NULL, ids = NULL,
+                                nonzero = NULL, coverage = NULL) {
+            subset_se(expt, subset = subset, ids = ids,
+                      nonzero = nonzero, coverage = coverage)
           })

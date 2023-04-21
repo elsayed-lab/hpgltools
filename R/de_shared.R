@@ -609,7 +609,9 @@ choose_binom_dataset <- function(input, verbose = TRUE, force = FALSE, ...) {
     } else if (norm_state != "raw" && tran_state != "raw" && conv_state != "raw") {
       ## These if statements may be insufficient to check for the appropriate
       ## input for deseq.
-      data <- exprs(input[["original_expressionset"]])
+      backup <- get_backup_expression_data(input)
+      data <- exprs(backup)
+      libsize <- backup[["libsize"]]
     } else if (norm_state != "raw" || tran_state != "raw") {
       ## This makes use of the fact that the order of operations in the
       ## normalization function is
@@ -632,6 +634,7 @@ choose_binom_dataset <- function(input, verbose = TRUE, force = FALSE, ...) {
     }
     ## End testing if normalization has been performed
   } else {
+    ## This is another function which would profit from using a method test.
     data <- as.data.frame(input)
     libsize <- colSums(data)
   }
