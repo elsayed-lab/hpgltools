@@ -6,7 +6,7 @@ context("050annotation_txt.R:
 ## 2017-12, exported functions in annotation_txt:
 ## load_trinotate_annotations() load_trinotate_go()
 
-tmp <- system.file("share/sb/trinotate_head.csv.xz", package = "hpgltools")
+tmp <- system.file("share/sb/trinotate_head.csv.xz", package = "hpgldata")
 testing <- load_trinotate_annotations(trinotate = tmp)
 ## Moved rownames to a column for tibble, ergo 1 more column
 ## I recently changed this to drop columns which have no information, losing 3.

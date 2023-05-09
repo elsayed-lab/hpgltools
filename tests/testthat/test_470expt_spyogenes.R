@@ -5,7 +5,7 @@ library(hpgltools)
 context("470expt_spyogenes.R: Does a small bacterial RNAseq experiment load?")
 
 mgas_data <- new.env()
-cdm_data <- system.file("share/cdm_expt.rda", package = "hpgltools")
+cdm_data <- system.file("share/cdm_expt.rda", package = "hpgldata")
 load(cdm_data, envir = mgas_data)
 rm(cdm_data)
 

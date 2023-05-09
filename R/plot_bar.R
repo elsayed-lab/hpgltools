@@ -540,6 +540,23 @@ plot_significant_bar <- function(ups, downs, maximum = NULL, text = TRUE,
 
 ## S4 dispatchers below.
 
+## For reasons I do not yet understand, I cannot set the generic along with
+## the matrix/factor/character method.  I think in order to do this I will need
+## to rename the function which does the actual work and call it separately.
+#setGeneric("plot_libsize",
+#  signature = c("data", "condition", "colors"),
+#  def = function(data, condition, colors, ...) standardGeneric("plot_libsize"))
+
+#setMethod("plot_libsize",
+#          signature = signature(data = "matrix", condition = "factor", colors = "character"),
+#          definition = function(data, condition, colors, text = TRUE,
+#                                order = NULL, plot_title = NULL, yscale = NULL,
+#                                expt_names = NULL, label_chars = 10, ...) {
+#            plot_libsize(data, condition = condition, colors = colors,
+#                         text = text, order = order, plot_title = plot_title, yscale = yscale,
+#                         expt_names = expt_names, label_chars = label_chars, ...)
+#          })
+
 setMethod("plot_libsize",
           signature = signature(data = "data.frame", condition = "factor", colors = "character"),
           definition = function(data, condition, colors, text = TRUE,
@@ -563,6 +580,7 @@ setMethod("plot_libsize",
                          order = order, plot_title = plot_title, yscale = yscale,
                          expt_names = expt_names, label_chars = label_chars, ...)
           })
+
 setMethod("plot_libsize",
           signature = signature(data = "ExpressionSet"),
           definition = function(data, condition = NULL, colors = NULL, text = TRUE,
@@ -605,7 +623,5 @@ setMethod("plot_libsize",
                          expt_names = expt_names, label_chars = label_chars,
                          ...)
           })
-
-
 
 ## EOF

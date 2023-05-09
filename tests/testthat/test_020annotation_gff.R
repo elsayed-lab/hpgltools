@@ -9,8 +9,8 @@ context("020annotation_gff.R
 ## I deleted make_tooltips(), that was stupid.
 ## I moved get_gff_gene_lengths() to get_genelengths() and made it less stupid.
 
-pa_gff <- system.file("share/paeruginosa_pa14.gff", package = "hpgltools")
-pa_fasta <- system.file("share/paeruginosa_pa14.fasta", package = "hpgltools")
+pa_gff <- system.file("share/paeruginosa_pa14.gff", package = "hpgldata")
+pa_fasta <- system.file("share/paeruginosa_pa14.fasta", package = "hpgldata")
 
 ## gff2irange()
 pa_irange <- gff2irange(pa_gff)

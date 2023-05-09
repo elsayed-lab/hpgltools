@@ -11,7 +11,7 @@ plot_pca(
   plot_title = TRUE,
   plot_size = 5,
   plot_alpha = NULL,
-  plot_labels = NULL,
+  plot_labels = FALSE,
   size_column = NULL,
   pc_method = "fast_svd",
   x_pc = 1,

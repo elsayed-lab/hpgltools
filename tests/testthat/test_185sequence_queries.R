@@ -1,10 +1,9 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("185sequence_queries.R:
-  123456789012\n")
+context("185sequence_queries.R")
 
-a909_fasta <- system.file("share/gbs_tnseq/sagalactiae_a909.fasta", package = "hpgltools")
+a909_fasta <- system.file("share/gbs_tnseq/sagalactiae_a909.fasta", package = "hpgldata")
 number_atg <- count_nmer(a909_fasta)
 expected <- 37134
 actual <- as.numeric(number_atg)
@@ -41,8 +40,6 @@ test_that("Do we get some sequences from the minus strand genes?", {
   expect_equal(nrow(dm_utrs[["threeprime_minus_table"]]), expected)
   expect_equal(nrow(dm_utrs[["cds_minus_table"]]), expected)
 })
-
-
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x = as.numeric(end - start))

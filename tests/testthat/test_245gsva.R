@@ -9,7 +9,7 @@ context("245gsva.R:
 
 ## I am not sure what I want to test with this either... hmmm
 hs_envir <- environment()
-hs_file <- system.file("share/hs_expt.rda", package = "hpgltools")
+hs_file <- system.file("share/hs_expt.rda", package = "hpgldata")
 load(file = hs_file, envir = hs_envir)
 hs_expt <- hs_envir[["expt"]]
 hs_expt <- subset_expt(hs_expt, subset="condition=='sh'|condition=='chr'")

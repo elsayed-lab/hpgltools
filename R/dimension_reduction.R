@@ -558,7 +558,7 @@ plot_3d_pca <- function(pc_result, components = c(1, 2, 3),
 #' }
 #' @export
 plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
-                     plot_size = 5, plot_alpha = NULL, plot_labels = NULL, size_column = NULL,
+                     plot_size = 5, plot_alpha = NULL, plot_labels = FALSE, size_column = NULL,
                      pc_method = "fast_svd", x_pc = 1, y_pc = 2, max_overlaps = 20,
                      num_pc = NULL, expt_names = NULL, label_chars = 10,
                      ...) {
@@ -971,8 +971,8 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
   comp_data[[y_name]] <- pc_table[, y_pc]
   tmp <- as.data.frame(pc_table)
   for (pc in seq_len(num_pc)) {
-    oldname <- glue::glue("PC{pc}")
-    pc_name <- glue::glue("pc_{pc}")
+    oldname <- glue("PC{pc}")
+    pc_name <- glue("pc_{pc}")
     comp_data[[pc_name]] <- tmp[[oldname]]
   }
 
@@ -1765,8 +1765,8 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
     pca_plot <- pca_plot +
       ggplot2::geom_point(colour = "black", alpha = plot_alpha, show.legend = FALSE,
                           aes(shape = .data[["batch"]],
-                              size = "size",
-                              fill = "condition")) +
+                              size = .data[["size"]],
+                              fill = .data[["condition"]])) +
       ggplot2::scale_color_manual(name = "Condition",
                                   guide = "legend",
                                   values = color_list) +
@@ -1779,8 +1779,8 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
         guide = ggplot2::guide_legend(override.aes = list(size = plot_size, fill = "grey")),
         values = 21:25) +
       ggplot2::scale_size_manual(name = size_column,
-                                 labels = levels(pca_data[[size_column]]),
-                                 values = as.numeric(levels(pca_data[["size"]])))
+        labels = levels(pca_data[[size_column]]),
+        values = as.numeric(levels(pca_data[["size"]])))
   } else if (!is.null(size_column) && num_batches > 5) {
     pca_plot <- pca_plot +
       ggplot2::geom_point(alpha = plot_alpha,

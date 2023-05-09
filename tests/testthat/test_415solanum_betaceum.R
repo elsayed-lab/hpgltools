@@ -4,7 +4,7 @@ library(hpgltools)
 context("15solanum_betaceum.R: Test some Pseudomonas data.\n")
 
 sb_annot <- load_trinotate_annotations(
-  trinotate = system.file("share/sb/trinotate_head.csv.xz", package = "hpgltools"))
+  trinotate = system.file("share/sb/trinotate_head.csv.xz", package = "hpgldata"))
 
 expected <- c(49999, 31)
 actual <- dim(sb_annot)
@@ -14,7 +14,7 @@ test_that("Do we get the expected trinotate annotation data?", {
 
 ## Try loading some data generated with Sandra and make sure it still works.
 untarred <- utils::untar(tarfile = system.file("share/sb/preprocessing.tar.xz",
-                                               package = "hpgltools"))
+                                               package = "hpgldata"))
 
 ## A little context: Sandra is working with an organism with no genome and no love.
 ## We therefore passed all the reads to trinity and trinotate and used the resulting,

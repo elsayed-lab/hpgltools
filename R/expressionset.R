@@ -9,12 +9,12 @@ setMethod("assay<-",
             Biobase::exprs(x) <- value
             return(x)
           })
-setMethod("backup_expression_data",
-          signature = "ExpressionSet",
-          definition = function(expt) {
-            message("I do not know a good way to backup the expressionset data, returning.")
-            return(expt)
-          })
+setMethod(
+  "backup_expression_data", signature = signature(expt = "ExpressionSet"),
+  definition = function(expt) {
+    message("I do not know a good way to backup the expressionset data, returning.")
+    return(expt)
+  })
 setMethod("colData",
           signature = "ExpressionSet",
           definition = function(x, withDimnames = TRUE, ...) {

@@ -50,9 +50,9 @@ context("250proteomics.R:
 
 ## For most of the above choices, I have functions in the hpgltools to help.
 
-meta <- system.file("share/mtb_prot/dia_samples.ods", package = "hpgltools")
+meta <- system.file("share/mtb_prot/dia_samples.ods", package = "hpgldata")
 untarred <- utils::untar(tarfile = system.file("share/mtb_prot/sb_prot.tar.xz",
-                                               package = "hpgltools"))
+                                               package = "hpgldata"))
 ##mtb_expt <- create_expt(meta = meta)
 
 ## As the name implies, this function uses the diascored column in the metadata

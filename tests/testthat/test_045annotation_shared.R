@@ -8,8 +8,8 @@ context("045annotation_shared.R:
 
 ## get_gene_size uses load_annotations, and load_annotations just calls one of the others.
 
-pa_gff <- system.file("share/paeruginosa_pa14.gff", package = "hpgltools")
-pa_fasta <- system.file("share/paeruginosa_pa14.fasta", package = "hpgltools")
+pa_gff <- system.file("share/paeruginosa_pa14.gff", package = "hpgldata")
+pa_fasta <- system.file("share/paeruginosa_pa14.fasta", package = "hpgldata")
 
 testing <- load_annotations(type = "gff", gff = pa_gff)
 expected <- 11946

@@ -82,6 +82,7 @@ Collate:
   'de_deseq.R'
   'de_ebseq.R'
   'de_limma.R'
+  'de_noiseq.R'
   'de_plots.R'
   'de_xlsx.R'
   'dimension_reduction.R'

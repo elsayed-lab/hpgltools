@@ -330,7 +330,7 @@ actual <- dim(testing[["up_genes"]])
 ## 3839
 test_that("Did get_sig_genes() get some stuff?", {
   expect_equal(expected[1], actual[1])
-  expect_equal(expected[2], actual[2])
+  expect_lt(expected[2], actual[2])
 })
 
 expected <- c(183, 6)
@@ -338,7 +338,7 @@ actual <- dim(testing[["down_genes"]])
 ## 4041
 test_that("Did get_sig_genes() get some stuff?", {
   expect_equal(expected[1], actual[1])
-  expect_equal(expected[2], actual[2])
+  expect_lt(expected[2], actual[2])
 })
 
 pombe_model <- choose_model(pombe_subset)

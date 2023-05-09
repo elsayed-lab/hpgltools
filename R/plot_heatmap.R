@@ -89,6 +89,7 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
                          type = "correlation", batch_row = "batch", plot_title = NULL,
                          label_chars = 10, ...) {
   arglist <- list(...)
+
   margin_list <- c(12, 9)
   if (!is.null(arglist[["margin_list"]])) {
     margin_list <- arglist[["margin_list"]]
@@ -104,36 +105,6 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
   remove_equal <- FALSE
   if (!is.null(arglist[["remove_equal"]])) {
     remove_equal <- arglist[["remove_equal"]]
-  }
-
-  ## If plot_title is NULL, print nothing, if it is TRUE
-  ## Then give some information about what happened to the data to make the plot.
-  ## I tried foolishly to put this in plot_pcs(), but there is no way that receives
-  ## my expt containing the normalization state of the data.
-  if (isTRUE(plot_title)) {
-    plot_title <- what_happened(expt_data)
-  } else if (!is.null(plot_title)) {
-    data_title <- what_happened(expt_data)
-    plot_title <- glue("{plot_title}; {data_title}")
-  } else {
-    ## Leave the title blank.
-  }
-
-  data_class <- class(expt_data)[1]
-  if (data_class == "expt" || data_class == "SummarizedExperiment") {
-    expt_design <- pData(expt_data)
-    expt_colors <- expt_data[["colors"]]
-    if (is.null(expt_names)) {
-      expt_names <- expt_data[["expt_names"]]
-    }
-    expt_data <- exprs(expt_data)
-  } else if (data_class == "ExpressionSet") {
-    expt_data <- exprs(expt_data)
-  } else if (data_class == "matrix" || data_class == "data.frame") {
-    ## some functions prefer matrix, so I am keeping this explicit for the moment
-    expt_data <- as.data.frame(expt_data)
-  } else {
-    stop("This function understands types: expt, ExpressionSet, data.frame, and matrix.")
   }
 
   if (is.null(expt_colors)) {
@@ -177,12 +148,13 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
     heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "OrRd"))(100)
     if (method == "cordist") {
       heatmap_colors <- grDevices::colorRampPalette(
-                                       c("yellow2", "goldenrod", "darkred"),
-                                       bias = 0.5)(100)
+        c("yellow2", "goldenrod", "darkred"),
+        bias = 0.5)(100)
     }
   } else if (type == "distance") {
     heatmap_data <- as.matrix(dist(t(expt_data)), method = method)
-    heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "GnBu"))(100)
+    heatmap_colors <- grDevices::colorRampPalette(
+      RColorBrewer::brewer.pal(9, "GnBu"))(100)
   } else {
     heatmap_colors <- gplots::redgreen(75)
     heatmap_data <- as.matrix(expt_data)
@@ -350,27 +322,14 @@ plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_
 #' @return a recordPlot() heatmap describing the samples.
 #' @seealso [gplots::heatmap.2()]
 #' @export
-plot_sample_heatmap <- function(data, colors = NULL, design = NULL,
+plot_sample_heatmap <- function(data, colors = NULL, design = NULL, heatmap_colors = NULL,
                                 expt_names = NULL, dendrogram = "column",
                                 row_label = NA, plot_title = NULL, Rowv = TRUE,
                                 Colv = TRUE, label_chars = 10, filter = TRUE, ...) {
-  data_class <- class(data)[1]
-  if (data_class == "expt" || data_class == "SummarizedExperiment") {
-    if (isTRUE(filter)) {
-      data <- sm(normalize_expt(data, filter = TRUE))
-    }
-    design <- pData(data)
-    colors <- colors(data)
-    data <- exprs(data)
-  } else if (data_class == "ExpressionSet") {
-    data <- exprs(data)
-  } else if (data_class == "matrix" || data_class == "data.frame") {
-    ## some functions prefer matrix, so I am keeping this explicit for the moment
-    data <- as.data.frame(data)
-  } else {
-    stop("This function understands types: expt, ExpressionSet, data.frame, and matrix.")
+  data <- as.data.frame(data)
+  if (is.null(heatmap_colors)) {
+    heatmap_colors <- gplots::redgreen(75)
   }
-  heatmap_colors <- gplots::redgreen(75)
   if (is.null(names)) {
     names <- colnames(data)
   }
@@ -1022,5 +981,123 @@ heatmap.3 <- function(x, Rowv = TRUE, Colv = if (symm) "Rowv" else TRUE,
     extrafun()
   invisible(retval)
 }
+
+setMethod("plot_heatmap",
+  signature = signature(expt_data = "expt"),
+  definition = function(expt_data, expt_colors = NULL, expt_design = NULL, method = "pearson",
+                        expt_names = NULL, type = "correlation", batch_row = "batch",
+                        plot_title = NULL, label_chars = 10, ...) {
+    expt_design <- pData(expt_data)
+    expt_colors <- expt_data[["colors"]]
+    expt_names <- expt_data[["expt_names"]]
+    expt_data <- exprs(expt_data)
+    ## If plot_title is NULL, print nothing, if it is TRUE
+    ## Then give some information about what happened to the data to make the plot.
+    ## I tried foolishly to put this in plot_pcs(), but there is no way that receives
+    ## my expt containing the normalization state of the data.
+    if (isTRUE(plot_title)) {
+      plot_title <- what_happened(expt_data)
+    } else if (!is.null(plot_title)) {
+      data_title <- what_happened(expt_data)
+      plot_title <- glue("{plot_title}; {data_title}")
+    } else {
+      ## Leave the title blank.
+    }
+    plot_heatmap(expt_data, expt_colors = expt_colors, expt_design = expt_design,
+      method = method, expt_names = expt_names, type = type,
+      batch_row = batch_row, plot_title = plot_title,
+      label_chars = label_chars, ...)
+  })
+
+
+setMethod("plot_heatmap",
+  signature = signature(expt_data = "SummarizedExperiment"),
+  definition = function(expt_data, expt_colors = NULL, expt_design = NULL, method = "pearson",
+                        expt_names = NULL, type = "correlation", batch_row = "batch",
+                        plot_title = NULL, label_chars = 10, ...) {
+    expt_design <- pData(expt_data)
+    expt_colors <- metadata(expt_data)[["colors"]]
+    expt_names <- metadata(expt_data)[["expt_names"]]
+    expt_data <- exprs(expt_data)
+    if (isTRUE(plot_title)) {
+      plot_title <- what_happened(expt_data)
+    } else if (!is.null(plot_title)) {
+      data_title <- what_happened(expt_data)
+      plot_title <- glue("{plot_title}; {data_title}")
+    } else {
+      ## Leave the title blank.
+    }
+    plot_heatmap(expt_data, expt_colors = expt_colors, expt_design = expt_design,
+      method = method, expt_names = expt_names, type = type,
+      batch_row = batch_row, plot_title = plot_title,
+      label_chars = label_chars, ...)
+  })
+
+setMethod("plot_heatmap",
+  signature = signature(expt_data = "data.frame"),
+  definition = function(expt_data, ...) {
+    expt_mtrx <- as.matrix(expt_data)
+    plot_heatmap(expt_mtrx, ...)
+  })
+
+setMethod("plot_heatmap",
+  signature = signature(expt_data = "ExpressionSet"),
+  definition = function(expt_data, expt_colors = NULL, expt_design = NULL, method = "pearson",
+                        expt_names = NULL, type = "correlation", batch_row = "batch",
+                        plot_title = NULL, label_chars = 10, ...) {
+    expt_design <- pData(expt_data)
+    expt_mtrx <- exprs(expt_data)
+    plot_heatmap(expt_mtrx, expt_colors = expt_colors, expt_design = expt_design,
+      method = method, expt_names = expt_names, type = type,
+      batch_row = batch_row, plot_title = plot_title,
+      label_chars = label_chars, ...)
+  })
+
+setMethod("plot_sample_heatmap",
+  signature = signature(data = "expt"),
+  definition = function(data, colors = NULL, design = NULL, heatmap_colors = NULL,
+                        expt_names = NULL, dendrogram = "column",
+                        row_label = NA, plot_title = NULL, Rowv = TRUE,
+                        Colv = TRUE, label_chars = 10, filter = TRUE, ...) {
+    expt_design <- pData(data)
+    expt_colors <- data[["colors"]]
+    expt_names <- data[["expt_names"]]
+    expt_data <- exprs(data)
+    plot_sample_heatmap(expt_data, colors = expt_colors, design = expt_design,
+      expt_names = expt_names, dendrogram = dendrogram, heatmap_colors = heatmap_colors,
+      row_label = row_label, plot_title = plot_title, Rowv = Rowv,
+      Colv = Colv, label_chars = label_chars, filter = filter, ...)
+  })
+
+setMethod("plot_sample_heatmap",
+  signature = "ExpressionSet",
+  definition = function(data, colors = NULL, design = NULL, heatmap_colors = NULL,
+                        expt_names = NULL, dendrogram = "column",
+                        row_label = NA, plot_title = NULL, Rowv = TRUE,
+                        Colv = TRUE, label_chars = 10, filter = TRUE, ...) {
+    expt_design <- pData(data)
+    expt_names <- colnames(expt_design)
+    expt_data <- exprs(data)
+    plot_sample_heatmap(expt_data, colors = expt_colors, design = expt_design,
+      expt_names = expt_names, dendrogram = dendrogram, heatmap_colors = heatmap_colors,
+      row_label = row_label, plot_title = plot_title, Rowv = Rowv,
+      Colv = Colv, label_chars = label_chars, filter = filter, ...)
+  })
+
+setMethod("plot_sample_heatmap",
+  signature = "SummarizedExperiment",
+  definition = function(data, colors = NULL, design = NULL, heatmap_colors = NULL,
+                        expt_names = NULL, dendrogram = "column",
+                        row_label = NA, plot_title = NULL, Rowv = TRUE,
+                        Colv = TRUE, label_chars = 10, filter = TRUE, ...) {
+    expt_design <- pData(data)
+    expt_colors <- metadata(data)[["colors"]]
+    expt_names <- metadata(data)[["expt_names"]]
+    expt_data <- exprs(data)
+    plot_sample_heatmap(expt_data, colors = expt_colors, design = expt_design,
+      expt_names = expt_names, dendrogram = dendrogram, heatmap_colors = heatmap_colors,
+      row_label = row_label, plot_title = plot_title, Rowv = Rowv,
+      Colv = Colv, label_chars = label_chars, filter = filter, ...)
+  })
 
 ## EOF

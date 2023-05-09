@@ -418,7 +418,7 @@ recolor_points <- function(plot, df, ids, color = "red", ...) {
 #'  nonzero_plot <- plot_nonzero(expt = expt)
 #' }
 #' @export
-plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
+plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = FALSE,
                          expt_names = NULL, label_chars = 10, plot_legend = FALSE,
                          plot_title = NULL, cutoff = 0.65, ...) {
   arglist <- list(...)
@@ -518,7 +518,7 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
                                guide = "legend",
                                values = color_list) +
     ggplot2::ylab("Number of non-zero genes observed.") +
-    ggplot2::xlab("Observed CPM") +
+    ggplot2::xlab("Reads mapped in millions.") +
     ggplot2::theme_bw(base_size = base_size)
 
   if (is.null(plot_labels)) {

@@ -1,10 +1,11 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
+library(hpgldata)
 context("290alt_splicing.R:\n")
 
 mtb_rmats_untarred <- utils::untar(tarfile = system.file("share/mtb_rmats.tar.xz",
-                                                         package = "hpgltools"))
+                                                         package = "hpgldata"))
 
 basedir <- "mtb_rmats/rmats_hg38_91"
 ## Define the prefixes
@@ -44,7 +45,7 @@ test_that("We get a plot of some rMATS data?", {
 })
 
 suppa_rmats_untarred <- utils::untar(tarfile = system.file("share/mtb_suppa.tar.xz",
-                                                           package = "hpgltools"))
+                                                           package = "hpgldata"))
 basedir <- "mtb_suppa/preprocessing/outputs/suppa_hg38_91"
 dpsi_file <- file.path(basedir, "uninf_inf_diffsplice.dpsi")
 tpm_file <- file.path(basedir, "uninf_inf_diffsplice_avglogtpm.tab")

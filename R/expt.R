@@ -173,7 +173,7 @@ concatenate_runs <- function(expt, column = "replicate") {
   for (rep in replicates) {
     ## expression <- paste0(column, "=='", rep, "'")
     expression <- glue("{column} == '{rep}'")
-    tmp_expt <- sm(subset_expt(expt, expression))
+    tmp_expt <- subset_expt(expt, expression)
     tmp_data <- rowSums(exprs(tmp_expt))
     tmp_design <- pData(tmp_expt)[1, ]
     final_data <- cbind(final_data, tmp_data)
@@ -280,7 +280,7 @@ concatenate_runs <- function(expt, column = "replicate") {
 #' @import Biobase
 #' @export
 create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
-                        sanitize_rownames = FALSE, sample_colors = NULL, title = NULL,
+                        sanitize_rownames = TRUE, sample_colors = NULL, title = NULL,
                         notes = NULL, countdir = NULL, include_type = "all",
                         include_gff = NULL, file_column = "file", id_column = NULL,
                         savefile = NULL, low_files = FALSE, handle_na = "drop",
@@ -438,11 +438,15 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
   }
   ## Features like exon:alicethegene-1 are annoying and entirely too common in TriTrypDB data
   if (isTRUE(sanitize_rownames)) {
-    all_count_tables[["rownames"]] <- gsub(pattern = "^exon:", replacement = "",
-                                           x = all_count_tables[["rownames"]])
-    all_count_tables[["rownames"]] <- make.names(gsub(pattern = ":\\d+", replacement = "",
-                                                      x = all_count_tables[["rownames"]]),
-                                                 unique = TRUE)
+    mesg("Sanitizing rownames, if something unexpected happens later, look here first.")
+    all_count_tables[["rownames"]] <- gsub(
+      x = all_count_tables[["rownames"]],
+      pattern = "^exon:", replacement = "") %>%
+      gsub(pattern = "^gene:", replacement = "")
+
+    all_count_tables[["rownames"]] <- make.names(gsub(
+      x = all_count_tables[["rownames"]],
+      pattern = ":\\d+", replacement = ""), unique = TRUE)
   }
 
   ## There is an important caveat here!!
@@ -712,20 +716,25 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
   ## Therefore, if we call a function like DESeq() which requires
   ## non-log2 counts, we can check these values and convert accordingly
 
-  ## Now that the expressionset has been created, pack it into an expt object so that I
-  ## can keep backups etc.
-  expt <- sm(subset_expt(experiment)) ## I think this is spurious now.
+  ## expt <- sm(subset_expt(experiment)) ## I think this is spurious now.
 
   if (is.null(study_name)) {
     study_name <- basename(getwd())
   }
-  expt[["study"]] <- study_name
-  expt[["researcher"]] <- researcher
-  expt[["title"]] <- title
-  expt[["notes"]] <- toString(notes)
-  expt[["design"]] <- sample_definitions
-  expt[["annotation"]] <- annotation
-  expt[["gff_file"]] <- include_gff
+  expt <- list(
+    "expressionset" = experiment,
+    "annotation" = annotation,
+    "batches" = sample_definitions[["batch"]],
+    "conditions" = sample_definitions[["condition"]],
+    "colors" = chosen_colors,
+    "design" = sample_definitions,
+    "gff_file" = include_gff,
+    "libsize" = colSums(Biobase::exprs(experiment)),
+    "notes" = toString(notes),
+    "researcher" = researcher,
+    "study" = study_name,
+    "title" = title,
+    "tximport" = tximport_data)
   ## the 'state' slot in the expt is used to keep track of how the data is modified over time.
   starting_state <- list(
       "filter" = "raw",
@@ -737,18 +746,15 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
   ## Just in case there are condition names which are not used.
   ## Ditto here, this should not be needed.
   ## expt[["conditions"]] <- droplevels(as.factor(sample_definitions[, "condition"]))
-  expt[["conditions"]] <- sample_definitions[["condition"]]
   ## This might be redundant, but it ensures that no all-numeric conditions exist.
   ## expt[["conditions"]] <- gsub(pattern = "^(\\d+)$", replacement = "c\\1", x = expt[["conditions"]])
   names(expt[["conditions"]]) <- rownames(sample_definitions)
   ## Ditto for batches
-  expt[["batches"]] <- sample_definitions[["batch"]]
   ## expt[["batches"]] <- droplevels(as.factor(sample_definitions[, "batch"]))
   ## expt[["batches"]] <- gsub(pattern = "^(\\d+)$", replacement = "b\\1", x = expt[["batches"]])
   names(expt[["batches"]]) <- rownames(sample_definitions)
   ## Keep a backup of the metadata in case we do semantic filtering or somesuch.
   ## Keep a backup of the library sizes for limma.
-  expt[["libsize"]] <- colSums(Biobase::exprs(experiment))
   if (sum(expt[["libsize"]] == 0) > 0) {
     zero_idx <- expt[["libsize"]] == 0
     zero_samples <- names(expt[["libsize"]])[zero_idx]
@@ -756,9 +762,8 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
   }
   names(expt[["libsize"]]) <- rownames(sample_definitions)
   ## Save the chosen colors
-  expt[["colors"]] <- chosen_colors
   names(expt[["colors"]]) <- rownames(sample_definitions)
-  expt[["tximport"]] <- tximport_data
+  class(expt) <- "expt"
   ## Save an rdata file of the expressionset.
   if (is.null(savefile)) {
     if ("character" %in% class(metadata)) {
@@ -779,6 +784,13 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
   message("The final expressionset has ", nrow(exprs(expt)),
           " features and ", ncol(exprs(expt)), " samples.")
   return(expt)
+}
+
+#' A temporary alias to subset_genes
+#' @export
+exclude_genes_expt <- function(...) {
+  message("Note, I renamed this to subset_genes().")
+  subset_genes(...)
 }
 
 #' Exclude some genes given a pattern match
@@ -832,7 +844,7 @@ subset_genes <- function(expt, column = "txtype", method = "remove", ids = NULL,
   idx <- rep(x = TRUE, times = nrow(annotations))
   if (is.null(ids)) {
     idx <- grepl(pattern = silly_string, x = annotations[[column]], perl = TRUE)
-  } else if (is.logical(ids)) {
+  } else if (is.logical(ids) || is.numeric(ids)) {
     idx <- ids
   } else {
     idx <- rownames(expression) %in% ids
@@ -1784,6 +1796,15 @@ get_expt_colors <- function(expt) {
   return(all_colors)
 }
 
+print.expt <- function(x) {
+  message("An expressionSet containing experiment with ",
+          nrow(exprs(x)), " genes ", ncol(exprs(x)), " samples,")
+  message("There are ", ncol(pData(x)), " metadata columns and ",
+          ncol(fData(x)), " annotation columns.")
+  message("Its current state is: ", what_happened(x), ".")
+  message("The annotation set is: ", annotation(x), ".")
+}
+
 #' Change the colors of an expt
 #'
 #' When exploring differential analyses, it might be useful to play with the
@@ -1987,7 +2008,8 @@ set_expt_colors <- function(expt, colors = TRUE,
 #'  expt = set_expt_conditions(big_expt, factor = c(some,stuff,here))
 #' }
 #' @export
-set_expt_conditions <- function(expt, fact = NULL, ids = NULL, null_cell = "null", ...) {
+set_expt_conditions <- function(expt, fact = NULL, ids = NULL,
+                                prefix = NULL, null_cell = "null", ...) {
   arglist <- list(...)
   original_conditions <- pData(expt)[["condition"]]
   original_length <- length(original_conditions)
@@ -2019,6 +2041,9 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL, null_cell = "null
       ## Only do this if there are some null entries.
       if (sum(null_ids) > 0) {
         new_fact[null_ids] <- null_cell
+      }
+      if (!is.null(prefix)) {
+        new_fact <- paste0(prefix, new_fact)
       }
       new_expt[["conditions"]] <- new_fact
       pData(new_expt[["expressionset"]])[["condition"]] <- new_fact
@@ -2286,6 +2311,12 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
   }
 
   if (!is.null(ids)) {
+    if (is.numeric(ids)) {
+      ids <- rownames(pData(expt))[ids]
+    } else if (is.logical(ids)) {
+      ids <- rownames(pData(expt))[ids]
+    }
+
     string <- ""
     for (id in ids) {
       string <- glue("{string}|sampleid=='{id}'")
@@ -2293,7 +2324,6 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
     ## Remove the leading |
     subset <- substring(string, 2)
   }
-
   note_appended <- NULL
   subset_design <- NULL
   if (is.null(coverage) && is.null(nonzero)) {
@@ -2343,12 +2373,9 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
     subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
     message("The samples (and read coverage) removed when filtering ",
             nonzero, " non-zero genes are: ")
-    print(colSums(exprs(expt))[remove_idx])
-    print(num_nonzero[remove_idx])
   } else {
     stop("Unable to determine what is being subset.")
   }
-
   ## This is to get around stupidity with respect to needing all factors to be
   ## in a DESeqDataSet
   starting_ids <- rownames(starting_metadata)
@@ -2363,12 +2390,10 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
   current_libsize <- expt[["libsize"]]
   subset_current_libsize <- current_libsize[subset_positions, drop = TRUE]
   subset_expressionset <- starting_expressionset[, subset_positions]
-
   notes <- expt[["notes"]]
   if (!is.null(note_appended)) {
     notes <- glue("{notes}{note_appended}")
   }
-
   for (col in seq_len(ncol(subset_design))) {
     if (class(subset_design[[col]])[1] == "factor") {
       subset_design[[col]] <- droplevels(subset_design[[col]])
@@ -2698,8 +2723,8 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
                            sheet = sheet, start_col = 1, title = "Experimental Design.")
 
   ## Get the library sizes and other raw plots before moving on...
-  metrics <- sm(graph_metrics(expt, qq = TRUE,
-                              ...))
+  metrics <- graph_metrics(expt, qq = TRUE,
+                              ...)
   new_row <- new_row + nrow(pData(expt)) + 3
   libsizes <- as.data.frame(metrics[["libsizes"]])[, c("id", "sum", "condition")]
   xls_result <- write_xlsx(data = libsizes, wb = wb, start_row = new_row,
@@ -2764,7 +2789,9 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   try_result <- xlsx_insert_png(legend_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "01_legend", savedir = excel_basename, fancy_type = "svg")
-  if (! "try-error" %in% class(try_result)) {
+  if ("try-error" %in% class(try_result)) {
+    warning("Failed to add the raw legend.")
+  } else {
     image_files <- c(image_files, try_result[["filename"]])
   }
   new_col <- new_col + plot_cols + 1
@@ -2773,7 +2800,9 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
                               width = plot_dim, height = plot_dim,
                               start_col = new_col, start_row = new_row,
                               plotname = "02_libsize", savedir = excel_basename)
-  if (! "try-error" %in% class(try_result)) {
+  if ("try-error" %in% class(try_result)) {
+    warning("Failed to add the raw library sizes.")
+  } else {
     image_files <- c(image_files, try_result[["filename"]])
   }
 
@@ -2783,7 +2812,9 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   try_result <- xlsx_insert_png(nonzero_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "03_nonzero", savedir = excel_basename)
-  if (! "try-error" %in% class(try_result)) {
+  if ("try-error" %in% class(try_result)) {
+    warning("Failed to add the raw nonzero plot.")
+  } else {
     image_files <- c(image_files, try_result[["filename"]])
   }
   new_col <- new_col + plot_cols + 1
@@ -2802,7 +2833,9 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   try_result <- xlsx_insert_png(density_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "04_density", savedir = excel_basename)
-  if (! "try-error" %in% class(try_result)) {
+  if ("try-error" %in% class(try_result)) {
+    warning("Failed to add the raw density plot.")
+  } else {
     image_files <- c(image_files, try_result[["filename"]])
   }
   new_col <- new_col + plot_cols + 1
@@ -2810,7 +2843,9 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   try_result <- xlsx_insert_png(boxplot_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "05_boxplot", savedir = excel_basename)
-  if (! "try-error" %in% class(try_result)) {
+  if ("try-error" %in% class(try_result)) {
+    warning("Failed to add the raw boxplot.")
+  } else {
     image_files <- c(image_files, try_result[["filename"]])
   }
   new_col <- new_col + plot_cols + 1
@@ -2818,7 +2853,9 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   try_result <- xlsx_insert_png(topn_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "06_topnplot", savedir = excel_basename)
-  if (! "try-error" %in% class(try_result)) {
+  if ("try-error" %in% class(try_result)) {
+    warning("Failed to add the raw top-n plot.")
+  } else {
     image_files <- c(image_files, try_result[["filename"]])
   }
   new_col <- new_col + plot_cols + 1
@@ -2826,7 +2863,9 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   try_result <- xlsx_insert_png(cv_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "07_cvplot", savedir = excel_basename)
-  if (! "try-error" %in% class(try_result)) {
+  if ("try-error" %in% class(try_result)) {
+    warning("Failed to insert the raw cv plot.")
+  } else {
     image_files <- c(image_files, try_result[["filename"]])
   }
   new_col <- 1
@@ -2845,7 +2884,9 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   try_result <- xlsx_insert_png(corheat_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "08_corheat", savedir = excel_basename)
-  if (! "try-error" %in% class(try_result)) {
+  if ("try-error" %in% class(try_result)) {
+    warning("Failed to add the raw correlation heatmap.")
+  } else {
     image_files <- c(image_files, try_result[["filename"]])
   }
   disheat_plot <- metrics[["disheat"]]
@@ -2853,17 +2894,21 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   try_result <- xlsx_insert_png(disheat_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "09_disheat", savedir = excel_basename)
-  if (! "try-error" %in% class(try_result)) {
+  if ("try-error" %in% class(try_result)) {
+    warning("Failed to add the raw distance heatmap.")
+  } else {
     image_files <- c(image_files, try_result[["filename"]])
   }
   if (isTRUE(sample_heat)) {
     tmp_expt <- sm(normalize_expt(expt, transform = "log2", filter = TRUE))
     sampleheat_plot <- plot_sample_heatmap(tmp_expt)
     new_col <- new_col + plot_cols + 1
-    try_result <- xlsx_insert_png(sampleheat_plot, wb = wb, sheet = sheet, width = plot_dim,
-                                height = plot_dim, start_col = new_col, start_row = new_row,
-                                plotname = "09a_sampleheat", savedir = excel_basename)
-    if (! "try-error" %in% class(try_result)) {
+    try_result <- xlsx_insert_png(sampleheat_plot[["plot"]], wb = wb, sheet = sheet, width = plot_dim,
+                                  height = plot_dim, start_col = new_col, start_row = new_row,
+                                  plotname = "09a_sampleheat", savedir = excel_basename)
+    if ("try-error" %in% class(try_result)) {
+      warning("Failed to add the sample heatmap.")
+    } else {
       image_files <- c(image_files, try_result[["filename"]])
     }
   }
@@ -2883,7 +2928,9 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   try_result <- xlsx_insert_png(smc_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "10_smc", savedir = excel_basename, fancy_type = "svg")
-  if (! "try-error" %in% class(try_result)) {
+  if ("try-error" %in% class(try_result)) {
+    warning("Failed to add the raw correlation standard median plot.")
+  } else {
     image_files <- c(image_files, try_result[["filename"]])
   }
   new_col <- new_col + plot_cols + 1
@@ -2891,7 +2938,9 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   try_result <- xlsx_insert_png(smd_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "11_smd", savedir = excel_basename, fancy_type = "svg")
-  if (! "try-error" %in% class(try_result)) {
+  if ("try-error" %in% class(try_result)) {
+    warning("Failed to add the raw distance standard median plot.")
+  } else {
     image_files <- c(image_files, try_result[["filename"]])
   }
   new_col <- 1
@@ -2926,13 +2975,15 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   try_result <- xlsx_insert_png(pca_plot, wb = wb, sheet = sheet, width = plot_dim,
                               height = plot_dim, start_col = new_col, start_row = new_row,
                               plotname = "12_pcaplot", savedir = excel_basename, fancy_type = "svg")
-  if (! "try-error" %in% class(try_result)) {
+  if ("try-error" %in% class(try_result)) {
+    warning("Failed to add the initial PCA plot.")
+  } else {
     image_files <- c(image_files, try_result[["filename"]])
   }
   new_col <- new_col + plot_cols + 1
-  try_result <- xlsx_insert_png(pca_topn, wb = wb, sheet = sheet, width = plot_dim,
-                              height = plot_dim, start_col = new_col, start_row = new_row,
-                              plotname = "13_pctopn", savedir = excel_basename, fancy_type = "svg")
+  try_result <- xlsx_insert_png(pca_topn[["plot"]], wb = wb, sheet = sheet, width = plot_dim,
+                                height = plot_dim, start_col = new_col, start_row = new_row,
+                                plotname = "13_pctopn", savedir = excel_basename, fancy_type = "svg")
   if (! "try-error" %in% class(try_result)) {
     image_files <- c(image_files, try_result[["filename"]])
   }
@@ -2983,9 +3034,8 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   ## Violin plots
   if (isTRUE(violin)) {
     filt <- sm(normalize_expt(expt, filter = "simple"))
-    varpart_raw <- suppressWarnings(try(simple_varpart(
-        filt, predictor = NULL, factors = c("condition", "batch"))))
-    if (class(varpart_raw) != "try-error") {
+    varpart_raw <- suppressWarnings(try(simple_varpart(filt)))
+    if (! "try-error" %in% class(varpart_raw)) {
       violin_plot <- varpart_raw[["partition_plot"]]
       new_row <- new_row + plot_rows + 2
       new_col <- 1
@@ -3159,7 +3209,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   if (isTRUE(sample_heat)) {
     sampleheat_plot <- plot_sample_heatmap(norm_data)
     new_col <- new_col + plot_cols + 1
-    try_result <- xlsx_insert_png(sampleheat_plot, wb = wb, sheet = sheet, width = plot_dim,
+    try_result <- xlsx_insert_png(sampleheat_plot[["plot"]], wb = wb, sheet = sheet, width = plot_dim,
                                 height = plot_dim, start_col = new_col, start_row = new_row,
                                 plotname = "26a_sampleheat", savedir = excel_basename)
     if (! "try-error" %in% class(try_result)) {
@@ -3223,9 +3273,9 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
     image_files <- c(image_files, try_result[["filename"]])
   }
   new_col <- new_col + plot_cols + 1
-  try_result <- xlsx_insert_png(npc_topnplot, wb = wb, sheet = sheet, width = plot_dim,
-                              height = plot_dim, start_col = new_col, start_row = new_row,
-                              plotname = "30_npcloadplot", savedir = excel_basename, fancy_type = "svg")
+  try_result <- xlsx_insert_png(npc_topnplot[["plot"]], wb = wb, sheet = sheet, width = plot_dim,
+                                height = plot_dim, start_col = new_col, start_row = new_row,
+                                plotname = "30_npcloadplot", savedir = excel_basename, fancy_type = "svg")
   if (! "try-error" %in% class(try_result)) {
     image_files <- c(image_files, try_result[["filename"]])
   }
@@ -3251,9 +3301,8 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   nvarpart_plot <- NULL
   npct_plot <- NULL
   if (isTRUE(violin)) {
-    varpart_norm <- suppressWarnings(try(simple_varpart(norm_data, predictor = NULL,
-                                                        factors = c("condition", "batch"))))
-    if (class(varpart_norm) != "try-error") {
+    varpart_norm <- suppressWarnings(try(simple_varpart(norm_data)))
+    if (! "try-error" %in% class(varpart_norm)) {
       nvarpart_plot <- varpart_norm[["partition_plot"]]
       new_row <- new_row + plot_rows + 2
       new_col <- 1
@@ -3412,9 +3461,45 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
 expt <- function(...) {
   create_expt(...)
 }
-expt_set <- setOldClass("expt")
+#expt_set <- setOldClass("expt")
+setClass("expt")
 
 ## Put S4 dispatchers here.
+
+setGeneric("backupExpressionData",
+  function(expt) standardGeneric("backupExpressionData"),
+  signature = signature(expt = "expt"))
+
+#' Generic method to get colors from expression data.
+#'
+#' @param object The object from which to gather colors.
+#' @param ... Additional arguments passed to function constructors.
+#' @return colors!
+#' @rdname methods
+#' @export
+setGeneric("getColors",
+  function(expt) standardGeneric("getColors"),
+  signature = signature(expt = "expt"))
+
+#setGeneric("setColors",
+#  function(expt, lst) standardGeneric("setColors"),
+#  signature = signature(expt = "expt", lst = "list"))
+
+setGeneric("getBackupExpression",
+  function(expt) standardGeneric("getBackupExpression"),
+  signature = signature(expt = "expt"))
+
+setGeneric("state",
+  function(expt) standardGeneric("state"),
+  signature = signature(expt = "expt"))
+
+#setGeneric("state<-",
+#  function(expt, lst) standardGeneric("state<-"),
+#  signature = c("expt", "lst"))
+
+setGeneric("subsetExpt",
+  function(expt, ...) standardGeneric("subsetExpt"),
+  signature = signature(expt = "expt"))
 
 #' A series of setMethods for expts, ExpressionSets, and SummarizedExperiments.
 #'
@@ -3426,119 +3511,158 @@ expt_set <- setOldClass("expt")
 #' @param i Nor this.
 #' @importFrom SummarizedExperiment assay assay<- colData colData<- rowData rowData<-
 #' @importFrom Biobase annotation annotation<-
-setMethod("annotation",
-          signature = "expt",
-          definition = function(object) {
-            Biobase::annotation(object[["expressionset"]])
-          })
-setMethod("annotation<-",
-          signature = "expt",
-          definition = function(object, value) {
-            fData(object[["expressionset"]]) <- value
-            return(object)
-          })
-setMethod("assay",
-          signature = "expt",
-          definition = function(x, withDimnames = TRUE, ...) {
-            mtrx <- Biobase::exprs(x[["expressionset"]])
-            return(mtrx)
-          })
-setMethod("assay<-",
-          signature = "expt",
-          definition = function(x, i, withDimnames = TRUE, ..., value) {
-            Biobase::exprs(x[["expressionset"]]) <- value
-            return(x)
-          })
-setMethod("colData",
-          signature = "expt",
-          definition = function(x, withDimnames = TRUE, ...) {
-            Biobase::pData(x[["expressionset"]])
-          })
-setMethod("colData<-",
-          signature = "expt",
-          definition = function(x, i, withDimnames = TRUE, ..., value) {
-            Biobase::pData(x[["expressionset"]]) <- value
-            return(x)
-          })
-setMethod("colors",
-          signature = "expt",
-          definition = function(expt) {
-            expt[["colors"]]
-          })
-setMethod("colors<-",
-          signature = "expt",
-          definition = function(expt, lst) {
-            expt[["colors"]] <- lst
-            return(expt)
-          })
-setMethod("exprs",
-          signature = "expt",
-          definition = function(object) {
-            Biobase::exprs(object[["expressionset"]])
-          })
-setMethod("exprs<-",
-          signature = "expt",
-          definition = function(object, value) {
-            exprs(object[["expressionset"]]) <- value
-            return(object)
-          })
-setMethod("fData",
-          signature = "expt",
-          definition = function(object) {
-            Biobase::fData(object[["expressionset"]])
-          })
-setMethod("fData<-",
-          signature = "expt",
-          definition = function(object, value) {
-            fData(object[["expressionset"]]) <- value
-            return(object)
-          })
-setMethod("notes",
-          signature = "expt",
-          definition = function(object) {
-            Biobase::notes(object[["expressionset"]])
-          })
-setMethod("pData",
-          signature = "expt",
-          definition = function(object) {
-            Biobase::pData(object[["expressionset"]])
-          })
-setMethod("pData<-",
-          signature = "expt",
-          definition = function(object, value) {
-            pData(object[["expressionset"]]) <- value
-            return(object)
-          })
-setMethod("rowData",
-          signature = "expt",
-          definition = function(x, withDimnames = TRUE, ...) {
-            Biobase::fData(x[["expressionset"]])
-          })
-setMethod("rowData<-",
-          signature = "expt",
-          definition = function(x, i, withDimnames = TRUE, ..., value) {
-            Biobase::fData(x[["expressionset"]]) <- value
-            return(x)
-          })
-setMethod("sampleNames",
-          signature = "expt",
-          definition = function(object) {
-            Biobase::sampleNames(object[["expressionset"]])
-          })
-setMethod("sampleNames<-",
-          signature = "expt",
-          definition = function(object, value) {
-            set_expt_samplenames(object, value)
-          })
-setMethod("state",
-          signature = "expt",
-          definition = function(expt) {
-            expt[["state"]]
-          })
-setMethod("state<-",
-          signature = "expt",
-          definition = function(expt, value) {
-            expt[["state"]] <- value
-            return(expt)
-          })
+setMethod(
+  "annotation", signature = signature(object = "expt"),
+  definition = function(object) {
+    Biobase::annotation(object[["expressionset"]])
+  })
+
+setMethod(
+  "annotation<-", signature = signature(object = "expt"),
+  definition = function(object, value) {
+    fData(object[["expressionset"]]) <- value
+    return(object)
+  })
+
+setMethod(
+  "assay", signature = signature(x = "expt"),
+  definition = function(x, withDimnames = TRUE, ...) {
+    mtrx <- Biobase::exprs(x[["expressionset"]])
+    return(mtrx)
+  })
+
+setMethod(
+  "assay<-", signature = signature(x = "expt"),
+  definition = function(x, i, withDimnames = TRUE, ..., value) {
+    Biobase::exprs(x[["expressionset"]]) <- value
+    return(x)
+  })
+
+setMethod(
+  "colData", signature = signature(x = "expt"),
+  definition = function(x, withDimnames = TRUE, ...) {
+    Biobase::pData(x[["expressionset"]])
+  })
+
+setMethod(
+  "colData<-", signature = signature(x = "expt"),
+  definition = function(x, i, withDimnames = TRUE, ..., value) {
+    Biobase::pData(x[["expressionset"]]) <- value
+    return(x)
+  })
+
+setMethod(
+  "colors", signature = signature(expt = "expt"),
+  definition = function(expt) {
+    expt[["colors"]]
+  })
+
+setMethod(
+  "colors<-", signature = signature(expt = "expt"),
+  definition = function(expt, lst) {
+    expt[["colors"]] <- lst
+    return(expt)
+  })
+
+setMethod(
+  "exprs", signature = signature(object = "expt"),
+  definition = function(object) {
+    Biobase::exprs(object[["expressionset"]])
+  })
+
+setMethod(
+  "exprs<-", signature = signature(object = "expt"),
+  definition = function(object, value) {
+    exprs(object[["expressionset"]]) <- value
+    return(object)
+  })
+
+setMethod(
+  "fData", signature = signature(object = "expt"),
+  definition = function(object) {
+    Biobase::fData(object[["expressionset"]])
+  })
+
+setMethod(
+  "fData<-", signature = signature(object = "expt"),
+  definition = function(object, value) {
+    fData(object[["expressionset"]]) <- value
+    return(object)
+  })
+
+setMethod(
+  "notes", signature = signature(object = "expt"),
+  definition = function(object) {
+    Biobase::notes(object[["expressionset"]])
+  })
+
+setMethod(
+  "pData", signature = signature(object = "expt"),
+  definition = function(object) {
+    Biobase::pData(object[["expressionset"]])
+  })
+
+setMethod(
+  "pData<-", signature = signature(object = "expt"),
+  definition = function(object, value) {
+    pData(object[["expressionset"]]) <- value
+    return(object)
+  })
+
+setMethod(
+  "rowData", signature = signature(x = "expt"),
+  definition = function(x, withDimnames = TRUE, ...) {
+    Biobase::fData(x[["expressionset"]])
+  })
+
+setMethod(
+  "rowData<-", signature = signature(x = "expt"),
+  definition = function(x, i, withDimnames = TRUE, ..., value) {
+    Biobase::fData(x[["expressionset"]]) <- value
+    return(x)
+  })
+
+setMethod(
+  "sampleNames", signature = signature(object = "expt"),
+  definition = function(object) {
+    Biobase::sampleNames(object[["expressionset"]])
+  })
+
+setMethod(
+  "sampleNames<-", signature = signature(object = "expt"),
+  definition = function(object, value) {
+    set_expt_samplenames(object, value)
+  })
+
+setMethod(
+  "state", signature = signature(expt = "expt"),
+  definition = function(expt) {
+    expt[["state"]]
+  })
+
+setMethod(
+  "state<-", signature = signature(expt = "expt"),
+  definition = function(expt, value) {
+    expt[["state"]] <- value
+    return(expt)
+  })
+
+## I think I get why these don't work, the listyness of the expt
+## object wins out, I think I need to do something more
+## canonical to ensure that the expt gets this dispatch.
+`[.expt` <- function(expt, i, j, ...) {
+  if (!missing(i)) {
+    message("Subsetting on genes.")
+    expt <- subset_genes(expt, ids = i, ...)
+  }
+  if (!missing(j)) {
+    message("Subsetting on samples.")
+    expt <- subset_expt(expt, ids = j, ...)
+  }
+  if (missing(i) && missing(j)) {
+    message("No subset was provided, returning the original.")
+  }
+  return(expt)
+}
+
 ## EOF

@@ -3,19 +3,7 @@ library(testthat)
 library(hpgltools)
 context("105helpers_misc.R:
   123\n")
-## 2017-12, exported functions in helpers_misc:
-## bioc_all() clear_session() cordist() get_git_commit()
-## hpgl_arescore() hpgl_cor() install_packrat_globally() loadme()
-## make_report() pp() require.auto() rex() saveme() sillydist()
-## sm() unAsIs() ymxb_print()
 
-## bioc_all()
-
-## clear_session()
-
-## cordist()
-
-## get_git_commit()
 ## This function actually makes untenable assumptions about where the repository lives.
 testing <- get_git_commit(gitdir = "")
 expected <- c("glue", "character")
@@ -24,17 +12,6 @@ test_that("get_git_commit() gave me a commit id?", {
   expect_equal(expected, actual)
 })
 
-## hpgl_arescore()
-
-## hpgl_cor()
-
-## install_packrat_globally()
-
-## loadme()
-
-## make_report()
-
-## pp()
 sp <- plot_hypotrochoid()
 test_that("We can make fun spirograph plots?", {
   expect_equal(class(sp)[1], "gg")

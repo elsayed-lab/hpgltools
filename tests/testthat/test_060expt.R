@@ -1,15 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("060expt.R:
-  1234567890123456789012345678901234567890123456789012345678901234567\n")
-## Functions exported in expt.r
-## make_pombe_expt(), create_expt(), concatenate_runs(), exclude_genes_expt(),
-## features_greater_than(), make_exampledata(), median_by_factor(),
-## set_expt_batches(), set_expt_colors(), set_expt_conditions(),
-## set_expt_factors(), set_expt_samplenames(), subset_expt(), what_happened(),
-## write_expt()
-## S4 methods: exprs(), fData(), pData(), notes()
+context("060expt.R")
 
 ## make_pombe_expt() invokes create_expt()
 pombe_expt <- make_pombe_expt()
@@ -192,7 +184,7 @@ test_that("Will an expt tell us what happened to it?", {
 
 ## write_expt()
 ## I run this on an interactive session and get no warnings...
-testing <- sm(write_expt(pombe_expt, excel = "testing_write_expt.xlsx"))
+testing <- write_expt(pombe_expt, excel = "testing_write_expt.xlsx")
 ## 33
 test_that("Did write_expt() work?", {
   expect_true(file.exists("testing_write_expt.xlsx"))

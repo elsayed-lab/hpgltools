@@ -63,8 +63,8 @@ all_pairwise <- function(input = NULL, conditions = NULL,
                          model_intercept = FALSE, extra_contrasts = NULL,
                          alt_model = NULL, libsize = NULL, test_pca = TRUE,
                          annot_df = NULL, parallel = TRUE,
-                         do_basic = TRUE, do_deseq = TRUE, do_ebseq = NULL,
-                         do_edger = TRUE, do_limma = TRUE,
+                         do_basic = TRUE, do_deseq = TRUE, do_ebseq = FALSE,
+                         do_edger = TRUE, do_limma = TRUE, do_noiseq = TRUE,
                          convert = "cpm", norm = "quant", verbose = TRUE,
                          surrogates = "be", ...) {
   arglist <- list(...)
@@ -194,6 +194,10 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     num_cpus_needed <- num_cpus_needed + 1
     results[["limma"]] <- list()
   }
+  if (isTRUE(do_noiseq)) {
+    num_cpus_needed <- num_cpus_needed + 1
+    results[["noiseq"]] <- list()
+  }
 
   res <- NULL
   if (isTRUE(parallel)) {
@@ -248,7 +252,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
   ## function.
   ## Thus we will use modified_data to note the data was modified by sva.
   modified_data <- FALSE
-  if (is.null(sv_model) & isTRUE(modified_data)) {
+  if (is.null(sv_model) && isTRUE(modified_data)) {
     ret <- sva_modify_pvalues(results)
     results <- ret[["results"]]
     original_pvalues <- ret[["original_pvalues"]]
@@ -265,6 +269,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     "ebseq" = results[["ebseq"]],
     "edger" = results[["edger"]],
     "limma" = results[["limma"]],
+    "noiseq" = results[["noiseq"]],
     "batch_type" = model_type,
     "comparison" = result_comparison,
     "extra_contrasts" = extra_contrasts,
@@ -627,8 +632,8 @@ choose_binom_dataset <- function(input, verbose = TRUE, force = FALSE, ...) {
       }
     } else {
       if (isTRUE(verbose)) {
-        message("The data should be suitable for EdgeR/DESeq/EBSeq. ",
-                "If they freak out, check the state of the count table ",
+        message("The data should be suitable for EdgeR/DESeq/EBSeq.\n",
+                "If they freak out, check the state of the count table\n",
                 "and ensure that it is in integer counts.")
       }
     }
@@ -1344,6 +1349,10 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
     retlst[["basic"]] <- results[["basic"]][["all_tables"]]
     methods <- c(methods, "basic")
   }
+  if (class(results[["noiseq"]])[1] == "noiseq_result") {
+    retlst[["noiseq"]] <- results[["noiseq"]][["all_tables"]]
+    methods <- c(methods, "noiseq")
+  }
 
   extra_eval_names <- NULL
   if (!is.null(extra_contrasts)) {
@@ -1684,6 +1693,8 @@ do_pairwise <- function(type, ...) {
     res <- try(deseq2_pairwise(...))
   } else if (type == "basic") {
     res <- try(basic_pairwise(...))
+  } else if (type == "noiseq") {
+    res <- try(noiseq_pairwise(...))
   }
   res[["type"]] <- type
   return(res)
@@ -2050,7 +2061,6 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
   if (!is.null(z)) {
     ## Take an arbitrary number which are >= and <= a value which is z zscores
     ## from the median.
-    mesg("Getting the genes >= ", z, " stdevs away from the mean of all.")
     ## Use the entire table for the summary
     out_summary <- summary(as.numeric(table[[column]]))
     out_mad <- stats::mad(as.numeric(table[[column]]), na.rm = TRUE)
@@ -2155,6 +2165,8 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
   all_pairwise <- list()
   identity_names <- names(identities)
   lenminus <- length(identities) - 1
+  numerators <- c()
+  denominators <- c()
   for (c in seq_len(lenminus)) {
     c_name <- names(identities[c])
     nextc <- c + 1
@@ -2163,6 +2175,8 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
       minus_string <- paste(d_name, "_vs_", c_name, sep = "")
       exprs_string <- paste(minus_string, "=", d_name, "-", c_name, ",", sep = "")
       all_pairwise[minus_string] <- exprs_string
+      numerators <- c(numerators, d_name)
+      denominators <- c(denominators, c_name)
     }
   }
   ## At this point, I have strings which represent the definition of every
@@ -2183,11 +2197,13 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
     extra_eval_names <- extra_eval_strings
     extra_eval_names <- stringi::stri_replace_all_regex(extra_eval_strings,
                                                         "^(\\s*)(\\w+)\\s*=\\s*.*$", "$2")
-    extra_eval_names <- gsub(pattern = "^\\s+", replacement = "", x = extra_eval_names, perl = TRUE)
+    extra_eval_names <- gsub(pattern = "^\\s+", replacement = "",
+                             x = extra_eval_names, perl = TRUE)
     for (i in seq_along(extra_eval_strings)) {
       new_name <- extra_eval_names[[i]]
       extra_eval_string <- extra_eval_strings[[i]]
-      extra_eval_string <- gsub(pattern = "^\\s+", replacement = "", x = extra_eval_string, perl = TRUE)
+      extra_eval_string <- gsub(pattern = "^\\s+", replacement = "",
+                                x = extra_eval_string, perl = TRUE)
       extra_contrast <- glue("{extra_eval_string}, ")
       eval_strings <- append(eval_strings, extra_contrast)
       eval_names <- append(eval_names, new_name)
@@ -2214,6 +2230,8 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
   ## I like to change the column names of the contrasts because by default
   ## they are kind of obnoxious and too long to type
 
+  names(numerators) <- eval_names
+  names(denominators) <- eval_names
   colnames(all_pairwise_contrasts) <- eval_names
   result <- list(
     "all_pairwise_contrasts" = all_pairwise_contrasts,
@@ -2221,7 +2239,9 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
     "identity_names" = identity_names,
     "all_pairwise" = all_pairwise,
     "contrast_string" = contrast_string,
-    "names" = eval_names)
+    "names" = eval_names,
+    "numerators" = numerators,
+    "denominators" = denominators)
   return(result)
 }
 

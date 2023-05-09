@@ -17,12 +17,13 @@ plot_volcano_condition_de(
   p_name = "-log10 p-value",
   pval = 0.05,
   shapes_by_state = FALSE,
-  color_high = NULL,
-  color_low = NULL,
+  color_high = "darkred",
+  color_low = "darkblue",
   size = 2,
   invert = FALSE,
   label = NULL,
-  label_column = "hgncsymbol"
+  label_column = "hgncsymbol",
+  label_size = 6
 )
 }
 \arguments{

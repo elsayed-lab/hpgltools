@@ -88,6 +88,7 @@ simple_varpart <- function(expt, predictor = NULL, factors = c("condition", "bat
     message("varpart sees only 1 batch, adjusting the model accordingly.")
     factors <- factors[!grepl(pattern = chosen_factor, x = factors)]
   }
+
   model_string <- "~ "
   if (isTRUE(mixed)) {
     if (!is.null(predictor)) {
@@ -111,7 +112,7 @@ simple_varpart <- function(expt, predictor = NULL, factors = c("condition", "bat
   mesg("Fitting the expressionset to the model, this is slow.")
   my_extract <- try(variancePartition::fitExtractVarPartModel(data, my_model, design_sub))
   ## my_extract <- try(variancePartition::fitVarPartModel(data, my_model, design))
-  if (class(my_extract) == "try-error") {
+  if ("try-error" %in% class(my_extract)) {
     mesg("A couple of common errors:
 An error like 'vtv downdated' may be because there are too many 0s, filter the data and rerun.
 An error like 'number of levels of each grouping factor must be < number of observations' means
@@ -120,7 +121,7 @@ which are shared among multiple samples.")
     message("Retrying with only condition in the model.")
     my_model <- as.formula("~ condition")
     my_extract <- try(variancePartition::fitExtractVarPartModel(data, my_model, design))
-    if (class(my_extract) == "try-error") {
+    if ("try-error" %in% class(my_extract)) {
       message("Attempting again with only condition failed.")
       stop()
     }
@@ -186,11 +187,7 @@ which are shared among multiple samples.")
     tmp_annot <- tmp_annot[, -1]
     ## Make it possible to use a generic expressionset, though maybe this is
     ## impossible for this function.
-    if (class(new_expt) == "ExpressionSet") {
-      Biobase::fData(new_expt) <- tmp_annot
-    } else {
-      Biobase::fData(new_expt[["expressionset"]]) <- tmp_annot
-    }
+    fData(new_expt) <- tmp_annot
     ret[["modified_expt"]] <- new_expt
   }
   return(ret)

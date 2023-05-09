@@ -10,6 +10,7 @@ dispatch_csv_search(
   input_file_spec,
   file_type = "csv",
   chosen_func = NULL,
+  species = "*",
   basedir = "preprocessing",
   which = "first",
   verbose = FALSE,
