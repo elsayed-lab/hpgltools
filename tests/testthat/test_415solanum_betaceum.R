@@ -1,7 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("15solanum_betaceum.R: Test some Pseudomonas data.\n")
+context("415solanum_betaceum.R: Test some Pseudomonas data.")
 
 sb_annot <- load_trinotate_annotations(
   trinotate = system.file("share/sb/trinotate_head.csv.xz", package = "hpgldata"))

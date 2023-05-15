@@ -1,8 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("020annotation_gff.R
-  123456\n")
+context("020annotation_gff.R")
 ## 2017-12, exported functions in annotation_gff:
 ##   gff2irange(), load_gff_annotations(), pattern_count_genome()
 ##   sequence_attributes(), sum_exons()

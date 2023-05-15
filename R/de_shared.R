@@ -130,7 +130,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     } else if (class(model_type)[1] == "character") {
       mesg("Using ", model_type, " to visualize before/after batch inclusion.")
       test_norm <- "quant"
-      if (model_type != "TRUE" & model_type != FALSE) {
+      if (model_type != "TRUE" && model_type != FALSE) {
         ## Then it is probably some sort of sva which will have a hard time with quantile.
         test_norm <- "raw"
       }
@@ -313,7 +313,7 @@ calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp
   ## of the number of genes.
   if (topn <= 0) {
     stop("topn need to be either a float from 0-1 or an interger bigger than 100.")
-  } else if (topn > 1 & topn <= 100) {
+  } else if (topn > 1 && topn <= 100) {
     stop("topn need to be either a float from 0-1 or an interger bigger than 100.")
   } else if (topn < 1) {
     topn <- ceiling(nrow(tbl) * topn)
@@ -838,7 +838,7 @@ choose_model <- function(input, conditions = NULL, batches = NULL, model_batch =
                          surrogates = "be", verbose = TRUE, ...) {
   arglist <- list(...)
   design <- NULL
-  if (class(input)[1] != "matrix" & class(input)[1] != "data.frame") {
+  if (class(input)[1] != "matrix" && class(input)[1] != "data.frame") {
     design <- pData(input)
   }
   if (is.null(design)) {
@@ -865,7 +865,7 @@ choose_model <- function(input, conditions = NULL, batches = NULL, model_batch =
   blist <- list("batch" = "contr.treatment")
   cblist <- list("condition" = "contr.treatment", "batch" = "contr.treatment")
   if (!is.null(contr)) {
-    if (!is.null(contr[["condition"]]) & !is.null(contr[["batch"]])) {
+    if (!is.null(contr[["condition"]]) && !is.null(contr[["batch"]])) {
       cblist <- list("condition" = contr[["condition"]], "batch" = contr[["batch"]])
     } else if (!is.null(contr[["condition"]])) {
       clist <- list("condition" = contr[["condition"]])
@@ -948,7 +948,7 @@ choose_model <- function(input, conditions = NULL, batches = NULL, model_batch =
     int_string <- cond_int_string
     noint_string <- cond_noint_string
     including <- "condition"
-  } else if (isTRUE(model_cond) & isTRUE(model_batch)) {
+  } else if (isTRUE(model_cond) && isTRUE(model_batch)) {
     if (class(condbatch_int_model)[1] == "try-error") {
       if (isTRUE(verbose)) {
         message("The condition+batch model failed. ",
@@ -1001,7 +1001,7 @@ choose_model <- function(input, conditions = NULL, batches = NULL, model_batch =
     int_string <- glue("{int_string}{sv_string}")
     rownames(model_batch) <- rownames(int_model)
     including <- glue("condition{sv_string}")
-  } else if (class(model_batch)[1] == "numeric" | class(model_batch)[1] == "matrix") {
+  } else if (class(model_batch)[1] == "numeric" || class(model_batch)[1] == "matrix") {
     if (isTRUE(verbose)) {
       mesg("Including batch estimates from sva/ruv/pca in the model.")
     }
@@ -1158,7 +1158,7 @@ compare_de_results <- function(first, second, cor_method = "pearson",
         column_name <- glue("{method}_{comparison}")
         f_column <- as.vector(as.numeric(first[["data"]][[table]][[column_name]]))
         s_column <- as.vector(as.numeric(second[["data"]][[table]][[column_name]]))
-        if (length(f_column) == 0 | length(s_column) == 0) {
+        if (length(f_column) == 0 || length(s_column) == 0) {
           ## The column of data does not exist.
           break
         }
@@ -1497,37 +1497,37 @@ compare_logfc_plots <- function(combined_tables) {
   for (c in seq_along(tnames)) {
     tname <- tnames[c]
     tab <- data[[tname]]
-    if (!is.null(tab[["limma_logfc"]]) & !is.null(tab[["edger_logfc"]])) {
+    if (!is.null(tab[["limma_logfc"]]) && !is.null(tab[["edger_logfc"]])) {
       le_data <- tab[, c("limma_logfc", "edger_logfc", "limma_adjp", "edger_adjp")]
       le <- sm(plot_linear_scatter(le_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       le <- NULL
     }
-    if (!is.null(tab[["limma_logfc"]]) & !is.null(tab[["deseq_logfc"]])) {
+    if (!is.null(tab[["limma_logfc"]]) && !is.null(tab[["deseq_logfc"]])) {
       ld_data <- tab[, c("limma_logfc", "deseq_logfc", "limma_adjp", "deseq_adjp")]
       ld <- sm(plot_linear_scatter(ld_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       ld <- NULL
     }
-    if (!is.null(tab[["deseq_logfc"]]) & !is.null(tab[["edger_logfc"]])) {
+    if (!is.null(tab[["deseq_logfc"]]) && !is.null(tab[["edger_logfc"]])) {
       de_data <- tab[, c("deseq_logfc", "edger_logfc", "deseq_adjp", "edger_adjp")]
       de <- sm(plot_linear_scatter(de_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       de <- NULL
     }
-    if (!is.null(tab[["limma_logfc"]]) & !is.null(tab[["basic_logfc"]])) {
+    if (!is.null(tab[["limma_logfc"]]) && !is.null(tab[["basic_logfc"]])) {
       lb_data <- tab[, c("limma_logfc", "basic_logfc", "limma_adjp", "basic_p")]
       lb <- sm(plot_linear_scatter(lb_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       lb <- NULL
     }
-    if (!is.null(tab[["deseq_logfc"]]) & !is.null(tab[["basic_logfc"]])) {
+    if (!is.null(tab[["deseq_logfc"]]) && !is.null(tab[["basic_logfc"]])) {
       db_data <- tab[, c("deseq_logfc", "basic_logfc", "deseq_adjp", "basic_p")]
       db <- sm(plot_linear_scatter(db_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       db <- NULL
     }
-    if (!is.null(tab[["edger_logfc"]]) & !is.null(tab[["basic_logfc"]])) {
+    if (!is.null(tab[["edger_logfc"]]) && !is.null(tab[["basic_logfc"]])) {
       eb_data <- tab[, c("edger_logfc", "basic_logfc", "edger_adjp", "basic_p")]
       eb <- sm(plot_linear_scatter(eb_data, pretty_colors = FALSE)[["scatter"]])
     } else {
@@ -1727,7 +1727,7 @@ do_pairwise <- function(type, ...) {
 #' @export
 get_abundant_genes <- function(datum, type = "limma", n = NULL, z = NULL,
                                fx = "mean", unique = FALSE) {
-  if (is.null(z) & is.null(n)) {
+  if (is.null(z) && is.null(n)) {
     n <- 100
   }
   if (!is.null(datum[["limma"]])) {
@@ -2184,6 +2184,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
   ## B-A where B comes somewhere after A in the model matrix.
   ## The goal now is to create the variables in the R environment
   ## and add them to makeContrasts()
+
   if (isTRUE(do_identities)) {
     eval_strings <- append(eval_strings, identities)
   }
@@ -2192,7 +2193,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
   }
   eval_names <- names(eval_strings)
 
-  if (!is.null(extra_contrasts) & isTRUE(do_extras)) {
+  if (!is.null(extra_contrasts) && isTRUE(do_extras)) {
     extra_eval_strings <- strsplit(extra_contrasts, ",")[[1]]
     extra_eval_names <- extra_eval_strings
     extra_eval_names <- stringi::stri_replace_all_regex(extra_eval_strings,
@@ -2214,10 +2215,10 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
   ## Add them to makeContrasts()
   contrast_string <- "all_pairwise_contrasts = mymakeContrasts("
   for (f in seq_along(eval_strings)) {
-    eval_name = names(eval_strings[f])
+    eval_name <- names(eval_strings[f])
     ## Get a little defensive to make sure I do not have contrasts which start with
     ## silly things like numbers of punctuation.
-    if (grepl(x=eval_name, pattern="^([[:digit:]]|[[:punct:]])")) {
+    if (grepl(x = eval_name, pattern = "^([[:digit:]]|[[:punct:]])")) {
       stop("This function requires contrast names to start with a letter.")
     }
     eval_string <- eval_strings[f]
@@ -2230,8 +2231,10 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
   ## I like to change the column names of the contrasts because by default
   ## they are kind of obnoxious and too long to type
 
-  names(numerators) <- eval_names
-  names(denominators) <- eval_names
+  pairwise_name_idx <- grepl(x = eval_names, pattern = "_vs_")
+  pairwise_names <- eval_names[pairwise_name_idx]
+  names(numerators) <- pairwise_names
+  names(denominators) <- pairwise_names
   colnames(all_pairwise_contrasts) <- eval_names
   result <- list(
     "all_pairwise_contrasts" = all_pairwise_contrasts,

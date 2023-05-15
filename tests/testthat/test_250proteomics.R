@@ -1,8 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("250proteomics.R:
-")
+context("250proteomics.R")
 
 ## Available functions:  add_conditional_nas(), extract_mayu_pps_fdr(),
 ## extract_scan_data(), extract_mzXML_scans(), extract_mzML_scans(),

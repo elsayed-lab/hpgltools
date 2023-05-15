@@ -1534,7 +1534,7 @@ extract_abundant_genes <- function(pairwise, according_to = "deseq", n = 100,
       kept_idx <- rownames(annotations) %in% kept_annotations
       kept_annotations <- annotations[kept_idx, ]
       high_data <- data.frame()
-      if (nrow(annotations) > 0 & ncol(annotations) > 0) {
+      if (nrow(annotations) > 0 && ncol(annotations) > 0) {
         high_df <- as.data.frame(high_abundances)
         rownames(high_df) <- names(high_abundances)
         high_data <- merge(high_df, annotations,
@@ -1557,7 +1557,7 @@ extract_abundant_genes <- function(pairwise, according_to = "deseq", n = 100,
       kept_idx <- rownames(annotations) %in% kept_annotations
       kept_annotations <- annotations[kept_idx, ]
       low_data <- data.frame()
-      if (nrow(annotations) > 0 & ncol(annotations) > 0) {
+      if (nrow(annotations) > 0 && ncol(annotations) > 0) {
         low_df <- as.data.frame(low_abundances)
         rownames(low_df) <- names(low_abundances)
         low_data <- merge(data.frame(low_df), annotations,
@@ -1872,7 +1872,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
   summary_df <- data.frame(row.names = names(ret[[name_element]][["ups"]]))
 
   sig_bar_plots <- NULL
-  if (isTRUE(do_excel) & isTRUE(sig_bar)) {
+  if (isTRUE(do_excel) && isTRUE(sig_bar)) {
     ## This needs to be changed to get_sig_genes()
     sig_bar_plots <- significant_barplots(
       combined, lfc_cutoffs = siglfc_cutoffs, invert = invert_barplots,
@@ -2062,7 +2062,7 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
     } else if (conjugate %in% possible_columns) {
       chosen_selectors <- c(chosen_selectors, rawname)
       extract_selectors <- c(extract_selectors, rawname)
-    } else if (arglist[["fc_column"]] %in% possible_columns &
+    } else if (arglist[["fc_column"]] %in% possible_columns &&
                  arglist[["p_column"]] %in% possible_columns) {
       chosen_selectors <- c(chosen_selectors, "alternate")
       alternate_selectors <- c(alternate_selectors, "alternate")
@@ -2342,7 +2342,7 @@ write_combined_legend <- function(wb, excel_basename, plot_dim, apr,
   reminder_string <- NULL
   if (class(reminder_model_batch)[1] == "matrix") {
     reminder_string <- "The contrasts were performed using surrogates from sva/ruv/etc."
-  } else if (isTRUE(reminder_model_batch) & isTRUE(reminder_model_cond)) {
+  } else if (isTRUE(reminder_model_batch) && isTRUE(reminder_model_cond)) {
     reminder_string <- "The contrasts were performed with condition and batch in the model."
   } else if (isTRUE(reminder_model_cond)) {
     reminder_string <- "The contrasts were performed with only condition in the model."
@@ -2498,16 +2498,16 @@ stringsAsFactors = FALSE)
   table_names <- unique(table_names)
 
   ## Make sure there were no errors and die if things went catastrophically wrong.
-  if (!isTRUE(include_limma) & !isTRUE(include_deseq) & !isTRUE(include_edger) &
-        !isTRUE(include_basic) & !isTRUE(include_ebseq)) {
+  if (!isTRUE(include_limma) && !isTRUE(include_deseq) && !isTRUE(include_edger) &&
+        !isTRUE(include_basic) && !isTRUE(include_ebseq)) {
     stop("None of the DE tools appear to have worked.")
   }
   if (length(table_names) == 0) {
     stop("Could not find the set of table names.")
   }
 
-  if (isTRUE(include_limma) & isTRUE(include_deseq) &
-        isTRUE(include_edger) & isTRUE(include_basic)) {
+  if (isTRUE(include_limma) && isTRUE(include_deseq) &&
+        isTRUE(include_edger) && isTRUE(include_basic)) {
     legend <- rbind(legend, summary_legend)
   }
   colnames(legend) <- c("column name", "column definition")
@@ -3175,50 +3175,4 @@ summarize_combined <- function(comb, up_fc, down_fc, p_cutoff, adjp = TRUE) {
   return(ret)
 }
 
-setMethod("extract_keepers",
-          signature = signature(keepers = "character"),
-          definition = function(extracted, keepers, table_names,
-                                all_coefficients,
-                                limma, edger, ebseq, deseq, basic,
-                                adjp, annot_df,
-                                include_deseq, include_edger,
-                                include_ebseq, include_limma,
-                                include_basic, excludes, padj_type,
-                                fancy = FALSE, loess = FALSE,
-                                lfc_cutoff = 1.0, p_cutoff = 0.05,
-                                sheet_prefix = NULL, sheet_number = NULL,
-                                format_sig = 4, plot_colors = plot_colors,
-                                z = 1.5, alpha = 0.4, z_lines = FALSE,
-                                label = 10, label_column = "hgncsymbol") {
-            if (keepers[1] == "all") {
-              new_keepers <- list()
-              names_length <- length(table_names)
-              numerators <- denominators <- c()
-              for (a in seq_len(names_length)) {
-                name <- table_names[a]
-                splitted <- strsplit(x = name, split = "_vs_")
-                denominator <- splitted[[1]][2]
-                numerator <- splitted[[1]][1]
-                new_keepers[[name]] <- c(numerator, denominator)
-              }
-            } else {
-              splitted <- strsplit(x = keepers, split = "_vs_")
-              numerator <- splitted[[1]][1]
-              denominator <- splited[[1]][2]
-              new_keepers <- list(splitted = c(numerator, denominator))
-            }
-            extract_keepers(extracted, new_keepers, table_names,
-                            all_coefficients,
-                            limma, edger, ebseq, deseq, basic,
-                            adjp, annot_df,
-                            include_deseq, include_edger,
-                            include_ebseq, include_limma,
-                            include_basic, excludes, padj_type,
-                            fancy = FALSE, loess = FALSE,
-                            lfc_cutoff = 1.0, p_cutoff = 0.05,
-                            sheet_prefix = NULL, sheet_number = NULL,
-                            format_sig = 4, plot_colors = plot_colors,
-                            z = 1.5, alpha = 0.4, z_lines = FALSE,
-                            label = 10, label_column = "hgncsymbol")
-          })
 ## EOF

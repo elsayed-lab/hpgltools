@@ -34,7 +34,7 @@ simple_gostats <- function(sig_genes, go_db = NULL, gff = NULL, gff_df = NULL, u
   ## for the rownames and because it (should) contain every gene in the
   ## 'universe' used by GOstats, as much it ought to be pretty much perfect.
   arglist <- list(...)
-  if (is.null(gff_df) & is.null(gff)) {
+  if (is.null(gff_df) && is.null(gff)) {
     warning("This requires a gff or gff database of gene IDs.")
     ## Perhaps I should make this a bit more flexible, I can integer index orgdbs etc.
   } else if (is.null(gff)) {

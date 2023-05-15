@@ -1,7 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("29de_shared.R: Do the combined differential expression searches work?")
+context("329de_shared.R: Do the combined differential expression searches work?")
 
 pasilla <- new.env()
 load("pasilla.rda", envir = pasilla)
@@ -71,12 +71,12 @@ test_that("Do we get similar results to previous DE runs: (basic)?", {
     expect_equal(expected, actual)
 })
 
-le <- hpgl_all[["comparison"]][["comp"]][[1]]
-ld <- hpgl_all[["comparison"]][["comp"]][[2]]
-ed <- hpgl_all[["comparison"]][["comp"]][[3]]
-lb <- hpgl_all[["comparison"]][["comp"]][[4]]
-eb <- hpgl_all[["comparison"]][["comp"]][[5]]
-db <- hpgl_all[["comparison"]][["comp"]][[6]]
+le <- hpgl_all[["comparison"]][["comp"]]["limma_vs_edger", ]
+ld <- hpgl_all[["comparison"]][["comp"]]["limma_vs_deseq", ]
+ed <- hpgl_all[["comparison"]][["comp"]]["deseq_vs_edger", ]
+lb <- hpgl_all[["comparison"]][["comp"]]["limma_vs_basic", ]
+eb <- hpgl_all[["comparison"]][["comp"]]["edger_vs_basic", ]
+db <- hpgl_all[["comparison"]][["comp"]]["deseq_vs_basic", ]
 test_that("Are the comparisons between DE tools sufficiently similar? (limma/edger)", {
     expect_gt(le, 0.95)
 })
@@ -245,12 +245,6 @@ test_that("Is the number of significant down genes as expected? (deseq)", {
 actual <- nrow(significant_excel[["edger"]][["downs"]][[table]])
 expected <- 90
 test_that("Is the number of significant down genes as expected? (edger)", {
-  expect_gt(actual, expected)
-})
-
-actual <- nrow(significant_excel[["ebseq"]][["downs"]][[table]])
-expected <- 80
-test_that("Is the number of significant down genes as expected? (ebseq)", {
   expect_gt(actual, expected)
 })
 

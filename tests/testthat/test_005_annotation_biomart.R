@@ -1,8 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("005annotation_biomart.R
-  1234\n")
+context("005annotation_biomart.R")
 ## 2017-12, exported functions in annotation_biomart:
 ##   load_biomart_annotations(), load_biomart_go(), load_biomart_orthologs()
 

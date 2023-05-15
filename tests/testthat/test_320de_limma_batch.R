@@ -2,7 +2,7 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 cbcb <- sm(library(cbcbSEQ))
-context("320de_limma_batch.R: Does hpgltools work with limma?\n")
+context("320de_limma_batch.R: Does hpgltools work with limma?")
 
 load("pasilla_df.rda")
 pasilla <- new.env()
@@ -22,7 +22,6 @@ cbcb_res <- cbcbSEQ::pcRes(cbcb_svd[["v"]], cbcb_svd[["d"]],
 cbcb_libsize <- cbcb_cpm[["lib.size"]]
 cbcb_combat <- cbcbSEQ::combatMod(cbcb_cpm[["y"]], batch = design[["libType"]],
                                   mod = design[["condition"]], noScale = TRUE)
-## oh yeah, cbcbSEQ's combatMod no longer works
 cbcb_v <- cbcbSEQ::voomMod(cbcb_qcpmcounts,
                            model.matrix(~ design[["condition"]] + design[["libType"]]),
                            lib.size = cbcb_libsize)
@@ -153,7 +152,8 @@ test_that("Do cbcbSEQ and hpgltools agree on the p-values?", {
 })
 
 ## Finished checking the no-intercept invocations, now compare intercept to no-intercept limma.
-noint_limma <- sm(limma_pairwise(hpgl_norm, which_voom = "hpgl", limma_method = "ls"))
+#noint_limma <- limma_pairwise(hpgl_norm, which_voom = "hpgl", limma_method = "ls")
+noint_limma <- limma_pairwise(hpgl_norm, which_voom = "hpgl", limma_method = "ls")
 expected <- noint_limma[["voom_result"]][["E"]]
 table_order <- rownames(expected)
 actual <- int_limma[["voom_result"]][["E"]]

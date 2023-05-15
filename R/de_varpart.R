@@ -1,245 +1,3 @@
-## de_limma.r: Simplify/standardize inputs/outputs when doing differential
-## expression with limma.  The ideas here are identical to de_edger.r and
-## de_deseq.r.  It is worth noting that limma was the first tool I learned to
-## use and therefore some of the code in this file is some of the very first R
-## code I learned and therefore potentially... bad.
-
-#' A minor change to limma's voom with quality weights to attempt to address some corner cases.
-#'
-#' This copies the logic employed in hpgl_voom().  I suspect one should not use it.
-#'
-#' @param data Some data!
-#' @param fun_model A model for voom() and arrayWeights()
-#' @param libsize Library sizes passed to voom().
-#' @param normalize.method Passed to voom()
-#' @param plot Do the plot of mean variance?
-#' @param span yes
-#' @param var.design maybe
-#' @param method kitty!
-#' @param maxiter 50 is good
-#' @param tol I have no tolerance.
-#' @param trace no trace for you.
-#' @param replace.weights  Replace the weights?
-#' @param col yay columns!
-#' @param ... more arguments!
-#' @return a voom return
-#' @seealso [limma::voom()]
-#' @examples
-#' \dontrun{
-#' ## No seriously, dont run this, I think it is wiser to use the functions
-#' ## provided by limma. But this provides a place to test stuff out.
-#'  voom_result <- hpgl_voomweighted(dataset, model)
-#' }
-#' @export
-hpgl_voomweighted <- function(data, fun_model, libsize = NULL, normalize.method = "none",
-                              plot = TRUE, span = 0.5, var.design = NULL, method = "genebygene",
-                              maxiter = 50, tol = 1E-10, trace = FALSE, replace.weights = TRUE,
-                              col = NULL, ...) {
-
-  if (isTRUE(plot)) {
-    oldpar <- par(mfrow = c(1, 2))
-    on.exit(par(oldpar))
-  }
-  v1 <- hpgl_voom(data, model = fun_model, libsize = libsize,
-                  normalize.method = normalize.method,
-                  plot = TRUE, span = span, ...)
-  aw <- try(limma::arrayWeights(v1, design = fun_model, method = method, maxiter = maxiter,
-                                tol = tol, var.design = var.design))
-  if (class(aw) == "try-error") {
-    message("arrayWeights failed, returning the voom result.")
-    return(v1)
-  }
-  v <- hpgl_voom(data, model = fun_model, weights = aw, libsize = libsize,
-                 normalize.method = normalize.method, plot = TRUE, span = span, ...)
-  aw <- limma::arrayWeights(v, design = fun_model, method = method, maxiter = maxiter,
-                            tol = tol, trace = trace, var.design = var.design)
-  wts <- limma::asMatrixWeights(aw, dim(v)) * v[["weights"]]
-  attr(wts, "arrayweights") <- NULL
-  if (plot) {
-    barplot(aw, names = 1:length(aw), main = "Sample-specific weights",
-            ylab = "Weight", xlab = "Sample", col = col)
-    abline(h = 1, col = 2, lty = 2)
-    voom_barplot <- grDevices::recordPlot()
-  }
-  if (replace.weights) {
-    v[["weights"]] <- wts
-    v[["sample.weights"]] <- aw
-    v[["barplot"]] <- voom_barplot
-    v[["first_iter"]] <- v1
-    return(v)
-  } else {
-    return(wts)
-  }
-}
-
-#' A slight modification of limma's voom().
-#'
-#' Estimate mean-variance relationship between samples and generate
-#' 'observational-level weights' in preparation for linear modeling RNAseq data.
-#' This particular implementation was primarily scabbed from cbcbSEQ, but
-#' changes the mean-variance plot slightly and attempts to handle corner cases
-#' where the sample design is confounded by setting the coefficient to 1 for
-#' those samples rather than throwing an unhelpful error.  Also, the Elist
-#' output gets a 'plot' slot which contains the plot rather than just printing
-#' it.
-#'
-#' @param dataframe Dataframe of sample counts which have been normalized and
-#'  log transformed.
-#' @param model Experimental model defining batches/conditions/etc.
-#' @param libsize Size of the libraries (usually provided by edgeR).
-#' @param normalize.method Normalization method used in voom().
-#' @param span The span used in voom().
-#' @param stupid Cheat when the resulting matrix is not solvable?
-#' @param logged Is the input data is known to be logged?
-#' @param converted Is the input data is known to be cpm converted?
-#' @param ... Extra arguments are passed to arglist.
-#' @return EList containing the following information:
-#'  E = The normalized data
-#'  weights = The weights of said data
-#'  design = The resulting design
-#'  lib.size = The size in pseudocounts of the library
-#'  plot = A ggplot of the mean/variance trend with a blue loess fit and red trend fit
-#' @seealso [limma::voom()]
-#' @examples
-#' \dontrun{
-#'  funkytown = hpgl_voom(samples, model)
-#' }
-#' @export
-hpgl_voom <- function(dataframe, model = NULL, libsize = NULL,
-                      normalize.method = "none", span = 0.5,
-                      stupid = FALSE, logged = FALSE, converted = FALSE, ...) {
-  arglist <- list(...)
-  ## Going to attempt to as closely as possible dovetail the original implementation.
-  ## I think at this point, my implementation is the same as the original with the exception
-  ## of a couple of tests to check that the data is not fubar and I think my plot is prettier.
-  counts <- dataframe
-  out <- list()
-  if (is(counts, "DGEList")) {
-    out[["genes"]] <- counts[["genes"]]
-    out[["targets"]] <- counts[["samples"]]
-    if (is.null(model) &
-          diff(range(as.numeric(counts[["sample"]][["group"]]))) > 0) {
-      model <- model.matrix(~group, data = counts[["samples"]])
-    }
-    if (is.null(libsize)) {
-      ## libsize <- with(counts[["samples"]], libsize * norm.factors)
-      ## This is a bit confusing.
-      libsize <- with(counts[["samples"]], counts[["libsize"]] * counts[["norm.factors"]])
-    }
-    counts <- counts[["counts"]]
-  } else {
-    isExpressionSet <- sm(is(counts, "ExpressionSet"))
-    if (isExpressionSet) {
-      if (length(fData(counts))) {
-        out[["genes"]] <- fData(counts)
-      }
-      if (length(pData(counts))) {
-        out[["targets"]] <- pData(counts)
-      }
-      counts <- exprs(counts)
-    } else {
-      counts <- as.matrix(counts)
-    }
-  }
-  if (is.null(model)) {
-    model <- matrix(1, ncol(counts), 1)
-    rownames(model) <- colnames(counts)
-    colnames(model) <- "GrandMean"
-  }
-  if (is.null(libsize)) {
-    libsize <- colSums(dataframe, na.rm = TRUE)
-  }
-  if (converted == "cpm") {
-    converted <- TRUE
-  }
-  if (!isTRUE(converted)) {
-    message("The voom input was not cpm, converting now.")
-    posed <- t(dataframe + 0.5)
-    dataframe <- t(posed / (libsize + 1) * 1e+06)
-    ##y <- t(log2(t(counts + 0.5)/(lib.size + 1) * 1000000)) ## from voom()
-  }
-  if (logged == "log2") {
-    logged <- TRUE
-  }
-  if (isTRUE(logged)) {
-    if (max(dataframe, na.rm = TRUE) > 1000) {
-      warning("This data appears to not be logged, the lmfit will do weird things.")
-    }
-  } else {
-    if (max(dataframe, na.rm = TRUE) < 200) {
-      warning("This data says it was not logged, but the maximum counts seem small.")
-      warning("If it really was log2 transformed, ",
-              "then we are about to double-log it and that would be very bad.")
-    }
-    message("The voom input was not log2, transforming now.")
-    dataframe <- log2(dataframe)
-  }
-  dataframe <- as.matrix(dataframe)
-  dataframe <- limma::normalizeBetweenArrays(dataframe, method = normalize.method)
-  linear_fit <- limma::lmFit(dataframe, model, method = "ls")
-  if (is.null(linear_fit[["Amean"]])) {
-    linear_fit[["Amean"]] <- rowMeans(dataframe, na.rm = TRUE)
-  }
-  sx <- linear_fit[["Amean"]] + mean(log2(libsize + 1)) - log2(1e+06)
-  sy <- sqrt(linear_fit[["sigma"]])
-
-  ## First remove NAs
-  sx_nas <- is.na(sx)
-  sy_nas <- is.na(sy)
-  or_nas <- sx_nas | sy_nas
-  ## Then look for all-zero entries.
-  all_zero <- rowSums(dataframe, na.rm = TRUE) == 0
-  or_nas_zero <- or_nas | all_zero
-  sx <- sx[!or_nas_zero]
-  sy <- sy[!or_nas_zero]
-
-  fitted <- gplots::lowess(sx, sy, f = 0.5)
-  f <- stats::approxfun(fitted, rule = 2)
-  mean_var_df <- data.frame(mean = sx, var = sy)
-  mean_var_plot <- ggplot(mean_var_df,
-                          aes(x = .data[["mean"]], y = .data[["var"]])) +
-    ggplot2::geom_point() +
-    ggplot2::xlab("Log2(count size + 0.5)") +
-    ggplot2::ylab("Square root of the standard deviation.") +
-    ggplot2::stat_density2d(geom = "tile", aes(fill = ggplot2::after_stat(density^0.25)),
-                            contour = FALSE, show.legend = FALSE) +
-    ggplot2::scale_fill_gradientn(
-      colours = grDevices::colorRampPalette(c("white", "black"))(256)) +
-    ggplot2::geom_smooth(method = "loess") +
-    ggplot2::stat_function(fun = f, colour = "red") +
-    ggplot2::theme(legend.position = "none")
-  if (is.null(linear_fit[["rank"]])) {
-    message("Some samples cannot be balanced across the experimental design.")
-    if (isTRUE(stupid)) {
-      ## I think this is telling me I have confounded data, and so
-      ## for those replicates I will have no usable coefficients, so
-      ## I say set them to 1 and leave them alone.
-      linear_fit[["coefficients"]][is.na(linear_fit[["coefficients"]])] <- 1
-      fitted.values <- linear_fit[["coefficients"]] %*%
-        t(linear_fit[["design"]])
-    }
-  } else if (linear_fit[["rank"]] < ncol(linear_fit[["design"]])) {
-    j <- linear_fit[["pivot"]][1:linear_fit[["rank"]]]
-    fitted.values <- linear_fit[["coefficients"]][, j, drop = FALSE] %*%
-      t(linear_fit[["design"]][, j, drop = FALSE])
-  } else {
-    fitted.values <- linear_fit[["coefficients"]] %*%
-      t(linear_fit[["design"]])
-  }
-  fitted.cpm <- 2 ^ fitted.values
-  fitted.count <- 1e-06 * t(t(fitted.cpm) * (libsize + 1.0))
-  fitted.logcount <- log2(fitted.count)
-  w <- 1 / f(fitted.logcount) ^ 4
-  dim(w) <- dim(fitted.logcount)
-  rownames(w) <- rownames(dataframe)
-  colnames(w) <- colnames(dataframe)
-  out[["E"]] <- dataframe
-  out[["weights"]] <- w
-  out[["design"]] <- model
-  out[["lib.size"]] <- libsize
-  out[["plot"]] <- mean_var_plot
-  new("EList", out)
-}
 
 #' Set up a model matrix and set of contrasts for pairwise comparisons using
 #' voom/limma.
@@ -290,21 +48,20 @@ hpgl_voom <- function(dataframe, model = NULL, libsize = NULL,
 #'  pretend <- limma_pairwise(expt)
 #' }
 #' @export
-limma_pairwise <- function(input = NULL, conditions = NULL,
-                           batches = NULL, model_cond = TRUE,
-                           model_batch = TRUE, model_intercept = FALSE,
-                           alt_model = NULL, extra_contrasts = NULL,
-                           annot_df = NULL, libsize = NULL,
-                           which_voom = "limma", limma_method = "ls",
-                           limma_robust = FALSE, voom_norm = "quantile",
-                           limma_trend = FALSE, force = FALSE, ...) {
+varpart_pairwise <- function(input = NULL, conditions = NULL,
+                             batches = NULL, model_cond = TRUE,
+                             model_batch = TRUE, model_intercept = FALSE,
+                             alt_model = NULL, extra_contrasts = NULL,
+                             annot_df = NULL, libsize = NULL,
+                             limma_method = "ls", limma_robust = FALSE, voom_norm = "quantile",
+                             limma_trend = FALSE, force = FALSE, ...) {
   arglist <- list(...)
   ## This is used in the invocation of a voom() implementation for normalization.
   ## This is for the eBayes() call.
 
-  message("Starting limma pairwise comparison.")
+  message("Starting limma/varpart pairwise comparison.")
   san_input <- sanitize_expt(input)
-  input_data <- choose_limma_dataset(san_input, force = force, which_voom = which_voom)
+  input_data <- choose_limma_dataset(san_input, force = force)
   design <- pData(san_input)
   if (is.null(conditions)) {
     conditions <- design[["condition"]]
@@ -400,70 +157,14 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
   }
 
   na_sum <- sum(is.na(data))
-  if (na_sum > 0) {
-    ## My version of voom can handle nas
-    which_voom <- "hpgl"
-  }
   fun_voom <- NULL
   voom_plot <- NULL
-  if (which_voom == "hpgl_weighted") {
-    message("Limma step 2/6: running hpgl_voomweighted(), switch with the argument 'which_voom'.")
-    fun_voom <- hpgl_voomweighted(
-      data, chosen_model, libsize = libsize, voom_norm = voom_norm,
-      span = 0.5, var.design = NULL, method = "genebygene",
-      maxiter = 50, tol = 1E-10, trace = FALSE, replace.weights = TRUE, col = NULL,
-      logged = loggedp, converted = convertedp)
-    voom_plot <- fun_voom[["plot"]]
-  } else if (which_voom == "hpgl") {
-    message("Limma step 2/6: running hpgl_voom(), switch with the argument 'which_voom'.")
-    fun_voom <- hpgl_voom(
-      data, chosen_model, libsize = libsize,
-      logged = loggedp, converted = convertedp)
-    voom_plot <- fun_voom[["plot"]]
-  } else if (which_voom == "limma_weighted") {
-    message("Limma step 2/6: running limma::voomWithQualityWeights(), ",
-            "switch with the argument 'which_voom'.")
-    fun_voom <- try(limma::voomWithQualityWeights(
-      counts = data, design = chosen_model, lib.size = libsize,
-      normalize.method = voom_norm, plot = TRUE, span = 0.5,
-      var.design = NULL, method = "genebygene", maxiter = 50,
-      tol = 1E-10, trace = FALSE, replace.weights = TRUE, col = NULL))
-    if (class(fun_voom) == "try-error") {
-      message("voomWithQualityWeights failed, falling back to voom.")
-      fun_voom <- limma::voom(
-        counts = data, design = chosen_model, lib.size = libsize,
-        normalize.method = voom_norm, span = 0.5, plot = TRUE, save.plot = TRUE)
-    }
-    voom_plot <- grDevices::recordPlot()
-  } else if (which_voom == "limma") {
-    message("Limma step 2/6: running limma::voom(), switch with the argument 'which_voom'.")
-    message("Using normalize.method = ", voom_norm, " for voom.")
-    ## Note to self, the defaults are span = 0.5, plot = FALSE, save.plot = FALSE,
-    ## normalize.method = "none", lib.size = NULL, design = NULL
-    fun_voom <- limma::voom(
-      counts = data, design = chosen_model, lib.size = libsize,
-      normalize.method = voom_norm, span = 0.5, plot = TRUE, save.plot = TRUE)
-    voom_plot <- grDevices::recordPlot()
-  } else if (which_voom == "cpm") {
-    ## Reyy reminded me today that one does not necessarily need voom, but
-    ## logcpm might be sufficient when the data distributions are nice and
-    ## consistent.
-    message("Limma step 2/6: using edgeR::cpm(), switch with the argument 'which_voom'.")
-    fun_voom <- edgeR::cpm(data, log = TRUE, prior.count = 3)
-  } else if (which_voom == "none") {
-    ## Then this is microarray-ish data.
-    message("Assuming this data is similar to a micro array and not performign voom.")
-    fun_voom <- data
-  } else {
-    message("Limma step 2/6: running limma::voom(), switch with the argument 'which_voom'.")
-    message("Using normalize.method = ", voom_norm, " for voom.")
-    ## Note to self, the defaults are span = 0.5, plot = FALSE, save.plot = FALSE,
-    ## normalize.method = "none", lib.size = NULL, design = NULL
-    fun_voom <- limma::voom(
-      counts = data, design = chosen_model, lib.size = libsize,
-      normalize.method = voom_norm, span = 0.5, plot = TRUE, save.plot = TRUE)
-    voom_plot <- grDevices::recordPlot()
-  }
+  message("Attempting voomWithDreamWeights.")
+  fun_voom <- variancePartition::voomWithDreamWeights(
+    counts = data, design = chosen_model, lib.size = libsize,
+    normalize.method = voom_norm, span = 0.5, plot = TRUE, save.plot = TRUE)
+  voom_plot <- grDevices::recordPlot()
+
   one_replicate <- FALSE
   fun_design <- pData(san_input)
   if (is.null(fun_voom)) {
@@ -476,10 +177,9 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
   ## Do the lmFit() using this model
   pairwise_fits <- NULL
   identity_fits <- NULL
-  message("Limma step 3/6: running lmFit with method: ", limma_method, ".")
-  fitted_data <- limma::lmFit(object = fun_voom,
-                              design = chosen_model,
-                              method = limma_method)
+  message("Limma/varpart step 3/6: running dream.")
+  fitted_data <- variancePartition::dream(
+    object = fun_voom, design = chosen_model, method = limma_method)
   all_tables <- NULL
   if (isTRUE(model_intercept)) {
     message("Limma step 4/6: making and fitting contrasts with an intercept. (~ factors)")

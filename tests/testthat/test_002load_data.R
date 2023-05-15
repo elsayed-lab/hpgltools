@@ -1,8 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("002load_data.R: Does pasilla load into hpgltools?
-  123456789\n")
+context("002load_data.R: Does pasilla load into hpgltools?")
 
 library(pasilla)
 ## data(pasillaGenes)

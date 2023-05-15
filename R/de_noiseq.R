@@ -64,7 +64,14 @@ noiseq_pairwise <- function(input = NULL, conditions = NULL,
       norm, k = 0.5, norm = "rpkm", factor = "condition", lc = 1,
       r = 20, adj = 1.5, plot = TRUE, a0per = 0.9, filter = 1,
       conditions = c(numerator, denominator))
-    result_list[[name]] <- noiseq_table@results[[1]]
+    noiseq_result <- noiseq_table@results[[1]]
+    rename_col <- colnames(noiseq_result) == "log2FC"
+    colnames(noiseq_result)[rename_col] <- "logFC"
+    ## It looks to me like noiseq flips the logFC compared to other methods.
+    noiseq_result[["logFC"]] <- -1.0 * noiseq_results[["logFC"]]
+    noiseq_result[["p"]] <- 1.0 - noiseq_result[["prob"]]
+    noiseq_result[["adjp"]] <- p.adjust(noiseq_result[["p"]])
+    result_list[[name]] <- noiseq_result
   }
   if (isTRUE(verbose)) {
     close(bar)
@@ -78,7 +85,6 @@ noiseq_pairwise <- function(input = NULL, conditions = NULL,
       "conditions_table" = conditions_table,
       "contrast_list" = contrast_list,
       "contrasts" = apc,
-      "contrast_string" = contrast_string,
       "contrasts_performed" = apc[["names"]],
       "input_data" = input,
       "method" = "noiseq",

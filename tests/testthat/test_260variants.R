@@ -1,8 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("260variants.R:
-")
+context("260variants.R")
 
 ## The functions in variants.R deal with the outputs from samtools mpileup,
 ## bcftools, and vcfutils.  I have a small perl function which reads the bcf

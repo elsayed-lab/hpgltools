@@ -13,7 +13,6 @@ pombe_subset <- subset_expt(
 testing <- basic_pairwise(pombe_subset)
 actual <- length(testing[["contrasts_performed"]])
 expected <- 15
-## 01
 test_that("Basic performed the expected number of contrasts?", {
   expect_equal(expected, actual)
 })
@@ -21,7 +20,6 @@ test_that("Basic performed the expected number of contrasts?", {
 test <- testing[["all_tables"]][["wt0_vs_mut0"]]
 actual <- sum(test[["logFC"]] > 2)
 expected <- 1
-## 02
 test_that("Basic got some expected results (logFC)?", {
   expect_equal(expected, actual)
 })
@@ -29,13 +27,11 @@ test_that("Basic got some expected results (logFC)?", {
 ## Add a little fudge-factor to some of these tests.
 actual <- sum(as.numeric(test[["p"]]) < 0.1)
 expected <- 358
-## 03
 test_that("Basic got some expected results (p)?", {
   expect_equal(expected, actual, tolerance = 3)
 })
 
 test <- write_basic(testing, excel = "test_basic_pairwise.xlsx")
-## 04
 test_that("write_basic() did something?", {
   expect_true(file.exists("test_basic_pairwise.xlsx"))
 })
@@ -43,7 +39,6 @@ test_that("write_basic() did something?", {
 testing <- deseq_pairwise(pombe_subset)
 actual <- length(testing[["contrasts_performed"]])
 expected <- 15
-## 05
 test_that("DESeq performed the expected number of contrasts?", {
   expect_equal(expected, actual)
 })
@@ -51,20 +46,17 @@ test_that("DESeq performed the expected number of contrasts?", {
 test <- testing[["all_tables"]][["wt0_vs_mut0"]]
 actual <- sum(test[["logFC"]] > 2)
 expected <- 50
-## 06
 test_that("DESeq got some expected results (logFC)?", {
   expect_equal(expected, actual)
 })
 
 actual <- sum(as.numeric(test[["P.Value"]]) < 0.1)
 expected <- 319
-## 07
 test_that("DESeq got some expected results (adjp)?", {
   expect_equal(expected, actual)
 })
 
 written_test <- write_deseq(testing, excel = "test_deseq_pairwise.xlsx")
-## 08
 test_that("write_deseq() did something?", {
   expect_true(file.exists("test_deseq_pairwise.xlsx"))
 })
@@ -73,7 +65,6 @@ test_that("write_deseq() did something?", {
 testing <- edger_pairwise(pombe_subset)
 actual <- length(testing[["contrasts_performed"]])
 expected <- 15
-## 09
 test_that("edgeR performed the expected number of contrasts?", {
   expect_equal(expected, actual)
 })
@@ -81,20 +72,17 @@ test_that("edgeR performed the expected number of contrasts?", {
 test <- testing[["all_tables"]][["wt0_vs_mut0"]]
 actual <- sum(test[["logFC"]] > 2)
 expected <- 61
-## 10
 test_that("edgeR got some expected results (logFC)?", {
   expect_equal(expected, actual)
 })
 
 actual <- sum(as.numeric(test[["PValue"]]) < 0.1)
 expected <- 328
-## 11
 test_that("edgeR got some expected results (adjp)?", {
   expect_equal(expected, actual)
 })
 
 test <- write_edger(testing, excel = "test_edger_pairwise.xlsx")
-## 12
 test_that("write_edger() did something?", {
   expect_true(file.exists("test_edger_pairwise.xlsx"))
 })
@@ -104,7 +92,6 @@ test_that("write_edger() did something?", {
 testing <- limma_pairwise(pombe_subset)
 actual <- length(testing[["contrasts_performed"]])
 expected <- 15
-## 13
 test_that("limma performed the expected number of contrasts?", {
   expect_equal(expected, actual)
 })
@@ -112,36 +99,31 @@ test_that("limma performed the expected number of contrasts?", {
 test <- testing[["all_tables"]][["wt0_vs_mut0"]]
 actual <- sum(test[["logFC"]] > 2)
 expected <- 9
-## 14
 test_that("limma got some expected results (logFC)?", {
   expect_equal(expected, actual)
 })
 
 actual <- sum(as.numeric(test[["P.Value"]]) < 0.1)
 expected <- 421
-## 15
 test_that("limma got some expected results (adjp)?", {
   expect_equal(expected, actual)
 })
 
 test <- write_limma(testing, excel = "test_limma_pairwise.xlsx")
-## 16
 test_that("write_limma() did something?", {
   expect_true(file.exists("test_limma_pairwise.xlsx"))
 })
 
 test_condbatch <- all_pairwise(pombe_subset)
-actual <- min(test_condbatch[["comparison"]][["comp"]])
-expected <- 0.71
-## 17
+actual <- min(test_condbatch[["comparison"]][["comp"]]["deseq_vs_edger", ])
+expected <- 0.80
 test_that("all_pairwise() provided results reasonably similar (batch in model)?", {
   expect_gt(actual, expected)
 })
 
 test_cond <- all_pairwise(pombe_subset, model_batch = FALSE)
-actual <- min(test_cond[["comparison"]][["comp"]])
+actual <- min(test_cond[["comparison"]][["comp"]]["deseq_vs_edger", ])
 expected <- 0.76
-## 18
 test_that("all_pairwise() provided results reasonably similar (no batch in model)?", {
   expect_gt(actual, expected)
 })
@@ -149,7 +131,6 @@ test_that("all_pairwise() provided results reasonably similar (no batch in model
 test_sva <- all_pairwise(pombe_subset, model_batch = "svaseq", filter = TRUE)
 actual <- min(test_sva[["comparison"]][["comp"]])
 expected <- 0.63
-## 19
 test_that("all_pairwise() provided results reasonably similar? (svaseq in model)", {
   expect_gt(actual, expected)
 })
@@ -157,7 +138,6 @@ test_that("all_pairwise() provided results reasonably similar? (svaseq in model)
 cond_model <- choose_model(pombe_subset, model_batch = FALSE)
 expected <- "~ 0 + condition"
 actual <- cond_model[["chosen_string"]]
-## 20
 test_that("choose_model provides expected models?", {
   expect_equal(expected, actual)
 })
@@ -176,7 +156,6 @@ for (c in 1:length(pombe_subset[["conditions"]])) {
   value <- as.character(pombe_subset[["conditions"]][c])
   test_df[name, value] <- 1
 }
-## 21
 test_that("choose_model provides a model which matches the design?", {
   expect_equal(model_df, test_df)
 })
@@ -184,7 +163,6 @@ test_that("choose_model provides a model which matches the design?", {
 condbatch_model <- choose_model(pombe_subset)
 expected <- "~ 0 + condition + batch"
 actual <- condbatch_model[["chosen_string"]]
-## 22
 test_that("choose_model provides expected models?", {
   expect_equal(expected, actual)
 })
@@ -193,7 +171,6 @@ test_that("choose_model provides expected models?", {
 testing <- choose_dataset(pombe_subset, choose_for = "limma")
 expected <- c("libsize", "conditions", "batches", "data")
 actual <- names(testing)
-## 23
 test_that("choose_dataset provides some expected output?", {
   expect_equal(expected, actual)
 })
@@ -201,7 +178,6 @@ test_that("choose_dataset provides some expected output?", {
 testing <- choose_dataset(pombe_subset, choose_for = "deseq")
 expected <- c("libsize", "conditions", "batches", "data")
 actual <- names(testing)
-## 23
 test_that("choose_dataset provides some expected output?", {
   expect_equal(expected, actual)
 })
@@ -209,7 +185,6 @@ test_that("choose_dataset provides some expected output?", {
 testing <- choose_dataset(pombe_subset, choose_for = "edger")
 expected <- c("libsize", "conditions", "batches", "data")
 actual <- names(testing)
-## 23
 test_that("choose_dataset provides some expected output?", {
   expect_equal(expected, actual)
 })
@@ -256,7 +231,6 @@ test_that("combine_de_tables() with keepers worked?", {
 ## Same query, condition in model
 test_cond_combined <- combine_de_tables(test_cond,
                                         keepers = keepers)
-## 25
 test_that("combine_de_tables() gave expected tables?", {
   expect_equal(length(test_cond_combined[["data"]]), 2)
 })
@@ -264,22 +238,19 @@ test_that("combine_de_tables() gave expected tables?", {
 testing <- compare_de_results(test_condbatch_combined, test_cond_combined)
 expected <- 18
 actual <- length(unlist(testing[["result"]]))
-## 26
 test_that("compare_de_results provides some expected output?", {
   expect_equal(expected, actual)
 })
 
 expected <- 0.96
 actual <- min(testing[["logfc"]])
-## 27
 test_that("compare_de_results provides some expected logfc comparisons?", {
   expect_gt(actual, expected)
 })
 
 testing <- correlate_de_tables(test_sva)
 actual <- min(testing[["comp"]])
-expected <- 0.80
-## 28
+expected <- 0.70
 test_that("compare_led_tables provides some expected comparisons?", {
   expect_gt(actual, expected)
 })
@@ -300,7 +271,6 @@ save(list = "cb_sig", file = "test_065_significant.rda", compress = TRUE)
 testing <- get_abundant_genes(test_sva)
 actual <- length(testing[["high"]])
 expected <- 6
-## 34
 test_that("Did get_abundant_genes get some stuff?", {
   expect_equal(expected, actual)
 })
@@ -310,7 +280,6 @@ actual <- names(head(testing[["high"]][["mut0"]]))
 ##              "SPAC977.13c", "SPAC977.15", "SPAC977.16c")
 expected <- c("SPRRNA.49", "SPRRNA.01", "SPNCRNA.98",
               "SPRRNA.46", "SPSNRNA.07", "SPBC14F5.04c")
-## 35
 test_that("Did get_abundant_genes get some stuff?", {
   expect_equal(expected, actual)
 })
@@ -318,7 +287,6 @@ test_that("Did get_abundant_genes get some stuff?", {
 testing <- get_pairwise_gene_abundances(test_sva)
 expected <- c(5720, 6)
 actual <- dim(testing[["expression_values"]])
-## 3637
 test_that("Did get_pairwise_gene_abundances() get some stuff?", {
   expect_equal(expected[1], actual[1])
   expect_equal(expected[2], actual[2])
@@ -327,7 +295,6 @@ test_that("Did get_pairwise_gene_abundances() get some stuff?", {
 testing <- get_sig_genes(table = test_sva[["deseq"]][["all_tables"]][[1]])
 expected <- c(199, 6)
 actual <- dim(testing[["up_genes"]])
-## 3839
 test_that("Did get_sig_genes() get some stuff?", {
   expect_equal(expected[1], actual[1])
   expect_lt(expected[2], actual[2])
@@ -335,7 +302,6 @@ test_that("Did get_sig_genes() get some stuff?", {
 
 expected <- c(183, 6)
 actual <- dim(testing[["down_genes"]])
-## 4041
 test_that("Did get_sig_genes() get some stuff?", {
   expect_equal(expected[1], actual[1])
   expect_lt(expected[2], actual[2])
@@ -346,7 +312,6 @@ testing <- make_pairwise_contrasts(model = pombe_model[["chosen_model"]],
                                    conditions = pombe_subset[["conditions"]])
 actual <- length(names(testing[["all_pairwise"]]))
 expected <- 15
-## 42
 test_that("Did make_pairwise_contrasts() get some stuff?", {
   expect_equal(expected, actual)
 })
@@ -358,13 +323,11 @@ testing <- make_pairwise_contrasts(model = pombe_model[["chosen_model"]],
                                    conditions = pombe_expt[["conditions"]])
 actual <- length(names(testing[["all_pairwise"]]))
 expected <- 66
-## 43
 test_that("Did make_pairwise_contrasts() get some stuff?", {
   expect_equal(expected, actual)
 })
 
 testing <- significant_barplots(combined = test_condbatch_combined)
-## 464748
 test_that("significant_barplots() gave some plots?", {
   expect_equal(class(testing[["deseq"]]), c("gg", "ggplot"))
   expect_equal(class(testing[["limma"]]), c("gg", "ggplot"))
@@ -372,7 +335,6 @@ test_that("significant_barplots() gave some plots?", {
 })
 
 testing <- de_venn(test_condbatch_combined[["data"]][[1]])
-## 5253
 test_that("de_venn() gave some plots?", {
   expect_equal(class(testing[["up_noweight"]]), "recordedplot")
   expect_equal(class(testing[["down_noweight"]]), "recordedplot")
@@ -380,7 +342,6 @@ test_that("de_venn() gave some plots?", {
 
 testing <- plot_num_siggenes(test_condbatch_combined[["data"]][[1]])
 expected <- c("gg", "ggplot")
-## 57
 test_that("plot_num_siggenes() gave some plots?", {
   expect_equal(class(testing[["up"]]), expected)
   expect_equal(class(testing[["down"]]), expected)
@@ -389,13 +350,11 @@ test_that("plot_num_siggenes() gave some plots?", {
 })
 
 testing <- extract_abundant_genes(test_sva, excel = NULL)
-## 58
 test_that("extract_abundant_genes() gave some stuff?", {
   expect_equal(100, length(testing[["abundances"]][["deseq"]][["high"]][["mut0"]]))
 })
 
 testing <- write_de_table(data = test_sva, type = "deseq")
-## 62
 test_that("Did write_de_table() write something?", {
   expect_equal(testing, 1)
 })

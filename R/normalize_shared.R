@@ -965,30 +965,4 @@ normalize <- function(expt, todo = list()) {
   return(count_table)
 }
 
-## Put S4 dispatchers here
-
-setGeneric("normalizeData",
-  function(expt, ...) standardGeneric("normalizeData"),
-  signature = signature(expt = "expt"))
-
-setMethod("normalizeData",
-  signature = signature(expt = "expt"),
-  definition = function(expt, ...) {
-    normalize_expt(expt, ...)
-  })
-
-setMethod("normalizeData",
-          signature = signature(expt = "SummarizedExperiment"),
-          definition = function(expt, ...) {
-            se <- expt
-            normalize_se(se, transform = transform, norm = norm,
-              convert = convert, batch = batch, filter = filter,
-              annotations = annotations, fasta = fasta, entry_type = entry_type,
-              use_original = use_original, batch1 = batch1, batch2 = batch2,
-              batch_step = batch_step, low_to_zero = low_to_zero, thresh = thresh,
-              min_samples = min_samples, p = p, A = A, k = k, cv_min = cv_min,
-              cv_max = cv_max, na_to_zero = na_to_zero,
-              adjust_method = adjust_method, verbose = verbose, ...)
-          })
-
 ## EOF

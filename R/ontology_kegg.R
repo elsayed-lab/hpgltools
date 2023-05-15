@@ -46,7 +46,7 @@ simple_pathview <- function(gene_input = NULL, compound_input = NULL,
   ## In the most recent iteration of using this, we were asked to create images of
   ## both compounds and genes.  Thus we will separate the input into
   ## two variables as per pathview().
-  if (is.null(gene_input) & is.null(compound_input)) {
+  if (is.null(gene_input) && is.null(compound_input)) {
     stop("This requires at least one of gene_input or compound_input to exist.")
   }
 
@@ -325,7 +325,7 @@ simple_pathview <- function(gene_input = NULL, compound_input = NULL,
 #' @export
 get_kegg_compounds <- function(pathway = "all", abbreviation = NULL,
                                species = "leishmania major", savefile = NULL) {
-  if (is.null(abbreviation) & is.null(species)) {
+  if (is.null(abbreviation) && is.null(species)) {
     stop("This requires either a species or 3 letter kegg id.")
   } else if (is.null(abbreviation)) {
     ## Then the species was provided.
@@ -412,7 +412,7 @@ get_kegg_compounds <- function(pathway = "all", abbreviation = NULL,
 #' @export
 get_kegg_genes <- function(pathway = "all", abbreviation = NULL,
                            species = "leishmania major", savefile = NULL) {
-  if (is.null(abbreviation) & is.null(species)) {
+  if (is.null(abbreviation) && is.null(species)) {
     stop("This requires either a species or 3 letter kegg id.")
   } else if (is.null(abbreviation)) {
     ## Then the species was provided.
@@ -872,7 +872,7 @@ mygetKGMLurl <- function(pathwayid, organism = "hsa", hostname = "http://www.keg
   pathwayid <- gsub(":", "", pathwayid)
   pco <- grepl("^[a-z][a-z][a-z]", pathwayid)
   org.len <- length(organism)
-  if (org.len == 1 & length(pathwayid) != 1) {
+  if (org.len == 1 && length(pathwayid) != 1) {
     organisms <- rep(organism, length(pathwayid))
     organisms[pco] <- sapply(pathwayid[pco],
                              function(x) substr(x, 1L, 3L))

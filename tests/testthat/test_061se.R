@@ -177,7 +177,6 @@ test_that("Did we get some old/new colors?", {
 
 test <- plot_libsize(pombe_se)
 
-
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x = as.numeric(end - start))
 message("\nFinished 060expt.R in ", elapsed,  " seconds.")

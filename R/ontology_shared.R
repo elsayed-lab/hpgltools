@@ -239,7 +239,7 @@ topgo2enrich <- function(retlist, ontology = "mf", pval = 0.05, organism = NULL,
 random_ontology <- function(input, method = "goseq", n = 200, ...) {
   ## Lets assume the result of *_pairwise() or combine_de_tables()
   input_table <- NULL
-  if (class(input) == "expt" | class(input) == "ExpressionSet") {
+  if (class(input) == "expt" || class(input) == "ExpressionSet") {
     input_table <- data.frame(row.names = rownames(exprs(input)))
     input_table[["ID"]] <- rownames(input_table)
     input_table[["DE"]] <- 1
@@ -790,10 +790,10 @@ all_ontology_searches <- function(de_out, gene_lengths = NULL, goids = NULL, n =
   arglist <- list(...)
   message("This function expects a list of contrast tables and annotation information.")
   message("The annotation information would be gene lengths and ontology ids")
-  if (isTRUE(do_goseq) & is.null(gene_lengths)) {
+  if (isTRUE(do_goseq) && is.null(gene_lengths)) {
     stop("Performing a goseq search requires a data frame of gene lengths.")
   }
-  if (isTRUE(do_cluster) & is.null(gff_file)) {
+  if (isTRUE(do_cluster) && is.null(gff_file)) {
     stop("Performing a clusterprofiler search requires a gff file.")
   }
   arglist <- list(...)

@@ -1966,28 +1966,4 @@ u_plot <- function(plotted_us) {
   return(u_plot)
 }
 
-## S4 dispatchers
-#' Generic method to input data to iDA
-#'
-#' @param object The object to run iDA on
-#' @param ... Additonal arguments passed to object constructors
-#' @return iDA output with clustering, gene weights, and cell weights
-#' @export
-setGeneric("iDA", signature = c("object"),
-           function(object, ...) {
-             standardGeneric("iDA")
-           })
-
-#' Set method for matrix to input data to iDA
-#'
-#' @param object The object to run iDA on
-#' @param ... Additonal arguments passed to object constructors
-#' @return iDA output with clustering, gene weights, and cell weights
-#' @export
-setMethod("iDA", "matrix",
-          function(object, ...) {
-            iDAoutput <- iDA::iDA_core(object, ...)
-            return(iDAoutput)
-          })
-
 ## EOF
