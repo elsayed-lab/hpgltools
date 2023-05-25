@@ -1352,6 +1352,13 @@ dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv"
   return(output_entries)
 }
 
+#' Adding an alias to sanitize_metadata until I decide how I want to name this.
+#'
+#' @param ... Arguments for sanitize_metadata().
+#' @export
+sanitize_expt_metadata <- function(...) {
+  sanitize_metadata(...)
+}
 #' Given an expressionset, sanitize pData columns of interest.
 #'
 #' I wrote this function after spending a couple of hours confused
@@ -1362,48 +1369,58 @@ dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv"
 #' another analysis we essentially had a cell which said 'cyre' and a
 #' similar data explosion occurred.
 #'
-#' @param expt Input expressionset
+#' @param meta Input metadata
 #' @param columns Set of columns to check, if left NULL, all columns
 #'  will be molested.
 #' @param na_string Fill NA values with a string.
 #' @param lower Set everything to lowercase?
 #' @param punct Remove punctuation?
 #' @export
-sanitize_expt_metadata <- function(expt, columns = NULL, na_string = "notapplicable",
-                                   lower = TRUE, punct = TRUE) {
-  pd <- pData(expt)
+sanitize_metadata <- function(meta, columns = NULL, na_string = "notapplicable",
+                              lower = TRUE, punct = TRUE,
+                              spaces = FALSE, numbers = NULL) {
   if (is.null(columns)) {
-    columns <- colnames(pd)
+    columns <- colnames(meta)
   }
   for (col in seq_along(columns)) {
     todo <- columns[col]
     mesg("Sanitizing metadata column: ", todo, ".")
-    if (! todo %in% colnames(pd)) {
+    if (! todo %in% colnames(meta)) {
       mesg("The column ", todo, " is missing, skipping it (also warning this).")
       warning("The column ", todo, " is missing, skipping it.")
       next
     }
     ## First get rid of trailing/leading spaces, those anger me and are crazy hard to find
-    pd[[todo]] <- gsub(pattern = "^[[:space:]]", replacement = "", x = pd[[todo]])
-    pd[[todo]] <- gsub(pattern = "[[:space:]]$", replacement = "", x = pd[[todo]])
+    meta[[todo]] <- gsub(pattern = "^[[:space:]]", replacement = "", x = meta[[todo]])
+    meta[[todo]] <- gsub(pattern = "[[:space:]]$", replacement = "", x = meta[[todo]])
     ## Set the column to lowercase, I have recently had a rash of mixed case sample sheet data.
     if (isTRUE(lower)) {
-      pd[[todo]] <- tolower(pd[[todo]])
+      mesg("Setting everything to lowercase.")
+      meta[[todo]] <- tolower(meta[[todo]])
     }
     ## I think punctuation needs to go
     if (isTRUE(punct)) {
-      pd[[todo]] <- gsub(pattern = "[[:punct:]]", replacement = "", x = pd[[todo]])
+      mesg("Removing punctuation.")
+      meta[[todo]] <- gsub(pattern = "[[:punct:]]", replacement = "", x = meta[[todo]])
+    }
+    if (!is.null(numbers)) {
+      mesg("Adding a prefix to bare numbers.")
+      meta[[todo]] <- gsub(pattern = "^([[:digit:]]+)$",
+        replacement = glue("{numbers}\\1"), x = meta[[todo]])
     }
     if (!is.null(na_string)) {
-      ## Set NAs to "NotApplicable"
-      na_idx <- is.na(pd[[todo]])
-      pd[na_idx, todo] <- na_string
+      mesg("Setting NAs to ", na_string, ".")
+      na_idx <- is.na(meta[[todo]])
+      meta[na_idx, todo] <- na_string
+    }
+    ## This needs to go last
+    if (isTRUE(spaces)) {
+      mesg("Removing all spaces.")
+      meta[[todo]] <- gsub(pattern = "[[:space:]]", replacement = "", x = meta[[todo]])
     }
   } ## End iterating over the columns of interest
 
-  pData(expt[["expressionset"]]) <- pd
-  expt[["design"]] <- pd
-  return(expt)
+  return(meta)
 }
 
 #' Generate an assembly annotation specification for use by gather_preprocessing_metadata()

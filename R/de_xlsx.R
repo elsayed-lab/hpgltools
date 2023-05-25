@@ -1928,6 +1928,12 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
   ret[["sig_bar_plots"]] <- sig_bar_plots
   summary_df[["rownames"]] <- NULL
   ret[["summary_df"]] <- summary_df
+  ret[["lfc"]] <- lfc
+  ret[["p"]] <- p
+  ret[["z"]] <- z
+  ret[["n"]] <- n
+  ret[["according"]] <- according_to
+  ret[["p_type"]] <- p_type
 
   if (isTRUE(do_excel)) {
     excel_ret <- try(openxlsx::saveWorkbook(wb, excel, overwrite = TRUE))

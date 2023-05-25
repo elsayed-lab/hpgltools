@@ -63,9 +63,9 @@ test_that("Do we get a reasonable number of resulting samples if we collapse by 
   expect_equal(actual[2], expected[2], tolerance = 0.001)
 })
 
-no_rrna <- exclude_genes_expt(pombe_expt,
-                              column = "gene_biotype",
-                              patterns = c("ncRNA", "pseudogene"))
+no_rrna <- subset_genes(pombe_expt,
+                        column = "gene_biotype",
+                        patterns = c("ncRNA", "pseudogene"))
 expected <- 5778
 actual <- nrow(exprs(no_rrna))
 test_that("Does exclude_genes_expt remove stuff?", {
@@ -180,12 +180,12 @@ test_that("Did write_expt() create pictures?", {
   expect_equal("data.frame", class(testing[["raw_pca_table"]])[[1]])
   expect_equal("gg", class(testing[["raw_tsne"]])[[1]])
   expect_equal("data.frame", class(testing[["raw_tsne_table"]])[[1]])
-  ## 50
   expect_equal("gg", class(testing[["raw_scaled_pca"]])[[1]])
   expect_equal("data.frame", class(testing[["raw_scaled_pca_table"]])[[1]])
   expect_equal("gg", class(testing[["raw_scaled_tsne"]])[[1]])
   expect_equal("data.frame", class(testing[["raw_scaled_tsne_table"]])[[1]])
-  expect_equal("recordedplot", class(testing[["raw_qq"]])[[1]])
+  ## I turned off qq plots by default.
+  ## expect_equal("recordedplot", class(testing[["raw_qq"]])[[1]])
   expect_equal("gg", class(testing[["norm_libsize"]])[[1]])
   expect_equal("gg", class(testing[["norm_nonzero"]])[[1]])
   expect_equal("gg", class(testing[["norm_density"]])[[1]])

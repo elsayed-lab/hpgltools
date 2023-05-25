@@ -9,7 +9,7 @@ write_expt(
   excel = "excel/pretty_counts.xlsx",
   norm = "quant",
   violin = TRUE,
-  sample_heat = TRUE,
+  sample_heat = NULL,
   convert = "cpm",
   transform = "log2",
   batch = "svaseq",

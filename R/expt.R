@@ -46,8 +46,8 @@ combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, a
   if ((num_shared / total_num) < 0.8) {
     warning("There are many gene IDs which are not shared among the two datasets, this may fail.")
     message("There are many gene IDs which are not shared among the two datasets.")
-    message("Here are some from the first: ", head(rownames(exp1)))
-    message("Here are some from the second: ", head(rownames(exp2)))
+    message("Here are some from the first: ", toString(head(rownames(exp1))))
+    message("Here are some from the second: ", toString(head(rownames(exp2))))
   }
 
   if (isTRUE(merge_meta)) {
@@ -111,30 +111,42 @@ combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, a
   }
 
   ## It appears combining expressionsets can lead to NAs?
-  new_exprs <- exprs(expt1)
-  na_idx <- is.na(new_exprs)
-  new_exprs[na_idx] <- 0
-  tmp <- expt1[["expressionset"]]
-  exprs(tmp) <- as.matrix(new_exprs)
-  expt1[["expressionset"]] <- tmp
+  ## I ran into a situation where the expression data of the expressionset somehow got
+  ## cast as dataframe.  Let us make sure that doesn't happen here, though I think
+  ## there are better places for this type of check.  I did add some checks in my
+  ## setMethod calls for exprs<-
+  if (class(exprs(expt1))[1] == "data.frame") {
+    exprs(expt1) <- as.matrix(exprs(expt1))
+  }
+  na_idx <- is.na(exprs(expt1))
+  exprs(expt1)[na_idx] <- 0
 
   if (isFALSE(all_x) || isFALSE(all_y)) {
     found_first <- rownames(exprs(expt1)) %in% rownames(exprs(exp1))
     shared_first_ids <- rownames(exprs(expt1))[found_first]
-    expt1 <- exclude_genes_expt(expt1, ids = shared_first_ids, method = "keep")
+    expt1 <- subset_genes(expt1, ids = shared_first_ids, method = "keep")
 
     found_second <- rownames(exprs(expt1)) %in% rownames(exprs(exp2))
     shared_second_ids <- rownames(exprs(expt1))[found_second]
-    expt1 <- exclude_genes_expt(expt1, ids = shared_second_ids, method = "keep")
+    expt1 <- subset_genes(expt1, ids = shared_second_ids, method = "keep")
   }
 
   return(expt1)
 }
 
+#' Get the colors from an expt.
+#'
+#' @param expt Expt from which to get colors.
+#' @export
 colors <- function(expt) {
   expt[["colors"]]
 }
 
+#' Set the colors to an expt.
+#'
+#' @param expt Expt to which to add colors.
+#' @param lst List of colors.
+#' @export
 `colors<-` <- function(expt, lst) {
   expt[["colors"]] <- lst
   return(expt)
@@ -729,7 +741,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
     "colors" = chosen_colors,
     "design" = sample_definitions,
     "gff_file" = include_gff,
-    "libsize" = colSums(Biobase::exprs(experiment)),
+    "libsize" = colSums(exprs(experiment)),
     "notes" = toString(notes),
     "researcher" = researcher,
     "study" = study_name,
@@ -1142,6 +1154,9 @@ generate_expt_colors <- function(sample_definitions, cond_column = "condition",
   return(chosen_colors)
 }
 
+#' Extract the backup copy of an expressionset from an expt.
+#'
+#' @param expt Expt which should contain the backup.
 get_backup_expression_data <- function(expt) {
   backup <- expt[["original_expressionset"]]
   return(backup)
@@ -2258,10 +2273,17 @@ set_expt_samplenames <- function(expt, newnames) {
   return(new_expt)
 }
 
+#' Get the state of the data in an expt.
+#'
+#' @param expt Experiment containing the state.
 state <- function(expt) {
   return(expt[["state"]])
 }
 
+#' Set the state of the data in an expt.
+#'
+#' @param expt Experiment requiring a state update.
+#' @param value New state!
 `state<-` <- function(expt, value) {
   expt[["state"]] <- value
   return(expt)
@@ -2668,7 +2690,7 @@ what_happened <- function(expt = NULL, transform = "raw", convert = "raw",
 #' }
 #' @export
 write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
-                       violin = TRUE, sample_heat = TRUE, convert = "cpm", transform = "log2",
+                       violin = TRUE, sample_heat = NULL, convert = "cpm", transform = "log2",
                        batch = "svaseq", filter = TRUE, med_or_mean = "mean",
                        color_na = "#DD0000", merge_order = "counts_first", ...) {
   arglist <- list(...)
@@ -2714,7 +2736,14 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
                            sheet = sheet, start_col = 1, title = "Experimental Design.")
 
   ## Get the library sizes and other raw plots before moving on...
-  metrics <- graph_metrics(expt, qq = TRUE,
+  do_qq <- FALSE
+  do_sample_heat <- FALSE
+  if (ncol(exprs(expt)) < 18) {
+    do_qq <- TRUE
+    do_sample_heat <- TRUE
+  }
+
+  metrics <- graph_metrics(expt, qq = do_qq, gene_heat = do_sample_heat,
                               ...)
   new_row <- new_row + nrow(pData(expt)) + 3
   libsizes <- as.data.frame(metrics[["libsizes"]])[, c("id", "sum", "condition")]
@@ -3097,7 +3126,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   mesg("Graphing the normalized reads.")
   sheet <- "norm_graphs"
   newsheet <- try(openxlsx::addWorksheet(wb, sheetName = sheet))
-  norm_metrics <- sm(graph_metrics(norm_data, qq = TRUE,
+  norm_metrics <- sm(graph_metrics(norm_data, qq = do_qq, gene_heat = do_sample_heat,
                                    ...))
   openxlsx::writeData(wb, sheet = sheet, x = "Raw PCA res.",
                       startRow = new_row, startCol = new_col)
@@ -3359,56 +3388,58 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   ## Save the result
   save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite = TRUE))
   retlist <- list(
-      "save" = save_result,
-      "legend" = legend,
-      "annotations" = info,
-      "raw_reads" = reads,
-      "design" = annot,
-      "legend_plot" = legend_plot,
-      "raw_libsize" = libsize_plot,
-      "raw_nonzero" = nonzero_plot,
-      "raw_density" = density_plot,
-      "raw_cv" = cv_plot,
-      "raw_boxplot" = boxplot_plot,
-      "raw_corheat" = corheat_plot,
-      "raw_disheat" = disheat_plot,
-      "raw_smc" = smc_plot,
-      "raw_smd" = smd_plot,
-      "raw_pctopn" = pca_topn,
-      "raw_pca" = pca_plot,
-      "raw_pca_table" = pca_table,
-      "raw_tsne" = tsne_plot,
-      "raw_tsne_table" = tsne_table,
-      "raw_scaled_pca" = rspca_plot,
-      "raw_scaled_pca_table" = rpca_table,
-      "raw_scaled_tsne" = rtsne_plot,
-      "raw_scaled_tsne_table" = rtsne_table,
-      "raw_qq" = qq_plot,
-      "raw_violin" = violin_plot,
-      "raw_percent" = pct_plot,
-      "norm_reads" = norm_reads,
-      "norm_libsize" = nlibsize_plot,
-      "norm_nonzero" = nnzero_plot,
-      "norm_density" = ndensity_plot,
-      "norm_boxplot" = nboxplot_plot,
-      "norm_corheat" = ncorheat_plot,
-      "norm_disheat" = ndisheat_plot,
-      "norm_smc" = nsmc_plot,
-      "norm_smd" = nsmd_plot,
-      "norm_pca" = npca_plot,
-      "norm_pctopn" = npc_topnplot,
-      "norm_pca_table" = npca_table,
-      "norm_tsne" = ntsne_plot,
-      "norm_tsne_table" = ntsne_table,
-      "norm_qq" = nqq_plot,
-      "norm_violin" = nvarpart_plot,
-      "norm_pct" = npct_plot,
-      "medians" = median_data,
-      "saved" = save_result
+    "excel" = excel,
+    "save" = save_result,
+    "legend" = legend,
+    "annotations" = info,
+    "raw_reads" = reads,
+    "design" = annot,
+    "legend_plot" = legend_plot,
+    "raw_libsize" = libsize_plot,
+    "raw_nonzero" = nonzero_plot,
+    "raw_density" = density_plot,
+    "raw_cv" = cv_plot,
+    "raw_boxplot" = boxplot_plot,
+    "raw_corheat" = corheat_plot,
+    "raw_disheat" = disheat_plot,
+    "raw_smc" = smc_plot,
+    "raw_smd" = smd_plot,
+    "raw_pctopn" = pca_topn,
+    "raw_pca" = pca_plot,
+    "raw_pca_table" = pca_table,
+    "raw_tsne" = tsne_plot,
+    "raw_tsne_table" = tsne_table,
+    "raw_scaled_pca" = rspca_plot,
+    "raw_scaled_pca_table" = rpca_table,
+    "raw_scaled_tsne" = rtsne_plot,
+    "raw_scaled_tsne_table" = rtsne_table,
+    "raw_qq" = qq_plot,
+    "raw_violin" = violin_plot,
+    "raw_percent" = pct_plot,
+    "norm_reads" = norm_reads,
+    "norm_libsize" = nlibsize_plot,
+    "norm_nonzero" = nnzero_plot,
+    "norm_density" = ndensity_plot,
+    "norm_boxplot" = nboxplot_plot,
+    "norm_corheat" = ncorheat_plot,
+    "norm_disheat" = ndisheat_plot,
+    "norm_smc" = nsmc_plot,
+    "norm_smd" = nsmd_plot,
+    "norm_pca" = npca_plot,
+    "norm_pctopn" = npc_topnplot,
+    "norm_pca_table" = npca_table,
+    "norm_tsne" = ntsne_plot,
+    "norm_tsne_table" = ntsne_table,
+    "norm_qq" = nqq_plot,
+    "norm_violin" = nvarpart_plot,
+    "norm_pct" = npct_plot,
+    "medians" = median_data,
+    "saved" = save_result
   )
   for (img in image_files) {
     removed <- try(suppressWarnings(file.remove(img)), silent = TRUE)
   }
+  class(retlist) <- "written_expt"
   return(retlist)
 }
 

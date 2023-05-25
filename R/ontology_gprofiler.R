@@ -66,6 +66,7 @@ all_gprofiler <- function(sig, according_to = "deseq", together = FALSE, ...) {
       ret[[retname_down]] <- NULL
     }
   }
+  class(ret) <- "all_gprofiler"
   return(ret)
 }
 
@@ -249,9 +250,11 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
     type_name <- paste0(type, "_enrich")
     ## Note to self, now that I think about it I think gprofiler2 provides its own p-adjustment.
     retlst[[type_name]] <- gprofiler2enrich(retlst, ontology = type,
-                                             cutoff = threshold)
+                                            cutoff = threshold)
   }
 
+  retlst[["species"]] <- species
+  retlst[["threshold"]] <- threshold
   class(retlst) <- c("gprofiler_result", "list")
   return(retlst)
 }

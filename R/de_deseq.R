@@ -248,7 +248,7 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
     dataset <- DESeq2::DESeqDataSet(se = summarized, design = as.formula(model_string))
   } else if (isTRUE(model_batch) && isTRUE(model_cond)) {
     mesg("DESeq2 step 1/5: Including batch and condition in the deseq model.")
-    ## summarized <- DESeqDataSetFromMatrix(countData = data, colData = pData(input$expressionset),
+    ## summarized <- DESeqDataSetFromMatrix(countData = data, colData = pData(input),
     ##                                     design=~ 0 + condition + batch)
     ## conditions and batch in this context is information taken from pData()
     model_string <- model_choice[["chosen_string"]]

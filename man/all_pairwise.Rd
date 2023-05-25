@@ -25,6 +25,7 @@ all_pairwise(
   do_edger = TRUE,
   do_limma = TRUE,
   do_noiseq = TRUE,
+  do_dream = FALSE,
   convert = "cpm",
   norm = "quant",
   verbose = TRUE,
@@ -80,6 +81,8 @@ so it can choose).}
 \item{do_edger}{Perform EdgeR?}
 
 \item{do_limma}{Perform limma?}
+
+\item{do_noiseq}{Perform dream?}
 
 \item{convert}{Modify the data with a 'conversion' method for PCA?}
 

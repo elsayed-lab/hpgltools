@@ -558,6 +558,7 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = FALSE
   retlist <- list(
     "plot" = non_zero_plot,
     "table" = nz_df)
+  class(retlist) <- "nonzero_plot"
   return(retlist)
 }
 

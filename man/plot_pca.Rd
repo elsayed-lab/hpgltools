@@ -20,6 +20,8 @@ plot_pca(
   num_pc = NULL,
   expt_names = NULL,
   label_chars = 10,
+  cond_column = "condition",
+  batch_column = "batch",
   ...
 )
 }

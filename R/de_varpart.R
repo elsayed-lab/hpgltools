@@ -1,3 +1,4 @@
+## Use variancePartition's dream method with limma.
 
 #' Set up a model matrix and set of contrasts for pairwise comparisons using
 #' voom/limma.
@@ -48,13 +49,13 @@
 #'  pretend <- limma_pairwise(expt)
 #' }
 #' @export
-varpart_pairwise <- function(input = NULL, conditions = NULL,
-                             batches = NULL, model_cond = TRUE,
-                             model_batch = TRUE, model_intercept = FALSE,
-                             alt_model = NULL, extra_contrasts = NULL,
-                             annot_df = NULL, libsize = NULL,
-                             limma_method = "ls", limma_robust = FALSE, voom_norm = "quantile",
-                             limma_trend = FALSE, force = FALSE, ...) {
+dream_pairwise <- function(input = NULL, conditions = NULL,
+                           batches = NULL, model_cond = TRUE,
+                           model_batch = TRUE, model_intercept = FALSE,
+                           alt_model = NULL, extra_contrasts = NULL,
+                           annot_df = NULL, libsize = NULL,
+                           limma_method = "ls", limma_robust = FALSE, voom_norm = "quantile",
+                           limma_trend = FALSE, force = FALSE, ...) {
   arglist <- list(...)
   ## This is used in the invocation of a voom() implementation for normalization.
   ## This is for the eBayes() call.
@@ -122,47 +123,12 @@ varpart_pairwise <- function(input = NULL, conditions = NULL,
   ##                      alt_model = alt_model)
   chosen_model <- model[["chosen_model"]]
   model_string <- model[["chosen_string"]]
-  fun_voom <- NULL
-  ## voom() it, taking into account whether the data has been log2 transformed.
 
-  ## Leaving the following here for the moment, but I think it will no longer be needed.
-  ## Instead, I am checking the data state before passing it to this function with the
-  ## choose_limma_dataset() call above.
-  loggedp <- san_input[["state"]][["transform"]]
-  if (is.null(loggedp)) {
-    message("I don't know if this data is logged, testing if it is integer.")
-    if (is.integer(data)) {
-      loggedp <- FALSE
-    } else {
-      loggedp <- TRUE
-    }
-  } else {
-    if (grepl(pattern = "log", x = loggedp)) {
-      loggedp <- TRUE
-    } else {
-      loggedp <- FALSE
-    }
-  }
-
-  convertedp <- san_input[["state"]][["conversion"]]
-  if (is.null(convertedp)) {
-    message("I cannot determine if this data has been converted, assuming no.")
-    convertedp <- FALSE
-  } else {
-    if (convertedp == "raw") {
-      convertedp <- FALSE
-    } else {
-      convertedp <- TRUE
-    }
-  }
-
-  na_sum <- sum(is.na(data))
-  fun_voom <- NULL
   voom_plot <- NULL
   message("Attempting voomWithDreamWeights.")
   fun_voom <- variancePartition::voomWithDreamWeights(
-    counts = data, design = chosen_model, lib.size = libsize,
-    normalize.method = voom_norm, span = 0.5, plot = TRUE, save.plot = TRUE)
+    counts = data, formula = model_string,
+    data = design, plot = TRUE)
   voom_plot <- grDevices::recordPlot()
 
   one_replicate <- FALSE
@@ -178,74 +144,40 @@ varpart_pairwise <- function(input = NULL, conditions = NULL,
   pairwise_fits <- NULL
   identity_fits <- NULL
   message("Limma/varpart step 3/6: running dream.")
-  fitted_data <- variancePartition::dream(
-    object = fun_voom, design = chosen_model, method = limma_method)
-  all_tables <- NULL
-  if (isTRUE(model_intercept)) {
-    message("Limma step 4/6: making and fitting contrasts with an intercept. (~ factors)")
-    contrasts <- "nointercept"
-    all_pairwise_contrasts <- NULL
-    contrast_string <- "no intercept done"
-    all_pairwise <- NULL
-    pairwise_fits <- fitted_data
-    identity_contrasts <- NULL
-    identities <- NULL
-    identity_fits <- fitted_data
-    message("Limma step 5/6: Running eBayes with robust = ",
-            limma_robust, " and trend = ", limma_trend, ".")
-    all_pairwise_comparisons <- limma::eBayes(fitted_data,
-                                              robust = limma_robust,
-                                              trend = limma_trend)
-    all_identity_comparisons <- NULL
-    message("Limma step 6/6: Writing limma outputs with an intercept.")
-    pairwise_results <- make_limma_tables(fit = all_pairwise_comparisons, adjust = "BH",
-                                          n = 0, coef = NULL, annot_df = NULL, intercept = TRUE)
-    limma_tables <- pairwise_results[["contrasts"]]
-    contrasts_performed <- names(limma_tables)
-    limma_identities <- pairwise_results[["identities"]]
-  } else {
-    message("Limma step 4/6: making and fitting contrasts with no intercept. (~ 0 + factors)")
-    contrasts <- make_pairwise_contrasts(model = chosen_model, conditions = conditions,
-                                         extra_contrasts = extra_contrasts)
-    all_pairwise_contrasts <- contrasts[["all_pairwise_contrasts"]]
-    contrast_string <- contrasts[["contrast_string"]]
-    all_pairwise <- contrasts[["all_pairwise"]]
-    ## Once all that is done, perform the fit
-    ## This will first provide the relative abundances of each condition
-    ## followed by the set of all pairwise comparisons.
-    pairwise_fits <- limma::contrasts.fit(fit = fitted_data, contrasts = all_pairwise_contrasts)
-
-    identity_contrasts <- make_pairwise_contrasts(model = chosen_model, conditions = conditions,
-                                                  do_identities = TRUE, do_pairwise = FALSE)
-    identities <- identity_contrasts[["all_pairwise_contrasts"]]
-    identity_fits <- limma::contrasts.fit(fit = fitted_data, contrasts = identities)
-    message("Limma step 5/6: Running eBayes with robust = ",
-            limma_robust, " and trend = ", limma_trend, ".")
-    if (isTRUE(one_replicate)) {
-      all_pairwise_comparisons <- pairwise_fits[["coefficients"]]
-      all_identity_comparisons <- pairwise_fits[["coefficients"]]
-    } else {
-      all_pairwise_comparisons <- limma::eBayes(pairwise_fits,
-                                                robust = limma_robust,
-                                                trend = limma_trend)
-      all_identity_comparisons <- limma::eBayes(identity_fits,
-                                                robust = limma_robust,
-                                                trend = limma_trend)
-    }
-    message("Limma step 6/6: Writing limma outputs.")
-    pairwise_results <- make_limma_tables(fit = all_pairwise_comparisons, adjust = "BH",
-                                          n = 0, coef = NULL, annot_df = NULL)
-    limma_tables <- pairwise_results[["contrasts"]]
-    identity_results <- make_limma_tables(fit = all_identity_comparisons, adjust = "BH",
-                                          n = 0, coef = NULL, annot_df = NULL)
-    limma_identities <- identity_results[["identities"]]
-
-    contrasts_performed <- names(limma_tables)
+  contrasts <- make_pairwise_contrasts(model = chosen_model, conditions = conditions,
+                                       extra_contrasts = extra_contrasts)
+  all_pairwise_contrasts <- contrasts[["all_pairwise"]]
+  all_pairwise_contrasts <- gsub(x = all_pairwise_contrasts, pattern = ",$", replacement = "")
+  contrast_vector <- c()
+  for (f in all_pairwise_contrasts) {
+    name_val <- strsplit(f, "=")[[1]]
+    vec_name <- name_val[1]
+    vec <- name_val[2]
+    num_den <- strsplit(vec, "-")[[1]]
+    num <- paste0("condition", num_den[1])
+    den <- paste0("condition", num_den[2])
+    expression <- paste0(num, " - ", den)
+    names(expression) <- vec_name
+    contrast_vector <- c(contrast_vector, expression)
   }
+
+  varpart_contrasts <- variancePartition::makeContrastsDream(my_formula, design,
+                                                contrasts = contrast_vector)
+  fitted_data <- variancePartition::dream(
+    exprObj = fun_voom, formula = model_string, data = design, L = varpart_contrasts)
+
+  all_tables <- NULL
+  all_pairwise_comparisons <- limma::eBayes(fitted_data,
+                                            robust = limma_robust,
+                                            trend = limma_trend)
+  message("Limma step 6/6: Writing limma outputs.")
+  pairwise_results <- make_limma_tables(fit = all_pairwise_comparisons, adjust = "BH",
+                                        n = 0, coef = NULL, annot_df = NULL)
+  contrasts_performed <- names(pairwise_results)
 
   retlist <- list(
     "all_pairwise" = all_pairwise,
-    "all_tables" = limma_tables,
+    "all_tables" = pairwise_results,
     "batches" = batches,
     "batches_table" = batch_table,
     "conditions" = conditions,
@@ -254,9 +186,6 @@ varpart_pairwise <- function(input = NULL, conditions = NULL,
     "contrasts_performed" = contrasts_performed,
     "dispersion_plot" = voom_plot,
     "fit" = fitted_data,
-    "identities" = identities,
-    "identity_tables" = limma_identities,
-    "identity_comparisons" = all_identity_comparisons,
     "input_data" = input,
     "method" = "limma",
     "model" = model,
@@ -265,9 +194,9 @@ varpart_pairwise <- function(input = NULL, conditions = NULL,
     "single_table" = all_tables,
     "voom_design" = fun_design,
     "voom_result" = fun_voom)
-  class(retlist) <- c("limma_result", "list")
+  class(retlist) <- c("dream_result", "list")
   if (!is.null(arglist[["limma_excel"]])) {
-    retlist[["limma_excel"]] <- write_limma(retlist, excel = arglist[["limma_excel"]])
+    retlist[["dream_excel"]] <- write_limma(retlist, excel = arglist[["limma_excel"]])
   }
   return(retlist)
 }

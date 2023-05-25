@@ -182,9 +182,11 @@ which are shared among multiple samples.")
     tmp_annot[["Row.names"]] <- NULL
     added_data <- my_sorted
     colnames(added_data) <- glue("variance_{colnames(added_data)}")
-    tmp_annot <- merge(tmp_annot, added_data, by = "row.names")
+    ## Note that we are getting these variance numbers from data which was filtered
+    ## thus we need all.x to get the IDs to match up.
+    tmp_annot <- merge(tmp_annot, added_data, by = "row.names", all.x = TRUE)
     rownames(tmp_annot) <- tmp_annot[["Row.names"]]
-    tmp_annot <- tmp_annot[, -1]
+    tmp_annot[["Row.names"]] <- NULL
     ## Make it possible to use a generic expressionset, though maybe this is
     ## impossible for this function.
     fData(new_expt) <- tmp_annot

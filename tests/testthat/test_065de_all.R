@@ -128,7 +128,7 @@ test_that("all_pairwise() provided results reasonably similar (no batch in model
   expect_gt(actual, expected)
 })
 
-test_sva <- all_pairwise(pombe_subset, model_batch = "svaseq", filter = TRUE)
+test_sva <- all_pairwise(pombe_subset, model_batch = "svaseq", filter = TRUE, parallel = FALSE)
 actual <- min(test_sva[["comparison"]][["comp"]])
 expected <- 0.63
 test_that("all_pairwise() provided results reasonably similar? (svaseq in model)", {

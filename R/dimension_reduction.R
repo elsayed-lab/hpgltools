@@ -159,7 +159,7 @@ get_res <- function(svd_result, design, factors = c("condition", "batch"),
 #' @seealso [corpcor] [plot_pca()] [plot_pcs()] [stats::lm()]
 #' @examples
 #' \dontrun{
-#'  pca_info = pca_information(exprs(some_expt$expressionset), some_design, "all")
+#'  pca_info = pca_information(exprs(some_expt), some_design, "all")
 #'  pca_info
 #' }
 #' @export
@@ -225,7 +225,7 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
       next_pc <- pc + 1
       name <- glue::glue("PC{pc}")
       for (second_pc in seq(from = next_pc, to = num_components)) {
-        if (pc < second_pc & second_pc <= num_components) {
+        if (pc < second_pc && second_pc <= num_components) {
           second_name <- glue::glue("PC{second_pc}")
           list_name <- glue::glue("{name}_{second_name}")
           ## Sometimes these plots fail because too many grid operations are happening.
@@ -561,18 +561,15 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
                      plot_size = 5, plot_alpha = NULL, plot_labels = FALSE, size_column = NULL,
                      pc_method = "fast_svd", x_pc = 1, y_pc = 2, max_overlaps = 20,
                      num_pc = NULL, expt_names = NULL, label_chars = 10,
+                     cond_column = "condition", batch_column = "batch",
                      ...) {
   arglist <- list(...)
   ## Set default columns in the experimental design for condition and batch
   ## changing these may be used to query other experimental factors with pca.
-  cond_column <- "condition"
-  if (!is.null(arglist[["cond_column"]])) {
-    cond_column <- arglist[["cond_column"]]
+  if (cond_column[1] != "condition") {
     message("Using ", cond_column, " as the condition column in the experimental design.")
   }
-  batch_column <- "batch"
-  if (!is.null(arglist[["batch_column"]])) {
-    batch_column <- arglist[["batch_column"]]
+  if (batch_column[1] != "batch") {
     message("Using ", batch_column, " as the batch column in the experimental design.")
   }
   if (!is.null(arglist[["base_size"]])) {
@@ -674,7 +671,7 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
   } else {
     label_list <- glue::glue("{design[['sampleid']]}_{design[[cond_column]]}")
   }
-  if (!is.null(label_chars) & is.numeric(label_chars)) {
+  if (!is.null(label_chars) && is.numeric(label_chars)) {
     label_list <- abbreviate(label_list, minlength = label_chars)
   }
 
@@ -801,7 +798,7 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
 
       residual_df <- get_res(svd_result, design, res_slot = "Y", var_slot = "itercosts")
       prop_lst <- residual_df[["prop_var"]]
-      if (x_pc > components | y_pc > components) {
+      if (x_pc > components || y_pc > components) {
         stop("The components plotted must be smaller than the number of components calculated.")
       }
 
@@ -994,7 +991,7 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
     warning("There are NA values in the component data.  This can lead to weird plotting errors.")
   }
 
-  if (nrow(comp_data) > 100 & is.null(plot_labels)) {
+  if (nrow(comp_data) > 100 && is.null(plot_labels)) {
     message("plot labels was not set and there are more than 100 samples, disabling it.")
     plot_labels <- FALSE
   }
@@ -1029,7 +1026,14 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
     "prop_var" = prop_lst,
     "plot" = comp_plot,
     "table" = comp_data,
-    "result" = svd_result)
+    "result" = svd_result,
+    "pc_method" = pc_method,
+    "x_pc" = x_pc,
+    "y_pc" = y_pc,
+    "cond_column" = cond_column,
+    "batch_column" = batch_column,
+    "design" = design)
+  class(pca_return) <- "pca_result"
   return(pca_return)
 }
 
@@ -1179,7 +1183,7 @@ plot_pca_genes <- function(data, design = NULL, plot_colors = NULL, plot_title =
   } else {
     label_list <- glue::glue("{design[['sampleid']]}_{design[[cond_column]]}")
   }
-  if (!is.null(label_chars) & is.numeric(label_chars)) {
+  if (!is.null(label_chars) && is.numeric(label_chars)) {
     label_list <- abbreviate(label_list, minlength = label_chars)
   }
 
@@ -1303,7 +1307,7 @@ plot_pca_genes <- function(data, design = NULL, plot_colors = NULL, plot_title =
 
       residual_df <- get_res(svd_result, fData(data), res_slot = "Y", var_slot = "itercosts")
       prop_lst <- residual_df[["prop_var"]]
-      if (x_pc > components | y_pc > components) {
+      if (x_pc > components || y_pc > components) {
         stop("The components plotted must be smaller than the number of components calculated.")
       }
 

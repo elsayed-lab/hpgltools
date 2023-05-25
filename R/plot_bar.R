@@ -84,6 +84,7 @@ plot_libsize <- function(data, condition = NULL, colors = NULL,
     "plot" = libsize_plot,
     "table" = libsize_df,
     "summary" = summary_df)
+  class(retlist) <- "libsize_plot"
   return(retlist)
 }
 

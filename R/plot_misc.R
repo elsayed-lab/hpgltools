@@ -104,8 +104,27 @@ pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
   return(image)
 }
 
-plot_meta_sankey <- function(design, factors = c("condition", "batch"),
-                             color_choices = NULL, html = "sankey.html", drill_down = TRUE) {
+#' Plot metadata factors as a sankey diagram.
+#'
+#' This provides two implementations of a sankey plot, one interactive and one using ggplot2.
+#'
+#' @param design Metadata from which to extract the categories/numbers.
+#' @param factors Factors/columns in the metadata to count and plot.
+#' @param fill Use either the current or next node for coloring the transitions.
+#' @param color_choices Either a named vector of states and colors, or NULL
+#'  (in which case it will use viridis.)
+#' @param html Write the interactive plot to this file.
+#' @param drill_down When true, this will end in the product of the
+#'  factor levels number of final states. (e.g. if there are 2 sexes,
+#'  3 visits, and 4 genotypes, there will be 2, 6, 24 states going
+#' from right to left).  If FALSE, there will be 2,3,4 states going
+#' from right to left.
+#' @return List containing a couple of plots, one interactive, one gg.
+#' @export
+plot_meta_sankey <- function(design, factors = c("condition", "batch"), fill = "node",
+                             font_size = 18, node_width = 30,
+                             color_choices = NULL, html = "sankey.html",
+                             drill_down = TRUE) {
   permutations <- c()
   states <- list()
   for (f in factors) {
@@ -168,8 +187,9 @@ plot_meta_sankey <- function(design, factors = c("condition", "batch"),
 
   plt = networkD3::sankeyNetwork(Links = my_links, Nodes = my_nodes,
                                  Source = "source", Target = "target",
-                                 Value = "value", fontSize = 12, nodeWidth = 30)
+                                 Value = "value", fontSize = font_size, nodeWidth = node_width)
   retlist <- list(
+    "permutations" = permutations,
     "plot" = plt)
   if (!is.null(html)) {
     retlist[["html"]] <- htmlwidgets::saveWidget(plt, file = html, selfcontained = TRUE)
@@ -198,7 +218,7 @@ plot_meta_sankey <- function(design, factors = c("condition", "batch"),
 
   color_fact <- NULL
   if (!is.null(colors)) {
-    color_levels <- levels(as.factor(df[["node"]]))
+    color_levels <- levels(as.factor(plot_df[["node"]]))
     all_colors <- unlist(color_choices)
     names(all_colors) <- gsub(x = names(all_colors),
                               pattern = ".*\\.", replacement = "")
@@ -226,9 +246,19 @@ plot_meta_sankey <- function(design, factors = c("condition", "batch"),
       color_fact <- new_color_fact
     }
   }
+  retlist[["design"]] <- design
+  retlist[["factors"]] <- factors
+  retlist[["observed_nodes"]] <- unique(plot_df[["node"]])
 
-  ggplt <- ggplot(plot_df, aes(x = x, next_x = next_x, node = node,
-                               next_node = next_node, fill = factor(node), label = name)) +
+  if (fill == "node") {
+    ggplt <- ggplot(plot_df, aes(x = x, next_x = next_x, node = node,
+                                 next_node = next_node, fill = factor(node), label = name))
+  } else if (fill == "next") {
+    message("Filling to next node?")
+    ggplt <- ggplot(plot_df, aes(x = x, next_x = next_x, node = node,
+                                 next_node = next_node, fill = factor(next_node), label = name))
+  }
+  ggplt <- ggplt +
     ggsankey::geom_sankey(flow.alpha = 0.6,
                           node.color = "gray30") +
     ggsankey::geom_sankey_label()
@@ -238,18 +268,19 @@ plot_meta_sankey <- function(design, factors = c("condition", "batch"),
     ggplt <- ggplt +
       ggplot2::scale_fill_viridis_d() +
       ggsankey::theme_sankey(base_size = 18) +
-      labs(x = NULL) +
+      ggplot2::labs(x = NULL) +
       theme(legend.position = "none",
             plot.title = element_text(hjust = 0.5))
   } else {
     ggplt <- ggplt +
-      scale_fill_manual(values = color_fact) +
-      ggsankey::theme_sankey(base_size = 18) +
-      labs(x = NULL) +
+      ggplot2::scale_fill_manual(values = color_fact) +
+      ggsankey::theme_sankey(base_size = font_size) +
+      ggplot2::labs(x = NULL) +
       theme(legend.position = "none",
             plot.title = element_text(hjust = 0.5))
   }
   retlist[["ggplot"]] <- ggplt
+  class(retlist) <- "meta_sankey"
   return(retlist)
 }
 

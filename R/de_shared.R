@@ -41,6 +41,8 @@
 #'  so it can choose).
 #' @param do_edger Perform EdgeR?
 #' @param do_limma Perform limma?
+#' @param do_noiseq Perform noiseq?
+#' @param do_noiseq Perform dream?
 #' @param convert Modify the data with a 'conversion' method for PCA?
 #' @param norm Modify the data with a 'normalization' method for PCA?
 #' @param verbose Print extra information while running?
@@ -65,6 +67,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
                          annot_df = NULL, parallel = TRUE,
                          do_basic = TRUE, do_deseq = TRUE, do_ebseq = FALSE,
                          do_edger = TRUE, do_limma = TRUE, do_noiseq = TRUE,
+                         do_dream = FALSE,
                          convert = "cpm", norm = "quant", verbose = TRUE,
                          surrogates = "be", ...) {
   arglist <- list(...)
@@ -197,6 +200,10 @@ all_pairwise <- function(input = NULL, conditions = NULL,
   if (isTRUE(do_noiseq)) {
     num_cpus_needed <- num_cpus_needed + 1
     results[["noiseq"]] <- list()
+  }
+  if (isTRUE(do_dream)) {
+    num_cpus_needed <- num_cpus_needed + 1
+    results[["dream"]] <- list()
   }
 
   res <- NULL

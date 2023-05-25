@@ -6,6 +6,18 @@
 ## 'ARSyNseq()' and if we use svaseq, simply send the modified counts to the various noiseq()
 ## functions which follow.
 
+#' Perform pairwise comparisons using noiseq.
+#'
+#' @param input Expressionset to compare.
+#' @param conditions Set of conditions to query
+#' @param batches known batches in the data, or a surrogate estimator.
+#' @param model_cond Add condition to the model?
+#' @param model_batch Add batch to the model, noiseq has its own combat-like method,
+#'  so maybe not necessary?
+#' @param annot_df Extra annotations.
+#' @param ... Extra arguments.
+#' @return List similar to deseq_pairwise/edger_pairwise/etc.
+#' @export
 noiseq_pairwise <- function(input = NULL, conditions = NULL,
                             batches = NULL, model_cond = TRUE,
                             model_batch = TRUE, annot_df = NULL,
@@ -68,7 +80,7 @@ noiseq_pairwise <- function(input = NULL, conditions = NULL,
     rename_col <- colnames(noiseq_result) == "log2FC"
     colnames(noiseq_result)[rename_col] <- "logFC"
     ## It looks to me like noiseq flips the logFC compared to other methods.
-    noiseq_result[["logFC"]] <- -1.0 * noiseq_results[["logFC"]]
+    # noiseq_result[["logFC"]] <- -1.0 * noiseq_result[["logFC"]]
     noiseq_result[["p"]] <- 1.0 - noiseq_result[["prob"]]
     noiseq_result[["adjp"]] <- p.adjust(noiseq_result[["p"]])
     result_list[[name]] <- noiseq_result

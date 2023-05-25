@@ -146,7 +146,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 
   new_expt <- backup_expression_data(new_expt)
 
-  mesg("This function will replace the expt$expressionset slot with:")
+  mesg("This function will replace the expressionset with:")
   operations <- what_happened(transform = transform, batch = batch, convert = convert,
                               norm = norm, filter = filter)
   mesg(operations)

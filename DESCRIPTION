@@ -136,3 +136,5 @@ Collate:
   'variants.R'
   'xlsx.R'
   'zzz_methods.R'
+  'zzz_print.R'
+  'zzz_subset.R'
