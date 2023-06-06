@@ -288,16 +288,22 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
     if (!is.null(specification[[entry_type]][["column"]])) {
       new_column <- specification[[entry_type]][["column"]]
     }
-   if (new_column %in% colnames(meta)) {
+    if (new_column %in% colnames(meta)) {
       warning("Column: ", new_column, " already exists, replacing it.")
     }
     input_file_spec <- specification[[entry_type]][["file"]]
+    message("Checking input_file_spec: ", input_file_spec, ".")
     new_entries <- dispatch_metadata_extract(
       meta, entry_type, input_file_spec, specification,
       basedir = basedir, verbose = verbose, species = species, type = type,
       ...)
     if (is.null(new_entries)) {
       message("Not including new entries for: ", new_column, ".")
+    } else if ("data.frame" %in% class(new_entries)) {
+      for (sp in colnames(new_entries)) {
+        new_column_name <- glue("{entry_type}_{sp}")
+        meta[[new_column_name]] <- new_entries[[sp]]
+      }
     } else {
       meta[[new_column]] <- new_entries
     }
@@ -416,81 +422,81 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
       entries <- dispatch_gc(meta, input_file_spec, basedir = basedir, verbose = verbose)
     },
     "gatk_unpaired" = {
-      search <- "^\\w+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
-      replace <- "^\\w+\t(\\d+)\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
-      entries <- dispatch_regex_search(meta, search, replace,
-        input_file_spec, verbose = verbose, basedir = basedir,
-        which = "first",
-        ...)
+      search <- "^.+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
+      replace <- "^.+\t(\\d+)\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
+      entries <- dispatch_regex_search(meta, search, replace, species = species,
+                                       input_file_spec, verbose = verbose, basedir = basedir,
+                                       which = "first",
+                                       ...)
     },
     "gatk_paired" = {
-      search <- "^\\w+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
-      replace <- "^\\w+\t\\d+\t(\\d+)\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
-      entries <- dispatch_regex_search(meta, search, replace,
-        input_file_spec, verbose = verbose, basedir = basedir,
-        which = "first",
-        ...)
+      search <- "^.+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
+      replace <- "^.+\t\\d+\t(\\d+)\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
+      entries <- dispatch_regex_search(meta, search, replace, species = species,
+                                       input_file_spec, verbose = verbose, basedir = basedir,
+                                       which = "first",
+                                       ...)
     },
     "gatk_supplementary" = {
-      search <- "^\\w+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
-      replace <- "^\\w+\t\\d+\t\\d+\t(\\d+)\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
-      entries <- dispatch_regex_search(meta, search, replace,
-        input_file_spec, verbose = verbose, basedir = basedir,
-        which = "first",
-        ...)
+      search <- "^.+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
+      replace <- "^.+\t\\d+\t\\d+\t(\\d+)\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
+      entries <- dispatch_regex_search(meta, search, replace, species = species,
+                                       input_file_spec, verbose = verbose, basedir = basedir,
+                                       which = "first",
+                                       ...)
     },
     "gatk_unmapped" = {
-      search <- "^\\w+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
-      replace <- "^\\w+\t\\d+\t\\d+\t\\d+\t(\\d+)\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
-      entries <- dispatch_regex_search(meta, search, replace,
-        input_file_spec, verbose = verbose, basedir = basedir,
-        which = "first",
-        ...)
+      search <- "^.+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
+      replace <- "^.+\t\\d+\t\\d+\t\\d+\t(\\d+)\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
+      entries <- dispatch_regex_search(meta, search, replace, species = species,
+                                       input_file_spec, verbose = verbose, basedir = basedir,
+                                       which = "first",
+                                       ...)
     },
     "gatk_unpaired_duplicates" = {
-      search <- "^\\w+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
-      replace <- "^\\w+\t\\d+\t\\d+\t\\d+\t\\d+\t(\\d+)\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
-      entries <- dispatch_regex_search(meta, search, replace,
-        input_file_spec, verbose = verbose, basedir = basedir,
-        which = "first",
-        ...)
+      search <- "^.+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
+      replace <- "^.+\t\\d+\t\\d+\t\\d+\t\\d+\t(\\d+)\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
+      entries <- dispatch_regex_search(meta, search, replace, species = species,
+                                       input_file_spec, verbose = verbose, basedir = basedir,
+                                       which = "first",
+                                       ...)
     },
     "gatk_paired_duplicates" = {
-      search <- "^\\w+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
-      replace <- "^\\w+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t(\\d+)\t\\d+\t0\\.\\d+\t\\d+$"
-      entries <- dispatch_regex_search(meta, search, replace,
-        input_file_spec, verbose = verbose, basedir = basedir,
-        which = "first",
-        ...)
+      search <- "^.+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
+      replace <- "^.+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t(\\d+)\t\\d+\t0\\.\\d+\t\\d+$"
+      entries <- dispatch_regex_search(meta, search, replace, species = species,
+                                       input_file_spec, verbose = verbose, basedir = basedir,
+                                       which = "first",
+                                       ...)
     },
     "gatk_paired_opt_duplicates" = {
-      search <- "^\\w+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
-      replace <- "^\\w+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t(\\d+)\t0\\.\\d+\t\\d+$"
-      entries <- dispatch_regex_search(meta, search, replace,
+      search <- "^.+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
+      replace <- "^.+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t(\\d+)\t0\\.\\d+\t\\d+$"
+      entries <- dispatch_regex_search(meta, search, replace, species = species,
                                        input_file_spec, verbose = verbose, basedir = basedir,
                                        which = "first",
                                        ...)
     },
     "gatk_duplicate_pct" = {
-      search <- "^\\w+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
-      replace <- "^\\w+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t(0\\.\\d+)\t\\d+$"
-      entries <- dispatch_regex_search(meta, search, replace,
+      search <- "^.+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
+      replace <- "^.+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t(0\\.\\d+)\t\\d+$"
+      entries <- dispatch_regex_search(meta, search, replace, species = species,
                                        input_file_spec, verbose = verbose, basedir = basedir,
                                        which = "first",
                                        ...)
     },
     "gatk_libsize" = {
-      search <- "^\\w+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
-      replace <- "^\\w+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t(\\d+)$"
-      entries <- dispatch_regex_search(meta, search, replace,
+      search <- "^.+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t\\d+$"
+      replace <- "^.+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t\\d+\t0\\.\\d+\t(\\d+)$"
+      entries <- dispatch_regex_search(meta, search, replace, species = species,
                                        input_file_spec, verbose = verbose, basedir = basedir,
                                        which = "first",
                                        ...)
     },
     "glimmer_positive_strand" = {
-        search <- "\\s+\\+\\d+\\s+"
-        entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
-                                        basedir = basedir)
+      search <- "\\s+\\+\\d+\\s+"
+      entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
+                                      basedir = basedir)
     },
     "glimmer_negative_strand" = {
       search <- "\\s+-\\d+\\s+"
@@ -498,7 +504,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
                                       basedir = basedir)
     },
     "hisat_count_table" = {
-      entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+      entries <- dispatch_filename_search(meta, input_file_spec, verbose = verbose,
                                           species = species, type = "genome", basedir = basedir)
     },
     "hisat_rrna_single_concordant" = {
@@ -902,11 +908,34 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
     "variants_observed" = {
       search <- ".*"
       entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
-                                      basedir = basedir)
+                                      species = species, basedir = basedir)
+    },
+    "variants_by_gene_file" = {
+      entries <- dispatch_filename_search(meta, input_file_spec, verbose = verbose,
+                                          species = species, basedir = basedir)
+    },
+    "variants_bcf_table" = {
+      entries <- dispatch_filename_search(meta, input_file_spec, verbose = verbose,
+                                          species = species, basedir = basedir)
+    },
+    "variants_modified_genome" = {
+      entries <- dispatch_filename_search(meta, input_file_spec, verbose = verbose,
+                                          species = species, basedir = basedir)
+    },
+    "variants_bcf_file" = {
+      entries <- dispatch_filename_search(meta, input_file_spec, verbose = verbose,
+                                          species = species, basedir = basedir)
+    },
+    "variants_penetrance_file" = {
+      entries <- dispatch_filename_search(meta, input_file_spec, verbose = verbose,
+                                          species = species, basedir = basedir)
     },
     {
       stop("I do not know this spec: ", entry_type)
     })
+  if ("data.frame" %in% class(entries)) {
+    return(entries)
+  }
   if (!is.null(entries)) {
     entries <- gsub(pattern = ",", replacement = "", x = entries)
   }
@@ -927,8 +956,20 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
 #' @param verbose Print diagnostic information while running?
 #' @param basedir Root directory containing the files/logs of metadata.
 dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbose,
-                                 basedir = "preprocessing") {
-  filenames_with_wildcards <- glue::glue(input_file_spec)
+                                 species = "*", basedir = "preprocessing") {
+
+  if (length(species) > 1) {
+    output_entries <- data.frame(row.names = seq_len(nrow(meta)))
+    for (s in seq_len(length(species))) {
+      species_name <- species[s]
+      output_entries[[species_name]] <- dispatch_count_lines(
+        meta, search, input_file_spec, verbose = verbose,
+        species = species_name, basedir = basedir)
+    }
+    return(output_entries)
+  }
+
+  filenames_with_wildcards <- glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
   output_entries <- rep(0, length(filenames_with_wildcards))
   for (row in seq_len(nrow(meta))) {
@@ -936,12 +977,14 @@ dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbos
     ## Just in case there are multiple matches
     input_file <- Sys.glob(filenames_with_wildcards[row])[1]
     if (length(input_file) == 0) {
-      warning("There is no file matching: ", filenames_with_wildcards[row],
-              ".")
+      mesg("There is no file matching: ", filenames_with_wildcards[row],
+           ".")
+      output_entries[row] <- ''
       next
     }
     if (is.na(input_file)) {
-      warning("The input file is NA for: ", filenames_with_wildcards[row], ".")
+      mesg("The input file is NA for: ", filenames_with_wildcards[row], ".")
+      output_entries[row] <- ''
       next
     }
 
@@ -966,7 +1009,7 @@ dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbos
 #' @param basedir Root directory containing the files/logs of metadata.
 dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose,
                                    basedir = "preprocessing") {
-  filenames_with_wildcards <- glue::glue(input_file_spec)
+  filenames_with_wildcards <- glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
   output_entries <- rep(0, length(filenames_with_wildcards))
   for (row in seq_len(nrow(meta))) {
@@ -976,10 +1019,12 @@ dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose,
     if (length(input_file) == 0) {
       warning("There is no file matching: ", filenames_with_wildcards[row],
               ".")
+      output_entries[row] <- ''
       next
     }
     if (is.na(input_file)) {
       warning("The input file is NA for: ", filenames_with_wildcards[row], ".")
+      output_entries[row] <- ''
       next
     }
 
@@ -1001,7 +1046,18 @@ dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose,
 #' @param basedir Root directory containing the files/logs of metadata.
 dispatch_filename_search <- function(meta, input_file_spec, verbose = verbose,
                                      species = "*", type = "genome", basedir = "preprocessing") {
-  filenames_with_wildcards <- glue::glue(input_file_spec)
+  if (length(species) > 1) {
+    output_entries <- data.frame(row.names = seq_len(nrow(meta)))
+    for (s in seq_len(length(species))) {
+      species_name <- species[s]
+      output_entries[[species_name]] <- dispatch_filename_search(
+        meta, input_file_spec, verbose = verbose, species = species_name,
+        type = type, basedir = basedir)
+    }
+    return(output_entries)
+  }
+
+  filenames_with_wildcards <- glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
   output_entries <- rep(0, length(filenames_with_wildcards))
   for (row in seq_len(nrow(meta))) {
@@ -1034,7 +1090,7 @@ dispatch_filename_search <- function(meta, input_file_spec, verbose = verbose,
 #' @param basedir Root directory containing the files/logs of metadata.
 dispatch_gc <- function(meta, input_file_spec, verbose = FALSE,
                         basedir = "preprocessing") {
-  filenames_with_wildcards <- glue::glue(input_file_spec)
+  filenames_with_wildcards <- glue(input_file_spec)
   message("Example filename: ", filenames_with_wildcards[1], ".")
   output_entries <- rep(0, length(filenames_with_wildcards))
   for (row in seq_len(nrow(meta))) {
@@ -1116,34 +1172,43 @@ dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
 #' @param as Coerce the output to a specific data type (numeric/character/etc).
 #' @param verbose For testing regexes.
 #' @param ... Used to pass extra variables to glue for finding files.
-dispatch_regex_search <- function(meta, search, replace, input_file_spec, basedir = "preprocessing",
-                                  extraction = "\\1", which = "first", as = NULL, verbose = FALSE,
+dispatch_regex_search <- function(meta, search, replace, input_file_spec,
+                                  species = "*", basedir = "preprocessing",
+                                  extraction = "\\1", which = "first",
+                                  as = NULL, verbose = FALSE,
                                   ...) {
   arglist <- list(...)
-  ##if (length(arglist) > 0) {
+  ## if (length(arglist) > 0) {
   ##
-  ##}
-  filenames_with_wildcards <- glue::glue(input_file_spec,
-                                         ...)
-  ## filenames_with_wildcards <- glue::glue(input_file_spec)
-  message("Example filename: ", filenames_with_wildcards[1], ".")
-  test_file <- Sys.glob(filenames_with_wildcards[1])
-  if (length(test_file) == 0) {
-    message("The first filename does not exist, assuming this method was not performed.")
-    return(NULL)
+  ## }
+
+  if (length(species) > 1) {
+    output_entries <- data.frame(row.names = seq_len(nrow(meta)))
+    for (s in seq_len(length(species))) {
+      species_name <- species[s]
+      output_entries[[species_name]] <- dispatch_regex_search(
+        meta, search, replace, input_file_spec, verbose = verbose,
+        species = species_name, basedir = basedir,
+        extraction = extraction, which = which, as = as, ...)
+    }
+    return(output_entries)
   }
+
+  filenames_with_wildcards <- glue(input_file_spec, ...)
+  message("Example filename: ", filenames_with_wildcards[1], ".")
   output_entries <- rep(0, length(filenames_with_wildcards))
   for (row in seq_len(nrow(meta))) {
     found <- 0
     ## Just in case there are multiple matches
     input_file <- Sys.glob(filenames_with_wildcards[row])[1]
     if (is.na(input_file)) {
+      output_entries[row] <- ''
       ## The file did not exist.
       next
     }
     if (length(input_file) == 0) {
-      warning("There is no file matching: ", filenames_with_wildcards[row],
-              ".")
+      warning("There is no file matching: ", filenames_with_wildcards[row], ".")
+      output_entries[row] <- ''
       next
     }
 
@@ -1151,13 +1216,14 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec, basedi
     input_vector <- readLines(input_handle)
     if (length(input_vector) == 0) {
       ## Empty file, move on.
+      output_entries[row] <- ''
       next
     }
     last_found <- NULL
     this_found <- NULL
     all_found <- c()
     for (i in seq_along(input_vector)) {
-      if (which == "first" & found == 1) {
+      if (which == "first" && found == 1) {
         output_entries[row] <- last_found
         next
       }
@@ -1213,18 +1279,27 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec, basedi
 #' @param which Take the first entry, or some subset.
 #' @param verbose Print diagnostic information while running?
 #' @param ... Other arguments for glue.
-dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv", chosen_func = NULL,
-                                basedir = "preprocessing", which = "first", verbose = FALSE,
-                                ...) {
+dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv",
+                                chosen_func = NULL, species = "*",
+                                basedir = "preprocessing", which = "first",
+                                verbose = FALSE, ...) {
   arglist <- list(...)
-  filenames_with_wildcards <- glue::glue(input_file_spec,
-                                         ...)
-  message("Example filename: ", filenames_with_wildcards[1], ".")
-  test_file <- Sys.glob(filenames_with_wildcards[1])
-  if (length(test_file) == 0) {
-    message("The first filename does not exist, assuming this method was not performed.")
-    return(NULL)
+
+  if (length(species) > 1) {
+    output_entries <- data.frame(row.names = seq_len(nrow(meta)))
+    for (s in seq_len(length(species))) {
+      species_name <- species[s]
+      output_entries[[species_name]] <- dispatch_csv_search(
+        meta, column, input_file_spec, file_type = file_type,
+        chosen_func = chosen_func, species = species_name,
+        basedir = basedir, which = which, verbose = verbose, ...)
+    }
+    return(output_entries)
   }
+
+  filenames_with_wildcards <- glue(input_file_spec, ...)
+  mesg("Example filename: ", filenames_with_wildcards[1], ".")
+
   output_entries <- rep(0, length(filenames_with_wildcards))
   for (row in seq_len(nrow(meta))) {
     found <- 0
@@ -1232,10 +1307,12 @@ dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv"
     input_file <- Sys.glob(filenames_with_wildcards[row])[1]
     if (is.na(input_file)) {
       ## The file did not exist.
+      output_entries[row] <- ''
       next
     }
     if (length(input_file) == 0) {
       warning("There is no file matching: ", filenames_with_wildcards[row], ".")
+      output_entries[row] <- ''
       next
     }
 
@@ -1275,6 +1352,13 @@ dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv"
   return(output_entries)
 }
 
+#' Adding an alias to sanitize_metadata until I decide how I want to name this.
+#'
+#' @param ... Arguments for sanitize_metadata().
+#' @export
+sanitize_expt_metadata <- function(...) {
+  sanitize_metadata(...)
+}
 #' Given an expressionset, sanitize pData columns of interest.
 #'
 #' I wrote this function after spending a couple of hours confused
@@ -1285,48 +1369,58 @@ dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv"
 #' another analysis we essentially had a cell which said 'cyre' and a
 #' similar data explosion occurred.
 #'
-#' @param expt Input expressionset
+#' @param meta Input metadata
 #' @param columns Set of columns to check, if left NULL, all columns
 #'  will be molested.
 #' @param na_string Fill NA values with a string.
 #' @param lower Set everything to lowercase?
 #' @param punct Remove punctuation?
 #' @export
-sanitize_expt_metadata <- function(expt, columns = NULL, na_string = "notapplicable",
-                                   lower = TRUE, punct = TRUE) {
-  pd <- pData(expt)
+sanitize_metadata <- function(meta, columns = NULL, na_string = "notapplicable",
+                              lower = TRUE, punct = TRUE,
+                              spaces = FALSE, numbers = NULL) {
   if (is.null(columns)) {
-    columns <- colnames(pd)
+    columns <- colnames(meta)
   }
   for (col in seq_along(columns)) {
     todo <- columns[col]
     mesg("Sanitizing metadata column: ", todo, ".")
-    if (! todo %in% colnames(pd)) {
+    if (! todo %in% colnames(meta)) {
       mesg("The column ", todo, " is missing, skipping it (also warning this).")
       warning("The column ", todo, " is missing, skipping it.")
       next
     }
     ## First get rid of trailing/leading spaces, those anger me and are crazy hard to find
-    pd[[todo]] <- gsub(pattern = "^[[:space:]]", replacement = "", x = pd[[todo]])
-    pd[[todo]] <- gsub(pattern = "[[:space:]]$", replacement = "", x = pd[[todo]])
+    meta[[todo]] <- gsub(pattern = "^[[:space:]]", replacement = "", x = meta[[todo]])
+    meta[[todo]] <- gsub(pattern = "[[:space:]]$", replacement = "", x = meta[[todo]])
     ## Set the column to lowercase, I have recently had a rash of mixed case sample sheet data.
     if (isTRUE(lower)) {
-      pd[[todo]] <- tolower(pd[[todo]])
+      mesg("Setting everything to lowercase.")
+      meta[[todo]] <- tolower(meta[[todo]])
     }
     ## I think punctuation needs to go
     if (isTRUE(punct)) {
-      pd[[todo]] <- gsub(pattern = "[[:punct:]]", replacement = "", x = pd[[todo]])
+      mesg("Removing punctuation.")
+      meta[[todo]] <- gsub(pattern = "[[:punct:]]", replacement = "", x = meta[[todo]])
+    }
+    if (!is.null(numbers)) {
+      mesg("Adding a prefix to bare numbers.")
+      meta[[todo]] <- gsub(pattern = "^([[:digit:]]+)$",
+        replacement = glue("{numbers}\\1"), x = meta[[todo]])
     }
     if (!is.null(na_string)) {
-      ## Set NAs to "NotApplicable"
-      na_idx <- is.na(pd[[todo]])
-      pd[na_idx, todo] <- na_string
+      mesg("Setting NAs to ", na_string, ".")
+      na_idx <- is.na(meta[[todo]])
+      meta[na_idx, todo] <- na_string
+    }
+    ## This needs to go last
+    if (isTRUE(spaces)) {
+      mesg("Removing all spaces.")
+      meta[[todo]] <- gsub(pattern = "[[:space:]]", replacement = "", x = meta[[todo]])
     }
   } ## End iterating over the columns of interest
 
-  pData(expt[["expressionset"]]) <- pd
-  expt[["design"]] <- pd
-  return(expt)
+  return(meta)
 }
 
 #' Generate an assembly annotation specification for use by gather_preprocessing_metadata()
@@ -1417,7 +1511,7 @@ make_assembly_spec <- function() {
     "hisat_genome_multi_all" = list(
       "file" = "{basedir}/{meta[['sampleid']]}/outputs/*/hisat2_*.stderr"),
     "hisat_count_table" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*/*_{species}_genome*.count.xz"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/{species}_{type}*.count.xz"),
     "jellyfish_count_table" = list(
       "file" = "{basedir}/{meta[['sampleid']]}/outputs/*jellyfish_*/*_matrix.csv.xz"),
     "jellyfish_observed" = list(
@@ -1521,7 +1615,7 @@ make_assembly_spec <- function() {
 #' This currently assumes the set of tools used by one doing RNASeq to be trimomatic,
 #' fastqc, hisat2, and htseq.
 #' @export
-make_rnaseq_spec <- function(species_list = NULL) {
+make_rnaseq_spec <- function() {
   specification <- list(
     ## First task performed is pretty much always trimming
     ## "input_r1" = list(
@@ -1529,69 +1623,34 @@ make_rnaseq_spec <- function(species_list = NULL) {
     ## "input_r2" = list(
     ##    "file" = "{basedir}/{meta[['sampleid']]}/scripts/*trim_*.sh"),
     "trimomatic_input" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.out"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.stderr"),
     "trimomatic_output" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.out"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.stderr"),
     "trimomatic_ratio" = list(
       "column" = "trimomatic_percent"),
     "fastqc_pct_gc" = list(
       "file" = "{basedir}/{meta[['sampleid']]}/outputs/*fastqc/*_fastqc/fastqc_data.txt"),
     "fastqc_most_overrepresented" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*fastqc/*_fastqc/fastqc_data.txt")
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*fastqc/*_fastqc/fastqc_data.txt"),
+    "hisat_rrna_single_concordant" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*rRNA*.stderr"),
+    "hisat_rrna_multi_concordant" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*rRNA*.stderr"),
+    "hisat_rrna_percent" = list(
+      "column" = "hisat_rrna_percent"),
+    "hisat_genome_single_concordant" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
+    "hisat_genome_multi_concordant" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
+    "hisat_genome_single_all" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
+    "hisat_genome_multi_all" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
+    "hisat_genome_percent" = list(
+      "column" = "hisat_genome_percent"),
+    "hisat_count_table" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/{species}_{type}*.count.xz")
   )
-  if (is.null(species_list)) {
-    hisat <- list(
-      "hisat_rrna_single_concordant" = list(
-        "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*rRNA*.stderr"),
-      "hisat_rrna_multi_concordant" = list(
-        "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*rRNA*.stderr"),
-      "hisat_rrna_percent" = list(
-        "column" = "hisat_rrna_percent"),
-      "hisat_genome_single_concordant" = list(
-        "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*genome*.stderr"),
-      "hisat_genome_multi_concordant" = list(
-        "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*genome*.stderr"),
-      "hisat_genome_single_all" = list(
-        "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*genome*.stderr"),
-      "hisat_genome_multi_all" = list(
-        "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*genome*.stderr"),
-      "hisat_genome_percent" = list(
-        "column" = "hisat_genome_percent"),
-      "hisat_count_table" = list(
-        "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/*_{species}_{type}*.count.xz")
-    )
-    specification <- append(specification, hisat)
-  } else {
-    for (species in species_list) {
-      hisat_species <- list(
-        "hisat_rrna_single_concordant" = list(
-          "column" = glue("hisat_{species}_rrna_single_concordant"),
-          "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_{species}*rRNA*.stderr"),
-        "hisat_rrna_multi_concordant" = list(
-          "column" = glue("hisat_{species}_rrna_multi_concordant"),
-          "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_{species}*rRNA*.stderr"),
-        "hisat_rrna_percent" = list(
-          "column" = glue("hisat_{species}_rrna_percent")),
-        "hisat_genome_single_concordant" = list(
-          "column" = glue("hisat_{species}_single_concordant"),
-          "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
-        "hisat_genome_multi_concordant" = list(
-          "column" = glue("hisat_{species}_multi_concordant"),
-          "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
-        "hisat_genome_single_all" = list(
-          "column" = glue("hisat_{species}_single_all"),
-          "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
-        "hisat_genome_multi_all" = list(
-          "column" = glue("hisat_{species}_multi_all"),
-          "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
-        "hisat_genome_percent" = list(
-          "column" = glue("hisat_{species}_percent")),
-        "hisat_genome_count_table" = list(
-          "column" = glue("hisat_{species}_count_table"),
-          "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/*_{species}_{type}*.count.xz"))
-      specification <- append(specification, hisat_species)
-    }
-  }
   return(specification)
 }
 
@@ -1603,9 +1662,9 @@ make_rnaseq_spec <- function(species_list = NULL) {
 make_dnaseq_spec <- function() {
   specification <- list(
     "trimomatic_input" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.out"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.stderr"),
     "trimomatic_output" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.out"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.stderr"),
     "trimomatic_ratio" = list(
       "column" = "trimomatic_percent"),
     "fastqc_pct_gc" = list(
@@ -1613,35 +1672,48 @@ make_dnaseq_spec <- function() {
     "fastqc_most_overrepresented" = list(
       "file" = "{basedir}/{meta[['sampleid']]}/outputs/*fastqc/*_fastqc/fastqc_data.txt"),
     "hisat_genome_single_concordant" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*genome*.stderr"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
     "hisat_genome_multi_concordant" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*genome*.stderr"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
     "hisat_genome_single_all" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*genome*.stderr"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
     "hisat_genome_multi_all" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_*/hisat2_*genome*.stderr"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
     "hisat_genome_percent" = list(
       "column" = "hisat_genome_percent"),
     "gatk_unpaired" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_*/deduplication_stats.txt"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_{species}/deduplication_stats.txt"),
     "gatk_paired" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_*/deduplication_stats.txt"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_{species}/deduplication_stats.txt"),
     "gatk_supplementary" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_*/deduplication_stats.txt"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_{species}/deduplication_stats.txt"),
     "gatk_unmapped" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_*/deduplication_stats.txt"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_{species}/deduplication_stats.txt"),
     "gatk_unpaired_duplicates" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_*/deduplication_stats.txt"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_{species}/deduplication_stats.txt"),
     "gatk_paired_duplicates" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_*/deduplication_stats.txt"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_{species}/deduplication_stats.txt"),
     "gatk_paired_opt_duplicates" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_*/deduplication_stats.txt"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_{species}/deduplication_stats.txt"),
     "gatk_duplicate_pct" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_*/deduplication_stats.txt"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_{species}/deduplication_stats.txt"),
     "gatk_libsize" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_*/deduplication_stats.txt"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_{species}/deduplication_stats.txt"),
     "variants_observed" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_*/all_tags.txt.xz"))
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_{species}/all_tags.txt.xz"),
+    "hisat_count_table" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/{species}_{type}*.count.xz"),
+    "variants_by_gene_file" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_{species}/variants_by_gene.txt.xz"),
+    "variants_bcf_table" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_{species}/all_tags.txt.xz"),
+    "variants_modified_genome" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_{species}/{species}-*.fasta"),
+    "variants_bcf_file" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_{species}/{species}.bcf"),
+    "variants_penetrance_file" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*freebayes_{species}/variants_penetrance.txt.xz")
+  )
   return(specification)
 }
 

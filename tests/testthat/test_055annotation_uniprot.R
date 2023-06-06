@@ -1,8 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("055annotation_uniprot.R:
-  1234\n")
+context("055annotation_uniprot.R")
 ## 2017-12, exported functions in annotation_gff:
 ## load_uniprot_annotations() download_uniprot_proteome()
 
@@ -10,7 +9,6 @@ context("055annotation_uniprot.R:
 testing <- load_uniprot_annotations(species = "H37Rv")
 expected <- c(3993, 76)
 actual <- dim(testing)
-## 0304
 test_that("Did we get the correct uniprot annotations?", {
   expect_gt(actual[1], expected[1])
   expect_gt(actual[2], expected[2])

@@ -9,7 +9,7 @@ plot_topn(
   plot_title = NULL,
   num = 100,
   expt_names = NULL,
-  plot_labels = "direct",
+  plot_labels = NULL,
   label_chars = 10,
   plot_legend = FALSE,
   ...

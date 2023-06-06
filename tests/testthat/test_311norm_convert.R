@@ -1,8 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("311norm_convert.R: Are normalizations consistent over time (Conversions)?
-  1234567890\n")
+context("311norm_convert.R")
 
 load("pasilla_df.rda")
 ## create_expt generates a .Rdata file which may be reread, do so.

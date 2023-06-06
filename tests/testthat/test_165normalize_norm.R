@@ -1,8 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("165normalize_norm.R:
-  1234567\n")
+context("165normalize_norm.R")
 ## 2017-12, exported functions in annotation_gff:
 
 pombe_expt <- make_pombe_expt(annotation = FALSE)

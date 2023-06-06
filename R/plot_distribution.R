@@ -165,7 +165,7 @@ plot_boxplot <- function(data, colors = NULL, plot_title = NULL, order = NULL,
 #' }
 #' @export
 plot_density <- function(data, colors = NULL, expt_names = NULL, position = "identity",
-                         direct = TRUE, fill = NULL, plot_title = NULL, scale = NULL,
+                         direct = NULL, fill = NULL, plot_title = NULL, scale = NULL,
                          colors_by = "condition", label_chars = 10, ...) {
   ## also position='stack'
   data_class <- class(data)[1]
@@ -182,6 +182,13 @@ plot_density <- function(data, colors = NULL, expt_names = NULL, position = "ide
     data <- as.matrix(data)
   } else {
     stop("This function understands types: expt, ExpressionSet, data.frame, and matrix.")
+  }
+
+  if (is.null(direct)) {
+    direct <- TRUE
+    if (ncol(data) > 30) {
+      direct <- FALSE
+    }
   }
 
   if (is.null(scale)) {
@@ -562,7 +569,7 @@ plot_single_qq <- function(data, x = 1, y = 2, labels = TRUE) {
 #' @return List containing the ggplot2
 #' @export
 plot_topn <- function(data, plot_title = NULL, num = 100, expt_names = NULL,
-                      plot_labels = "direct", label_chars = 10, plot_legend = FALSE, ...) {
+                      plot_labels = NULL, label_chars = 10, plot_legend = FALSE, ...) {
   arglist <- list(...)
   data_class <- class(data)
   if (data_class == "expt" || data_class == "SummarizedExperiment") {
@@ -576,6 +583,14 @@ plot_topn <- function(data, plot_title = NULL, num = 100, expt_names = NULL,
     data <- as.matrix(data)
   } else {
     stop("This understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+  }
+
+  if (is.null(plot_labels)) {
+    if (ncol(data) < 30) {
+      plot_labels <- "direct"
+    } else {
+      plot_labels <- FALSE
+    }
   }
 
   columns <- colSums(data)

@@ -6,6 +6,7 @@
 \usage{
 plot_sm(
   data,
+  design = NULL,
   colors = NULL,
   method = "pearson",
   plot_legend = FALSE,

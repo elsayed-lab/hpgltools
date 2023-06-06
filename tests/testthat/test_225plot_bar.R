@@ -1,6 +1,5 @@
 start <- as.POSIXlt(Sys.time())
-context("225plot_bar.R:
-  1234\n")
+context("225plot_bar.R")
 ## 2017-12, exported functions in plot_bar:
 ## plot_libsize, plot_libsize_prepost, plot_pct_kept, plot_significant_bar
 

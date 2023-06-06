@@ -1,8 +1,8 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("280tnseq.R:
-  1234567890123456\n")
+library(hpgldata)
+context("280tnseq.R")
 
 ## I am going to just copy some of my tasks from here:
 ## https://github.com/abelew/sagalacticae_2019
@@ -18,7 +18,7 @@ test_that("We downloaded annotations for strain a909?", {
 })
 
 ## I copied some of the reference data into inst/gbs_tnseq
-gff_file <- system.file("share/gbs_tnseq/sagalactiae_a909.gff", package = "hpgltools")
+gff_file <- system.file("share/gbs_tnseq/sagalactiae_a909.gff", package = "hpgldata")
 a909_gff <- load_gff_annotations(gff_file)
 expected <- 4400
 actual <- nrow(a909_gff)
@@ -49,8 +49,8 @@ test_that("We merged the annotation data?", {
 })
 
 a909_counts <- utils::untar(tarfile = system.file("share/gbs_tnseq/gbs_essentiality_counts.tar.xz",
-                                                  package = "hpgltools"))
-metadata <- system.file("share/gbs_tnseq/sagalactiae_samples.xlsx", package = "hpgltools")
+                                                  package = "hpgldata"))
+metadata <- system.file("share/gbs_tnseq/sagalactiae_samples.xlsx", package = "hpgldata")
 a909_expt <- create_expt(metadata = metadata, batch = FALSE, gene_info = a909_annot,
                          file_column = "a909_filename")
 expected <- 2000
@@ -62,9 +62,9 @@ test_that("We created an expressionset?", {
 
 ## Grab copies of some of the essentiality results
 a909_wig <- utils::untar(tarfile = system.file("share/gbs_tnseq/gbs_essentiality_wig.tar.xz",
-                                               package = "hpgltools"))
+                                               package = "hpgldata"))
 a909_csv <- utils::untar(tarfile = system.file("share/gbs_tnseq/gbs_essentiality.tar.xz",
-                                               package = "hpgltools"))
+                                               package = "hpgldata"))
 
 saturation <- tnseq_saturation(
   "preprocessing/01/outputs/essentiality_sagalactiae_a909/trimmed_ca-v0M1.wig",
@@ -135,7 +135,7 @@ high_df <- a909_tables[["data"]][["high_vs_control"]]
 counts_df <- as.data.frame(exprs(a909_norm))
 
 circos_cfg <- circos_prefix(annotation = a909_annot, name = "a909")
-a909_fasta <- system.file("share/gbs_tnseq/sagalactiae_a909.fasta", package = "hpgltools")
+a909_fasta <- system.file("share/gbs_tnseq/sagalactiae_a909.fasta", package = "hpgldata")
 a909_kary <- circos_karyotype(circos_cfg, fasta = a909_fasta)
 a909_plus_minus <- circos_plus_minus(circos_cfg, width = 0.06, thickness = 40)
 a909_low <- circos_hist(circos_cfg, low_df, colname = "deseq_logfc", basename = "low",

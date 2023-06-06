@@ -2,7 +2,7 @@ start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
 library(pasilla)
-context("18norm_surrogates.R: Do surrogate estimators provide expected outputs?\n")
+context("318norm_surrogates.R: Do surrogate estimators provide expected outputs?")
 
 ## Some changes were made to the surrogate detectors in 2017-01/2016-12.  In at least one instance
 ## an error crept in.  In addition, in this time frame I added a hook to the batch_counts() function

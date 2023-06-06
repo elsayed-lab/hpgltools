@@ -1,10 +1,9 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("01paeruginosa.R: Test some Pseudomonas data.
-  1234\n")
+context("400paeruginosa.R: Test some Pseudomonas data.")
 
-pa_gff <- load_gff_annotations(gff = system.file("share/paeruginosa_pa14.gff", package = "hpgltools"))
+pa_gff <- load_gff_annotations(gff = system.file("share/paeruginosa_pa14.gff", package = "hpgldata"))
 ## This does provide some of what we need:
 ## seqnames, start, end, width, strand, source, type, score, phase, ID(thisone!),
 ## Name, Dbxref, Alias, name, Parent(or this one!), locus
@@ -16,8 +15,8 @@ pa_gff[["rownames"]] <- pa_gff[["Parent"]]
 ##rownames(pa_annotations) <- pa_annotations[["Parent"]]
 
 pa_expt <- create_expt(
-  metadata = system.file("share/pa_samples.xlsx", package = "hpgltools"),
-  countdir = system.file("share/counts", package = "hpgltools"),
+  metadata = system.file("share/pa_samples.xlsx", package = "hpgldata"),
+  countdir = system.file("share/counts", package = "hpgldata"),
   gene_info = pa_gff,
   title = "Pseudomonas aeruginosa RNAseq data of two strains and two time points.")
 

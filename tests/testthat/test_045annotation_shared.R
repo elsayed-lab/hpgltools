@@ -1,15 +1,14 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("045annotation_shared.R:
-  12\n")
+context("045annotation_shared.R")
 ## 2017-12, exported functions in annotation_shared:
 ## get_gene_size() load_annotations()
 
 ## get_gene_size uses load_annotations, and load_annotations just calls one of the others.
 
-pa_gff <- system.file("share/paeruginosa_pa14.gff", package = "hpgltools")
-pa_fasta <- system.file("share/paeruginosa_pa14.fasta", package = "hpgltools")
+pa_gff <- system.file("share/paeruginosa_pa14.gff", package = "hpgldata")
+pa_fasta <- system.file("share/paeruginosa_pa14.fasta", package = "hpgldata")
 
 testing <- load_annotations(type = "gff", gff = pa_gff)
 expected <- 11946

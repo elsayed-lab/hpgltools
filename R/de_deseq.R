@@ -184,14 +184,10 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
                             model_batch = TRUE, model_intercept = FALSE,
                             alt_model = NULL, extra_contrasts = NULL,
                             annot_df = NULL, force = FALSE,
-                            deseq_method = "long", ...) {
+                            deseq_method = "long", fittype = "parametric", ...) {
   arglist <- list(...)
-  fittype <- "parametric"
-  if (!is.null(arglist[["fittype"]])) {
-    fittype <- arglist[["fittype"]]
-  }
 
-  message("Starting DESeq2 pairwise comparisons.")
+  mesg("Starting DESeq2 pairwise comparisons.")
   input <- sanitize_expt(input)
   input_data <- choose_binom_dataset(input, force = force)
   ## Now that I understand pData a bit more, I should probably remove the
@@ -240,7 +236,7 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
   ## Therefore the following 8 or so lines should not be needed any longer.
   model_string <- NULL
   if (!is.null(alt_model)) {
-    message("DESeq2 step 1/5: Using a user-supplied model.")
+    mesg("DESeq2 step 1/5: Using a user-supplied model.")
     model_string <- model_choice[["chosen_string"]]
     if (is.null(model_string)) {
       model_string <- model_choice[["int_string"]]
@@ -250,9 +246,9 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
     summarized <- import_deseq(data, column_data,
                                model_string, tximport = input[["tximport"]][["raw"]])
     dataset <- DESeq2::DESeqDataSet(se = summarized, design = as.formula(model_string))
-  } else if (isTRUE(model_batch) & isTRUE(model_cond)) {
-    message("DESeq2 step 1/5: Including batch and condition in the deseq model.")
-    ## summarized <- DESeqDataSetFromMatrix(countData = data, colData = pData(input$expressionset),
+  } else if (isTRUE(model_batch) && isTRUE(model_cond)) {
+    mesg("DESeq2 step 1/5: Including batch and condition in the deseq model.")
+    ## summarized <- DESeqDataSetFromMatrix(countData = data, colData = pData(input),
     ##                                     design=~ 0 + condition + batch)
     ## conditions and batch in this context is information taken from pData()
     model_string <- model_choice[["chosen_string"]]
@@ -262,14 +258,14 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
                                model_string, tximport = input[["tximport"]][["raw"]])
     dataset <- DESeq2::DESeqDataSet(se = summarized, design = as.formula(model_string))
   } else if (isTRUE(model_batch)) {
-    message("DESeq2 step 1/5: Including only batch in the deseq model.")
+    mesg("DESeq2 step 1/5: Including only batch in the deseq model.")
     model_string <- model_choice[["chosen_string"]]
     column_data[["batch"]] <- as.factor(column_data[["batch"]])
     summarized <- import_deseq(data, column_data,
                                model_string, tximport = input[["tximport"]][["raw"]])
     dataset <- DESeq2::DESeqDataSet(se = summarized, design = as.formula(model_string))
   } else if (class(model_batch)[1] == "matrix") {
-    message("DESeq2 step 1/5: Including a matrix of batch estimates in the deseq model.")
+    mesg("DESeq2 step 1/5: Including a matrix of batch estimates in the deseq model.")
     sv_model_string <- model_choice[["chosen_string"]]
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
     for (i in seq_along(ncol(data))) {
@@ -280,7 +276,7 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
 
     dataset <- DESeq2::DESeqDataSet(se = summarized, design = as.formula(sv_model_string))
   } else {
-    message("DESeq2 step 1/5: Including only condition in the deseq model.")
+    mesg("DESeq2 step 1/5: Including only condition in the deseq model.")
     model_string <- model_choice[["chosen_string"]]
     column_data[["condition"]] <- as.factor(column_data[["condition"]])
     summarized <- import_deseq(data, column_data,
@@ -293,7 +289,7 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
   deseq_run <- NULL
   chosen_beta <- model_intercept
   if (deseq_method == "short") {
-    message("DESeq steps 2-4 in one shot.")
+    mesg("DESeq steps 2-4 in one shot.")
     deseq_run <- try(DESeq2::DESeq(dataset, fitType = fittype,
                                    betaPrior = chosen_beta), silent = TRUE)
     if (class(deseq_run)[1] == "try-error") {
@@ -305,21 +301,21 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
         if (class(deseq_run)[1] == "try-error") {
           warning("All fitting types failed.  This will end badly.")
         } else {
-          message("Using a local fit seems to have worked.")
+          mesg("Using a local fit seems to have worked.")
         }
       } else {
-        message("Using a mean fitting seems to have worked.")
+        mesg("Using a mean fitting seems to have worked.")
       }
     }
   } else {
     ## Eg. Using the long method of invoking DESeq.
     ## If making a model ~0 + condition -- then must set betaPrior = FALSE
-    message("DESeq2 step 2/5: Estimate size factors.")
+    mesg("DESeq2 step 2/5: Estimate size factors.")
     deseq_sf <- DESeq2::estimateSizeFactors(dataset)
-    message("DESeq2 step 3/5: Estimate dispersions.")
+    mesg("DESeq2 step 3/5: Estimate dispersions.")
     deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType = fittype), silent = TRUE)
     if (class(deseq_disp)[1] == "try-error") {
-      message("Trying a mean fitting.")
+      mesg("Trying a mean fitting.")
       deseq_disp <- try(DESeq2::estimateDispersions(deseq_sf, fitType = "mean"), silent = TRUE)
       if (class(deseq_disp)[1] == "try-error") {
         warning("Both 'parametric' and 'mean' failed.  Trying 'local'.")
@@ -328,15 +324,15 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
         if (class(deseq_disp)[1] == "try-error") {
           warning("All fitting types failed.  This will end badly.")
         } else {
-          message("Using a local fit seems to have worked.")
+          mesg("Using a local fit seems to have worked.")
         }
       } else {
-        message("Using a mean fitting seems to have worked.")
+        mesg("Using a mean fitting seems to have worked.")
       }
     } else {
-      message("Using a parametric fitting seems to have worked.")
+      mesg("Using a parametric fitting seems to have worked.")
     }
-    message("DESeq2 step 4/5: nbinomWaldTest.")
+    mesg("DESeq2 step 4/5: nbinomWaldTest.")
     deseq_run <- DESeq2::nbinomWaldTest(deseq_disp, betaPrior = chosen_beta, quiet = TRUE)
   }
   normalized_counts <- DESeq2::counts(deseq_disp)
@@ -353,13 +349,14 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
 
   ## DESeq does not use contrasts in a way similar to limma/edgeR
   ## Therefore we will create all sets of c/d using these for loops.
+  mesg("DESeq2 step 5/5: Collecting the results.")
   denominators <- list()
   numerators <- list()
   result_list <- list()
   coefficient_list <- list()
   ## The following is an attempted simplification of the contrast formulae
-  number_comparisons <- sum(1:(length(condition_levels) - 1))
-  inner_count <- 0
+  end <- length(condition_levels) - 1
+  number_comparisons <- sum(seq_len(end))
   ## Something peculiar has happened, since making the condition levels
   ## ordered in the expts, deseq no longer necessarily orders it contrasts
   ## the same as limma/edger.
@@ -441,7 +438,7 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
   ## the mtc_wtu_vs_mtc_mtu from the Intercept, which is annoying.
   ## The following lines will attempt to do these things and
   ## appropriately rename the columns.
-  coefficient_df <- coef(deseq_run)
+  coefficient_df <- as.data.frame(coef(deseq_run))
   ## Here I will just simplify the column names.
   colnames(coefficient_df) <- gsub(
       pattern = "^condition", replacement = "", x = colnames(coefficient_df))
@@ -479,7 +476,7 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
           next
         } else {
           numerator <- strsplit(x = column_name, split = "_vs_")[[1]][1]
-          coefficient_df[, count] <- abs(coefficient_df[, 1] - coefficient_df[, count])
+          coefficient_df[[count]] <- abs(coefficient_df[[1]] - coefficient_df[[count]])
           colnames(coefficient_df)[count] <- numerator
         }
       }
@@ -511,10 +508,37 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
           ## The SV columns or batch or whatever
           next
         } else {
-          coefficient_df[, count] <- abs(coefficient_df[, 1] - coefficient_df[, count])
+          coefficient_df[[count]] <- abs(coefficient_df[[1]] - coefficient_df[[count]])
         }
       }
     } ## End both likely types of intercept columns.
+  }
+
+  ## Let us add the coefficients of each contrast to the result tables from deseq.
+  for (i in seq_along(contrast_order)) {
+    contrast_name <- contrast_order[[i]]
+    if (is.null(result_list[[contrast_name]])) {
+      ## This contrast was not performed, skip it.
+      next
+    }
+    num_den <- strsplit(x = contrast_name, split = "_vs_")
+    numerator_name <- num_den[[1]][[1]]
+    denominator_name <- num_den[[1]][[2]]
+    ## Reminder to self: If you expect a dataframe, are using a matrix,
+    ## and ask for a simplifying subset ([[]]), then you will be sad with
+    ## the unhelpful error 'subscript out of bounds'.  Don't forget this.
+    if (!is.null(coefficient_df[[numerator_name]]) &&
+          !is.null(coefficient_df[[denominator_name]])) {
+      this_coef <- coefficient_df[, c(numerator_name, denominator_name)]
+      colnames(this_coef) <- c("deseq_num", "deseq_den")
+      result_list[[contrast_name]] <- merge(result_list[[contrast_name]], this_coef,
+                                            by.x = "row.names", by.y = "row.names")
+      rownames(result_list[[contrast_name]]) <- result_list[[contrast_name]][["Row.names"]]
+      result_list[[contrast_name]][["Row.names"]] <- NULL
+    } else {
+      result_list[[contrast_name]][["deseq_num"]] <- NA
+      result_list[[contrast_name]][["deseq_den"]] <- NA
+    }
   }
 
   retlist <- list(
@@ -535,8 +559,7 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
       "normalized_counts" = normalized_counts,
       "numerators" = numerators,
       "deseq_dataset" = dataset,
-      "run" = deseq_run
-  )
+      "run" = deseq_run)
   class(retlist) <- c("deseq_result", "list")
   if (!is.null(arglist[["deseq_excel"]])) {
     retlist[["deseq_excel"]] <- write_deseq(retlist, excel = arglist[["deseq_excel"]])
@@ -579,7 +602,7 @@ deseq_try_sv <- function(data, summarized, svs, num_sv = NULL) {
   model_columns <- ncol(data_model)
   model_rank <- qr(data_model)[["rank"]]
   if (model_rank < model_columns) {
-    message("Including ", num_sv, " will fail because the resulting model is too low rank.")
+    mesg("Including ", num_sv, " will fail because the resulting model is too low rank.")
     num_sv <- num_sv - 1
     message("Trying again with ", num_sv, " surrogates.")
     message("You should consider rerunning the pairwise comparison with the number of

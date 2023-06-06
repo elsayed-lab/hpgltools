@@ -72,10 +72,10 @@ extract_de_plots <- function(pairwise, combined, type = "edger",
       label = label, label_column = label_column)
   }
 
-retlist <- list(
-  "coef" = coef_result,
-  "ma" = ma_material,
-  "volcano" = vol_material)
+  retlist <- list(
+    "coef" = coef_result,
+    "ma" = ma_material,
+    "volcano" = vol_material)
   return(retlist)
 }
 
@@ -178,8 +178,8 @@ extract_coefficient_scatter <- function(output, toptable = NULL, type = "limma",
     coefficient_df <- coefficients[, c(xname, yname)]
   } else if (type == "ebseq") {
     tables <- names(output[["all_tables"]])
-    verted <- glue::glue("{xname}_vs_{yname}")
-    inverted <- glue::glue("{yname}_vs_{xname}")
+    verted <- glue("{xname}_vs_{yname}")
+    inverted <- glue("{yname}_vs_{xname}")
     coefficient_df <- data.frame()
     if (verted %in% tables) {
       table_idx <- verted == tables
@@ -486,7 +486,7 @@ get_plot_columns <- function(data, type, p_type = "adj") {
     ## Figure that out here and return the appropriate table.
     the_table <- wanted_table
     revname <- strsplit(x = the_table, split = "_vs_")
-    revname <- glue::glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
+    revname <- glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
     if (!(the_table %in% possible_tables) && revname %in% possible_tables) {
       mesg("Trey you doofus, you reversed the name of the table.")
       the_table <- all_tables[[revname]]
@@ -509,9 +509,9 @@ get_plot_columns <- function(data, type, p_type = "adj") {
     the_table <- all_tables[[table]]
   } else if (length(wanted_table) == 2) {
     ## Perhaps one will ask for c(numerator, denominator)
-    the_table <- glue::glue("{wanted_table[[1]]}_vs_{wanted_table[[2]]}")
+    the_table <- glue("{wanted_table[[1]]}_vs_{wanted_table[[2]]}")
     revname <- strsplit(x = the_table, split = "_vs_")
-    revname <- glue::glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
+    revname <- glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
     possible_tables <- names(data[["data"]])
     if (!(the_table %in% possible_tables) && revname %in% possible_tables) {
       mesg("Trey you doofus, you reversed the name of the table.")
@@ -621,10 +621,10 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
   p_columns <- c()
   kept_methods <- c()
   for (m in methods) {
-    colname <- glue::glue("{m}_logfc")
+    colname <- glue("{m}_logfc")
     if (!is.null(table[[colname]])) {
       lfc_columns <- c(lfc_columns, colname)
-      pcol <- glue::glue("{m}_adjp")
+      pcol <- glue("{m}_adjp")
       kept_methods <- c(kept_methods, m)
       p_columns <- c(p_columns, pcol)
       test_fc <- min(table[[colname]])
@@ -1378,9 +1378,9 @@ plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
                                       line_color = "black", line_position = "bottom", logfc = 1.0,
                                       p_col = "adj.P.Val", p_name = "-log10 p-value", pval = 0.05,
                                       shapes_by_state = FALSE,
-                                      color_high = NULL, color_low = NULL,
+                                      color_high = "darkred", color_low = "darkblue",
                                       size = 2, invert = FALSE, label = NULL,
-                                      label_column = "hgncsymbol") {
+                                      label_column = "hgncsymbol", label_size = 6) {
 
   low_vert_line <- 0.0 - logfc
   horiz_line <- -1 * log10(pval)
@@ -1426,20 +1426,28 @@ plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
                     colour = .data[["state"]]))
 
   ## Now define when to put lines vs. points
-  if (line_position == "bottom") {
+  if (is.null(line_position)) {
+    plt <- plt +
+      ggplot2::geom_point(stat = "identity", size = size, alpha = alpha)
+  } else if (line_position == "bottom") {
     ## lines, then points.
     plt <- plt +
       ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size = (size / 2)) +
       ggplot2::geom_vline(xintercept = logfc, color = line_color, size = (size / 2)) +
       ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size = (size / 2)) +
       ggplot2::geom_point(stat = "identity", size = size, alpha = alpha)
-  } else {
+
+  } else if (line_position == "top") {
     ## points, then lines
     plt <- plt +
       ggplot2::geom_point(stat = "identity", size = size, alpha = alpha) +
       ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size = (size / 2)) +
       ggplot2::geom_vline(xintercept = logfc, color = line_color, size = (size / 2)) +
       ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size = (size / 2))
+  } else {
+    mesg("Not printing volcano demarcation lines.")
+    plt <- plt +
+      ggplot2::geom_point(stat = "identity", size = size, alpha = alpha)
   }
 
   ## Now set the colors and axis labels
@@ -1465,7 +1473,8 @@ plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
       bottom <- tail(reordered, n = label)
       df_subset <- rbind(top, bottom)
     } else if (is.character(label)) {
-      sig_idx <- rownames(df) %in% label
+      sig_idx <- df[["label"]] %in% label
+      mesg("Found ", sum(sig_idx), " of the labeled genes.")
       df_subset <- df[sig_idx, ]
     } else {
       stop("I do not understand this set of IDs to label.")
@@ -1476,6 +1485,7 @@ plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
                                    x = .data[["xaxis"]]),
                                colour = "black", box.padding = ggplot2::unit(0.5, "lines"),
                                point.padding = ggplot2::unit(1.6, "lines"),
+                               size = label_size,
                                arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")))
   }
 
@@ -1556,8 +1566,8 @@ rank_order_scatter <- function(first, second = NULL, first_type = "limma",
   merged <- merged[, -1]
 
   if (first_column == second_column) {
-    c1 <- glue::glue("{first_column}.x")
-    c2 <- glue::glue("{first_column}.y")
+    c1 <- glue("{first_column}.x")
+    c2 <- glue("{first_column}.y")
   } else {
     c1 <- first_column
     c2 <- second_column
@@ -1572,8 +1582,8 @@ rank_order_scatter <- function(first, second = NULL, first_type = "limma",
 
   merged[["state"]] <- "neither"
   if (first_p_col == second_p_col) {
-    p1 <- glue::glue("{first_p_col}.x")
-    p2 <- glue::glue("{first_p_col}.y")
+    p1 <- glue("{first_p_col}.x")
+    p2 <- glue("{first_p_col}.y")
   } else {
     p1 <- first_p_col
     p2 <- second_p_col
@@ -1586,9 +1596,9 @@ rank_order_scatter <- function(first, second = NULL, first_type = "limma",
   merged[p2_idx, "state"] <- "second"
   merged[["state"]] <- as.factor(merged[["state"]])
 
-  first_table_colname <- glue::glue(
+  first_table_colname <- glue(
     "Table: {first_table}, Type: {first_type}, column: {first_column}")
-  second_table_colname <- glue::glue(
+  second_table_colname <- glue(
     "Table: {second_table}, Type: {second_type}, column: {second_column}")
 
   plt <- ggplot(data = merged,
@@ -1601,8 +1611,8 @@ rank_order_scatter <- function(first, second = NULL, first_type = "limma",
                                            "second"=second_color,
                                            "neither"=no_color)) +
     ggplot2::geom_smooth(method = "loess", color = "lightblue") +
-    ggplot2::ylab(glue::glue("Rank order of {second_table_colname}")) +
-    ggplot2::xlab(glue::glue("Rank order of {first_table_colname}")) +
+    ggplot2::ylab(glue("Rank order of {second_table_colname}")) +
+    ggplot2::xlab(glue("Rank order of {first_table_colname}")) +
     ggplot2::theme_bw(base_size = base_size) +
     ggplot2::theme(legend.position = "none",
                    axis.text = ggplot2::element_text(size = base_size, colour = "black"))
@@ -1698,7 +1708,7 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
   ##}
 
   for (type in types) {
-    test_column <- glue::glue("{type}_logfc")
+    test_column <- glue("{type}_logfc")
     if (! test_column %in% colnames(combined[["data"]][[1]])) {
       message("We do not have the ", test_column, " in the data, skipping ", type, ".")
       next
@@ -1710,7 +1720,7 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
                                              p = p, z = z, n = NULL, excel = FALSE,
                                              p_type = p_type, sig_bar = FALSE, ma = FALSE))
       table_length <- length(fc_sig[[type]][["ups"]])
-      fc_name <- glue::glue("fc_{fc}")
+      fc_name <- glue("fc_{fc}")
       fc_names <- append(fc_names, fc_name)
 
       for (tab in seq_len(table_length)) {

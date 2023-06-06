@@ -8,7 +8,7 @@ plot_nonzero(
   data,
   design = NULL,
   colors = NULL,
-  plot_labels = NULL,
+  plot_labels = FALSE,
   expt_names = NULL,
   label_chars = 10,
   plot_legend = FALSE,

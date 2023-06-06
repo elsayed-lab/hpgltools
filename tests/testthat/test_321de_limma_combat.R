@@ -1,7 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("21de_limma_combat.R: Does hpgltools work with limma and combat?\n")
+context("321de_limma_combat.R: Does hpgltools work with limma and combat?")
 
 ## create_expt generates a .Rdata file which may be reread, do so.
 pasilla <- new.env()

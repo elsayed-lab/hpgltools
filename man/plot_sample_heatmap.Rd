@@ -8,6 +8,7 @@ plot_sample_heatmap(
   data,
   colors = NULL,
   design = NULL,
+  heatmap_colors = NULL,
   expt_names = NULL,
   dendrogram = "column",
   row_label = NA,

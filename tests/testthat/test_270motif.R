@@ -1,8 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("270motif.R:
-")
+context("270motif.R")
 
 ## Also going to fail because eupathdb is not working yet.
 
@@ -13,7 +12,7 @@ if (FALSE) {
   pkgnames <- EuPathDB::get_eupath_pkgnames(entry = lm_entry)
   lm_bsg <- pkgnames[["bsgenome"]]
 
-  motif_input <- system.file("share/motif/pro_high.fasta", package = "hpgltools")
+  motif_input <- system.file("share/motif/pro_high.fasta", package = "hpgldata")
 
   lm_gadem <- sm(simple_gadem(motif_input, genome = lm_bsg, p = 1.0))
 

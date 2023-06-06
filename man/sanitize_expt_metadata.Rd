@@ -2,34 +2,13 @@
 % Please edit documentation in R/metadata.R
 \name{sanitize_expt_metadata}
 \alias{sanitize_expt_metadata}
-\title{Given an expressionset, sanitize pData columns of interest.}
+\title{Adding an alias to sanitize_metadata until I decide how I want to name this.}
 \usage{
-sanitize_expt_metadata(
-  expt,
-  columns = NULL,
-  na_string = "notapplicable",
-  lower = TRUE,
-  punct = TRUE
-)
+sanitize_expt_metadata(...)
 }
 \arguments{
-\item{expt}{Input expressionset}
-
-\item{columns}{Set of columns to check, if left NULL, all columns
-will be molested.}
-
-\item{na_string}{Fill NA values with a string.}
-
-\item{lower}{Set everything to lowercase?}
-
-\item{punct}{Remove punctuation?}
+\item{...}{Arguments for sanitize_metadata().}
 }
 \description{
-I wrote this function after spending a couple of hours confused
-because one cell in my metadata said 'cure ' instead of 'cure' and
-I could not figure out why chaos reigned in my analyses.  There is
-a sister to this somewhere else which checks that the expected
-levels of a metadata factor are consistent; this is because in
-another analysis we essentially had a cell which said 'cyre' and a
-similar data explosion occurred.
+Adding an alias to sanitize_metadata until I decide how I want to name this.
 }

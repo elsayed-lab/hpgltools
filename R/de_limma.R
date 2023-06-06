@@ -295,36 +295,12 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
                            model_batch = TRUE, model_intercept = FALSE,
                            alt_model = NULL, extra_contrasts = NULL,
                            annot_df = NULL, libsize = NULL,
-                           force = FALSE, ...) {
+                           which_voom = "limma", limma_method = "ls",
+                           limma_robust = FALSE, voom_norm = "quantile",
+                           limma_trend = FALSE, force = FALSE, ...) {
   arglist <- list(...)
-  print(summary(input))
   ## This is used in the invocation of a voom() implementation for normalization.
-  voom_norm <- "quantile"  ## a normalize.method supported by limma.
-  if (!is.null(arglist[["voom_norm"]])) {
-    voom_norm <- arglist[["voom_norm"]]
-  }
-  ## Which implementation of voom() to use?
-  which_voom <- "limma"  ## limma, limma_weighted, hpgl, or hpgl_weighted are possible
-  if (!is.null(arglist[["which_voom"]])) {
-    which_voom <- arglist[["which_voom"]]
-  }
-  ## This is for the lmFit() call.
-  limma_method <- "ls" ## or robust
-  if (!is.null(arglist[["limma_method"]])) {
-    limma_method <- arglist[["limma_method"]]
-  }
   ## This is for the eBayes() call.
-  limma_robust <- FALSE
-  if (!is.null(arglist[["limma_robust"]])) {
-    if (!identical(arglist[["limma_robus"]], FALSE)) {
-      limma_robust <- TRUE
-    }
-  }
-  ## This is also used in eBayes()
-  limma_trend <- FALSE
-  if (!is.null(arglist[["limma_trend"]])) {
-    limma_trend <- arglist[["limma_trend"]]
-  }
 
   message("Starting limma pairwise comparison.")
   san_input <- sanitize_expt(input)
@@ -389,7 +365,6 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
   ##                      alt_model = alt_model)
   chosen_model <- model[["chosen_model"]]
   model_string <- model[["chosen_string"]]
-
   fun_voom <- NULL
   ## voom() it, taking into account whether the data has been log2 transformed.
 
@@ -567,8 +542,6 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
 
     contrasts_performed <- names(limma_tables)
   }
-
-  print(summary(input))
 
   retlist <- list(
     "all_pairwise" = all_pairwise,

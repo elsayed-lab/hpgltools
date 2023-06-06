@@ -151,7 +151,7 @@ ggplt <- function(gg, filename = "ggplot.html",
 #' }
 #' @export
 graph_metrics <- function(expt, cormethod = "pearson", distmethod = "euclidean",
-                          title_suffix = NULL, qq = FALSE, ma = FALSE, gene_heat = FALSE,
+                          title_suffix = NULL, qq = NULL, ma = NULL, cv = NULL, gene_heat = NULL,
                           ...) {
   arglist <- list(...)
   if (!exists("expt", inherits = FALSE)) {

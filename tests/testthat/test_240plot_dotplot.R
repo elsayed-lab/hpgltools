@@ -1,5 +1,5 @@
 start <- as.POSIXlt(Sys.time())
-context("240plot_dotplot.R:\n")
+context("240plot_dotplot.R")
 
 pombe_expt <- make_pombe_expt(annotation = FALSE)
 pombe_subset <- subset_expt(

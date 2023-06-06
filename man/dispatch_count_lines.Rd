@@ -9,6 +9,7 @@ dispatch_count_lines(
   search,
   input_file_spec,
   verbose = verbose,
+  species = "*",
   basedir = "preprocessing"
 )
 }

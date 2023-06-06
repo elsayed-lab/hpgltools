@@ -1,16 +1,15 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("020annotation_gff.R
-  123456\n")
+context("020annotation_gff.R")
 ## 2017-12, exported functions in annotation_gff:
 ##   gff2irange(), load_gff_annotations(), pattern_count_genome()
 ##   sequence_attributes(), sum_exons()
 ## I deleted make_tooltips(), that was stupid.
 ## I moved get_gff_gene_lengths() to get_genelengths() and made it less stupid.
 
-pa_gff <- system.file("share/paeruginosa_pa14.gff", package = "hpgltools")
-pa_fasta <- system.file("share/paeruginosa_pa14.fasta", package = "hpgltools")
+pa_gff <- system.file("share/paeruginosa_pa14.gff", package = "hpgldata")
+pa_fasta <- system.file("share/paeruginosa_pa14.fasta", package = "hpgldata")
 
 ## gff2irange()
 pa_irange <- gff2irange(pa_gff)

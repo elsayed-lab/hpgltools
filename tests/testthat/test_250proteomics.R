@@ -1,8 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("250proteomics.R:
-")
+context("250proteomics.R")
 
 ## Available functions:  add_conditional_nas(), extract_mayu_pps_fdr(),
 ## extract_scan_data(), extract_mzXML_scans(), extract_mzML_scans(),
@@ -50,9 +49,9 @@ context("250proteomics.R:
 
 ## For most of the above choices, I have functions in the hpgltools to help.
 
-meta <- system.file("share/mtb_prot/dia_samples.ods", package = "hpgltools")
+meta <- system.file("share/mtb_prot/dia_samples.ods", package = "hpgldata")
 untarred <- utils::untar(tarfile = system.file("share/mtb_prot/sb_prot.tar.xz",
-                                               package = "hpgltools"))
+                                               package = "hpgldata"))
 ##mtb_expt <- create_expt(meta = meta)
 
 ## As the name implies, this function uses the diascored column in the metadata

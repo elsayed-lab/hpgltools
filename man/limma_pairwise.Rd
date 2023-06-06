@@ -16,6 +16,11 @@ limma_pairwise(
   extra_contrasts = NULL,
   annot_df = NULL,
   libsize = NULL,
+  which_voom = "limma",
+  limma_method = "ls",
+  limma_robust = FALSE,
+  voom_norm = "quantile",
+  limma_trend = FALSE,
   force = FALSE,
   ...
 )

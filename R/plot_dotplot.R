@@ -19,14 +19,14 @@
 #' }
 #' @export
 plot_svfactor <- function(expt, svest, sv = 1, chosen_factor = "batch", factor_type = "factor") {
-  chosen <- expt[["design"]][[chosen_factor]]
+  meta <- pData(expt)
+  chosen <- meta[[chosen_factor]]
+  names <- sampleNames(expt)
+  my_colors <- colors(expt)
   sv_df <- data.frame(
     "adjust" = svest[, sv],  ## Take a single estimate from compare_estimates()
     "factors" = chosen,
-    "samplenames" = rownames(expt[["design"]])
-  )
-  samplenames <- rownames(expt[["design"]])
-  my_colors <- expt[["colors"]]
+    "samplenames" = names)
 
   sv_melted <- reshape2::melt(sv_df, idvars = "factors")
   minval <- min(sv_df[["adjust"]])
@@ -70,7 +70,7 @@ plot_svfactor <- function(expt, svest, sv = 1, chosen_factor = "batch", factor_t
 plot_batchsv <- function(expt, svs, sv = 1, batch_column = "batch", factor_type = "factor",
                          id_column = "sampleid") {
   meta <- pData(expt)
-  chosen <- meta[, batch_column]
+  chosen <- meta[[batch_column]]
   names(chosen) <- sampleNames(expt)
   num_batches <- length(unique(chosen))
   samples <- meta[[id_column]]
@@ -210,9 +210,9 @@ plot_batchsv <- function(expt, svs, sv = 1, batch_column = "batch", factor_type 
 #' }
 #' @export
 plot_pcfactor <- function(pc_df, expt, exp_factor = "condition", component = "PC1") {
-  samplenames <- rownames(expt[["design"]])
-
-  my_colors <- expt[["colors"]]
+  meta <- pData(expt)
+  samplenames <- sampleNames(expt)
+  my_colors <- colors(expt)
   minval <- min(pc_df[[component]])
   maxval <- max(pc_df[[component]])
   my_binwidth <- (maxval - minval) / 40
@@ -262,29 +262,10 @@ plot_pcfactor <- function(pc_df, expt, exp_factor = "condition", component = "PC
 #'  smc_plot = hpgl_smc(expt = expt)
 #' }
 #' @export
-plot_sm <- function(data, colors = NULL, method = "pearson", plot_legend = FALSE,
+plot_sm <- function(data, design = NULL, colors = NULL, method = "pearson", plot_legend = FALSE,
                     expt_names = NULL, label_chars = 10, plot_title = NULL, dot_size = 5,
                     ...) {
   arglist <- list(...)
-  data_class <- class(data)[1]
-  conditions <- NULL
-  if (data_class == "expt" || data_class == "SummarizedExperiment") {
-    design <- pData(data)
-    colors <- data[["colors"]]
-    conditions <- pData(data)[["conditions"]]
-    data <- exprs(data)
-  } else if (data_class == "ExpressionSet") {
-    design <- pData(data)
-    conditions <- pData(data)[["conditions"]]
-    data <- exprs(data)
-  } else if (data_class == "matrix" || data_class == "data.frame") {
-    data <- as.data.frame(data)
-    ## some functions prefer matrix, so I am keeping this explicit for the moment
-  } else {
-    stop("This function currently only understands classes of type:
- expt, ExpressionSet, data.frame, and matrix.")
-  }
-
   chosen_palette <- "Dark2"
   if (!is.null(arglist[["palette"]])) {
     chosen_palette <- arglist[["palette"]]
@@ -298,18 +279,17 @@ plot_sm <- function(data, colors = NULL, method = "pearson", plot_legend = FALSE
 
   properties <- NULL
   if (method == "pearson" || method == "spearman" || method == "robust") {
-    message("Performing correlation.")
+    mesg("Performing ", method, " correlation.")
     properties <- hpgl_cor(data, method = method)
   } else {
-    message("Performing distance.")
-    properties <- as.matrix(dist(t(data)))
+    mesg("Performing ", method, " distance.")
+    properties <- as.matrix(dist(t(data), method = method))
   }
 
   prop_median <- matrixStats::rowMedians(properties)
   prop_spread <- stats::quantile(prop_median, p = c(1, 3) / 4)
   prop_iqr <- diff(prop_spread)
   log_scale <- FALSE
-
   outer_limit <- NULL
   ylimit <- NULL
   type <- "unknown"
@@ -326,31 +306,38 @@ plot_sm <- function(data, colors = NULL, method = "pearson", plot_legend = FALSE
     type <- "distance"
   }
 
-  if (is.null(conditions)) {
-    conditions <- colors
-  }
-
   sm_df <- data.frame(
     "sample" = rownames(properties),
     "sm" = prop_median,
-    "condition" = conditions,
     "color" = colors)
+
+  if (!is.null(design)) {
+    if (!is.null(design[["condition"]])) {
+      sm_df[["condition"]] <- as.factor(design[["condition"]])
+    } else {
+      sm_df[["condition"]] <- "undefined"
+    }
+    if (is.null(design[["batch"]])) {
+      sm_df[["batch"]] <- "undefined"
+    } else {
+      sm_df[["batch"]] <- as.factor(design[["batch"]])
+    }
+    if (class(expt_names) == "character" && length(expt_names) == 1) {
+      ## Then this refers to an experimental metadata column.
+      sm_df[["sample"]] <- design[[expt_names]]
+    }
+  } else {
+    sm_df[["condition"]] <- "undefined"
+    sm_df[["batch"]] <- "undefined"
+  }
+
   color_listing <- sm_df[, c("condition", "color")]
   color_listing <- unique(color_listing)
   color_list <- as.character(color_listing[["color"]])
   names(color_list) <- as.character(color_listing[["condition"]])
   sm_df[["num"]] <- seq_len(nrow(sm_df))
-  if (is.null(design[["batch"]])) {
-    sm_df[["batch"]] <- "undefined"
-  } else {
-    sm_df[["batch"]] <- as.factor(design[["batch"]])
-  }
   num_batches <- nlevels(sm_df[["batch"]])
 
-  if (class(expt_names) == "character" && length(expt_names) == 1) {
-    ## Then this refers to an experimental metadata column.
-    sm_df[["sample"]] <- design[[expt_names]]
-  }
   if (!is.null(label_chars) && is.numeric(label_chars)) {
     sm_df[["sample"]] <- abbreviate(sm_df[["sample"]], minlength = label_chars)
   }

@@ -41,6 +41,8 @@
 #'  so it can choose).
 #' @param do_edger Perform EdgeR?
 #' @param do_limma Perform limma?
+#' @param do_noiseq Perform noiseq?
+#' @param do_noiseq Perform dream?
 #' @param convert Modify the data with a 'conversion' method for PCA?
 #' @param norm Modify the data with a 'normalization' method for PCA?
 #' @param verbose Print extra information while running?
@@ -63,8 +65,9 @@ all_pairwise <- function(input = NULL, conditions = NULL,
                          model_intercept = FALSE, extra_contrasts = NULL,
                          alt_model = NULL, libsize = NULL, test_pca = TRUE,
                          annot_df = NULL, parallel = TRUE,
-                         do_basic = TRUE, do_deseq = TRUE, do_ebseq = NULL,
-                         do_edger = TRUE, do_limma = TRUE,
+                         do_basic = TRUE, do_deseq = TRUE, do_ebseq = FALSE,
+                         do_edger = TRUE, do_limma = TRUE, do_noiseq = TRUE,
+                         do_dream = FALSE,
                          convert = "cpm", norm = "quant", verbose = TRUE,
                          surrogates = "be", ...) {
   arglist <- list(...)
@@ -130,7 +133,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     } else if (class(model_type)[1] == "character") {
       mesg("Using ", model_type, " to visualize before/after batch inclusion.")
       test_norm <- "quant"
-      if (model_type != "TRUE" & model_type != FALSE) {
+      if (model_type != "TRUE" && model_type != FALSE) {
         ## Then it is probably some sort of sva which will have a hard time with quantile.
         test_norm <- "raw"
       }
@@ -194,6 +197,14 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     num_cpus_needed <- num_cpus_needed + 1
     results[["limma"]] <- list()
   }
+  if (isTRUE(do_noiseq)) {
+    num_cpus_needed <- num_cpus_needed + 1
+    results[["noiseq"]] <- list()
+  }
+  if (isTRUE(do_dream)) {
+    num_cpus_needed <- num_cpus_needed + 1
+    results[["dream"]] <- list()
+  }
 
   res <- NULL
   if (isTRUE(parallel)) {
@@ -248,7 +259,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
   ## function.
   ## Thus we will use modified_data to note the data was modified by sva.
   modified_data <- FALSE
-  if (is.null(sv_model) & isTRUE(modified_data)) {
+  if (is.null(sv_model) && isTRUE(modified_data)) {
     ret <- sva_modify_pvalues(results)
     results <- ret[["results"]]
     original_pvalues <- ret[["original_pvalues"]]
@@ -265,6 +276,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     "ebseq" = results[["ebseq"]],
     "edger" = results[["edger"]],
     "limma" = results[["limma"]],
+    "noiseq" = results[["noiseq"]],
     "batch_type" = model_type,
     "comparison" = result_comparison,
     "extra_contrasts" = extra_contrasts,
@@ -308,7 +320,7 @@ calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp
   ## of the number of genes.
   if (topn <= 0) {
     stop("topn need to be either a float from 0-1 or an interger bigger than 100.")
-  } else if (topn > 1 & topn <= 100) {
+  } else if (topn > 1 && topn <= 100) {
     stop("topn need to be either a float from 0-1 or an interger bigger than 100.")
   } else if (topn < 1) {
     topn <- ceiling(nrow(tbl) * topn)
@@ -627,8 +639,8 @@ choose_binom_dataset <- function(input, verbose = TRUE, force = FALSE, ...) {
       }
     } else {
       if (isTRUE(verbose)) {
-        message("The data should be suitable for EdgeR/DESeq/EBSeq. ",
-                "If they freak out, check the state of the count table ",
+        message("The data should be suitable for EdgeR/DESeq/EBSeq.\n",
+                "If they freak out, check the state of the count table\n",
                 "and ensure that it is in integer counts.")
       }
     }
@@ -833,7 +845,7 @@ choose_model <- function(input, conditions = NULL, batches = NULL, model_batch =
                          surrogates = "be", verbose = TRUE, ...) {
   arglist <- list(...)
   design <- NULL
-  if (class(input)[1] != "matrix" & class(input)[1] != "data.frame") {
+  if (class(input)[1] != "matrix" && class(input)[1] != "data.frame") {
     design <- pData(input)
   }
   if (is.null(design)) {
@@ -860,7 +872,7 @@ choose_model <- function(input, conditions = NULL, batches = NULL, model_batch =
   blist <- list("batch" = "contr.treatment")
   cblist <- list("condition" = "contr.treatment", "batch" = "contr.treatment")
   if (!is.null(contr)) {
-    if (!is.null(contr[["condition"]]) & !is.null(contr[["batch"]])) {
+    if (!is.null(contr[["condition"]]) && !is.null(contr[["batch"]])) {
       cblist <- list("condition" = contr[["condition"]], "batch" = contr[["batch"]])
     } else if (!is.null(contr[["condition"]])) {
       clist <- list("condition" = contr[["condition"]])
@@ -943,7 +955,7 @@ choose_model <- function(input, conditions = NULL, batches = NULL, model_batch =
     int_string <- cond_int_string
     noint_string <- cond_noint_string
     including <- "condition"
-  } else if (isTRUE(model_cond) & isTRUE(model_batch)) {
+  } else if (isTRUE(model_cond) && isTRUE(model_batch)) {
     if (class(condbatch_int_model)[1] == "try-error") {
       if (isTRUE(verbose)) {
         message("The condition+batch model failed. ",
@@ -996,7 +1008,7 @@ choose_model <- function(input, conditions = NULL, batches = NULL, model_batch =
     int_string <- glue("{int_string}{sv_string}")
     rownames(model_batch) <- rownames(int_model)
     including <- glue("condition{sv_string}")
-  } else if (class(model_batch)[1] == "numeric" | class(model_batch)[1] == "matrix") {
+  } else if (class(model_batch)[1] == "numeric" || class(model_batch)[1] == "matrix") {
     if (isTRUE(verbose)) {
       mesg("Including batch estimates from sva/ruv/pca in the model.")
     }
@@ -1153,7 +1165,7 @@ compare_de_results <- function(first, second, cor_method = "pearson",
         column_name <- glue("{method}_{comparison}")
         f_column <- as.vector(as.numeric(first[["data"]][[table]][[column_name]]))
         s_column <- as.vector(as.numeric(second[["data"]][[table]][[column_name]]))
-        if (length(f_column) == 0 | length(s_column) == 0) {
+        if (length(f_column) == 0 || length(s_column) == 0) {
           ## The column of data does not exist.
           break
         }
@@ -1344,6 +1356,10 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
     retlst[["basic"]] <- results[["basic"]][["all_tables"]]
     methods <- c(methods, "basic")
   }
+  if (class(results[["noiseq"]])[1] == "noiseq_result") {
+    retlst[["noiseq"]] <- results[["noiseq"]][["all_tables"]]
+    methods <- c(methods, "noiseq")
+  }
 
   extra_eval_names <- NULL
   if (!is.null(extra_contrasts)) {
@@ -1488,37 +1504,37 @@ compare_logfc_plots <- function(combined_tables) {
   for (c in seq_along(tnames)) {
     tname <- tnames[c]
     tab <- data[[tname]]
-    if (!is.null(tab[["limma_logfc"]]) & !is.null(tab[["edger_logfc"]])) {
+    if (!is.null(tab[["limma_logfc"]]) && !is.null(tab[["edger_logfc"]])) {
       le_data <- tab[, c("limma_logfc", "edger_logfc", "limma_adjp", "edger_adjp")]
       le <- sm(plot_linear_scatter(le_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       le <- NULL
     }
-    if (!is.null(tab[["limma_logfc"]]) & !is.null(tab[["deseq_logfc"]])) {
+    if (!is.null(tab[["limma_logfc"]]) && !is.null(tab[["deseq_logfc"]])) {
       ld_data <- tab[, c("limma_logfc", "deseq_logfc", "limma_adjp", "deseq_adjp")]
       ld <- sm(plot_linear_scatter(ld_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       ld <- NULL
     }
-    if (!is.null(tab[["deseq_logfc"]]) & !is.null(tab[["edger_logfc"]])) {
+    if (!is.null(tab[["deseq_logfc"]]) && !is.null(tab[["edger_logfc"]])) {
       de_data <- tab[, c("deseq_logfc", "edger_logfc", "deseq_adjp", "edger_adjp")]
       de <- sm(plot_linear_scatter(de_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       de <- NULL
     }
-    if (!is.null(tab[["limma_logfc"]]) & !is.null(tab[["basic_logfc"]])) {
+    if (!is.null(tab[["limma_logfc"]]) && !is.null(tab[["basic_logfc"]])) {
       lb_data <- tab[, c("limma_logfc", "basic_logfc", "limma_adjp", "basic_p")]
       lb <- sm(plot_linear_scatter(lb_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       lb <- NULL
     }
-    if (!is.null(tab[["deseq_logfc"]]) & !is.null(tab[["basic_logfc"]])) {
+    if (!is.null(tab[["deseq_logfc"]]) && !is.null(tab[["basic_logfc"]])) {
       db_data <- tab[, c("deseq_logfc", "basic_logfc", "deseq_adjp", "basic_p")]
       db <- sm(plot_linear_scatter(db_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       db <- NULL
     }
-    if (!is.null(tab[["edger_logfc"]]) & !is.null(tab[["basic_logfc"]])) {
+    if (!is.null(tab[["edger_logfc"]]) && !is.null(tab[["basic_logfc"]])) {
       eb_data <- tab[, c("edger_logfc", "basic_logfc", "edger_adjp", "basic_p")]
       eb <- sm(plot_linear_scatter(eb_data, pretty_colors = FALSE)[["scatter"]])
     } else {
@@ -1684,6 +1700,8 @@ do_pairwise <- function(type, ...) {
     res <- try(deseq2_pairwise(...))
   } else if (type == "basic") {
     res <- try(basic_pairwise(...))
+  } else if (type == "noiseq") {
+    res <- try(noiseq_pairwise(...))
   }
   res[["type"]] <- type
   return(res)
@@ -1716,7 +1734,7 @@ do_pairwise <- function(type, ...) {
 #' @export
 get_abundant_genes <- function(datum, type = "limma", n = NULL, z = NULL,
                                fx = "mean", unique = FALSE) {
-  if (is.null(z) & is.null(n)) {
+  if (is.null(z) && is.null(n)) {
     n <- 100
   }
   if (!is.null(datum[["limma"]])) {
@@ -2050,7 +2068,6 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
   if (!is.null(z)) {
     ## Take an arbitrary number which are >= and <= a value which is z zscores
     ## from the median.
-    mesg("Getting the genes >= ", z, " stdevs away from the mean of all.")
     ## Use the entire table for the summary
     out_summary <- summary(as.numeric(table[[column]]))
     out_mad <- stats::mad(as.numeric(table[[column]]), na.rm = TRUE)
@@ -2155,6 +2172,8 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
   all_pairwise <- list()
   identity_names <- names(identities)
   lenminus <- length(identities) - 1
+  numerators <- c()
+  denominators <- c()
   for (c in seq_len(lenminus)) {
     c_name <- names(identities[c])
     nextc <- c + 1
@@ -2163,6 +2182,8 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
       minus_string <- paste(d_name, "_vs_", c_name, sep = "")
       exprs_string <- paste(minus_string, "=", d_name, "-", c_name, ",", sep = "")
       all_pairwise[minus_string] <- exprs_string
+      numerators <- c(numerators, d_name)
+      denominators <- c(denominators, c_name)
     }
   }
   ## At this point, I have strings which represent the definition of every
@@ -2170,6 +2191,7 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
   ## B-A where B comes somewhere after A in the model matrix.
   ## The goal now is to create the variables in the R environment
   ## and add them to makeContrasts()
+
   if (isTRUE(do_identities)) {
     eval_strings <- append(eval_strings, identities)
   }
@@ -2178,16 +2200,18 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
   }
   eval_names <- names(eval_strings)
 
-  if (!is.null(extra_contrasts) & isTRUE(do_extras)) {
+  if (!is.null(extra_contrasts) && isTRUE(do_extras)) {
     extra_eval_strings <- strsplit(extra_contrasts, ",")[[1]]
     extra_eval_names <- extra_eval_strings
     extra_eval_names <- stringi::stri_replace_all_regex(extra_eval_strings,
                                                         "^(\\s*)(\\w+)\\s*=\\s*.*$", "$2")
-    extra_eval_names <- gsub(pattern = "^\\s+", replacement = "", x = extra_eval_names, perl = TRUE)
+    extra_eval_names <- gsub(pattern = "^\\s+", replacement = "",
+                             x = extra_eval_names, perl = TRUE)
     for (i in seq_along(extra_eval_strings)) {
       new_name <- extra_eval_names[[i]]
       extra_eval_string <- extra_eval_strings[[i]]
-      extra_eval_string <- gsub(pattern = "^\\s+", replacement = "", x = extra_eval_string, perl = TRUE)
+      extra_eval_string <- gsub(pattern = "^\\s+", replacement = "",
+                                x = extra_eval_string, perl = TRUE)
       extra_contrast <- glue("{extra_eval_string}, ")
       eval_strings <- append(eval_strings, extra_contrast)
       eval_names <- append(eval_names, new_name)
@@ -2198,10 +2222,10 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
   ## Add them to makeContrasts()
   contrast_string <- "all_pairwise_contrasts = mymakeContrasts("
   for (f in seq_along(eval_strings)) {
-    eval_name = names(eval_strings[f])
+    eval_name <- names(eval_strings[f])
     ## Get a little defensive to make sure I do not have contrasts which start with
     ## silly things like numbers of punctuation.
-    if (grepl(x=eval_name, pattern="^([[:digit:]]|[[:punct:]])")) {
+    if (grepl(x = eval_name, pattern = "^([[:digit:]]|[[:punct:]])")) {
       stop("This function requires contrast names to start with a letter.")
     }
     eval_string <- eval_strings[f]
@@ -2214,6 +2238,10 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
   ## I like to change the column names of the contrasts because by default
   ## they are kind of obnoxious and too long to type
 
+  pairwise_name_idx <- grepl(x = eval_names, pattern = "_vs_")
+  pairwise_names <- eval_names[pairwise_name_idx]
+  names(numerators) <- pairwise_names
+  names(denominators) <- pairwise_names
   colnames(all_pairwise_contrasts) <- eval_names
   result <- list(
     "all_pairwise_contrasts" = all_pairwise_contrasts,
@@ -2221,7 +2249,9 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
     "identity_names" = identity_names,
     "all_pairwise" = all_pairwise,
     "contrast_string" = contrast_string,
-    "names" = eval_names)
+    "names" = eval_names,
+    "numerators" = numerators,
+    "denominators" = denominators)
   return(result)
 }
 

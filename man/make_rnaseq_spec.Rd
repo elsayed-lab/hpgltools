@@ -4,7 +4,7 @@
 \alias{make_rnaseq_spec}
 \title{Generate a RNASeq specification for use by gather_preprocessing_metadata()}
 \usage{
-make_rnaseq_spec(species_list = NULL)
+make_rnaseq_spec()
 }
 \description{
 This currently assumes the set of tools used by one doing RNASeq to be trimomatic,

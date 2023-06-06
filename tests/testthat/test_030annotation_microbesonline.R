@@ -1,8 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("030annotation_microbesonline.R
-  1234\n")
+context("030annotation_microbesonline.R")
 ## 2017-12, exported functions in annotation_microbesonline:
 ## get_microbesonline_ids(), get_microbesonline_name(), load_microbesonline_annotations()
 ## load_microbesonline_go(), load_microbesonline_kegg().

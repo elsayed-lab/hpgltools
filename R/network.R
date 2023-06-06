@@ -130,10 +130,11 @@ annotate_network_nodes <- function(network, df, column = "assemblyxls", col_numb
   entries <- rownames(df)
   net_names <- igraph::vertex_attr(network, name = "name")
   nodes_annotated <- 0
-  for (e in 1:length(entries)) {
+  for (e in seq_len(length(entries))) {
     entry <- entries[e]
     gene_annotation_file <- df[e, column]
-    gene_annotations <- try(sm(extract_metadata(gene_annotation_file, fill = "")), silent=TRUE)
+    gene_annotations <- try(sm(extract_metadata(gene_annotation_file,
+                                                fill = "")), silent=TRUE)
     if ("try-error" %in% class(gene_annotations)) {
       next
     }
@@ -145,7 +146,7 @@ annotate_network_nodes <- function(network, df, column = "assemblyxls", col_numb
     pfam_defined <- pfam_names[defined_names]
     entries_found <- 0
     nodes_found <- 0
-    for (d in 1:length(pfam_defined)) {
+    for (d in seq_len(length(pfam_defined))) {
       defined_name <- names(pfam_defined)[d]
       defined_value <- pfam_defined[d]
       pfam_nodes <- net_names == defined_name
@@ -155,8 +156,9 @@ annotate_network_nodes <- function(network, df, column = "assemblyxls", col_numb
         nodes_found <- nodes_found + times_found
         nodes_annotated <- nodes_annotated + times_found
         pfam_vertices <- igraph::V(network)[pfam_nodes]
-        network <- igraph::set_vertex_attr(graph = network, name = column_name,
-                                           index = pfam_vertices, value = defined_value)
+        network <- igraph::set_vertex_attr(
+          graph = network, name = column_name,
+          index = pfam_vertices, value = defined_value)
       }
       mesg("Finished searching sample: ", entry, ", found ", entries_found, " genes across ",
            nodes_found, " network vertices.")
@@ -189,12 +191,86 @@ prune_network <- function(network, min_weight = 0.4, min_connectivity = 1) {
   delta_vertices <- start_vertices - end_vertices
   delta_edges <- start_edges - end_edges
   mesg("Network pruning vertices, start: ", start_vertices, ", end: ",
-          end_vertices, ", delta: ", delta_vertices, ".")
+       end_vertices, ", delta: ", delta_vertices, ".")
   if (start_edges > 0) {
     mesg("Network pruning edges, start: ", start_edges, ", end: ",
-            end_edges, ", delta: ", delta_edges, ".")
+         end_edges, ", delta: ", delta_edges, ".")
   }
   return(pruned_vertices)
+}
+
+#' Just putting down an example from Alejandro's work and
+#' https://bioinformaticsworkbook.org/tutorials/wgcna.html#gsc.tab=0
+#' so that I have someplace to remember the general path wgcna takes and
+#' as a starting point to explore further.
+wgcna_network <- function(expt) {
+  chosen_power <- 8
+  ## WGCNA calls cor() without specifying its own namespace, so overwrite cor for the moment.
+  cor <- WGCNA::cor
+  initial_modules <- WGCNA::blockwiseModules(
+    t(exprs(expt)), maxBlockSize = 11000, TOMType = "signed",
+    power = chosen_power, mergeCutHeight = 0.25, numericLabels = FALSE,
+    verbose = 3)
+  cor <- stats::cor
+
+  initial_eigen <- initial_modules[["MEs"]]
+  network_colors <- WGCNA::labels2colors(initial_modules[["colors"]])
+  WGCNA::plotDendroAndColors(
+    initial_modules[["dendrograms"]][[1]],
+    network_colors[initial_modules[["blockGenes"]][[1]]],
+    "Modules",
+    dendroLabels = FALSE,
+    hang = 0.03,
+    addGuide = TRUE,
+    guideHang = 0.05)
+
+  meta_numeric <- data.frame(
+    "cf_numeric" = as.numeric(as.factor(pData(l2input)[["finaloutcome"]])),
+    "visit_numeric" = as.numeric(as.factor(pData(l2input)[["visitnumber"]])))
+  rownames(meta_numeric) <- rownames(pData(l2input))
+
+  meta_factors <- pData(l2input)[, c("finaloutcome", "visitnumber")]
+  meta_eigen <- merge(initial_eigen, meta_factors, by = "row.names")
+  rownames(meta_eigen) <- meta_eigen[["Row.names"]]
+  meta_eigen[["Row.names"]] <- NULL
+
+  module_trait_corr <- stats::cor(initial_eigen, meta_numeric, use = "p")
+  module_trait_corr
+  module_trait_pvalues <- WGCNA::corPvalueStudent(module_trait_corr, nrow(meta_numeric))
+  module_trait_pvalues
+
+  wanted <- initial_modules[["colors"]] == "turqoise" | initial_modules[["colors"]] == "pink"
+  sum(wanted)
+  interesting_genes <- names(initial_modules[["colors"]])[wanted]
+
+  fData(l2input)[interesting_genes, "hgnc_symbol"]
+
+
+  ## Note that we can do similarity matrices on the samples too in order to get
+  ## dendrograms which may get interesting groups of samples?
+  not_grey <- initial_modules[["colors"]] != "grey"
+  not_grey_exprs <- t(exprs(l2input))[, not_grey]
+  dim(not_grey_exprs)
+  not_grey_genes <- colnames(not_grey_exprs)
+  dist_tom <- 1 - WGCNA::TOMsimilarityFromExpr(
+    not_grey_exprs,
+    power = chosen_power)
+  colnames(dist_tom) <- not_grey_genes
+  rownames(dist_tom) <- colnames(dist_tom)
+
+  similarity_cluster <- flashClust::flashClust(as.dist(dist_tom), method = "average")
+
+  WGCNA::plotDendroAndColors(
+    similarity_cluster,
+    colors = initial_modules[["colors"]][not_grey_genes],
+    "ME",
+    dendroLabels = FALSE,
+    hang = 0.03,
+    addGuide = TRUE,
+    guideHang = 0.05,
+    cex.colorLabels = 1.5,
+    main = ("Cluster Dendrogram (WGCNA)"))
+
 }
 
 ## EOF

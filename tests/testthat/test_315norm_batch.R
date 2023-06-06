@@ -1,7 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("15norm_batch.R: Are normalizations consistent over time (Batch estimation/correction)?\n")
+context("315norm_batch.R: Are normalizations consistent over time (Batch estimation/correction)?")
 
 ## Note to self: Some recent changed to the creation of my expressionsets lead to changes in the order of the resulting data frames.
 ## This is intended to make it easier for me to keep track of what is happening to the data by forcing it into a consistent order.

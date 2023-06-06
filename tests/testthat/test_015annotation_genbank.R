@@ -1,8 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("015annotation_genbank.R
-  123456789\n")
+context("015annotation_genbank.R")
 ## 2017-12, exported functions in annotation_genbank:
 ##   load_genbank_annotations() gbk_annotations() download_gbk()
 

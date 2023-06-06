@@ -1,8 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("066power_estimation.R:
-  12\n")
+context("066power_estimation.R")
 
 small_combined <- new.env()
 tt <- load(file = "065_small_combined.rda", envir = small_combined)

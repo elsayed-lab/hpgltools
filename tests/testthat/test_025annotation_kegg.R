@@ -1,8 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("025annotation_kegg.R
-  1234567\n")
+context("025annotation_kegg.R")
 ## 2017-12, exported functions in annotation_kegg:
 ## load_kegg_annotations(), map_kegg_to_ensembl()
 ## There are some functions in ontology_kegg which probably should be moved here.

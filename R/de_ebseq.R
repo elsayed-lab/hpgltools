@@ -65,13 +65,13 @@ ebseq_pairwise <- function(input = NULL, patterns = NULL, conditions = NULL,
                                     target_fdr = target_fdr, norm = norm, force = force,
                                     ...)
   } else {
-    message("Starting single EBSeq invocation.")
+    mesg("Starting single EBSeq invocation.")
 
     multi <- FALSE
     if (length(condition_levels) < 2) {
       stop("You have fewer than 2 conditions.")
     } else if (length(condition_levels) == 2) {
-      message("Invoking ebseq with 2-condition parameters.")
+      mesg("Invoking ebseq with 2-condition parameters.")
       result <- ebseq_two(input,
                           ng_vector = ng_vector, rounds = rounds,
                           target_fdr = target_fdr, norm = norm)
@@ -79,7 +79,7 @@ ebseq_pairwise <- function(input = NULL, patterns = NULL, conditions = NULL,
       stop("Beyond 5 conditions generates too many patterns, ",
            "please provide a pattern matrix, or 'all_same'.")
     } else {
-      message("Invoking ebseq with parameters suitable for a few conditions.")
+      mesg("Invoking ebseq with parameters suitable for a few conditions.")
       result <- ebseq_few(data, conditions, patterns = patterns,
                           ng_vector = ng_vector, rounds = rounds,
                           target_fdr = target_fdr, norm = norm)
@@ -125,7 +125,7 @@ ebseq_pairwise_subset <- function(input, ng_vector = NULL, rounds = 10, target_f
                                   model_batch = FALSE, model_cond = TRUE,
                                   model_intercept = FALSE, alt_model = NULL,
                                   conditions = NULL, norm = "median", force = FALSE, ...) {
-  message("Starting EBSeq pairwise subset.")
+  mesg("Starting EBSeq pairwise subset.")
   ## Now that I understand pData a bit more, I should probably remove the
   ## conditions/batches slots from my expt classes.
   design <- pData(input)
@@ -144,15 +144,8 @@ ebseq_pairwise_subset <- function(input, ng_vector = NULL, rounds = 10, target_f
   apc <- make_pairwise_contrasts(model_data, conditions, do_identities = FALSE, do_extras = FALSE,
                                  ...)
   contrasts_performed <- c()
-  if (isTRUE(verbose)) {
-    bar <- utils::txtProgressBar(style = 3)
-  }
   retlst <- list()
   for (c in seq_along(apc[["names"]])) {
-    if (isTRUE(verbose)) {
-      pct_done <- c / length(apc[["names"]])
-      utils::setTxtProgressBar(bar, pct_done)
-    }
     name  <- apc[["names"]][[c]]
     a_name <- gsub(pattern = "^(.*)_vs_(.*)$", replacement = "\\1", x = name)
     b_name <- gsub(pattern = "^(.*)_vs_(.*)$", replacement = "\\2", x = name)
@@ -163,7 +156,6 @@ ebseq_pairwise_subset <- function(input, ng_vector = NULL, rounds = 10, target_f
     }
     pair <- sm(subset_expt(
         expt = input,
-        ## subset = paste0("condition=='", b_name, "' | condition=='", a_name, "'")))
         subset = glue("condition=='{b_name}' | condition=='{a_name}'")))
     pair_data <- exprs(pair)
     conditions <- pair[["conditions"]]
@@ -171,9 +163,6 @@ ebseq_pairwise_subset <- function(input, ng_vector = NULL, rounds = 10, target_f
                           ng_vector = ng_vector, rounds = rounds, target_fdr = target_fdr,
                           norm = norm, force = force)
     retlst[[name]] <- a_result
-  }
-  if (isTRUE(verbose)) {
-    close(bar)
   }
   return(retlst)
 }
@@ -305,9 +294,9 @@ ebseq_two <- function(pair_data, conditions,
                       target_fdr = 0.05, norm = "median",
                       force = FALSE) {
   normalized <- ebseq_size_factors(pair_data, norm = norm)
-  message("Starting EBTest of ", numerator, " vs. ", denominator, ".")
+  mesg("Starting EBTest of ", numerator, " vs. ", denominator, ".")
   if (isTRUE(force)) {
-    message("Forcing out NA values by putting in the mean of all data.")
+    mesg("Forcing out NA values by putting in the mean of all data.")
     ## Put NA values (proteomics) to the mean of the existing values in the hopes
     ## they will not mess anything up too badly.
     na_idx <- is.na(pair_data)
@@ -333,7 +322,7 @@ ebseq_two <- function(pair_data, conditions,
   table <- table[, -1]
   ## This is incorrect I think, but being used as a placeholder until I figure out how to
   ## properly adjust a set prior probabilities.
-  message("Copying ppee values as ajusted p-values until I figure out how to deal with them.")
+  mesg("Copying ppee values as ajusted p-values until I figure out how to deal with them.")
   table[["ebseq_adjp"]] <- table[["PPEE"]]
 
   ## Finally, make sure the 'direction' matches my conception of numerator/denominator.
@@ -341,7 +330,6 @@ ebseq_two <- function(pair_data, conditions,
   eb_numerator <- gsub(pattern = "^(.*) Over (.*)$", replacement = "\\1", x = eb_direction)
   eb_denominator <- gsub(pattern = "^(.*) Over (.*)$", replacement = "\\2", x = eb_direction)
   if (! eb_numerator == denominator) {
-    ## message("Flipping the table FC and logFC.")
     table[["ebseq_FC"]] <- 1 / table[["ebseq_FC"]]
     table[["logFC"]] <- -1 * table[["logFC"]]
     table[["ebseq_postfc"]] <- 1 / table[["ebseq_postfc"]]

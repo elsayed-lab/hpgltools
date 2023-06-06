@@ -9,7 +9,7 @@ plot_density(
   colors = NULL,
   expt_names = NULL,
   position = "identity",
-  direct = TRUE,
+  direct = NULL,
   fill = NULL,
   plot_title = NULL,
   scale = NULL,

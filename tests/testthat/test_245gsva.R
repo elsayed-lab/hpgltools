@@ -1,15 +1,14 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("245gsva.R:
-  123456\n")
+context("245gsva.R")
 
 ## In order to test my GSVA functions, I am going to need a rda with some data...
 ## I am thinking to copy some of my human macrophage data.
 
 ## I am not sure what I want to test with this either... hmmm
 hs_envir <- environment()
-hs_file <- system.file("share/hs_expt.rda", package = "hpgltools")
+hs_file <- system.file("share/hs_expt.rda", package = "hpgldata")
 load(file = hs_file, envir = hs_envir)
 hs_expt <- hs_envir[["expt"]]
 hs_expt <- subset_expt(hs_expt, subset="condition=='sh'|condition=='chr'")

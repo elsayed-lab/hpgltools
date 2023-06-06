@@ -1,8 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("061se.R:
-  1234567890123456789012345678901234567890123456789012345678901234567\n")
+context("061se.R")
 ## Functions exported in expt.r
 ## make_pombe_expt(), create_expt(), concatenate_runs(), exclude_genes_expt(),
 ## features_greater_than(), make_exampledata(), median_by_factor(),
@@ -176,7 +175,6 @@ test_that("Did we get some old/new colors?", {
 ##tt <- file.remove("testing_write_expt.xlsx")
 
 test <- plot_libsize(pombe_se)
-
 
 end <- as.POSIXlt(Sys.time())
 elapsed <- round(x = as.numeric(end - start))

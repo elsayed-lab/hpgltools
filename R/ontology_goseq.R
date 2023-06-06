@@ -322,7 +322,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
   } else if (class(sig_genes) == "list") {
     gene_list <- names(sig_genes)
   } else if (class(sig_genes) == "data.frame") {
-    if (is.null(rownames(sig_genes)) & is.null(sig_genes[["ID"]])) {
+    if (is.null(rownames(sig_genes)) && is.null(sig_genes[["ID"]])) {
       stop("This requires a set of gene IDs from the rownames or a column named 'ID'.")
     } else if (!is.null(sig_genes[["ID"]])) {
       ## Use a column named 'ID' first because a bunch of annotation databases
@@ -351,7 +351,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
   }
   if (class(length_db)[[1]] == "character")  {
     ## Then this should be either a gff file or species name.
-    if (grepl(pattern = "\\.gff", x = length_db, perl = TRUE) |
+    if (grepl(pattern = "\\.gff", x = length_db, perl = TRUE) ||
         grepl(pattern = "\\.gtf", x = length_db, perl = TRUE)) {
       ## gff file
       txdb <- GenomicFeatures::makeTxDbFromGFF(length_db)
@@ -364,7 +364,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
     stop("This currently requires an actual OrganismDb, not AnnotationDbi.")
   } else if (class(length_db)[[1]] == "OrgDb") {
     stop("OrgDb objects contain links to other databases, but no gene lengths.")
-  } else if (class(length_db)[[1]] == "OrganismDb" |
+  } else if (class(length_db)[[1]] == "OrganismDb" ||
              class(length_db)[[1]] == "AnnotationDbi") {
     ##metadf <- extract_lengths(db = length_db, gene_list = gene_list)
     metadf <- sm(extract_lengths(db = length_db, gene_list = gene_list, ...))
@@ -378,7 +378,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
 
   ## Sometimes the column with gene lengths is named 'width'
   ## In that case, fix it.
-  if (is.null(metadf[["width"]]) & is.null(metadf[["length"]])) {
+  if (is.null(metadf[["width"]]) && is.null(metadf[["length"]])) {
     stop("The length db needs to have a length or width column.")
   } else if (is.null(metadf[["length"]])) {
     ## Then it is named 'width' and I want to rename it to length
@@ -389,7 +389,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
   godf <- data.frame()
   if (class(go_db)[[1]] == "character") {
     ## A text table or species name
-    if (grepl(pattern = "\\.csv", x = go_db, perl = TRUE) |
+    if (grepl(pattern = "\\.csv", x = go_db, perl = TRUE) ||
         grepl(pattern = "\\.tab", x = go_db, perl = TRUE)) {
       ## table
       godf <- read.table(go_db, ...)

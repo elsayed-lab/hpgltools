@@ -79,7 +79,7 @@ NULL
 #' @importFrom data.table data.table
 #' @importFrom dplyr filter group_by n summarise
 #' @importFrom foreach foreach
-#' @importFrom ggplot2 aes ggplot
+#' @importFrom ggplot2 aes ggplot theme labs scale_fill_manual element_text
 #' @importFrom glue glue glue_data
 #' @importFrom grDevices recordPlot
 #' @importFrom rlang abort sym
