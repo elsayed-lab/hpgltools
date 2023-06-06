@@ -682,6 +682,7 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
       "expt" = new_expt,
       "gsva" = gsva_result,
       "fdata" = fdata_df)
+  class(retlist) <- "gsva_result"
   return(retlist)
 }
 

@@ -125,6 +125,14 @@ plot_meta_sankey <- function(design, factors = c("condition", "batch"), fill = "
                              font_size = 18, node_width = 30,
                              color_choices = NULL, html = "sankey.html",
                              drill_down = TRUE) {
+
+  found <- factors %in% colnames(design)
+  if (sum(found) < length(factors)) {
+    missing <- factors[!found]
+    message("These columns are not in the metadata: ", toString(missing))
+    factors <- factors[found]
+  }
+
   permutations <- c()
   states <- list()
   for (f in factors) {
@@ -217,7 +225,7 @@ plot_meta_sankey <- function(design, factors = c("condition", "batch"), fill = "
                               plot_df[["value"]])
 
   color_fact <- NULL
-  if (!is.null(colors)) {
+  if (!is.null(color_choices)) {
     color_levels <- levels(as.factor(plot_df[["node"]]))
     all_colors <- unlist(color_choices)
     names(all_colors) <- gsub(x = names(all_colors),
@@ -264,7 +272,7 @@ plot_meta_sankey <- function(design, factors = c("condition", "batch"), fill = "
     ggsankey::geom_sankey_label()
 
   ## I want to figure out how to set up my own colors...
-  if (is.null(colors)) {
+  if (is.null(color_choices)) {
     ggplt <- ggplt +
       ggplot2::scale_fill_viridis_d() +
       ggsankey::theme_sankey(base_size = 18) +

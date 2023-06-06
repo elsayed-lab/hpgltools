@@ -323,6 +323,7 @@ plot_density <- function(data, colors = NULL, expt_names = NULL, position = "ide
     "batch_summary" = batch_summary,
     "sample_summary" = sample_summary,
     "table" = melted)
+  class(retlist) <- "density_plot"
   return(retlist)
 }
 
@@ -661,6 +662,7 @@ plot_topn <- function(data, plot_title = NULL, num = 100, expt_names = NULL,
   retlist <- list(
     "plot" = topn_plot,
     "table" = tmpdf)
+  class(retlist) <- "topn_plot"
   return(retlist)
 }
 
@@ -681,28 +683,13 @@ plot_topn <- function(data, plot_title = NULL, num = 100, expt_names = NULL,
 #' @param ... Extra arguments to pass along.
 #' @return List of plots showing the coefficients vs. genes along with the data.
 #' @export
-plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL,
+plot_variance_coefficients <- function(data, design = NULL, x_axis = "condition", colors = NULL,
                                        plot_title = NULL, ...) {
   arglist <- list(...)
   plot_legend <- FALSE
   if (!is.null(arglist[["plot_legend"]])) {
     plot_legend <- arglist[["plot_legend"]]
   }
-
-  data_class <- class(data)
-  if (data_class == "expt" || data_class == "SummarizedExperiment") {
-    design <- pData(data)
-    colors <- data[["colors"]]
-    data <- exprs(data)
-  } else if (data_class == "ExpressionSet") {
-    data <- exprs(data)
-    design <- pData(data)
-  } else if (data_class == "matrix" || data_class == "data.frame") {
-    data <- as.matrix(data)
-  } else {
-    stop("This understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
-  }
-  design <- as.data.frame(design)
 
   melted <- data.table::as.data.table(reshape2::melt(data))
   if (ncol(melted) == 3) {
@@ -815,6 +802,7 @@ plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL
   }
   retlst[["data"]] <- cv_data
   retlst[["plot"]] <- retlst[["cv"]]
+  class(retlst) <- "varcoef_plot"
   return(retlst)
 }
 

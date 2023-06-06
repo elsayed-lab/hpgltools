@@ -2015,7 +2015,8 @@ set_expt_colors <- function(expt, colors = TRUE,
 #' }
 #' @export
 set_expt_conditions <- function(expt, fact = NULL, ids = NULL,
-                                prefix = NULL, null_cell = "null", ...) {
+                                prefix = NULL, null_cell = "null", colors = TRUE,
+                                ...) {
   arglist <- list(...)
   original_conditions <- pData(expt)[["condition"]]
   original_length <- length(original_conditions)
@@ -2066,7 +2067,7 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL,
   }
 
   print(table(pData(new_expt)[["condition"]]))
-  new_expt <- set_expt_colors(new_expt)
+  new_expt <- set_expt_colors(new_expt, colors = colors)
   return(new_expt)
 }
 
@@ -2313,6 +2314,7 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
   starting_expressionset <- NULL
   starting_metadata <- NULL
   starting_samples <- sampleNames(expt)
+
   if ("ExpressionSet" %in% class(expt)) {
     starting_expressionset <- expt
     starting_metadata <- pData(starting_expressionset)
@@ -2323,11 +2325,20 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
     stop("expt is neither an expt nor ExpressionSet")
   }
 
+  if (class(subset)[1] == "logical") {
+    ids <- rownames(pData(expt))[subset]
+    subset <- NULL
+  }
+
+  if (is.null(starting_metadata[["sampleid"]])) {
+    starting_metadata[["sampleid"]] <- rownames(starting_metadata)
+  }
+
   if (!is.null(ids)) {
     if (is.numeric(ids)) {
-      ids <- rownames(pData(expt))[ids]
+      ids <- rownames(starting_metadata)[ids]
     } else if (is.logical(ids)) {
-      ids <- rownames(pData(expt))[ids]
+      ids <- rownames(starting_metadata)[ids]
     }
 
     string <- ""

@@ -1375,10 +1375,21 @@ sanitize_expt_metadata <- function(...) {
 #' @param na_string Fill NA values with a string.
 #' @param lower Set everything to lowercase?
 #' @param punct Remove punctuation?
+#' @param factorize Set some columns to factors?  If set to a vector
+#'  of length >=1, then set all of the provided columns to factors.
+#'  When set to 'heuristic', set any columns with <= max_levels
+#'  different elements to factors.
+#' @param max_levels When heuristically setting factors, use this as
+#'  the heuristic, when NULL it is the number of samples / 6
+#' @param spaces Remove any spaces in this column?
+#' @param numbers Sanitize numbers by adding a prefix character to them?
 #' @export
 sanitize_metadata <- function(meta, columns = NULL, na_string = "notapplicable",
-                              lower = TRUE, punct = TRUE,
-                              spaces = FALSE, numbers = NULL) {
+                              lower = TRUE, punct = TRUE, factorize = "heuristic",
+                              max_levels = NULL, spaces = FALSE, numbers = NULL) {
+  if (is.null(max_levels)) {
+    max_levels <- nrow(meta) / 6.0
+  }
   if (is.null(columns)) {
     columns <- colnames(meta)
   }
@@ -1404,21 +1415,44 @@ sanitize_metadata <- function(meta, columns = NULL, na_string = "notapplicable",
       meta[[todo]] <- gsub(pattern = "[[:punct:]]", replacement = "", x = meta[[todo]])
     }
     if (!is.null(numbers)) {
+      if (isTRUE(numbers)) {
+        ## Use the first letter of the column name.
+        numbers <- gsub(x = todo, pattern = "^(\\w{1}).*$", replacement = "\\1")
+      }
       mesg("Adding a prefix to bare numbers.")
       meta[[todo]] <- gsub(pattern = "^([[:digit:]]+)$",
-        replacement = glue("{numbers}\\1"), x = meta[[todo]])
+                           replacement = glue("{numbers}\\1"), x = meta[[todo]])
     }
     if (!is.null(na_string)) {
       mesg("Setting NAs to ", na_string, ".")
       na_idx <- is.na(meta[[todo]])
       meta[na_idx, todo] <- na_string
     }
-    ## This needs to go last
+    ## Handle spaces after the previous changes.
     if (isTRUE(spaces)) {
       mesg("Removing all spaces.")
       meta[[todo]] <- gsub(pattern = "[[:space:]]", replacement = "", x = meta[[todo]])
     }
+    if (!is.null(factorize) &&
+          (length(factorize) == 1 && factorize[1] == "heuristic")) {
+      nlevels <- length(levels(as.factor(meta[[todo]])))
+      if (nlevels <= max_levels) {
+        mesg("Setting column ", todo, " to a factor.")
+        meta[[todo]] <- as.factor(meta[[todo]])
+      }
+    }
   } ## End iterating over the columns of interest
+
+  if (!is.null(factorize) &&
+        (length(factorize) > 1 || factorize[1] != "heuristic")) {
+    for (f in factorize) {
+      if (is.null(meta[[f]])) {
+        message("The column ", f, " does not appear in the metadata.")
+      } else {
+        meta[[f]] <- as.factor(meta[[f]])
+      }
+    }
+  }
 
   return(meta)
 }
