@@ -297,8 +297,12 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
       meta, entry_type, input_file_spec, specification,
       basedir = basedir, verbose = verbose, species = species, type = type,
       ...)
-    if (is.null(new_entries)) {
-      message("Not including new entries for: ", new_column, ".")
+    empty_entries <- sum(new_entries == "")
+    na_entries <- sum(is.na(new_entries))
+    all_empty <- empty_entries == length(new_entries) ||
+      na_entries == length(new_entries)
+    if (is.null(new_entries) || isTRUE(all_empty)) {
+      message("Not including new entries for: ", new_column, ", it is empty.")
     } else if ("data.frame" %in% class(new_entries)) {
       for (sp in colnames(new_entries)) {
         new_column_name <- glue("{entry_type}_{sp}")
@@ -316,7 +320,12 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
 
   message("Writing new metadata to: ", new_metadata)
   written <- write_xlsx(data = meta, excel = new_metadata)
-  return(new_metadata)
+  ret <- list(
+    "xlsx_result" = written,
+    "new_file" = new_metadata,
+    "new_meta" = meta)
+  class(ret) <- "preprocessing_metadata"
+  return(ret)
 }
 
 #' This is basically just a switch and set of regexes for finding the
@@ -809,13 +818,25 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
                                        which = "first",
                                        ...)
     },
-    "salmon_mapped" = {
-      search <- "^.* [jointLog] [info] Counted .+ total reads in the equivalence classes$"
-      replace <- "^.* [jointLog] [info] Counted (.+) total reads in the equivalence classes$"
+    "salmon_stranded" = {
+      search <- "Automatically detected most likely library type as .+$"
+      replace <- "^.*Automatically detected most likely library type as (\\w+)$"
       entries <- dispatch_regex_search(meta, search, replace,
                                        input_file_spec, verbose = verbose,
-                                       as = "numeric", basedir = basedir,
+                                       basedir = basedir, which = "first",
                                        ...)
+    },
+    "salmon_mapped" = {
+      search <- "Counted .+ total reads in the equivalence classes"
+      replace <- "^.*Counted (.+)? total reads in the equivalence classes"
+      entries <- dispatch_regex_search(meta, search, replace,
+                                       input_file_spec, verbose = verbose,
+                                       basedir = basedir,
+                                       ...)
+    },
+    "salmon_count_table" = {
+      entries <- dispatch_filename_search(meta, input_file_spec, verbose = verbose,
+                                          species = species, type = "genome", basedir = basedir)
     },
     "shovill_contigs" = {
       ## [shovill] It contains 1 (min=131) contigs totalling 40874 bp.
@@ -1237,6 +1258,9 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
         this_found <- gsub(x = input_line,
                            pattern = replace,
                            replacement = extraction)
+        ## Drop leading or terminal spaces.
+        this_found <- gsub(x = this_found,
+                           pattern = "^ +| +$", replacement = "")
         found <- found + 1
       } else {
         next
@@ -1246,6 +1270,7 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
       output_entries[row] <- last_found
     } ## End looking at every line of the log file specified by the input file spec for this row
     close(input_handle)
+
     ## Handle cases where one might want to pull only the last entry in a log, or all of them.
     if (which == "last") {
       output_entries[row] <- last_found
@@ -1375,10 +1400,21 @@ sanitize_expt_metadata <- function(...) {
 #' @param na_string Fill NA values with a string.
 #' @param lower Set everything to lowercase?
 #' @param punct Remove punctuation?
+#' @param factorize Set some columns to factors?  If set to a vector
+#'  of length >=1, then set all of the provided columns to factors.
+#'  When set to 'heuristic', set any columns with <= max_levels
+#'  different elements to factors.
+#' @param max_levels When heuristically setting factors, use this as
+#'  the heuristic, when NULL it is the number of samples / 6
+#' @param spaces Remove any spaces in this column?
+#' @param numbers Sanitize numbers by adding a prefix character to them?
 #' @export
 sanitize_metadata <- function(meta, columns = NULL, na_string = "notapplicable",
-                              lower = TRUE, punct = TRUE,
-                              spaces = FALSE, numbers = NULL) {
+                              lower = TRUE, punct = TRUE, factorize = "heuristic",
+                              max_levels = NULL, spaces = FALSE, numbers = NULL) {
+  if (is.null(max_levels)) {
+    max_levels <- nrow(meta) / 6.0
+  }
   if (is.null(columns)) {
     columns <- colnames(meta)
   }
@@ -1404,21 +1440,44 @@ sanitize_metadata <- function(meta, columns = NULL, na_string = "notapplicable",
       meta[[todo]] <- gsub(pattern = "[[:punct:]]", replacement = "", x = meta[[todo]])
     }
     if (!is.null(numbers)) {
+      if (isTRUE(numbers)) {
+        ## Use the first letter of the column name.
+        numbers <- gsub(x = todo, pattern = "^(\\w{1}).*$", replacement = "\\1")
+      }
       mesg("Adding a prefix to bare numbers.")
       meta[[todo]] <- gsub(pattern = "^([[:digit:]]+)$",
-        replacement = glue("{numbers}\\1"), x = meta[[todo]])
+                           replacement = glue("{numbers}\\1"), x = meta[[todo]])
     }
     if (!is.null(na_string)) {
       mesg("Setting NAs to ", na_string, ".")
       na_idx <- is.na(meta[[todo]])
       meta[na_idx, todo] <- na_string
     }
-    ## This needs to go last
+    ## Handle spaces after the previous changes.
     if (isTRUE(spaces)) {
       mesg("Removing all spaces.")
       meta[[todo]] <- gsub(pattern = "[[:space:]]", replacement = "", x = meta[[todo]])
     }
+    if (!is.null(factorize) &&
+          (length(factorize) == 1 && factorize[1] == "heuristic")) {
+      nlevels <- length(levels(as.factor(meta[[todo]])))
+      if (nlevels <= max_levels) {
+        mesg("Setting column ", todo, " to a factor.")
+        meta[[todo]] <- as.factor(meta[[todo]])
+      }
+    }
   } ## End iterating over the columns of interest
+
+  if (!is.null(factorize) &&
+        (length(factorize) > 1 || factorize[1] != "heuristic")) {
+    for (f in factorize) {
+      if (is.null(meta[[f]])) {
+        message("The column ", f, " does not appear in the metadata.")
+      } else {
+        meta[[f]] <- as.factor(meta[[f]])
+      }
+    }
+  }
 
   return(meta)
 }
@@ -1542,8 +1601,10 @@ make_assembly_spec <- function() {
       "file" = "{basedir}/{meta[['sampleid']]}/outputs/??assembly_coverage_*/base_coverage.tsv"),
     "pernt_max_coverage" = list(
       "file" = "{basedir}/{meta[['sampleid']]}/outputs/??assembly_coverage_*/base_coverage.tsv"),
+    "salmon_stranded" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_*/salmon_*.stderr"),
     "salmon_mapped" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_*/salmon.stderr"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_*/salmon_*.stderr"),
     "shovill_contigs" = list(
       "file" = "{basedir}/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
     "shovill_length" = list(
@@ -1649,8 +1710,13 @@ make_rnaseq_spec <- function() {
     "hisat_genome_percent" = list(
       "column" = "hisat_genome_percent"),
     "hisat_count_table" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/{species}_{type}*.count.xz")
-  )
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/{species}_{type}*.count.xz"),
+    "salmon_stranded" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_{species}/salmon_*.stderr"),
+    "salmon_count_table" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_{species}/quant.sf"),
+    "salmon_mapped" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_{species}gg/salmon_*.stderr"))
   return(specification)
 }
 

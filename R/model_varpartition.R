@@ -92,14 +92,14 @@ simple_varpart <- function(expt, predictor = NULL, factors = c("condition", "bat
   model_string <- "~ "
   if (isTRUE(mixed)) {
     if (!is.null(predictor)) {
-      model_string <- glue::glue("{model_string}{predictor} + ")
+      model_string <- glue("{model_string}{predictor} + ")
     }
     for (fact in factors) {
-      model_string <- glue::glue("{model_string}(1|{fact}) + ")
+      model_string <- glue("{model_string}(1|{fact}) + ")
     }
   } else {
     for (fact in factors) {
-      model_string <- glue::glue("{model_string}{fact} + ")
+      model_string <- glue("{model_string}{fact} + ")
     }
   }
   model_string <- gsub(pattern = "\\+ $", replacement = "", x = model_string)
@@ -168,15 +168,16 @@ which are shared among multiple samples.")
   }
 
   ret <- list(
-      "model_used" = my_model,
-      "percent_plot" = percent_plot,
-      "partition_plot" = partition_plot,
-      "sorted_df" = my_sorted,
-      "fitted_df" = my_extract,
-      "fitting" = fitting,
-      "stratify_batch_plot" = stratify_batch_plot,
-      "stratify_condition_plot" = stratify_condition_plot)
-  if (isTRUE(modify_expt)) {
+    "model_string" = model_string,
+    "model_used" = my_model,
+    "percent_plot" = percent_plot,
+    "partition_plot" = partition_plot,
+    "sorted_df" = my_sorted,
+    "fitted_df" = my_extract,
+    "fitting" = fitting,
+    "stratify_batch_plot" = stratify_batch_plot,
+    "stratify_condition_plot" = stratify_condition_plot)
+  if (isTRUE(modify_expt) && nrow(fData(expt)) > 0) {
     new_expt <- expt
     tmp_annot <- fData(new_expt)
     tmp_annot[["Row.names"]] <- NULL
@@ -187,11 +188,14 @@ which are shared among multiple samples.")
     tmp_annot <- merge(tmp_annot, added_data, by = "row.names", all.x = TRUE)
     rownames(tmp_annot) <- tmp_annot[["Row.names"]]
     tmp_annot[["Row.names"]] <- NULL
+    annot_order <- rownames(exprs(new_expt))
+    tmp_annot <- tmp_annot[annot_order, ]
     ## Make it possible to use a generic expressionset, though maybe this is
     ## impossible for this function.
     fData(new_expt) <- tmp_annot
     ret[["modified_expt"]] <- new_expt
   }
+  class(ret) <- "varpart"
   return(ret)
 }
 

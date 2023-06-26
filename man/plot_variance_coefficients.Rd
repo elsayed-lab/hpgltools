@@ -7,6 +7,7 @@ with respect to an experimental factor.}
 \usage{
 plot_variance_coefficients(
   data,
+  design = NULL,
   x_axis = "condition",
   colors = NULL,
   plot_title = NULL,

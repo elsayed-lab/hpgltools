@@ -1142,6 +1142,31 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
   return(retlist)
 }
 
+plot_sankey_de <- function(de_table, lfc = 1.0, p = 0.05,
+                           lfc_column = "deseq_logfc", p_column = "deseq_adjp") {
+  de_table <- t_cf_clinical_table_sva$data$outcome
+  de_table[["start"]] <- "all"
+  de_table[["lfc"]] <- "up"
+  down_idx <- de_table[[lfc_column]] < 0
+  de_table[down_idx, "lfc"] <- "down"
+  up_idx <- de_table[[lfc_column]] > lfc
+  de_table[up_idx, "lfc"] <- "sigup"
+  down_idx <- de_table[[lfc_column]] < -1.0 * lfc
+  de_table[down_idx, "lfc"] <- "sigdown"
+
+  de_table[["adjusted_p"]] <- "insignificant"
+  sig_idx <- de_table[[p_column]] <= p
+  de_table[sig_idx, "adjusted_p"] <- "significant"
+
+  meta <- de_table[, c("start", "lfc", "adjusted_p")]
+  meta[["lfc"]] <- factor(meta[["lfc"]], levels = c("sigup", "up", "down", "sigdown"))
+  meta[["adjusted_p"]] <- factor(meta[["adjusted_p"]], levels = c("significant", "insignificant"))
+
+  #  color_choices <-
+  test <- plot_meta_sankey(meta, drill_down = FALSE, factors = c("lfc", "adjusted_p"), html = NULL)
+  return(test[["ggplot"]])
+}
+
 #' Make a pretty Volcano plot!
 #'
 #' Volcano plots and MA plots provide quick an easy methods to view the set of
@@ -1935,6 +1960,39 @@ overlap_geneids <- function(overlapping_groups, group) {
   return(gene_ids)
 }
 
+#' Make an upset plot of all up/down genes in a set of contrasts.
+#'
+#' This is intended to give a quick and dirty view of the genes
+#' observed in a series of de comparisons.
+#'
+#' @param combined Result from combine_de_tables.
+#' @param according_to Choose the lfc column to use.
+#' @param lfc Choose the logFC
+#' @param adjp and the p-value.
+upsetr_all <- function(combined, according_to = "deseq",
+                       lfc = 1.0, adjp = 1.0) {
+  ud_list <- list()
+  for (t in names(combined[["data"]])) {
+    t_data <- combined[["data"]][[t]]
+    fc_col <- paste0(according_to, "_logfc")
+    p_col <- paste0(according_to, "_adjp")
+    up_name <- glue("{t}_up")
+    up_idx <- t_data[[fc_col]] >= lfc &
+      t_data[[p_col]] <= adjp
+    up_ids <- rownames(t_data)[up_idx]
+    ud_list[[up_name]] <- up_ids
+    down_name <- glue("{t}_down")
+    down_idx <- t_data[[fc_col]] <= (-1.0 * lfc) &
+      t_data[[p_col]] <= adjp
+    down_ids <- rownames(t_data)[down_idx]
+    ud_list[[down_name]] <- down_ids
+  }
+
+  upset_combined <- UpSetR::upset(data = UpSetR::fromList(ud_list),
+                                  nsets = length(ud_list))
+  return(upset_combined)
+}
+
 #' Use UpSetR to compare significant gene lists.
 #'
 #' @param sig datastructure of significantly DE genes.
@@ -1946,8 +2004,8 @@ overlap_geneids <- function(overlapping_groups, group) {
 #' @param scale Make the numbers larger and easier to read?
 #' @param ... Other parameters to pass to upset().
 #' @export
-upsetr_sig <- function(sig, according_to="deseq", contrasts=NULL, up=TRUE,
-                       down=TRUE, both=FALSE, scale = 2, ...) {
+upsetr_sig <- function(sig, according_to = "deseq", contrasts = NULL, up = TRUE,
+                       down = TRUE, both = FALSE, scale = 2, ...) {
 
   ## Start by pulling the gene lists from the significant gene sets.
   start <- sig[[according_to]]

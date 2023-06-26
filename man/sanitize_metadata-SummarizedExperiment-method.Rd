@@ -2,7 +2,7 @@
 % Please edit documentation in R/zzz_methods.R
 \name{sanitize_metadata,SummarizedExperiment-method}
 \alias{sanitize_metadata,SummarizedExperiment-method}
-\title{Metadata sanitizers for an expressionset}
+\title{Metadata sanitizers for a Summarized Experiment.}
 \usage{
 \S4method{sanitize_metadata}{SummarizedExperiment}(
   meta,
@@ -10,10 +10,12 @@
   na_string = "notapplicable",
   lower = TRUE,
   punct = TRUE,
+  factorize = "heuristic",
+  max_levels = NULL,
   spaces = FALSE,
   numbers = NULL
 )
 }
 \description{
-Metadata sanitizers for an expressionset
+Metadata sanitizers for a Summarized Experiment.
 }

@@ -406,7 +406,8 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
     filenames <- as.character(sample_definitions[[file_column]])
     sample_ids <- rownames(sample_definitions)
     count_data <- read_counts_expt(sample_ids, filenames, countdir = countdir,
-                                   tx_gene_map = tx_gene_map, ...)
+                                   tx_gene_map = tx_gene_map,
+                                   ...)
     if (count_data[["source"]] == "tximport") {
       tximport_data <- list("raw" = count_data[["tximport"]],
                             "scaled" = count_data[["tximport_scaled"]])
@@ -435,6 +436,20 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
   ## While we are removing stuff...
   ## I have had a couple data sets with incomplete counts, get rid of those rows
   ## before moving on.
+
+  test_df <- as.data.frame(all_count_tables)
+  rownames(test_df) <- test_df[["rownames"]]
+  test_df[["rownames"]] <- NULL
+  count_nas <- is.na(test_df)
+  if (sum(count_nas) > 0) {
+    warning("There are some NAs in this data, the 'handle_nas' parameter may be required.")
+  }
+  check_counts <- colSums(test_df, na.rm = TRUE)
+  zero_count_samples <- check_counts == 0
+  if (sum(zero_count_samples) > 0) {
+    warning("The following samples have no counts: ", toString(names(check_counts)[zero_count_samples]))
+    message("If the handle_na parameter is 'drop', this will result in an empty dataset.")
+  }
 
   if (handle_na == "drop") {
     all_count_tables <- all_count_tables[complete.cases(all_count_tables), ]
@@ -1788,6 +1803,7 @@ set_expt_batches <- function(expt, fact, ids = NULL, ...) {
   expt[["batches"]] <- fact
   pData(expt[["expressionset"]])[["batch"]] <- fact
   expt[["design"]][["batch"]] <- fact
+  message("The number of samples by batch are: ")
   print(table(pData(expt)[["batch"]]))
   return(expt)
 }
@@ -2015,7 +2031,8 @@ set_expt_colors <- function(expt, colors = TRUE,
 #' }
 #' @export
 set_expt_conditions <- function(expt, fact = NULL, ids = NULL,
-                                prefix = NULL, null_cell = "null", ...) {
+                                prefix = NULL, null_cell = "null", colors = TRUE,
+                                ...) {
   arglist <- list(...)
   original_conditions <- pData(expt)[["condition"]]
   original_length <- length(original_conditions)
@@ -2023,6 +2040,8 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL,
   new_expt <- expt  ## Explicitly copying expt to new_expt
   ## because when I run this as a function call() it seems to be not properly setting
   ## the conditions and I do not know why.
+  fact_vector <- NULL
+  fact_name <- "condition"
   if (!is.null(ids)) {
     ## Change specific id(s) to given condition(s).
     mesg("Setting condition for ids ", toString(ids), " to ", fact, ".")
@@ -2039,7 +2058,9 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL,
     new_conditions[ids] <- fact
     new_expt[["conditions"]] <- as.factor(new_conditions)
     new_expt[["design"]][["condition"]] <- new_cond
+    fact_vector <- new_conditions
   } else if (length(fact) == 1) {
+    fact_name <- fact
     ## Assume it is a column in the design
     if (fact %in% colnames(pData(expt))) {
       new_fact <- pData(expt)[[fact]]
@@ -2051,6 +2072,7 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL,
       if (!is.null(prefix)) {
         new_fact <- paste0(prefix, new_fact)
       }
+      fact_vector <- new_fact
       new_expt[["conditions"]] <- new_fact
       pData(new_expt[["expressionset"]])[["condition"]] <- new_fact
       new_expt[["design"]][["condition"]] <- new_fact
@@ -2063,10 +2085,31 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL,
     new_expt[["conditions"]] <- fact
     pData(new_expt[["expressionset"]])[["condition"]] <- fact
     new_expt[["design"]][["condition"]] <- fact
+    fact_vector <- fact
   }
 
+  message("The numbers of samples by condition are: ")
   print(table(pData(new_expt)[["condition"]]))
-  new_expt <- set_expt_colors(new_expt)
+  condition_states <- levels(as.factor(pData(new_expt)[["condition"]]))
+  if (class(colors)[1] == "list") {
+    ## A list of colors may either be a color_choices list or
+    ## a hash of states->color which could/should be a named vector.
+    color_state_names <- names(colors)
+    found_colors <- sum(color_state_names %in% condition_states)
+    found_name <- fact_name %in% color_state_names
+    ## In this first instance, the choices should be in this element.
+    if (fact_name %in% color_state_names) {
+      mesg("The colors appear to be a list delineated by state name.")
+      colors <- color[[fact]]
+    } else if (found_colors) {
+      mesg("The colors appear to be a single list delineated by condition.")
+    } else {
+      message("A list of colors was provided, but element ", fact,
+              " is not in it; using defaults")
+      colors <- NULL
+    }
+  }
+  new_expt <- set_expt_colors(new_expt, colors = colors)
   return(new_expt)
 }
 
@@ -2313,6 +2356,7 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
   starting_expressionset <- NULL
   starting_metadata <- NULL
   starting_samples <- sampleNames(expt)
+
   if ("ExpressionSet" %in% class(expt)) {
     starting_expressionset <- expt
     starting_metadata <- pData(starting_expressionset)
@@ -2323,11 +2367,20 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
     stop("expt is neither an expt nor ExpressionSet")
   }
 
+  if (class(subset)[1] == "logical") {
+    ids <- rownames(pData(expt))[subset]
+    subset <- NULL
+  }
+
+  if (is.null(starting_metadata[["sampleid"]])) {
+    starting_metadata[["sampleid"]] <- rownames(starting_metadata)
+  }
+
   if (!is.null(ids)) {
     if (is.numeric(ids)) {
-      ids <- rownames(pData(expt))[ids]
+      ids <- rownames(starting_metadata)[ids]
     } else if (is.logical(ids)) {
-      ids <- rownames(pData(expt))[ids]
+      ids <- rownames(starting_metadata)[ids]
     }
 
     string <- ""

@@ -121,9 +121,12 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
                               domain_scope = "annotated", bg = NULL,
                               pseudo_gsea = TRUE, id_col = "row.names", excel = NULL) {
   gene_list <- NULL
+  num_genes <- 0
   if ("character" %in% class(sig_genes)) {
     gene_ids <- sig_genes
+    num_genes <- length(gene_ids)
   } else {
+    num_genes <- nrow(sig_genes)
     if (!is.null(sig_genes[[first_col]])) {
       gene_list <- sig_genes[order(-sig_genes[[first_col]]), ]
       pseudo_gsea <- TRUE
@@ -232,7 +235,7 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
     }
     retlst[[type]] <- a_df
   } ## End iterating over the set of default sources.
-
+  retlst[["num_genes"]] <- num_genes
   retlst[["interactive_plots"]] <- interactive_plots
   retlst[["num_hits"]] <- num_hits
   retlst[["gost_plots"]] <- gost_plots
