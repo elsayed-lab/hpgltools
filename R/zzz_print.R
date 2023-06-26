@@ -102,11 +102,12 @@ print.density_plot <- function(x) {
 #' @param x expt to print
 #' @export
 print.expt <- function(x) {
-  message("An expressionSet containing experiment with ",
-          nrow(exprs(x)), " genes and ", ncol(exprs(x)), " samples.")
-  message("There are ", ncol(pData(x)), " metadata columns and ",
-          ncol(fData(x)), " annotation columns.")
-  message("Its current state is: ", what_happened(x), ".")
+  summary_string <- glue("An expressionSet containing experiment with {nrow(exprs(x))}
+genes and {ncol(exprs(x))} samples. There are {ncol(pData(x))} metadata columns and
+{ncol(fData(x))} annotation columns; the primary condition is comprised of:
+{toString(levels(as.factor(pData(x)[['condition']])))}.
+Its current state is: {what_happened(x)}.")
+  message(summary_string)
   return(invisible(x))
 }
 
@@ -169,7 +170,35 @@ KEGG hits, {nrow(x[['REAC']])} reactome hits, \\
 #' @param x list of results from gprofiler.
 #' @export
 print.gsva_result <- function(x) {
+  summary_string <- glue("GSVA result using method: {x[['method']]} against the \\
+{x[['signature_category']]} dataset.
+Scores range from: {prettyNum(min(exprs(x[['expt']])))} \\
+to: {prettyNum(max(exprs(x[['expt']])))}.")
+  message(summary_string)
+  return(invisible(x))
+}
 
+#' Print a summary of gsva categories deemed 'significant'.
+#'
+#' @param x list of results from gprofiler.
+#' @export
+print.gsva_sig <- function(x) {
+  summary_string <- glue("The set of GSVA categories deemed significantly higher than the
+distribution of all scores.  It comprises {nrow(x[['subset_table']])} gene sets.")
+  message(summary_string)
+  plot(x[["subset_plot"]])
+  return(invisible(x))
+}
+
+#' Print a legend of an expressionset.
+#'
+#' @param x list of results from plot_legend().
+#' @export
+print.legend_plot <- function(x) {
+  summary_string <- glue("The colors used in the expressionset are: \\
+{toString(x[['color_fact']])}.")
+  message(summary_string)
+  print(x[["plot"]])
   return(invisible(x))
 }
 
@@ -180,7 +209,7 @@ print.gsva_result <- function(x) {
 print.libsize_plot <- function(x) {
   min_value <- min(x[["table"]][["sum"]])
   max_value <- max(x[["table"]][["sum"]])
-  message("Library sizes of ", nrow(x[["table"]]), " samples,
+  message("Library sizes of ", nrow(x[["table"]]), " samples, \\
 ranging from ", prettyNum(min_value, big.mark = ","),
 " to ", prettyNum(max_value, big.mark = ","), ".")
   plot(x[["plot"]])
@@ -208,7 +237,9 @@ and traversing metadata factors:
 print.nonzero_plot <- function(x) {
   summary_string <- glue("A non-zero genes plot of {nrow(x[['table']])} samples.
 These samples have an average {prettyNum(mean(x[['table']][['cpm']]))} CPM coverage and \\
-{as.integer(mean(x[['table']][['nonzero_genes']]))} genes observed.")
+{as.integer(mean(x[['table']][['nonzero_genes']]))} genes observed, ranging from \\
+{as.integer(min(x[['table']][['nonzero_genes']]))} to
+{as.integer(max(x[['table']][['nonzero_genes']]))}.")
   message(summary_string)
   plot(x[["plot"]])
   return(invisible(x))
@@ -295,6 +326,18 @@ print.varcoef_plot <- function(x) {
   summary_string <- glue("Plot describing the observed variance coefficients on a per-gene basis.")
   message(summary_string)
   plot(x[["plot"]])
+  return(invisible(x))
+}
+
+#' Print a summary of variance partition results.
+#'
+#' @param x list of results from simple_varpart().
+#' @export
+print.varpart <- function(x) {
+  summary_string <- glue("The result of using variancePartition with the model: \\
+x[['model_string']]")
+  message(summary_string)
+  plot(x[["partition_plot"]])
   return(invisible(x))
 }
 

@@ -10,6 +10,8 @@ sanitize_metadata(
   na_string = "notapplicable",
   lower = TRUE,
   punct = TRUE,
+  factorize = "heuristic",
+  max_levels = NULL,
   spaces = FALSE,
   numbers = NULL
 )
@@ -25,6 +27,18 @@ will be molested.}
 \item{lower}{Set everything to lowercase?}
 
 \item{punct}{Remove punctuation?}
+
+\item{factorize}{Set some columns to factors?  If set to a vector
+of length >=1, then set all of the provided columns to factors.
+When set to 'heuristic', set any columns with <= max_levels
+different elements to factors.}
+
+\item{max_levels}{When heuristically setting factors, use this as
+the heuristic, when NULL it is the number of samples / 6}
+
+\item{spaces}{Remove any spaces in this column?}
+
+\item{numbers}{Sanitize numbers by adding a prefix character to them?}
 }
 \description{
 I wrote this function after spending a couple of hours confused

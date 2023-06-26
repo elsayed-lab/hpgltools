@@ -282,6 +282,7 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
   if (!is.null(excel)) {
     retlist[["excel"]] <- write_gsva(retlist, excel)
   }
+  class(retlist) <- "gsva_sig"
   return(retlist)
 }
 

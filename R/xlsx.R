@@ -235,7 +235,7 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, ro
 
     return(written)
   }
-  if ("matrix" %in% class(data) | "character" %in% class(data)) {
+  if ("matrix" %in% class(data) || "character" %in% class(data)) {
     data <- as.data.frame(data, stringsAsFactors = FALSE)
   }
   if ("data.table" %in% class(data)) {

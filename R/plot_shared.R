@@ -359,10 +359,12 @@ graph_metrics <- function(expt, cormethod = "pearson", distmethod = "euclidean",
 #' @export
 plot_legend <- function(stuff) {
   plot <- NULL
+  color_fact <- NULL
   if (class(stuff)[[1]] == "gg") {
     ## Then assume it is a pca plot
     plot <- stuff
   } else {
+    color_fact <- get_expt_colors(stuff)
     plot <- plot_pca(stuff)[["plot"]]
   }
 
@@ -378,8 +380,10 @@ plot_legend <- function(stuff) {
   dev.off()
   removed <- file.remove(tmp_file)
   ret <- list(
-    colors = plot[["data"]][, c("condition", "batch", "colors")],
-    plot = legend_plot)
+    "color_fact" = color_fact,
+    "colors" = plot[["data"]][, c("condition", "batch", "colors")],
+    "plot" = legend_plot)
+  class(ret) <- "legend_plot"
   return(ret)
 }
 

@@ -297,8 +297,12 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
       meta, entry_type, input_file_spec, specification,
       basedir = basedir, verbose = verbose, species = species, type = type,
       ...)
-    if (is.null(new_entries)) {
-      message("Not including new entries for: ", new_column, ".")
+    empty_entries <- sum(new_entries == "")
+    na_entries <- sum(is.na(new_entries))
+    all_empty <- empty_entries == length(new_entries) ||
+      na_entries == length(new_entries)
+    if (is.null(new_entries) || isTRUE(all_empty)) {
+      message("Not including new entries for: ", new_column, ", it is empty.")
     } else if ("data.frame" %in% class(new_entries)) {
       for (sp in colnames(new_entries)) {
         new_column_name <- glue("{entry_type}_{sp}")
@@ -316,7 +320,12 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
 
   message("Writing new metadata to: ", new_metadata)
   written <- write_xlsx(data = meta, excel = new_metadata)
-  return(new_metadata)
+  ret <- list(
+    "xlsx_result" = written,
+    "new_file" = new_metadata,
+    "new_meta" = meta)
+  class(ret) <- "preprocessing_metadata"
+  return(ret)
 }
 
 #' This is basically just a switch and set of regexes for finding the
@@ -809,13 +818,25 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
                                        which = "first",
                                        ...)
     },
-    "salmon_mapped" = {
-      search <- "^.* [jointLog] [info] Counted .+ total reads in the equivalence classes$"
-      replace <- "^.* [jointLog] [info] Counted (.+) total reads in the equivalence classes$"
+    "salmon_stranded" = {
+      search <- "Automatically detected most likely library type as .+$"
+      replace <- "^.*Automatically detected most likely library type as (\\w+)$"
       entries <- dispatch_regex_search(meta, search, replace,
                                        input_file_spec, verbose = verbose,
-                                       as = "numeric", basedir = basedir,
+                                       basedir = basedir, which = "first",
                                        ...)
+    },
+    "salmon_mapped" = {
+      search <- "Counted .+ total reads in the equivalence classes"
+      replace <- "^.*Counted (.+)? total reads in the equivalence classes"
+      entries <- dispatch_regex_search(meta, search, replace,
+                                       input_file_spec, verbose = verbose,
+                                       basedir = basedir,
+                                       ...)
+    },
+    "salmon_count_table" = {
+      entries <- dispatch_filename_search(meta, input_file_spec, verbose = verbose,
+                                          species = species, type = "genome", basedir = basedir)
     },
     "shovill_contigs" = {
       ## [shovill] It contains 1 (min=131) contigs totalling 40874 bp.
@@ -1237,6 +1258,9 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
         this_found <- gsub(x = input_line,
                            pattern = replace,
                            replacement = extraction)
+        ## Drop leading or terminal spaces.
+        this_found <- gsub(x = this_found,
+                           pattern = "^ +| +$", replacement = "")
         found <- found + 1
       } else {
         next
@@ -1246,6 +1270,7 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
       output_entries[row] <- last_found
     } ## End looking at every line of the log file specified by the input file spec for this row
     close(input_handle)
+
     ## Handle cases where one might want to pull only the last entry in a log, or all of them.
     if (which == "last") {
       output_entries[row] <- last_found
@@ -1576,8 +1601,10 @@ make_assembly_spec <- function() {
       "file" = "{basedir}/{meta[['sampleid']]}/outputs/??assembly_coverage_*/base_coverage.tsv"),
     "pernt_max_coverage" = list(
       "file" = "{basedir}/{meta[['sampleid']]}/outputs/??assembly_coverage_*/base_coverage.tsv"),
+    "salmon_stranded" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_*/salmon_*.stderr"),
     "salmon_mapped" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_*/salmon.stderr"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_*/salmon_*.stderr"),
     "shovill_contigs" = list(
       "file" = "{basedir}/{meta[['sampleid']]}/outputs/*shovill_*/shovill.log"),
     "shovill_length" = list(
@@ -1683,8 +1710,13 @@ make_rnaseq_spec <- function() {
     "hisat_genome_percent" = list(
       "column" = "hisat_genome_percent"),
     "hisat_count_table" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/{species}_{type}*.count.xz")
-  )
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/{species}_{type}*.count.xz"),
+    "salmon_stranded" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_{species}/salmon_*.stderr"),
+    "salmon_count_table" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_{species}/quant.sf"),
+    "salmon_mapped" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_{species}gg/salmon_*.stderr"))
   return(specification)
 }
 

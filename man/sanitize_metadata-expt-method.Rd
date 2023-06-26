@@ -10,6 +10,8 @@
   na_string = "notapplicable",
   lower = TRUE,
   punct = TRUE,
+  factorize = "heuristic",
+  max_levels = NULL,
   spaces = FALSE,
   numbers = NULL
 )

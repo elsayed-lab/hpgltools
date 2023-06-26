@@ -10,6 +10,7 @@ set_expt_conditions(
   ids = NULL,
   prefix = NULL,
   null_cell = "null",
+  colors = TRUE,
   ...
 )
 }
