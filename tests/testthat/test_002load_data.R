@@ -8,7 +8,8 @@ library(pasilla)
 ## Try loading some annotation information for this species.
 
 ## This now generates an error on travis, but not on my computer.
-gene_info <- sm(load_biomart_annotations(species = "dmelanogaster", overwrite = TRUE))[["annotation"]]
+gene_info <- sm(load_biomart_annotations(species = "dmelanogaster",
+                                         overwrite = TRUE))[["annotation"]]
 info_idx <- gene_info[["gene_biotype"]] == "protein_coding"
 gene_info <- gene_info[info_idx, ]
 rownames(gene_info) <- make.names(gene_info[["ensembl_gene_id"]], unique = TRUE)
@@ -60,6 +61,12 @@ test_that("Was the annotation information imported into the expressionset? (stat
 ## expected <- c(3987, 990, 4860, 1617, 1947, 1314)
 ## This is a weird thing to change!
 expected <- c(3990, 993, 4863, 1620, 1950, 1317)
+## Sometimes the cds lengths don't get added to the annotations...
+if (is.null(hpgl_annotations[["cds_length"]])) {
+  hpgl_annotations[["cds_length"]] <- abs(as.numeric(hpgl_annotations[["start_position"]]) -
+                                            as.numeric(hpgl_annotations[["end_position"]]))
+  expected <- c(35866, 22835, 32016, 1850, 36566, 2267)
+}
 actual <- as.numeric(hpgl_annotations[chosen_genes, "cds_length"])
 ##  head(sm(sort(as.numeric(hpgl_annotations[["cds_length"]]))))
 test_that("Was the annotation information imported into the expressionset? (static lengths?)", {

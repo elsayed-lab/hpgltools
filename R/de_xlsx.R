@@ -67,6 +67,7 @@
 combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes = NULL,
                               adjp = TRUE, include_limma = TRUE, include_deseq = TRUE,
                               include_edger = TRUE, include_ebseq = TRUE, include_basic = TRUE,
+                              include_noiseq = TRUE,
                               rownames = TRUE, add_plots = TRUE, loess = FALSE, plot_dim = 6,
                               compare_plots = TRUE, padj_type = "ihw", fancy = FALSE,
                               lfc_cutoff = 1.0, p_cutoff = 0.05,
@@ -94,6 +95,7 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
   edger <- apr[["edger"]]
   ebseq <- apr[["ebseq"]]
   basic <- apr[["basic"]]
+  noiseq <- apr[["noiseq"]]
 
   if ("try-error" %in% class(limma) || is.null(limma)) {
     include_limma <- FALSE
@@ -1252,6 +1254,7 @@ map_keepers <- function(keepers, table_names, data) {
       keeper_table_map[[name]] <- list(
         "string" = FALSE,
         "orientation" = FALSE)
+      next
     }
     keeper_table_map[[name]][["wanted_numerator"]] <- numerator
     keeper_table_map[[name]][["wanted_denominator"]] <- denominator
@@ -1265,7 +1268,7 @@ map_keepers <- function(keepers, table_names, data) {
     individual_tables <- list()
     for (type in names(data)) {
       if (!is.null(data[[type]])) {
-        ## mesg("Checking ", type, " all_tables index ", position, " for ", keeper_table_map[[name]][["string"]])
+        ## message("Checking ", type, " all_tables index ", position, " for name ", name, ":", keeper_table_map[[name]][["string"]])
         test_name <- names(data[[type]][["all_tables"]])[position]
         data_key <- paste0(type, "_data")
         data_orientation_key <- paste0(type, "_orientation")

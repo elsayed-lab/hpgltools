@@ -120,6 +120,7 @@ deseq_lrt <- function(expt, interactor_column = "visitnumber",
       "cluster_data" = cluster_data,
       "group_list" = group_lst,
       "favorite_genes" = cluster_data[["df"]])
+  class(retlist) <- "deseq_lrt"
   return(retlist)
 }
 
@@ -560,10 +561,11 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
       "numerators" = numerators,
       "deseq_dataset" = dataset,
       "run" = deseq_run)
-  class(retlist) <- c("deseq_result", "list")
+  class(retlist) <- c("deseq_pairwise", "list")
   if (!is.null(arglist[["deseq_excel"]])) {
     retlist[["deseq_excel"]] <- write_deseq(retlist, excel = arglist[["deseq_excel"]])
   }
+  class(retlist) <- c("deseq_pairwise", "list")
   return(retlist)
 }
 

@@ -242,10 +242,11 @@ edger_pairwise <- function(input = NULL, conditions = NULL,
       "method" = "edger",
       "model" = model_data,
       "model_string" = model_string)
-  class(retlist) <- c("edger_result", "list")
+  class(retlist) <- c("edger_pairwise", "list")
   if (!is.null(arglist[["edger_excel"]])) {
     retlist[["edger_excel"]] <- write_edger(retlist, excel = arglist[["edger_excel"]])
   }
+  class(retlist) <- c("edger_pairwise", "list")
   return(retlist)
 }
 

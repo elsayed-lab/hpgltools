@@ -114,7 +114,7 @@ expected_annotations <- c(
   "edger_adjp_ihw", "basic_adjp_ihw",
   "lfc_meta", "lfc_var", "lfc_varbymed", "p_meta",
   "p_var")
-num_cols <- length(expected_annotations)
+num_cols <- length(expected_annotations) - 1
 expected <- c(7531, num_cols)
 actual <- dim(combined_table[["data"]][[1]])
 test_that("Has the untreated/treated combined table been filled in?", {

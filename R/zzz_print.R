@@ -45,12 +45,25 @@ print.all_pairwise <- function(x) {
           toString(included), ".")
   message("This used a surrogate/batch estimate from: ", x[["batch_type"]], ".")
   message("The primary analysis performed ", nrow(x[["comparison"]][["comp"]]), " comparisons.")
-  message("The logFC agreement among the methods follows:")
   if (is.null(x[["comparison"]][["heat"]])) {
+    message("The logFC agreement among the methods follows:")
     print(x[["comparison"]][["comp"]])
   } else {
     print(x[["comparison"]][["heat"]])
   }
+  return(invisible(x))
+}
+
+#' Print a summary of the result from calculate_aucc().
+#'
+#' @param x list of results from calculate_aucc().
+#' @export
+print.aucc_info <- function(x) {
+  summary_string <- glue("These two tables have an aucc value of: \\
+{x[['aucc']]} and correlation: ")
+  message(summary_string)
+  print(x[["cor"]])
+  plot(x[["plot"]])
   return(invisible(x))
 }
 
@@ -69,7 +82,9 @@ print.clusterprofiler_result <- function(x) {
 #' @export
 print.combined_de <- function(x) {
   message("A set of combined differential expression results.")
-  summary_table <- x[["de_summary"]][, c("table", "deseq_sigup", "deseq_sigdown", "edger_sigup", "edger_sigdown", "limma_sigup", "limma_sigdown")]
+  summary_table <- x[["de_summary"]][, c("table", "deseq_sigup", "deseq_sigdown",
+                                         "edger_sigup", "edger_sigdown",
+                                         "limma_sigup", "limma_sigdown")]
   print(summary_table)
   print(upsetr_all(x))
   return(invisible(x))
@@ -186,7 +201,7 @@ print.gsva_sig <- function(x) {
   summary_string <- glue("The set of GSVA categories deemed significantly higher than the
 distribution of all scores.  It comprises {nrow(x[['subset_table']])} gene sets.")
   message(summary_string)
-  plot(x[["subset_plot"]])
+  print(x[["subset_plot"]])
   return(invisible(x))
 }
 
@@ -250,6 +265,24 @@ These samples have an average {prettyNum(mean(x[['table']][['cpm']]))} CPM cover
 #' @param x Result from plot_pca()
 #' @export
 print.pca_result <- function(x) {
+  cond_column <- x[["cond_column"]]
+  batch_column <- x[["batch_column"]]
+
+  color_levels <- toString(levels(as.factor(x[["design"]][[cond_column]])))
+  batch_levels <- toString(levels(as.factor(x[["design"]][[batch_column]])))
+  message("The result of performing a ", x[["pc_method"]], " dimension reduction.
+The x-axis is PC", x[["x_pc"]], " and the y-axis is PC", x[["y_pc"]], "
+Colors are defined by ", color_levels, "
+Shapes are defined by ", batch_levels, ".")
+  plot(x[["plot"]])
+  return(invisible(x))
+}
+
+#' Print a summary of the result from gather_preprocessing_metadata().
+#'
+#' @param x Result from gather_preprocessing_metadata()
+#' @export
+print.preprocessing_metadata <- function(x) {
   cond_column <- x[["cond_column"]]
   batch_column <- x[["batch_column"]]
 

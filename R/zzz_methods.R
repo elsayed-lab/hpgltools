@@ -73,7 +73,7 @@ setMethod(
 setMethod(
   "annotation<-", signature = signature(object = "expt"),
   definition = function(object, value) {
-    fData(object[["expressionset"]]) <- value
+    annotation(object[["expressionset"]]) <- value
     return(object)
   })
 

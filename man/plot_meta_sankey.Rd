@@ -11,7 +11,7 @@ plot_meta_sankey(
   font_size = 18,
   node_width = 30,
   color_choices = NULL,
-  html = "sankey.html",
+  html = NULL,
   drill_down = TRUE
 )
 }

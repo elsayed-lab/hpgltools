@@ -565,7 +565,7 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
     "single_table" = all_tables,
     "voom_design" = fun_design,
     "voom_result" = fun_voom)
-  class(retlist) <- c("limma_result", "list")
+  class(retlist) <- c("limma_pairwise", "list")
   if (!is.null(arglist[["limma_excel"]])) {
     retlist[["limma_excel"]] <- write_limma(retlist, excel = arglist[["limma_excel"]])
   }

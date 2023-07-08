@@ -278,12 +278,16 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
   }
 
   meta <- extract_metadata(starting_metadata)
+  old_meta <- meta
   ## Perhaps use sanitize instead?
   meta[[1]] <- gsub(pattern = "\\s+", replacement = "", x = meta[[1]])
   colnames(meta)[1] <- "sampleid"
+  new_columns <- c()
   for (entry in seq_along(specification)) {
     entry_type <- names(specification[entry])
-    message("Starting ", entry_type, ".")
+    if (verbose) {
+      message("Starting ", entry_type, ": ", entry, ".")
+    }
     new_column <- entry_type
     if (!is.null(specification[[entry_type]][["column"]])) {
       new_column <- specification[[entry_type]][["column"]]
@@ -292,37 +296,42 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
       warning("Column: ", new_column, " already exists, replacing it.")
     }
     input_file_spec <- specification[[entry_type]][["file"]]
-    message("Checking input_file_spec: ", input_file_spec, ".")
+    if (verbose) {
+      message("Checking input_file_spec: ", input_file_spec, ".")
+    }
     new_entries <- dispatch_metadata_extract(
       meta, entry_type, input_file_spec, specification,
       basedir = basedir, verbose = verbose, species = species, type = type,
       ...)
-    empty_entries <- sum(new_entries == "")
-    na_entries <- sum(is.na(new_entries))
-    all_empty <- empty_entries == length(new_entries) ||
-      na_entries == length(new_entries)
+    test_entries <- new_entries
+    na_idx <- is.na(test_entries)
+    na_entries <- sum(na_idx)
+    test_entries <- test_entries[!na_idx]
+    empty_entries <- sum(test_entries == "")
+    zero_entries <- sum(test_entries == "0")
+    uninformative_entries <- na_entries + empty_entries + zero_entries
+    all_empty <- uninformative_entries == length(new_entries)
     if (is.null(new_entries) || isTRUE(all_empty)) {
       message("Not including new entries for: ", new_column, ", it is empty.")
     } else if ("data.frame" %in% class(new_entries)) {
       for (sp in colnames(new_entries)) {
         new_column_name <- glue("{entry_type}_{sp}")
+        new_columns <- c(new_columns, new_column_name)
         meta[[new_column_name]] <- new_entries[[sp]]
       }
     } else {
+      new_columns <- c(new_columns, new_column)
       meta[[new_column]] <- new_entries
     }
   } ## End iterating over every metadatum
-
-  ## Drop useless columns
-  meta[["condition"]] <- NULL
-  meta[["batch"]] <- NULL
-  meta[["sampleid"]] <- NULL
 
   message("Writing new metadata to: ", new_metadata)
   written <- write_xlsx(data = meta, excel = new_metadata)
   ret <- list(
     "xlsx_result" = written,
     "new_file" = new_metadata,
+    "new_columns" = new_column,
+    "old_meta" = old_meta,
     "new_meta" = meta)
   class(ret) <- "preprocessing_metadata"
   return(ret)
@@ -514,7 +523,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
     },
     "hisat_count_table" = {
       entries <- dispatch_filename_search(meta, input_file_spec, verbose = verbose,
-                                          species = species, type = "genome", basedir = basedir)
+                                          species = species, type = type, basedir = basedir)
     },
     "hisat_rrna_single_concordant" = {
       search <- "^\\s+\\d+ \\(.+\\) aligned concordantly exactly 1 time"
@@ -530,7 +539,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
       entries <- dispatch_regex_search(meta, search, replace,
                                        input_file_spec, basedir = basedir,
                                        as = "numeric", verbose = verbose,
-                                       species = species, ...)
+                                       type = type, species = species, ...)
     },
     "hisat_rrna_percent" = {
       numerator_column <- specification[["hisat_rrna_multi_concordant"]][["column"]]
@@ -554,7 +563,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
       entries <- dispatch_regex_search(meta, search, replace,
                                        input_file_spec, basedir = basedir,
                                        as = "numeric", verbose = verbose,
-                                       species = species, ...)
+                                       type = type, species = species, ...)
     },
     "hisat_genome_multi_concordant" = {
       search <- "^\\s+\\d+ \\(.+\\) aligned concordantly >1 times"
@@ -562,7 +571,7 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
       entries <- dispatch_regex_search(meta, search, replace,
                                        input_file_spec, basedir = basedir,
                                        as = "numeric", verbose = verbose,
-                                       species = species, ...)
+                                       type = type, species = species, ...)
     },
     "hisat_genome_single_all" = {
       search <- "^\\s+\\d+ \\(.+\\) aligned exactly 1 time"
@@ -570,15 +579,23 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
       entries <- dispatch_regex_search(meta, search, replace,
                                        input_file_spec, verbose = verbose,
                                        as = "numeric", basedir = basedir,
-                                       species = species, ...)
+                                       type = type, species = species, ...)
     },
     "hisat_genome_multi_all" = {
-      search <- "^\\s+\\d+ \\(.+\\) aligned concordantly >1 times"
-      replace <- "^\\s+(\\d+) \\(.+\\) aligned concordantly >1 times"
+      search <- "^\\s+\\d+ \\(.+\\) aligned >1 times"
+      replace <- "^\\s+(\\d+) \\(.+\\) aligned >1 times"
       entries <- dispatch_regex_search(meta, search, replace,
                                        input_file_spec, verbose = verbose,
                                        as = "numeric", basedir = basedir,
-                                       species = species, ...)
+                                       type = type, species = species, ...)
+    },
+    "hisat_unmapped" = {
+      search <- "^\\s+\\d+ \\(.+\\) aligned 0 times"
+      replace <- "^\\s+(\\d+) \\(.+\\) aligned 0 times"
+      entries <- dispatch_regex_search(meta, search, replace,
+                                       input_file_spec, verbose = verbose,
+                                       as = "numeric", basedir = basedir,
+                                       type = type, species = species, ...)
     },
     "hisat_genome_percent" = {
       numerator_column <- specification[["hisat_genome_single_concordant"]][["column"]]
@@ -590,6 +607,24 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
         denominator_column <- "trimomatic_output"
       }
       entries <- dispatch_metadata_ratio(meta, numerator_column, denominator_column)
+    },
+    "hisat_observed_genes" = {
+      search <- "^.*\t0$"
+      entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
+                                      basedir = basedir, inverse = TRUE,
+                                      type = type, species = species)
+    },
+    "hisat_observed_mean_exprs" = {
+      entries <- dispatch_csv_search(meta, 2, input_file_spec, file_type = "tsv",
+                                    which = "function", chosen_func = "mean",
+                                     verbose = verbose, basedir = basedir,
+                                     type = type, species = species, as = "numeric")
+    },
+    "hisat_observed_median_exprs" = {
+      entries <- dispatch_csv_search(meta, 2, input_file_spec, file_type = "tsv",
+                                     which = "function", chosen_func = "median",
+                                     verbose = verbose, basedir = basedir,
+                                     type = type, species = species, as = "numeric")
     },
     "host_filter_species" = {
       search <- "^.*$"
@@ -679,12 +714,12 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
                                       basedir = basedir)
     },
     "jellyfish_count_table" = {
-      entries <- dispatch_filename_search(meta, input_file_spec, verbose=verbose,
+      entries <- dispatch_filename_search(meta, input_file_spec, verbose = verbose,
                                           basedir = basedir)
     },
     "jellyfish_observed" = {
       search <- "^.*$"
-      entries <- dispatch_count_lines(meta, search, input_file_spec, verbose=verbose,
+      entries <- dispatch_count_lines(meta, search, input_file_spec, verbose = verbose,
                                       basedir = basedir)
     },
     "kraken_viral_classified" = {
@@ -834,6 +869,14 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
                                        basedir = basedir,
                                        ...)
     },
+    "salmon_percent" = {
+      search <- "^.* Mapping rate = \\d+\\.\\d+%"
+      replace <- "^.* Mapping rate = (\\d+\\.\\d+)%"
+      entries <- dispatch_regex_search(meta, search, replace,
+                                       input_file_spec, verbose = verbose,
+                                       basedir = basedir,
+                                       ...)
+    },
     "salmon_count_table" = {
       entries <- dispatch_filename_search(meta, input_file_spec, verbose = verbose,
                                           species = species, type = "genome", basedir = basedir)
@@ -875,17 +918,17 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
                                        ...)
     },
     "trimomatic_input" = {
-      search <- "^Input Read Pairs: \\d+ .*$"
-      replace <- "^Input Read Pairs: (\\d+) .*$"
+      search <- "^Input (Read Pairs|Reads): \\d+ .*$"
+      replace <- "^Input (Read Pairs|Reads): (\\d+) .*$"
       entries <- dispatch_regex_search(meta, search, replace,
-                                       input_file_spec, verbose = verbose, basedir = basedir,
+                                       input_file_spec, verbose = verbose, basedir = basedir, extraction = "\\2",
                                        ...)
     },
     "trimomatic_output" = {
-      search <- "^Input Read Pairs: \\d+ Both Surviving: \\d+ .*$"
-      replace <- "^Input Read Pairs: \\d+ Both Surviving: (\\d+) .*$"
+      search <- "^Input (Read Pairs|Reads): \\d+ (Both Surviving|Surviving): \\d+ .*$"
+      replace <- "^Input (Read Pairs|Reads): \\d+ (Both Surviving|Surviving): (\\d+) .*$"
       entries <- dispatch_regex_search(meta, search, replace,
-                                       input_file_spec, verbose = verbose, basedir = basedir,
+                                       input_file_spec, verbose = verbose, basedir = basedir, extraction = "\\3",
                                        ...)
     },
     "trimomatic_ratio" = {
@@ -977,7 +1020,8 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
 #' @param verbose Print diagnostic information while running?
 #' @param basedir Root directory containing the files/logs of metadata.
 dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbose,
-                                 species = "*", basedir = "preprocessing") {
+                                 species = "*", basedir = "preprocessing",
+                                 type = "genome", inverse = FALSE) {
 
   if (length(species) > 1) {
     output_entries <- data.frame(row.names = seq_len(nrow(meta)))
@@ -985,7 +1029,7 @@ dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbos
       species_name <- species[s]
       output_entries[[species_name]] <- dispatch_count_lines(
         meta, search, input_file_spec, verbose = verbose,
-        species = species_name, basedir = basedir)
+        species = species_name, basedir = basedir, inverse = inverse)
     }
     return(output_entries)
   }
@@ -1014,7 +1058,13 @@ dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbos
     last_found <- NULL
     this_found <- NULL
     all_found <- c()
-    num_hits <- sum(grepl(x = input_vector, pattern = search))
+    found_idx <- grepl(x = input_vector, pattern = search)
+    num_hits <- 0
+    if (inverse) {
+      num_hits <- sum(!found_idx)
+    } else {
+      num_hits <- sum(found_idx)
+    }
     close(input_handle)
     output_entries[row] <- num_hits
   } ## End looking at every row of the metadata
@@ -1305,7 +1355,7 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
 #' @param verbose Print diagnostic information while running?
 #' @param ... Other arguments for glue.
 dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv",
-                                chosen_func = NULL, species = "*",
+                                chosen_func = NULL, species = "*", type = "genome",
                                 basedir = "preprocessing", which = "first",
                                 verbose = FALSE, ...) {
   arglist <- list(...)
@@ -1707,16 +1757,28 @@ make_rnaseq_spec <- function() {
       "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
     "hisat_genome_multi_all" = list(
       "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
+    "hisat_unmapped" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
     "hisat_genome_percent" = list(
       "column" = "hisat_genome_percent"),
     "hisat_count_table" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/{species}_{type}*.count.xz"),
+    "hisat_observed_genes" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/{species}_{type}*.count.xz"),
+    "hisat_observed_mean_exprs" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/{species}_{type}*.count.xz"),
+    "hisat_observed_median_exprs" = list(
       "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/{species}_{type}*.count.xz"),
     "salmon_stranded" = list(
       "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_{species}/salmon_*.stderr"),
     "salmon_count_table" = list(
       "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_{species}/quant.sf"),
     "salmon_mapped" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_{species}gg/salmon_*.stderr"))
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_{species}/salmon_*.stderr"),
+    "salmon_percent" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*salmon_{species}/salmon_*.stderr")
+  )
+
   return(specification)
 }
 

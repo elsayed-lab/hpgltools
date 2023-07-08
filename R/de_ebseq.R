@@ -92,7 +92,7 @@ ebseq_pairwise <- function(input = NULL, patterns = NULL, conditions = NULL,
       "conditions_table" = conditions_table,
       "method" = "ebseq"
   )
-  class(retlist) <- c("ebseq_result", "list")
+  class(retlist) <- c("ebseq_pairwise", "list")
   return(retlist)
 }
 

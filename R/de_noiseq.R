@@ -102,7 +102,7 @@ noiseq_pairwise <- function(input = NULL, conditions = NULL,
       "method" = "noiseq",
       "model" = model_data,
       "model_string" = model_string)
-  class(retlist) <- c("noiseq_result", "list")
+  class(retlist) <- c("noiseq_pairwise", "list")
   return(retlist)
 }
 

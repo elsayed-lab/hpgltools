@@ -24,7 +24,7 @@ all_pairwise(
   do_ebseq = FALSE,
   do_edger = TRUE,
   do_limma = TRUE,
-  do_noiseq = TRUE,
+  do_noiseq = FALSE,
   do_dream = FALSE,
   convert = "cpm",
   norm = "quant",

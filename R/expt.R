@@ -1222,6 +1222,10 @@ make_exampledata <- function(ngenes = 1000, columns = 5) {
   return(example)
 }
 
+mean_by_factor <- function(data, fact = "condition") {
+  median_by_factor(data, fact = fact, fun = "mean")
+}
+
 #' Create a data frame of the medians of rows by a given factor in the data.
 #'
 #' This assumes of course that (like expressionsets) there are separate columns
@@ -2096,12 +2100,12 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL,
     ## a hash of states->color which could/should be a named vector.
     color_state_names <- names(colors)
     found_colors <- sum(color_state_names %in% condition_states)
-    found_name <- fact_name %in% color_state_names
+    found_names <- sum(fact_name %in% color_state_names)
     ## In this first instance, the choices should be in this element.
-    if (fact_name %in% color_state_names) {
+    if (found_names > 0) {
       mesg("The colors appear to be a list delineated by state name.")
-      colors <- color[[fact]]
-    } else if (found_colors) {
+      colors <- colors[[fact]]
+    } else if (found_colors > 0) {
       mesg("The colors appear to be a single list delineated by condition.")
     } else {
       message("A list of colors was provided, but element ", fact,

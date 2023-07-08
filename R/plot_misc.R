@@ -123,7 +123,7 @@ pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
 #' @export
 plot_meta_sankey <- function(design, factors = c("condition", "batch"), fill = "node",
                              font_size = 18, node_width = 30,
-                             color_choices = NULL, html = "sankey.html",
+                             color_choices = NULL, html = NULL,
                              drill_down = TRUE) {
 
   found <- factors %in% colnames(design)
@@ -193,9 +193,12 @@ plot_meta_sankey <- function(design, factors = c("condition", "batch"), fill = "
   links_to_nodes <- links_to_nodes[, c("name", "value")]
 
 
-  plt = networkD3::sankeyNetwork(Links = my_links, Nodes = my_nodes,
-                                 Source = "source", Target = "target",
-                                 Value = "value", fontSize = font_size, nodeWidth = node_width)
+  plt <- NULL
+  if (!is.null(html)) {
+    plt = networkD3::sankeyNetwork(Links = my_links, Nodes = my_nodes,
+                                   Source = "source", Target = "target",
+                                   Value = "value", fontSize = font_size, nodeWidth = node_width)
+  }
   retlist <- list(
     "permutations" = permutations,
     "plot" = plt)

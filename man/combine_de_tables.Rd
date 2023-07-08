@@ -15,6 +15,7 @@ combine_de_tables(
   include_edger = TRUE,
   include_ebseq = TRUE,
   include_basic = TRUE,
+  include_noiseq = TRUE,
   rownames = TRUE,
   add_plots = TRUE,
   loess = FALSE,
