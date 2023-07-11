@@ -67,6 +67,22 @@ print.aucc_info <- function(x) {
   return(invisible(x))
 }
 
+#' Print a summary of the result from self_evaluate_model().
+#'
+#' @param x list of results from self_evaluate_model().
+#' @export
+print.classifier_evaluation <- function(x) {
+  message("The summary of the (in)correct calls is: ")
+  print(x[["self_summary"]])
+  message("The missed samples are: ")
+  print(x[["wrong_samples"]])
+  message("The confusion matrix is:")
+  print(x[["confusion_mtrx"]])
+  message("The ROC AUC is: ", x[["auc"]], ".")
+  print(x[["roc_plot"]])
+  return(invisible(x))
+}
+
 #' Print a summary of a clusterprofiler over representation search.
 #'
 #' @param x list of results from clusterprofiler.

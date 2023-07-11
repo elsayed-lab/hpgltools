@@ -200,7 +200,6 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
   conditions_table <- table(conditions)
   batches_table <- table(batches)
   condition_levels <- levels(as.factor(conditions))
-  ## batch_levels <- levels(as.factor(batches))
 
   ## Make a model matrix which will have one entry for
   ## each of the condition/batches
@@ -217,11 +216,6 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
                                model_cond = model_cond, model_intercept = model_intercept,
                                alt_model = alt_model,
                                ...)
-  ## model_choice <- choose_model(input, conditions, batches,
-  ##                              model_batch = model_batch,
-  ##                              model_cond = model_cond,
-  ##                              model_intercept = model_intercept,
-  ##                              alt_model = alt_model)
   model_data <- model_choice[["chosen_model"]]
   model_including <- model_choice[["including"]]
   model_string <- model_choice[["chosen_string"]]
@@ -561,7 +555,7 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
       "numerators" = numerators,
       "deseq_dataset" = dataset,
       "run" = deseq_run)
-  class(retlist) <- c("deseq_pairwise", "list")
+  class(retlist) <- c("deseq_result", "list")
   if (!is.null(arglist[["deseq_excel"]])) {
     retlist[["deseq_excel"]] <- write_deseq(retlist, excel = arglist[["deseq_excel"]])
   }
