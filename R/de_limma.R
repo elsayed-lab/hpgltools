@@ -285,6 +285,7 @@ hpgl_voom <- function(dataframe, model = NULL, libsize = NULL,
 #'  pairwise_comparisons = The result from eBayes()
 #'  limma_result = The result from calling write_limma()
 #' @seealso [limma] [Biobase] [deseq_pairwise()] [edger_pairwise()] [basic_pairwise()]
+#'  DOI:10.1093/nar/gkv007
 #' @examples
 #' \dontrun{
 #'  pretend <- limma_pairwise(expt)

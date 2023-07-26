@@ -97,6 +97,16 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
   basic <- apr[["basic"]]
   noiseq <- apr[["noiseq"]]
 
+  model_used <- NULL
+  ## I want to be able to print the model
+  ## When summarizing the result, I think in most cases
+  ## checking for a deseq or limma model should suffice.
+  if (!is.null(deseq[["model_string"]])) {
+    model_used <- deseq[["model_string"]]
+  } else if (!is.null(limma[["model_string"]])) {
+    model_used <- limma[["model_string"]]
+  }
+
   if ("try-error" %in% class(limma) || is.null(limma)) {
     include_limma <- FALSE
   }
@@ -256,6 +266,7 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
     "keepers" = keepers,
     ## Kept is currently broken.
     "kept" = extracted[["kept"]],
+    "model_used" = model_used,
     "de_summary" = extracted[["summaries"]])
   class(ret) <- c("combined_de", "list")
 

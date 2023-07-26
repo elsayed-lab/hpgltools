@@ -1,56 +1,28 @@
 ## Some functions to help with classification
 
-#' Given an n-dimensional matrix, try some KNN-esque clustering on it.
-#'
-#' I want some functions to help me understand clustering.  This is a
-#' first pass at that goal.
-#'
-#' @param mtrx Matrix to cluster, usually 2d from a point plot.
-#' @param resolution Used after cluster generation for making neighbor
-#'  groups.
-#' @param k Used during cluster generation.
-#' @param type Define the type of clustering to perform, currently
-#'  only KNN/SNN
-#' @param full Get the full set of metrics from bluster.
-#' @param merge_to Use the neighborhood collapse function to set a
-#'  hard ceiling on the number of clusters in the final result.
-generate_nn_groups <- function(mtrx, resolution = 1, k = 10, type = "snn",
-                                full = TRUE, merge_to = NULL, ...) {
-  params <- bluster::SNNGraphParam(k = k, ...)
-  if (type == "knn") {
-    params <- bluster::KNNGraphParam(k = k)
-  }
-  clusters <- bluster::clusterRows(mtrx, params, full = full)
-  merged <- NULL
-  groups <- as.factor(paste0("g", clusters$clusters))
-  message("After clustering, there are: ", length(levels(groups)), " groups.")
-  if (!is.null(merge_to)) {
-    merged <- bluster::mergeCommunities(clusters[["objects"]][["graph"]],
-                                        clusters[["clusters"]],
-                                        steps = merge_to)
-  }
-  merged_groups <- as.factor(paste0("m", merged$clusters))
-  message("After merging, there are: ", length(levels(merged_groups)), " groups.")
-
-  retlist <- list(
-    "clusters" = clusters,
-    "merged" = merged,
-    "start_groups" = groups,
-    "merged_groups" = merged_groups)
-  return(retlist)
-}
-
 #' Use createDataPartition to create test/train sets and massage them a little.
 #'
 #' This will also do some massaging of the data to make it easier to work with for
 #' downstream tasks.  Most notably, since I am mostly evaluating classifiers of
 #' clinical data to see how well they agree with extant annotations, I want to make sure
 #' the relevant columns are renamed in the testing sets.
+#'
+#' @param full_df Dataframe containing the measured data and relevant factors.
+#' @param interesting_meta Other metadata (maybe not needed)
+#' @param outcome_factor Name of the outcome column
+#' @param p Ratio to split trainer and testers.
+#' @param list Generate result as list or dataframe
+#' @param times How many times to iterate
+#' @seealso https://topepo.github.io/caret/data-splitting.html#simple-splitting-based-on-the-outcome
+#'   and https://github.com/compgenomr/book/blob/master/05-supervisedLearning.Rmd
+#' @export
 create_partitions <- function(full_df, interesting_meta, outcome_factor = "condition",
-                              p = 0.6, list = FALSE, times = 5,
-                              outcome_column = "outcome_factor") {
-
-  outcome_fct <- as.factor(as.character(interesting_meta[[outcome_factor]]))
+                              p = 0.6, list = FALSE, times = 5) {
+  if (length(outcome_factor) == 1) {
+    outcome_fct <- as.factor(as.character(interesting_meta[[outcome_factor]]))
+  } else {
+    outcome_fct <- as.factor(outcome_factor)
+  }
   training_mtrx <- caret::createDataPartition(outcome_fct, p = p,
                                               list = list, times = times)
   full_df <- as.data.frame(full_df)
@@ -109,6 +81,62 @@ create_partitions <- function(full_df, interesting_meta, outcome_factor = "condi
   return(retlist)
 }
 
+#' Given an n-dimensional matrix, try some KNN-esque clustering on it.
+#'
+#' I want some functions to help me understand clustering.  This is a
+#' first pass at that goal.
+#'
+#' @param mtrx Matrix to cluster, usually 2d from a point plot.
+#' @param resolution Used after cluster generation for making neighbor
+#'  groups.
+#' @param k Used during cluster generation.
+#' @param type Define the type of clustering to perform, currently
+#'  only KNN/SNN
+#' @param full Get the full set of metrics from bluster.
+#' @param merge_to Use the neighborhood collapse function to set a
+#'  hard ceiling on the number of clusters in the final result.
+generate_nn_groups <- function(mtrx, resolution = 1, k = 10, type = "snn",
+                                full = TRUE, merge_to = NULL, ...) {
+  params <- bluster::SNNGraphParam(k = k, ...)
+  if (type == "knn") {
+    params <- bluster::KNNGraphParam(k = k)
+  }
+  clusters <- bluster::clusterRows(mtrx, params, full = full)
+  merged <- NULL
+  groups <- as.factor(paste0("g", clusters$clusters))
+  message("After clustering, there are: ", length(levels(groups)), " groups.")
+  if (!is.null(merge_to)) {
+    merged <- bluster::mergeCommunities(clusters[["objects"]][["graph"]],
+                                        clusters[["clusters"]],
+                                        steps = merge_to)
+  }
+  merged_groups <- as.factor(paste0("m", merged))
+  message("After merging, there are: ", length(levels(merged_groups)), " groups.")
+
+  retlist <- list(
+    "clusters" = clusters,
+    "merged" = merged,
+    "start_groups" = groups,
+    "merged_groups" = merged_groups)
+  return(retlist)
+}
+
+#' Create a confusion matrix and ROC of a model against its training data. (and test data
+#' if the annotations are known)
+#'
+#' This assumes a set of partitions from create_partitions() which
+#' keeps the training metadata alongside the matrix of model
+#' variables.  When available, that function also keeps the known
+#' annotations of the testing data.  Given those annotations and the
+#' model created/tested from them, this runs confusionMatrix and ROC,
+#' collects the results, and provides them as a list.
+#'
+#' @param predictions Model created by train()
+#' @param datasets Set of training/testing partitions along with
+#'  associated metadata annotations.
+#' @param which Choose a paritiont to evaluate
+#' @param type Use the training or testing data?
+#' @export
 self_evaluate_model <- function(predictions, datasets, which = 1, type = "train") {
   stripped <- data.frame()
   idx <- numeric()

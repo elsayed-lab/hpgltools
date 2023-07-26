@@ -119,8 +119,8 @@ plot_libsize_prepost <- function(expt, low_limit = 2, filter = TRUE, ...) {
   start_tab[["alpha"]] <- ggplot2::alpha(start_tab[["colors"]], 0.75)
   ## Get the number of low genes in each sample.
   start_tab[["low"]] <- lt_min_start
-  start_tab[["sub_low"]] <- ""
-  start_tab[["subtraction"]] <- ""
+  start_tab[["sub_low"]] <- 0
+  start_tab[["subtraction"]] <- 0
   start_tab[["subtraction_string"]] <- ""
 
   ## Get the number of counts after filtering.
@@ -132,11 +132,14 @@ plot_libsize_prepost <- function(expt, low_limit = 2, filter = TRUE, ...) {
   end_tab[["subtraction"]] <- subtract_count_sums
   ## Get the number of genes after filtering.
   end_tab[["low"]] <- lt_min_end
-  end_tab[["sub_low"]] <- ""
+  end_tab[["sub_low"]] <- 0
   end_tab[["subtraction_string"]] <- ""
 
   ## Get the number of genes lost from filtering.
   subtract_gene_sums <- start_tab[["low"]] - end_tab[["low"]]
+  undef <- is.na(subtract_gene_subs)
+  ## When this comes up NA, just use the original number.
+  subtract_gene_sums[undef] <- start_tab[undef, "low"]
   start_tab[["sub_low"]] <- subtract_gene_sums
   start_tab[["subtraction_string"]] <- paste0(subtract_count_sums, " counts from ",
                                               subtract_gene_sums, " genes.")
@@ -177,6 +180,7 @@ labeled by counts/genes removed.")
     "table" = all_tab,
     "count_plot" = count_columns,
     "lowgene_plot" = low_columns)
+  class(retlist) <- "prepost_filter"
   return(retlist)
 }
 

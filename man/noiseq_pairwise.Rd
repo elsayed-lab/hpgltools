@@ -36,3 +36,6 @@ List similar to deseq_pairwise/edger_pairwise/etc.
 \description{
 Perform pairwise comparisons using noiseq.
 }
+\seealso{
+DOI:10.1093/nar/gkv711
+}

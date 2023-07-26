@@ -35,3 +35,6 @@ deseq_lrt(
 \description{
 This function hopes to wrap up some of the ideas/methods for LRT.
 }
+\seealso{
+DOI:10.1186/s13059-014-0550-8
+}

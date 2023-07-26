@@ -1707,6 +1707,8 @@ read_metadata <- function(file, ...) {
 semantic_expt_filter <- function(input, invert = FALSE, topn = NULL,
                                  semantic = c("mucin", "sialidase", "RHS", "MASP", "DGF", "GP63"),
                                  semantic_column = "description") {
+  print("TESTME:")
+  print(dim(exprs(input)))
   mtrx <- exprs(input)
   annots <- fData(input)
   if (isTRUE(invert)) {
@@ -1769,6 +1771,8 @@ semantic_expt_filter <- function(input, invert = FALSE, topn = NULL,
   new_libsizes <- colSums(exprs(new_expressionset))
   input[["expressionset"]] <- new_expressionset
   input[["libsize"]] <- new_libsizes
+  print("TESTME END:")
+  print(dim(exprs(input)))
   return(input)
 }
 

@@ -87,4 +87,5 @@ Creates the set of all possible contrasts and performs them using voom/limma.
 }
 \seealso{
 [limma] [Biobase] [deseq_pairwise()] [edger_pairwise()] [basic_pairwise()]
+ DOI:10.1101/2023.03.17.533005
 }

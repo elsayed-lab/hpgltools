@@ -44,6 +44,7 @@
 #'  pairwise_comparisons = The result from eBayes()
 #'  limma_result = The result from calling write_limma()
 #' @seealso [limma] [Biobase] [deseq_pairwise()] [edger_pairwise()] [basic_pairwise()]
+#'  DOI:10.1101/2023.03.17.533005
 #' @examples
 #' \dontrun{
 #'  pretend <- limma_pairwise(expt)

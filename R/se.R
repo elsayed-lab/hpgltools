@@ -22,6 +22,7 @@
 #' @param tx_gene_map When using tximport, use this to convert from transcripts to genes.
 #' @param ... Extra options.
 #' @importFrom SummarizedExperiment SummarizedExperiment metadata<- assays
+#' @seealso [summarizedExperiment]
 #' @export
 create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
                       sanitize_rownames = FALSE, sample_colors = NULL, title = NULL,

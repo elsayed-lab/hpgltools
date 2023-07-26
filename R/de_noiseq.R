@@ -17,6 +17,7 @@
 #' @param annot_df Extra annotations.
 #' @param ... Extra arguments.
 #' @return List similar to deseq_pairwise/edger_pairwise/etc.
+#' @seealso DOI:10.1093/nar/gkv711
 #' @export
 noiseq_pairwise <- function(input = NULL, conditions = NULL,
                             batches = NULL, model_cond = TRUE,

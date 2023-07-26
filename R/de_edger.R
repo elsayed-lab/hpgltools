@@ -45,6 +45,7 @@
 #'  I do this to avoid running into the limit on # of contrasts addressable by topTags()
 #'  all_tables = a list of tables for the contrasts performed.
 #' @seealso [edgeR] [deseq_pairwise()] [ebseq_pairwise()] [limma_pairwise()] [basic_pairwise()]
+#'  DOI:10.12688/f1000research.8987.2
 #' @examples
 #' \dontrun{
 #'  expt <- create_expt(metadata = "metadata.xlsx", gene_info = annotations)

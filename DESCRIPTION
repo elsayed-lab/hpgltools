@@ -111,6 +111,7 @@ Collate:
   'ontology_plots.R'
   'ontology_xlsx.R'
   'ontology_kegg.R'
+  'pcr.R'
   'peptides.R'
   'phylo.R'
   'plot_shared.R'

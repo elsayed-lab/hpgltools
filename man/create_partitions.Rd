@@ -10,13 +10,29 @@ create_partitions(
   outcome_factor = "condition",
   p = 0.6,
   list = FALSE,
-  times = 5,
-  outcome_column = "outcome_factor"
+  times = 5
 )
+}
+\arguments{
+\item{full_df}{Dataframe containing the measured data and relevant factors.}
+
+\item{interesting_meta}{Other metadata (maybe not needed)}
+
+\item{outcome_factor}{Name of the outcome column}
+
+\item{p}{Ratio to split trainer and testers.}
+
+\item{list}{Generate result as list or dataframe}
+
+\item{times}{How many times to iterate}
 }
 \description{
 This will also do some massaging of the data to make it easier to work with for
 downstream tasks.  Most notably, since I am mostly evaluating classifiers of
 clinical data to see how well they agree with extant annotations, I want to make sure
 the relevant columns are renamed in the testing sets.
+}
+\seealso{
+https://topepo.github.io/caret/data-splitting.html#simple-splitting-based-on-the-outcome
+  and https://github.com/compgenomr/book/blob/master/05-supervisedLearning.Rmd
 }

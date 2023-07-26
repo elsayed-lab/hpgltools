@@ -46,5 +46,6 @@ cyoa.
 }
 }
 \seealso{
-[Biobase]
+[Biobase] freebayes:DOI:10.48550/arXiv.1207.3907,
+ mpileup:DOI:10.1093/gigascience/giab008
 }

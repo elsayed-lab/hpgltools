@@ -294,6 +294,20 @@ Shapes are defined by ", batch_levels, ".")
   return(invisible(x))
 }
 
+#' Print a representation of the pre vs. post filtered data.
+#'
+#' @param x Result from plot_libsize_prepost().
+#' @export
+print.prepost_filter <- function(x) {
+  min_range <- min(x[["table"]][["sub_low"]], na.rm = TRUE)
+  max_range <- max(x[["table"]][["sub_low"]], na.rm = TRUE)
+  summary_string <- glue("A comparison of the counts before and after filtering.
+The number of genes with low coverage changes by {min_range}-{max_range} genes.")
+  message(summary_string)
+  plot(x[["lowgene_plot"]])
+  return(invisible(x))
+}
+
 #' Print a summary of the result from gather_preprocessing_metadata().
 #'
 #' @param x Result from gather_preprocessing_metadata()
@@ -309,6 +323,16 @@ The x-axis is PC", x[["x_pc"]], " and the y-axis is PC", x[["y_pc"]], "
 Colors are defined by ", color_levels, "
 Shapes are defined by ", batch_levels, ".")
   plot(x[["plot"]])
+  return(invisible(x))
+}
+
+#' Print a summary of the result from simple_proper().
+#'
+#' @param x list of results from simple_proper().
+#' @export
+print.proper_estimate <- function(x) {
+  message(x[[1]][["interpolated_text"]])
+  plot(x[[1]][["power_plot"]])
   return(invisible(x))
 }
 
@@ -344,6 +368,49 @@ print.sig_genes <- function(x) {
 #' @export
 print.sig_intersect <- function(x) {
   message("A set of genes deemed significant by multiple methods.")
+  return(invisible(x))
+}
+
+#' Print some information about the result of snp_intersections().
+#'
+#' @param x list of results from snp_intersections().
+#' @export
+print.snp_intersections <- function(x) {
+  summary_string <- glue("The combinations of variants, \\
+chromosomes, and genes which are unique to every factor
+and combination of factors in the data.")
+  ## TODO: Decide on something useful to provide here.
+  message(summary_string)
+  return(invisible(x))
+}
+
+#' Print the result of get_snp_sets().
+#'
+#' @param x list of results from get_snp_sets().
+#' @export
+print.snp_sets <- function(x) {
+  summary_string <- glue("A set of variants observed when cross referencing all variants against
+the samples associated with each metadata factor: {x[['factor']]}.  {ncol(x[['values']])}
+categories and {nrow(x[['values']])} variants were observed with {length(x[['intersections']])}
+combinations among them.  {length(x[['chr_data']])} chromosomes/scaffolds were observed with a
+density of variants ranging from {min(x[['density']])} to {max(x[['density']])}.")
+  message(summary_string)
+  return(invisible(x))
+}
+
+#' Print the result of snps_vs_genes().
+#'
+#' @param x list of results from snps_vs_genes().
+#' @export
+print.snps_genes <- function(x) {
+  gt_zero <- sum(x[["count_by_gene"]] > 0)
+  most_num <- max(x[["count_by_gene"]])
+  most_idx <- x[["count_by_gene"]] == most_num
+  most_name <- names(x[["count_by_gene"]])[most_idx]
+  summary_string <- glue("When the variants observed were cross referenced against annotated genes,
+{gt_zero} genes were observed with at least 1 variant.  {most_name} had the most variants, with
+{most_num}.")
+  message(summary_string)
   return(invisible(x))
 }
 

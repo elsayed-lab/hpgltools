@@ -15,6 +15,7 @@ default_proper(
   alpha = 0.1,
   stratify = "expr",
   target = "lfc",
+  add_coverage = TRUE,
   filter = "none",
   delta = 0.5
 )
@@ -59,5 +60,5 @@ and warrants further discussion/analysis.  This function invokes PROPER
 exactly as it was performed in their paper.
 }
 \seealso{
-[PROPER]
+[PROPER] DOI:10.1093/bioinformatics/btu640
 }

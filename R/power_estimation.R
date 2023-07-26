@@ -23,10 +23,10 @@
 #' @param filter Apply a filter?
 #' @param delta Not epsilon! (E.g. I forget what this does).
 #' @return List containing the various results and plots from proper.
-#' @seealso [PROPER]
+#' @seealso [PROPER] DOI:10.1093/bioinformatics/btu640
 default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20,
                            reps = c(3, 5, 7, 10), de_method = "edger", alpha_type = "fdr",
-                           alpha = 0.1, stratify = "expr", target = "lfc",
+                           alpha = 0.1, stratify = "expr", target = "lfc", add_coverage = TRUE,
                            filter = "none", delta = 0.5) {
   DEmethod <- "edgeR"
   if (de_method == "edger") {
@@ -41,10 +41,10 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
   ds <- c(experiment)
   loaded <- data(list = ds, package = "PROPER")
   simulation_options <- PROPER::RNAseq.SimOptions.2grp(
-                                    ngenes = genes,
-                                    p.DE = p,
-                                    lOD = experiment,
-                                    lBaselineExpr = experiment)
+    ngenes = genes,
+    p.DE = p,
+    lOD = experiment,
+    lBaselineExpr = experiment)
   simulation_result <- PROPER::runSims(Nreps = reps,
                                        sim.opts = simulation_options,
                                        DEmethod = DEmethod,
@@ -108,19 +108,24 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
   poweralpha_plot <- grDevices::recordPlot()
   dev.off()
   file.remove(tmp_file)
-
+  grant_text <- glue("Assume the transcriptome mean and variation profiles are similar to those from mouse
+striatum cells in previous studies, and the magnitude of true differential expression is similar
+to the level observed between two strains of mice. If we expect to identify 80% of DE genes
+whose log fold change is beyond 0.5, when the sequencing depth is at 5-million and FDR is
+controlled at 0.2, we need to have at least 5 samples in each treatment group.")
   power_table <- PROPER::power.seqDepth(simResult = simulation_result, powerOutput = powers)
   retlist <- list(
-      "options" = simulation_options,
-      "simulation" = simulation_result,
-      "powers" = powers,
-      "power_plot" = power_plot,
-      "powertd_plot" = powertd_plot,
-      "powerfd_plot" = powerfd_plot,
-      "fdcost_plot" = fdcost_plot,
-      "powerhist_plot" = powerhist_plot,
-      "poweralpha_plot" = poweralpha_plot,
-      "power_table" = power_table)
+    "options" = simulation_options,
+    "simulation" = simulation_result,
+    "powers" = powers,
+    "power_plot" = power_plot,
+    "powertd_plot" = powertd_plot,
+    "powerfd_plot" = powerfd_plot,
+    "fdcost_plot" = fdcost_plot,
+    "powerhist_plot" = powerhist_plot,
+    "poweralpha_plot" = poweralpha_plot,
+    "power_table" = power_table,
+    "grant_text" = grant_text)
   return(retlist)
 }
 
@@ -151,12 +156,13 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
 #' @param filter Apply a filter?
 #' @param delta Not epsilon! (E.g. I forget what this does).
 #' @return List containin the various tables and plots returned by PROPER.
-#' @seealso [PROPER]
+#' @seealso [PROPER] DOI:10.1093/bioinformatics/btu640
 #' @export
 simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20,
                           reps = c(3, 5, 7, 10), de_method = "edger", alpha_type = "fdr",
                           alpha = 0.1, stratify = "expr", target = "lfc", mean_or_median = "mean",
-                          filter = "none", delta = 0.5) {
+                          filter = "none", delta = 1.0, add_coverage = TRUE, target_power = 0.8,
+                          mean_gene_length = 2000, nt_per_read = 200, describe_samples = 5) {
   DEmethod <- "edgeR"
   if (de_method == "edger") {
     DEmethod <- "edgeR"
@@ -167,14 +173,24 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
   }
   exprs_mtrx <- exprs(de_tables[["input"]][["input"]])
   genes <- nrow(de_tables[["data"]][[1]])
-  contrasts <- names(de_tables[["input"]][["edger"]][["all_tables"]])
+  contrasts <- as.character(de_tables[["table_names"]])
   result_list <- list()
   ## For the moment this will hard-assume edger, but should be trivially changed for the others.
   count <- 0
-  for (c in contrasts) {
-    datum <- de_tables[["input"]][["edger"]]
+  for (con in contrasts) {
+    short <- gsub(x = con, pattern = "-inverted$", replacement = "")
+    invert_con <- short
+    used <- short
+    if (isTRUE(invertedp)) {
+      invert_con <- gsub(x = short, pattern = "^(\\w+)_vs_(\\w+)", replacement = "\\2_vs_\\1")
+    }
+    datum <- de_tables[["input"]][[de_method]]
     count <- count + 1
-    samples <- datum[["contrast_list"]][[c]]
+    samples <- datum[["contrast_list"]][[short]]
+    if (is.null(samples)) {
+      used <- invert_con
+      samples <- datum[["contrast_list"]][[invert_con]]
+    }
     model <- datum[["model"]]
     used_levels_idx <- samples != 0
     used_levels <- rownames(samples)[used_levels_idx]
@@ -203,15 +219,22 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
       }
     }
 
-    message("Working on contrast ", count, ": ", c, ".")
+    message("Working on contrast ", count, ": ", con, ".")
     simulation_options <- list(
-        "ngenes" = genes,
-        "p.DE" = p,
-        "lBaselineExpr" = datum[["lrt"]][[c]][["AveLogCPM"]],
-        "lOD" = log2(datum[["lrt"]][[c]][["dispersion"]]),
-        "lfc" = datum[["all_tables"]][[c]][["logFC"]],
-        "sim.seed" = 1,
-        "design" = "2grp")
+      "ngenes" = genes,
+      "p.DE" = p,
+      "sim.seed" = as.numeric(Sys.time()),
+      "design" = "2grp")
+    if (de_method == "edger") {
+      simulation_options[["lBaselineExpr"]] <- datum[["lrt"]][[used]][["AveLogCPM"]]
+      simulation_options[["lOD"]] = log2(datum[["lrt"]][[used]][["dispersion"]])
+      simulation_options[["lfc"]] = datum[["all_tables"]][[used]][["logFC"]]
+    } else {
+      simulation_options[["lBaselineExpr"]] = datum[["all_tables"]][[used]][["baseMean"]]
+      simulation_options[["lOD"]] = datum[["all_tables"]][[used]][["lfcSE"]]
+      simulation_options[["lfc"]] = datum[["all_tables"]][[used]][["logFC"]]
+    }
+
     simulation_result <- my_runsims(Nreps = reps,
                                     sim.opts = simulation_options,
                                     DEmethod = DEmethod,
@@ -228,70 +251,124 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     PROPER::plotPower(powers)
-    abline(v = x_intercept)
+    if (isTRUE(add_coverage)) {
+      abline(v = x_intercept)
+    }
     power_plot <- grDevices::recordPlot()
-    dev.off()
-    file.remove(tmp_file)
+    off <- dev.off()
+    removed <- file.remove(tmp_file)
 
     tmp_file <- tempfile(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     PROPER::plotPowerTD(powers)
-    abline(v = x_intercept)
+    if (isTRUE(add_coverage)) {
+      abline(v = x_intercept)
+    }
     powertd_plot <- grDevices::recordPlot()
-    dev.off()
-    file.remove(tmp_file)
+    off <- dev.off()
+    removed <- file.remove(tmp_file)
 
     tmp_file <- tempfile(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     PROPER::plotPowerFD(powers)
-    abline(v = x_intercept)
+    if (isTRUE(add_coverage)) {
+      abline(v = x_intercept)
+    }
     powerfd_plot <- grDevices::recordPlot()
-    dev.off()
-    file.remove(tmp_file)
+    off <- dev.off()
+    removed <- file.remove(tmp_file)
 
     tmp_file <- tempfile(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     PROPER::plotFDcost(powers)
-    abline(v = x_intercept)
+    if (isTRUE(add_coverage)) {
+      abline(v = x_intercept)
+    }
     fdcost_plot <- grDevices::recordPlot()
-    dev.off()
-    file.remove(tmp_file)
+    off <- dev.off()
+    removed <- file.remove(tmp_file)
 
     tmp_file <- tempfile(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     PROPER::plotPowerHist(powerOutput = powers, simResult = simulation_result)
-    abline(v = x_intercept)
+    if (isTRUE(add_coverage)) {
+      abline(v = x_intercept)
+    }
     powerhist_plot <- grDevices::recordPlot()
-    dev.off()
-    file.remove(tmp_file)
+    off <- dev.off()
+    removed <- file.remove(tmp_file)
 
     tmp_file <- tempfile(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     PROPER::plotPowerAlpha(powers)
-    abline(v = x_intercept)
+    if (isTRUE(add_coverage)) {
+      abline(v = x_intercept)
+    }
     poweralpha_plot <- grDevices::recordPlot()
-    dev.off()
-    file.remove(tmp_file)
+    off <- dev.off()
+    removed <- file.remove(tmp_file)
 
+    ## Stealing from plotPower to get the relevant cutoffs
+    nsims = dim(powers[["power"]])[3]
+    observed_power = apply(powers[["power"]], c(1, 2), mean, na.rm = TRUE)
+    power_se = apply(powers[["power"]], c(1, 2), sd, na.rm = TRUE) / sqrt(nsims)
+    ix.na = apply(observed_power, 1, function(x) all(is.na(x)))
+    observed_power = observed_power[!ix.na, ]
+    power_se = power_se[!ix.na, ]
+    strata = levels(cut(0, powers[["strata"]]))
+    strata = strata[!ix.na]
+
+    chosen_replicate_column <- which(reps == describe_samples)
+    chosen_replicates_first_gt <- which(observed_power[, chosen_replicate_column] >=
+                                          target_power)[1]
+    chosen_rep_stratum <- strata[chosen_replicates_first_gt]
+    max_required_coverage <- gsub(x = chosen_rep_stratum,
+                                  pattern = "^.*,(\\d+)\\]$", replacement = "\\1")
+    assumed_gene_sum <- mean_gene_length * genes
+    assumed_reads_for_coverage <- (assumed_gene_sum / nt_per_read) *
+      as.numeric(max_coverage)
+
+    interpolated_text <- glue("  Assuming similar expression patterns and variance to the
+provided experiment, comparing {used}, and a FDR
+cutoff of {p}, simulations by PROPER (DOI:10.1093/bioinformatics/btu640)
+suggest that it should be possible to identify {pct}% of DE genes with a |log2FC| >= {delta}
+when the sequencing depth is in the range of {chosen_rep_stratum} using {describe_samples}
+replicates in each group.
+
+  Assuming the {genes} genes used have a mean length of {mean_gene_length} and the sequencing run
+produces {nt_per_read}nt per read, ~{prettyNum(assumed_reads_for_coverage, big.mark=',')} \\
+reads will be required per sample to
+approach {max_required_coverage} reads per gene.")
+
+    ## TODO: Add some interpolation of the actual results here.
+    grant_text <- "Assume the transcriptome mean and variation profiles are similar to those
+from mouse striatum cells in previous studies, and the magnitude of true differential
+expression is similar to the level observed between two strains of mice. If we expect to
+identify 80% of DE genes whose log fold change is beyond 0.5, when the sequencing depth is
+at 5-million and FDR is controlled at 0.2, we need to have at least 5 samples in each
+treatment group."
     power_table <- PROPER::power.seqDepth(simResult = simulation_result, powerOutput = powers)
     retlist <- list(
-        "options" = simulation_options,
-        "simulation" = simulation_result,
-        "powers" = powers,
-        "power_plot" = power_plot,
-        "powertd_plot" = powertd_plot,
-        "powerfd_plot" = powerfd_plot,
-        "fdcost_plot" = fdcost_plot,
-        "powerhist_plot" = powerhist_plot,
-        "poweralpha_plot" = poweralpha_plot,
-        "power_table" = power_table)
-    result_list[[c]] <- retlist
+      "options" = simulation_options,
+      "simulation" = simulation_result,
+      "powers" = powers,
+      "power_plot" = power_plot,
+      "powertd_plot" = powertd_plot,
+      "powerfd_plot" = powerfd_plot,
+      "fdcost_plot" = fdcost_plot,
+      "powerhist_plot" = powerhist_plot,
+      "poweralpha_plot" = poweralpha_plot,
+      "power_table" = power_table,
+      "grant_text" = grant_text,
+      "interpolated_text" = interpolated_text)
+    result_list[[used]] <- retlist
   }
+  class(result_list) <- "proper_estimate"
   return(result_list)
 }
 
@@ -377,13 +454,13 @@ my_runsims <- function (Nreps = c(3, 5, 7, 10), Nreps2, nsims = 100, sim.opts,
     }
   }
   retlist <- list(
-      "pvalue" = pvalue,
-      "fdrs" = fdrs,
-      "xbar" = xbar,
-      "DEid" = DEids,
-      "lfcs" = lfcs,
-      "Nreps1" = Nreps,
-      "Nreps2" = Nreps2,
-      "sim.opts" = sim.opts)
+    "pvalue" = pvalue,
+    "fdrs" = fdrs,
+    "xbar" = xbar,
+    "DEid" = DEids,
+    "lfcs" = lfcs,
+    "Nreps1" = Nreps,
+    "Nreps2" = Nreps2,
+    "sim.opts" = sim.opts)
   return(retlist)
 }

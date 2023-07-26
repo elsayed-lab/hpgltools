@@ -15,6 +15,7 @@
 #' @param cutoff Significance cutoff
 #' @param minc Minimum number of elements for a group
 #' @param interaction Use an interaction model?
+#' @seealso DOI:10.1186/s13059-014-0550-8
 #' @export
 deseq_lrt <- function(expt, interactor_column = "visitnumber",
                       interest_column = "clinicaloutcome", transform = "rlog",
@@ -175,6 +176,7 @@ deseq_pairwise <- function(...) {
 #'  coefficients = list of coefficients making the contrasts
 #'  all_tables = list of DE tables
 #' @seealso [DESeq2] [basic_pairwise()] [limma_pairwise()] [edger_pairwise()] [ebseq_pairwise()]
+#'  DOI:10.1186/s13059-014-0550-8.
 #' @examples
 #' \dontrun{
 #'  pretend = deseq2_pairwise(data, conditions, batches)

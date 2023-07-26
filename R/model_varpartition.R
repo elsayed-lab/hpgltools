@@ -53,7 +53,7 @@ replot_varpart_percent <- function(varpart_output, n = 30, column = NULL, decrea
 #' @param mixed Used a mixed model?
 #' @param modify_expt Add annotation columns with the variance/factor?
 #' @return List of plots and variance data frames
-#' @seealso [variancePartition]
+#' @seealso [variancePartition] DOI:10.1186/s12859-016-1323-z.
 #' @export
 simple_varpart <- function(expt, predictor = NULL, factors = c("condition", "batch"),
                            chosen_factor = "batch", do_fit = FALSE, cor_gene = 1,
