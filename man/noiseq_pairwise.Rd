@@ -11,6 +11,14 @@ noiseq_pairwise(
   model_cond = TRUE,
   model_batch = TRUE,
   annot_df = NULL,
+  k = 0.5,
+  norm = "rpkm",
+  factor = "condition",
+  lc = 1,
+  r = 20,
+  adj = 1.5,
+  a0per = 0.9,
+  filter = 1,
   ...
 )
 }

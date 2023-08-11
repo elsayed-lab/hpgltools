@@ -83,6 +83,9 @@ simple_varpart <- function(expt, predictor = NULL, factors = c("condition", "bat
     ## multi <- BiocParallel::MulticoreParam()
   }
   design <- pData(expt)
+  #for (f in factors) {
+  #  design[[f]] <- as.factor(design[[f]])
+  #}
   num_batches <- length(levels(as.factor(design[[chosen_factor]])))
   if (num_batches == 1) {
     message("varpart sees only 1 batch, adjusting the model accordingly.")
@@ -103,7 +106,11 @@ simple_varpart <- function(expt, predictor = NULL, factors = c("condition", "bat
     }
   }
   model_string <- gsub(pattern = "\\+ $", replacement = "", x = model_string)
-  mesg("Attempting mixed linear model with: ", model_string)
+  if (isTRUE(mixed)) {
+    mesg("Attempting mixed linear model with: ", model_string)
+  } else {
+    mesg("Attempting regular linear model with: ", model_string)
+  }
   my_model <- as.formula(model_string)
   norm <- sm(normalize_expt(expt, filter = "simple"))
   data <- exprs(norm)
@@ -130,6 +137,15 @@ which are shared among multiple samples.")
   if (is.null(predictor)) {
     chosen_column <- factors[[1]]
     mesg("Placing factor: ", chosen_column, " at the beginning of the model.")
+  }
+
+  ## A new dataset has some NAs!
+  na_idx <- is.na(my_extract)
+  if (sum(na_idx) > 0) {
+    warning("There are ", sum(na_idx), " NAs in this data, something may be wrong.")
+    message("There are ", sum(na_idx), " NAs in this data, something may be wrong.")
+    message("Converting NAs to 0.")
+    my_extract[na_idx] <- 0
   }
 
   my_sorted <- sortCols(my_extract)

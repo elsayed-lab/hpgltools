@@ -6,14 +6,15 @@
 \usage{
 extract_de_plots(
   pairwise,
-  combined,
-  type = "edger",
+  combined = NULL,
+  type = NULL,
   invert = FALSE,
   invert_colors = c(),
   numerator = NULL,
   denominator = NULL,
   alpha = 0.4,
   z = 1.5,
+  n = NULL,
   logfc = 1,
   pval = 0.05,
   found_table = NULL,

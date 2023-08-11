@@ -178,6 +178,7 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
   ## For the moment this will hard-assume edger, but should be trivially changed for the others.
   count <- 0
   for (con in contrasts) {
+    invertedp <- grepl(x = con, pattern = "-inverted$")
     short <- gsub(x = con, pattern = "-inverted$", replacement = "")
     invert_con <- short
     used <- short
@@ -330,8 +331,10 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     max_required_coverage <- gsub(x = chosen_rep_stratum,
                                   pattern = "^.*,(\\d+)\\]$", replacement = "\\1")
     assumed_gene_sum <- mean_gene_length * genes
+    max_coverage <- max(sample_coverages)
     assumed_reads_for_coverage <- (assumed_gene_sum / nt_per_read) *
       as.numeric(max_coverage)
+    pct <- target_power * 100.0
 
     interpolated_text <- glue("  Assuming similar expression patterns and variance to the
 provided experiment, comparing {used}, and a FDR

@@ -48,10 +48,9 @@ rmd_file <- "c-03_fission_differential_expression.Rmd"
 
 # Example hpgltool usage with a real data set (fission)
 
-This document aims to provide further examples in how to use the hpgltools.
-
-Note to self, the header has rmarkdown::pdf_document instead of html_document or html_vignette
-because it gets some bullcrap error 'margins too large'...
+This document aims to provide further examples in how to use the
+hpgltools in order to perform a set of differential expression
+analyses.
 
 ## Setting up
 
@@ -112,9 +111,8 @@ fission_expt <- create_expt(metadata = meta,
 
 # Some simple differential expression analyses
 
-Travis wisely imposes a limit on the amount of time for building vignettes.
-My tools by default will attempt all possible pairwise comparisons, which takes a long time.
-Therefore I am going to take a subset of the data and limit these comparisons to that.
+My tools by default attempt all possible pairwise comparisons, this
+can take a long time.
 
 ```{r simple_subset}
 fun_data <- subset_expt(fission_expt,
@@ -126,8 +124,14 @@ fun_norm <- sm(normalize_expt(fun_filt, batch = "limma", norm = "quant",
 
 ## Try using limma first
 
+The following block will perform all pairwise comparisons of the
+fission dataset using limma.  If one were to add the model_batch
+argument, the statistical model could include a known batch effect or
+estimates from SVA.  If one wishes to use combat modified data, then
+one must use a normalize function to modify the counts with combat.
+
 ```{r simple_limma}
-limma_comparison <- sm(limma_pairwise(fun_data))
+limma_comparison <- limma_pairwise(fun_filt)
 names(limma_comparison[["all_tables"]])
 summary(limma_comparison[["all_tables"]][["wt30_vs_wt120"]])
 scatter_wt_mut <- extract_coefficient_scatter(limma_comparison, type = "limma",
@@ -142,62 +146,108 @@ ma_wt_mut[["volcano"]][["plot"]]
 
 ## Then DESeq2
 
+deseq2_pairwise() invokes DESeq2 in as an identical fashion as
+possible to how limma was run previously.  Note, I commented out the
+extract_de_plots() call because I changed it so that, for the moment,
+it only works when using combine_de_tables().  This is something I
+intend to change soon.
+
 ```{r simple_deseq2}
-deseq_comparison <- sm(deseq2_pairwise(fun_data))
+deseq_comparison <- deseq2_pairwise(fun_filt)
 summary(deseq_comparison[["all_tables"]][["wt30_vs_wt120"]])
 scatter_wt_mut <- extract_coefficient_scatter(deseq_comparison, type = "deseq",
-                                              x = "wt30", y = "wt120", gvis_filename = NULL)
+                                              x = "wt30", y = "wt120")
 scatter_wt_mut[["scatter"]]
-plots_wt_mut <- extract_de_plots(deseq_comparison, type = "deseq")
-plots_wt_mut[["ma"]][["plot"]]
-plots_wt_mut[["volcano"]][["plot"]]
+#plots_wt_mut <- extract_de_plots(deseq_comparison, type = "deseq")
+#plots_wt_mut[["ma"]][["plot"]]
+#plots_wt_mut[["volcano"]][["plot"]]
 ```
 
 ## EdgeR
 
+edger_pairwise(), as I suspect you already guessed, does the same
+process using EdgeR.  This time I made explicit the model_batch
+parameter.  It is also worth noting that I am feeding these programs
+the filtered expression data.  This is not required, but will
+generally help the fidelity of the result.  One may also filter the
+data at runtime via the 'filter' argument to *_pairwise().
+
 ```{r simple_edger1}
-edger_comparison <- sm(edger_pairwise(fun_data, model_batch = TRUE))
-plots_wt_mut <- extract_de_plots(edger_comparison, type = "edger")
+edger_comparison <- edger_pairwise(fun_filt, model_batch = TRUE)
+#plots_wt_mut <- extract_de_plots(edger_comparison, type = "edger")
 scatter_wt_mut <- extract_coefficient_scatter(edger_comparison, type = "edger",
-                                              x = "wt30", y = "wt120", gvis_filename = NULL)
+                                              x = "wt30", y = "wt120")
 scatter_wt_mut[["scatter"]]
-plots_wt_mut[["ma"]][["plot"]]
-plots_wt_mut[["volcano"]][["plot"]]
+#plots_wt_mut[["ma"]][["plot"]]
+#plots_wt_mut[["volcano"]][["plot"]]
 ```
 
 ## EBSeq
 
-```{r simple_edger2
-ebseq_comparison <- sm(ebseq_pairwise(fun_data))
+EBSeq is a bit of an outlier method.  It is a purely Bayesian method
+and makes some peculiar decisions with respect to how it handles the
+inputs.  In addition, it is _much_ slower for larger datasets and is
+therefore automatically disabled when there are more than a few
+contrasts in a dataset.
+
+```{r simple_ebseq, eval=FALSE}
+ebseq_comparison <- ebseq_pairwise(fun_filt)
 head(ebseq_comparison$all_tables[[1]])
 ```
 
-## My stupid basic comparison
+## My basic comparison
+
+basic_pairwise() is also an outlier method.  It explicitly does not
+perform any statistical operations on the data beyond a log2(cpm())
+subtraction of the data.  Thus, if another method agrees with this,
+the various normalizations, modelling, etc of that method had no
+effect on the result.
 
 ```{r simple_basic}
-basic_comparison <- sm(basic_pairwise(fun_data))
+basic_comparison <- basic_pairwise(fun_filt)
 summary(basic_comparison$all_tables$wt30_vs_wt120)
 scatter_wt_mut <- extract_coefficient_scatter(basic_comparison, type = "basic",
                                               x = "wt30", y = "wt120")
 scatter_wt_mut[["scatter"]]
-plots_wt_mut <- extract_de_plots(basic_comparison, type = "basic")
-plots_wt_mut[["ma"]][["plot"]]
-plots_wt_mut[["volcano"]][["plot"]]
+#plots_wt_mut <- extract_de_plots(basic_comparison, type = "basic")
+#plots_wt_mut[["ma"]][["plot"]]
+#plots_wt_mut[["volcano"]][["plot"]]
 ```
+
+# NoiSeq
+
+This is a new entrant to the hpgltools.  It has its own way of
+handling batches/surrogates.  As a result, it ignores the model_batch
+parameter.  Noiseq also prints a lot of random stuff to the user that
+(to my eyes) has no utility.  I am therefore wrapping it in the sm()
+function to silence it.
+
+```{r noiseq}
+noiseq_comparison <- sm(noiseq_pairwise(fun_filt))
+summary(noiseq_comparison$all_tables$wt30_vs_wt120)
+```
+
+# Dream
+
+This is another recent addition.  The authors of variancePartition
+showed in their last paper how one might include the variance
+estimates produced in order to supplement a statistical model.  In
+their paper, they used limma to implement these ideas; I assume that
+the way voom models variance is most appropriate for this method and
+so in my implementation did not change that aspect of it.
+dream_pairwise also ignores the model_batch parameter.
 
 ## Combine them all
 
 ```{r simple_all}
-all_comparisons <- sm(all_pairwise(fun_data, model_batch = TRUE, parallel = FALSE))
-all_combined <- sm(combine_de_tables(all_comparisons, excel = FALSE))
+all_comparisons <- all_pairwise(fun_data, model_batch = TRUE)
+all_comparisons
+all_combined <- combine_de_tables(all_comparisons, excel = "excel/wt30_vs_wt120.xlsx")
+all_combined
 
 save(file="de_table.rda", list="all_combined")
 devtools::load_all("~/hpgltools")
 slide_de_threshold(all_combined)
-
-head(all_combined$data[[1]], n = 3)
-sig_genes <- sm(extract_significant_genes(all_combined, excel = FALSE))
-head(sig_genes$limma$ups[[1]], n = 3)
 
 ## Here we see that edger and deseq agree the least:
 all_comparisons[["comparison"]][["comp"]]

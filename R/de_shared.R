@@ -65,8 +65,8 @@ all_pairwise <- function(input = NULL, conditions = NULL,
                          model_intercept = FALSE, extra_contrasts = NULL,
                          alt_model = NULL, libsize = NULL, test_pca = TRUE,
                          annot_df = NULL, parallel = TRUE,
-                         do_basic = TRUE, do_deseq = TRUE, do_ebseq = FALSE,
-                         do_edger = TRUE, do_limma = TRUE, do_noiseq = FALSE,
+                         do_basic = TRUE, do_deseq = TRUE, do_ebseq = TRUE,
+                         do_edger = TRUE, do_limma = TRUE, do_noiseq = TRUE,
                          do_dream = FALSE,
                          convert = "cpm", norm = "quant", verbose = TRUE,
                          surrogates = "be", ...) {
@@ -1306,6 +1306,11 @@ compare_de_tables <- function(first, second, fcx = "deseq_logfc", px = "deseq_ad
   merged <- merged[, kept_columns]
   colnames(merged) <- c("first_lfc", "first_p", "second_lfc", "second_p")
   scatter <- plot_linear_scatter(merged[, c("first_lfc", "second_lfc")])
+  class(scatter) <- "cross_table_comparison"
+  scatter[["first_table"]] <- first_table
+  scatter[["fcx_column"]] <- fcx
+  scatter[["fcy_column"]] <- fcy
+  scatter[["second_table"]] <- second_table
   return(scatter)
 }
 
@@ -1944,6 +1949,7 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
   ## We need to know the method used, because the values returned are not
   ## necessarily in the scale expected by IHW.
   if (is.null(type)) {
+    ## This little if statement is dumb.  FIXME.
     if (grepl(pattern = "^limma", x = pvalue_column)) {
       type <- "limma"
     } else if (grepl(pattern = "^deseq", x = pvalue_column)) {
@@ -1954,6 +1960,8 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
       type <- "basic"
     } else if (grepl(pattern = "^ebseq", x = pvalue_column)) {
       type <- "ebseq"
+    } else if (grepl(pattern = "^noiseq", x = pvalue_column)) {
+      type <- "noiseq"
     } else {
       stop("Unable to determine the type of pvalues in this data.")
     }
@@ -1971,6 +1979,9 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
   } else if (type == "basic") {
     tmp_table[["base10_median"]] <- 2 ^ ((tmp_table[["basic_num"]] + tmp_table[["basic_den"]]) / 2)
     mean_column <- "base10_median"
+  } else if (type == "noiseq") {
+    tmp_table[["base10_mean"]] <- 2 ^ ((tmp_table[["noiseq_num"]] + tmp_table[["noiseq_den"]]) / 2)
+    mean_column <- "base10_mean"
   }
 
   ## Add a hopefully unneccessary check that everything is numeric (which is currently not true

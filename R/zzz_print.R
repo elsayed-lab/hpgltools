@@ -116,6 +116,20 @@ print.combined_table <- function(x) {
   return(invisible(x))
 }
 
+#' Print a representation of compare_de_tables().
+#' Note I think I want to have that function return slightly different types
+#' depending on how the function call was set up.
+#'
+#' @param x Result from compare_de_tables().
+#' @export
+print.cross_table_comparison <- function(x) {
+  summary_string <- glue("Comparison of the {x[['fcx_column']]} vs {x[['fcy_column']]}
+of two DE tables.")
+  message(summary_string)
+  plot(x[["scatter"]])
+  return(invisible(x))
+}
+
 #' Print a summary of the result from plot_density().
 #'
 #' @param x The density plot and associated data in question.
@@ -358,7 +372,9 @@ print.sig_genes <- function(x) {
   message("The parameters defining significant were:")
   message(params)
   print(x[["summary_df"]])
-  plot(x[["sig_bar_plots"]][["deseq"]])
+  if (sum(rowSums(x[["summary_df"]])) > 0) {
+    plot(x[["sig_bar_plots"]][["deseq"]])
+  }
   return(invisible(x))
 }
 

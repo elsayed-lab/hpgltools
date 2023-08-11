@@ -7,13 +7,14 @@
 sanitize_metadata(
   meta,
   columns = NULL,
-  na_string = "notapplicable",
+  na_value = "notapplicable",
   lower = TRUE,
   punct = TRUE,
   factorize = "heuristic",
   max_levels = NULL,
   spaces = FALSE,
-  numbers = NULL
+  numbers = NULL,
+  numeric = FALSE
 )
 }
 \arguments{
@@ -21,8 +22,6 @@ sanitize_metadata(
 
 \item{columns}{Set of columns to check, if left NULL, all columns
 will be molested.}
-
-\item{na_string}{Fill NA values with a string.}
 
 \item{lower}{Set everything to lowercase?}
 
@@ -39,6 +38,8 @@ the heuristic, when NULL it is the number of samples / 6}
 \item{spaces}{Remove any spaces in this column?}
 
 \item{numbers}{Sanitize numbers by adding a prefix character to them?}
+
+\item{na_string}{Fill NA values with a string.}
 }
 \description{
 I wrote this function after spending a couple of hours confused

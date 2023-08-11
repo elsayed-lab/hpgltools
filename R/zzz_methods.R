@@ -316,11 +316,12 @@ setMethod(
   "extract_keepers", signature = signature(keepers = "character"),
   definition = function(extracted, keepers, table_names,
                         all_coefficients,
-                        limma, edger, ebseq, deseq, basic,
+                        limma, edger, ebseq, deseq, basic, noiseq,
                         adjp, annot_df,
                         include_deseq, include_edger,
                         include_ebseq, include_limma,
-                        include_basic, excludes, padj_type,
+                        include_basic, include_noiseq,
+                        excludes, padj_type,
                         fancy = FALSE, loess = FALSE,
                         lfc_cutoff = 1.0, p_cutoff = 0.05,
                         sheet_prefix = NULL, sheet_number = NULL,
@@ -346,11 +347,12 @@ setMethod(
     }
     extract_keepers(extracted, new_keepers, table_names,
                     all_coefficients,
-                    limma, edger, ebseq, deseq, basic,
+                    limma, edger, ebseq, deseq, basic, noiseq,
                     adjp, annot_df,
                     include_deseq, include_edger,
                     include_ebseq, include_limma,
-                    include_basic, excludes, padj_type,
+                    include_basic, include_noiseq,
+                    excludes, padj_type,
                     fancy = FALSE, loess = FALSE,
                     lfc_cutoff = 1.0, p_cutoff = 0.05,
                     sheet_prefix = NULL, sheet_number = NULL,
@@ -439,6 +441,21 @@ setMethod(
     iDAoutput <- iDA::iDA_core(object, ...)
     return(iDAoutput)
   })
+
+#setMethod(
+#  "overlap_groups", signature = signature(input_mtrx = "upset", sort = "logical"),
+#  definition = function(input_mtrx, sort = sort) {
+#    new_mtrx <- input_mtrx == 1
+#    overlap_groups(new_mtrx, sort = sort)
+#  })
+#
+#setMethod(
+#  "overlap_groups", signature = signature(input_mtrx = "list", sort = "logical"),
+#  definition = function(input_mtrx, sort = sort) {
+#    input_upset <- UpSetR::fromList(input_mtrx)
+#    new_mtrx <- input_upset == 1
+#    overlap_groups(new_mtrx, sort = sort)
+#  })
 
 setMethod(
   "normalizeData", signature = signature(expt = "expt"),
@@ -583,9 +600,14 @@ setMethod(
 #' @export
 setMethod(
   "plot_heatmap", signature = signature(expt_data = "data.frame"),
-  definition = function(expt_data, ...) {
+  definition = function(expt_data, expt_colors = NULL, expt_design = NULL,
+                        method = "pearson", expt_names = NULL, type = "correlation",
+                        batch_row = "batch", plot_title = NULL, label_chars = 10, ...) {
     expt_mtrx <- as.matrix(expt_data)
-    plot_heatmap(expt_mtrx, ...)
+    plot_heatmap(expt_mtrx, expt_colors = expt_colors, expt_design = expt_design,
+                 method = method, expt_names = expt_names, type = type,
+                 batch_row = batch_row, plot_title = plot_title,
+                 label_chars = label_chars, ...)
   })
 
 #' Run plot_heatmap with an ExpressionSet as input.
@@ -886,52 +908,52 @@ setMethod(
     set_expt_samplenames(object, value)
   })
 
-#' Metadata sanitizers for an expt
-#' @export
-setMethod(
-  "sanitize_metadata", signature = signature(meta = "expt"),
-  definition = function(meta, columns = NULL, na_string = "notapplicable",
-                        lower = TRUE, punct = TRUE, factorize = "heuristic",
-                        max_levels = NULL, spaces = FALSE, numbers = NULL) {
-    old_meta <- pData(meta)
-    new_meta <- sanitize_metadata(old_meta, columns = columns, na_string = na_string,
-                                  lower = lower, punct = punct,
-                                  factorize = factorize, max_levels = max_levels,
-                                  spaces = spaces, numbers = numbers)
-    pData(meta) <- new_meta
-    return(meta)
-  })
-
-#' Metadata sanitizers for an expressionset
-#' @export
-setMethod(
-  "sanitize_metadata", signature = signature(meta = "ExpressionSet"),
-  definition = function(meta, columns = NULL, na_string = "notapplicable",
-                        lower = TRUE, punct = TRUE, spaces = FALSE,
-                        numbers = NULL) {
-    old_meta <- pData(meta)
-    new_meta <- sanitize_metadata(old_meta, columns = columns, na_string = na_string,
-                                  lower = lower, punct = punct, spaces = spaces,
-                                  numbers = numbers)
-    pData(meta) <- new_meta
-    return(meta)
-  })
-
-#' Metadata sanitizers for a Summarized Experiment.
-#' @export
-setMethod(
-  "sanitize_metadata", signature = signature(meta = "SummarizedExperiment"),
-  definition = function(meta, columns = NULL, na_string = "notapplicable",
-                        lower = TRUE, punct = TRUE, factorize = "heuristic",
-                        max_levels = NULL, spaces = FALSE, numbers = NULL) {
-    old_meta <- pData(meta)
-    new_meta <- sanitize_metadata(old_meta, columns = columns, na_string = na_string,
-                                  lower = lower, punct = punct,
-                                  factorize = factorize, max_levels = max_levels,
-                                  spaces = spaces, numbers = numbers)
-    pData(meta) <- new_meta
-    return(meta)
-  })
+# #' Metadata sanitizers for an expt
+# #' @export
+#setMethod(
+#  "sanitize_metadata", signature = signature(meta = "expt"),
+#  definition = function(meta, columns = NULL, na_string = "notapplicable",
+#                        lower = TRUE, punct = TRUE, factorize = "heuristic",
+#                        max_levels = NULL, spaces = FALSE, numbers = NULL) {
+#    old_meta <- pData(meta)
+#    new_meta <- sanitize_metadata(old_meta, columns = columns, na_string = na_string,
+#                                  lower = lower, punct = punct,
+#                                  factorize = factorize, max_levels = max_levels,
+#                                  spaces = spaces, numbers = numbers)
+#    pData(meta) <- new_meta
+#    return(meta)
+#  })
+#
+# #' Metadata sanitizers for an expressionset
+# #' @export
+#setMethod(
+#  "sanitize_metadata", signature = signature(meta = "ExpressionSet"),
+#  definition = function(meta, columns = NULL, na_string = "notapplicable",
+#                        lower = TRUE, punct = TRUE, spaces = FALSE,
+#                        numbers = NULL) {
+#    old_meta <- pData(meta)
+#    new_meta <- sanitize_metadata(old_meta, columns = columns, na_string = na_string,
+#                                  lower = lower, punct = punct, spaces = spaces,
+#                                  numbers = numbers)
+#    pData(meta) <- new_meta
+#    return(meta)
+#  })
+#
+# #' Metadata sanitizers for a Summarized Experiment.
+# #' @export
+#setMethod(
+#  "sanitize_metadata", signature = signature(meta = "SummarizedExperiment"),
+#  definition = function(meta, columns = NULL, na_string = "notapplicable",
+#                        lower = TRUE, punct = TRUE, factorize = "heuristic",
+#                        max_levels = NULL, spaces = FALSE, numbers = NULL) {
+#    old_meta <- pData(meta)
+#    new_meta <- sanitize_metadata(old_meta, columns = columns, na_string = na_string,
+#                                  lower = lower, punct = punct,
+#                                  factorize = factorize, max_levels = max_levels,
+#                                  spaces = spaces, numbers = numbers)
+#    pData(meta) <- new_meta
+#    return(meta)
+#  })
 
 #' Extract the state of an expt vis a vis normalization.
 #' @export

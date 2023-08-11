@@ -4,7 +4,7 @@
 \alias{variance_expt}
 \title{Add some gene annotations based on the mean/variance in the data.}
 \usage{
-variance_expt(expt)
+variance_expt(expt, convert = "cpm", transform = "raw", norm = "raw")
 }
 \arguments{
 \item{expt}{Expressionset to which to add this information.}
@@ -14,5 +14,8 @@ Slightly modified gene annotations including the mean/variance.
 }
 \description{
 Why?  Maria Adelaida is interested in pulling the least-variant
-genes in our data, this seems like it might be generally applicable.
+genes in our data, this seems like it might be generally
+applicable.  Note, I made this slightly redundant by doing a cpm on
+the data; as a result the proportion and mean values are
+effectively identical.
 }

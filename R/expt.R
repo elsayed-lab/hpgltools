@@ -2604,23 +2604,40 @@ sum_eupath_exon_counts <- function(counts) {
 #' Add some gene annotations based on the mean/variance in the data.
 #'
 #' Why?  Maria Adelaida is interested in pulling the least-variant
-#' genes in our data, this seems like it might be generally applicable.
+#' genes in our data, this seems like it might be generally
+#' applicable.  Note, I made this slightly redundant by doing a cpm on
+#' the data; as a result the proportion and mean values are
+#' effectively identical.
 #'
 #' @param expt Expressionset to which to add this information.
 #' @return Slightly modified gene annotations including the mean/variance.
 #' @export
-variance_expt <- function(expt) {
-  df <- exprs(expt)
+variance_expt <- function(expt, convert = "cpm", transform = "raw", norm = "raw") {
+  start <- normalize_expt(expt, convert = convert,
+                          transform = transform, norm = norm)
+  df <- exprs(start)
+  na_idx <- is.na(df)
+  if (sum(na_idx) > 0) {
+    warning("There are ", sum(na_idx), " NAs in this data, removing them.")
+    message("There are ", sum(na_idx), " NAs in this data, removing them.")
+    df[na_idx] <- 0
+  }
+  raw_sum <- rowSums(exprs(expt))
+  raw_total <- sum(raw_sum)
+  sums <- rowSums(df)
+  total <- sum(sums)
   vars <- matrixStats::rowVars(df)
   sds <- matrixStats::rowSds(df)
   meds <- matrixStats::rowMedians(df)
   iqrs <- matrixStats::rowIQRs(df)
   mean <- rowMeans(df)
+  fData(expt)[["exprs_gene_prop"]] <- sums / total
+  fData(expt)[["exprs_gene_rawprop"]] <- raw_sum / raw_total
   fData(expt)[["exprs_gene_variance"]] <- vars
   fData(expt)[["exprs_gene_stdev"]] <- sds
   fData(expt)[["exprs_gene_mean"]] <- mean
   fData(expt)[["exprs_gene_median"]] <- meds
-  fData(expt)[["exprs_gene_interquart"]] <- iqrs
+  fData(expt)[["exprs_gene_iqrs"]] <- iqrs
   fData(expt)[["exprs_cv"]] <- sds / mean
   return(expt)
 }

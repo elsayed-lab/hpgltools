@@ -1431,9 +1431,34 @@ dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv"
 #'
 #' @param ... Arguments for sanitize_metadata().
 #' @export
-sanitize_expt_metadata <- function(...) {
-  sanitize_metadata(...)
+sanitize_expt_fData <- function(expt,
+                                columns = NULL, na_value = "notapplicable",
+                                lower = TRUE, punct = TRUE, factorize = "heuristic",
+                                max_levels = NULL, spaces = FALSE, numbers = NULL,
+                                numeric = FALSE) {
+  meta <- fData(expt)
+  sanitized <- sanitize_metadata(meta, columns = columns, na_value = na_value,
+                                 lower = lower, punct = punct, factorize = factorize,
+                                 max_levels = max_levels, spaces = spaces,
+                                 numbers = numbers, numeric = numeric)
+  fData(expt) <- sanitized
+  return(expt)
 }
+
+sanitize_expt_pData <- function(expt,
+                                columns = NULL, na_value = "notapplicable",
+                                lower = TRUE, punct = TRUE, factorize = "heuristic",
+                                max_levels = NULL, spaces = FALSE, numbers = NULL,
+                                numeric = FALSE) {
+  meta <- pData(expt)
+  sanitized <- sanitize_metadata(meta, columns = columns, na_value = na_value,
+                                 lower = lower, punct = punct, factorize = factorize,
+                                 max_levels = max_levels, spaces = spaces,
+                                 numbers = numbers, numeric = numeric)
+  pData(expt) <- sanitized
+  return(expt)
+}
+
 #' Given an expressionset, sanitize pData columns of interest.
 #'
 #' I wrote this function after spending a couple of hours confused
@@ -1459,9 +1484,10 @@ sanitize_expt_metadata <- function(...) {
 #' @param spaces Remove any spaces in this column?
 #' @param numbers Sanitize numbers by adding a prefix character to them?
 #' @export
-sanitize_metadata <- function(meta, columns = NULL, na_string = "notapplicable",
+sanitize_metadata <- function(meta, columns = NULL, na_value = "notapplicable",
                               lower = TRUE, punct = TRUE, factorize = "heuristic",
-                              max_levels = NULL, spaces = FALSE, numbers = NULL) {
+                              max_levels = NULL, spaces = FALSE, numbers = NULL,
+                              numeric = FALSE) {
   if (is.null(max_levels)) {
     max_levels <- nrow(meta) / 6.0
   }
@@ -1480,54 +1506,53 @@ sanitize_metadata <- function(meta, columns = NULL, na_string = "notapplicable",
     meta[[todo]] <- gsub(pattern = "^[[:space:]]", replacement = "", x = meta[[todo]])
     meta[[todo]] <- gsub(pattern = "[[:space:]]$", replacement = "", x = meta[[todo]])
     ## Set the column to lowercase, I have recently had a rash of mixed case sample sheet data.
-    if (isTRUE(lower)) {
-      mesg("Setting everything to lowercase.")
-      meta[[todo]] <- tolower(meta[[todo]])
-    }
-    ## I think punctuation needs to go
-    if (isTRUE(punct)) {
-      mesg("Removing punctuation.")
-      meta[[todo]] <- gsub(pattern = "[[:punct:]]", replacement = "", x = meta[[todo]])
-    }
-    if (!is.null(numbers)) {
-      if (isTRUE(numbers)) {
-        ## Use the first letter of the column name.
-        numbers <- gsub(x = todo, pattern = "^(\\w{1}).*$", replacement = "\\1")
+    if (isTRUE(numeric)) {
+      if (!is.null(na_value)) {
+        na_idx <- is.na(meta[[todo]])
+        meta[na_idx, todo] <- na_value
+        mesg("Setting numeric NAs to ", na_value, ".")
+        meta[[todo]] <- as.numeric(meta[[todo]])
       }
-      mesg("Adding a prefix to bare numbers.")
-      meta[[todo]] <- gsub(pattern = "^([[:digit:]]+)$",
-                           replacement = glue("{numbers}\\1"), x = meta[[todo]])
-    }
-    if (!is.null(na_string)) {
-      mesg("Setting NAs to ", na_string, ".")
-      na_idx <- is.na(meta[[todo]])
-      meta[na_idx, todo] <- na_string
-    }
-    ## Handle spaces after the previous changes.
-    if (isTRUE(spaces)) {
-      mesg("Removing all spaces.")
-      meta[[todo]] <- gsub(pattern = "[[:space:]]", replacement = "", x = meta[[todo]])
-    }
-    if (!is.null(factorize) &&
-          (length(factorize) == 1 && factorize[1] == "heuristic")) {
-      nlevels <- length(levels(as.factor(meta[[todo]])))
-      if (nlevels <= max_levels) {
-        mesg("Setting column ", todo, " to a factor.")
-        meta[[todo]] <- as.factor(meta[[todo]])
+    } else {
+      if (isTRUE(lower)) {
+        mesg("Setting everything to lowercase.")
+        meta[[todo]] <- tolower(meta[[todo]])
       }
-    }
-  } ## End iterating over the columns of interest
+      ## I think punctuation needs to go
+      if (isTRUE(punct)) {
+        mesg("Removing punctuation.")
+        meta[[todo]] <- gsub(pattern = "[[:punct:]]", replacement = "", x = meta[[todo]])
+      }
+      if (!is.null(numbers)) {
+        if (isTRUE(numbers)) {
+          ## Use the first letter of the column name.
+          numbers <- gsub(x = todo, pattern = "^(\\w{1}).*$", replacement = "\\1")
+        }
+        mesg("Adding a prefix to bare numbers.")
+        meta[[todo]] <- gsub(pattern = "^([[:digit:]]+)$",
+                             replacement = glue("{numbers}\\1"), x = meta[[todo]])
+      }
 
-  if (!is.null(factorize) &&
-        (length(factorize) > 1 || factorize[1] != "heuristic")) {
-    for (f in factorize) {
-      if (is.null(meta[[f]])) {
-        message("The column ", f, " does not appear in the metadata.")
-      } else {
-        meta[[f]] <- as.factor(meta[[f]])
+      if (!is.null(na_value)) {
+        na_idx <- is.na(meta[[todo]])
+        meta[na_idx, todo] <- na_value
+        mesg("Setting NAs to character/factor value ", na_value, ".")
       }
-    }
-  }
+      ## Handle spaces after the previous changes.
+      if (isTRUE(spaces)) {
+        mesg("Removing all spaces.")
+        meta[[todo]] <- gsub(pattern = "[[:space:]]", replacement = "", x = meta[[todo]])
+      }
+      if (!is.null(factorize) &&
+            (length(factorize) == 1 && factorize[1] == "heuristic")) {
+        nlevels <- length(levels(as.factor(meta[[todo]])))
+        if (nlevels <= max_levels) {
+          mesg("Setting column ", todo, " to a factor.")
+          meta[[todo]] <- as.factor(meta[[todo]])
+        }
+      }
+    } ## End checking if we are sanitizing numeric or other data.
+  } ## End iterating over the columns of interest
 
   return(meta)
 }

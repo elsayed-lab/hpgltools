@@ -49,7 +49,7 @@ Suggests:
 Imports:
   data.table, dplyr,
   foreach,
-  ggplot2, GenomicFeatures, glue, GSEABase,
+  ggplot2, GenomicFeatures, GSEABase,
   knitr,
   magrittr, methods,
   plotly,
@@ -57,7 +57,7 @@ Imports:
   shiny, sva,
   variancePartition
 Depends:
-  Biobase, SummarizedExperiment, S4Vectors
+  Biobase, SummarizedExperiment, S4Vectors, glue
 VignetteBuilder: knitr
 ByteCompile: true
 biocViews: DifferentialExpression

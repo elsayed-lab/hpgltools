@@ -22,6 +22,8 @@
 noiseq_pairwise <- function(input = NULL, conditions = NULL,
                             batches = NULL, model_cond = TRUE,
                             model_batch = TRUE, annot_df = NULL,
+                            k = 0.5, norm = "rpkm", factor = "condition",
+                            lc = 1, r = 20, adj = 1.5, a0per = 0.9, filter = 1,
                             ...) {
   arglist <- list(...)
 
@@ -81,7 +83,7 @@ noiseq_pairwise <- function(input = NULL, conditions = NULL,
     rename_col <- colnames(noiseq_result) == "log2FC"
     colnames(noiseq_result)[rename_col] <- "logFC"
     ## It looks to me like noiseq flips the logFC compared to other methods.
-    # noiseq_result[["logFC"]] <- -1.0 * noiseq_result[["logFC"]]
+    noiseq_result[["logFC"]] <- -1.0 * noiseq_result[["logFC"]]
     noiseq_result[["p"]] <- 1.0 - noiseq_result[["prob"]]
     noiseq_result[["adjp"]] <- p.adjust(noiseq_result[["p"]])
     result_list[[name]] <- noiseq_result

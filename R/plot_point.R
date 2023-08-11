@@ -363,6 +363,7 @@ plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FAL
     "first_mad" = first_mad,
     "second_median" = second_median,
     "second_mad" = second_mad)
+  class(plots) <- "linear_scatter"
   return(plots)
 }
 
