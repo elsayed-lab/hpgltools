@@ -20,11 +20,11 @@
 deseq_lrt <- function(expt, interactor_column = "visitnumber",
                       interest_column = "clinicaloutcome", transform = "rlog",
                       factors = NULL, cutoff = 0.05, minc = 3, interaction = TRUE) {
-  reduced_string <- glue::glue("~ {interest_column}")
-  full_string <- glue::glue("~ {interactor_column} + {interest_column}")
+  reduced_string <- glue("~ {interest_column}")
+  full_string <- glue("~ {interactor_column} + {interest_column}")
   if (isTRUE(interaction)) {
-    reduced_string <- glue::glue("~ {interactor_column} + {interest_column}")
-    full_string <- glue::glue("{full_string} + \\
+    reduced_string <- glue("~ {interactor_column} + {interest_column}")
+    full_string <- glue("{full_string} + \\
  {interactor_column}:{interest_column}")
   }
   full_model <- as.formula(full_string)
@@ -100,7 +100,6 @@ deseq_lrt <- function(expt, interactor_column = "visitnumber",
     rlog_matrix <- DESeq2::rlog(deseq_input)
   }
   clustering_amounts <- rlog_matrix[lrt_significant[["gene"]], ]
-
   cluster_data <- try(DEGreport::degPatterns(assay(clustering_amounts), metadata = col_data,
                                              time = interactor_column, col = interest_column,
                                              minc = minc))

@@ -87,16 +87,6 @@ test_that("Do we get expected features greater than some cutoffs?", {
   expect_equal(as.numeric(testing_100000[["number"]][1]), 5)
 })
 
-## Strange, in my last run of make test, this failed.  Running it interactively
-## provides no warnings nor errors.
-testing <- DESeq2::counts(make_exampledata())
-actual <- dim(testing)
-expected <- c(1000, 5)
-test_that("Do we get some example data from make_exampledata()?", {
-  expect_equal(actual[1], expected[1])
-  expect_equal(actual[2], expected[2])
-})
-
 ## median_by_factor()
 ## I changed the output of this function!
 medians <- median_by_factor(pombe_expt)[["medians"]]
@@ -155,6 +145,8 @@ test_that("Will an expt tell us what happened to it?", {
   expect_equal(expected, actual)
 })
 
+## Using aes(size) to define line width is deprecated now; I will need to
+## hunt for the function(s) doing this.
 testing <- write_expt(pombe_expt, excel = "testing_write_expt.xlsx")
 test_that("Did write_expt() work?", {
   expect_true(file.exists("testing_write_expt.xlsx"))

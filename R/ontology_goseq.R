@@ -297,13 +297,10 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
                          length_keytype = "transcripts", go_keytype = "entrezid",
                          goseq_method = "Wallenius", padjust_method = "BH",
                          expand_categories = TRUE, excel = NULL, enrich = TRUE,
+                         minimum_interesting = 1,
                          ...) {
   arglist <- list(...)
 
-  minimum_interesting <- 1
-  if (!is.null(arglist[["minimum_interesting"]])) {
-    minimum_interesting <- arglist[["minimum_interesting"]]
-  }
   length_df <- data.frame()
   length_vector <- vector()
   de_vector <- vector()

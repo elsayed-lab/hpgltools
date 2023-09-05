@@ -348,13 +348,13 @@ simple_clusterprofiler <- function(sig_genes, de_table = NULL, orgdb = "org.Dm.e
   map_sig_cc <- try(clusterProfiler::emapplot(ego_sig_cc), silent = TRUE)
   net_sig_mf <- try(
     clusterProfiler::cnetplot(ego_sig_mf, categorySize = "pvalue",
-                              foldChange = genelist), silent = TRUE)
+                              color.params = list(foldChange = genelist)), silent = TRUE)
   net_sig_bp <- try(
     clusterProfiler::cnetplot(ego_sig_bp, categorySize = "pvalue",
-                              foldChange = genelist), silent = TRUE)
+                              color.params = list(foldChange = genelist)), silent = TRUE)
   net_sig_cc <- try(
     clusterProfiler::cnetplot(ego_sig_cc, categorySize = "pvalue",
-                              foldChange = genelist), silent = TRUE)
+                              color.params = list(foldChange = genelist)), silent = TRUE)
 
   tree_sig_mf <- tree_sig_bp <- tree_sig_cc <- NULL
   tree_mf <- sm(try(clusterProfiler::plotGOgraph(ego_sig_mf), silent = TRUE))

@@ -223,6 +223,7 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
     excel_ret <- sm(try(write_topgo_data(retlist, excel = excel)))
     retlist[["excel"]] <- excel_ret
   }
+  class(retlist) <- "topgo_result"
   return(retlist)
 }
 

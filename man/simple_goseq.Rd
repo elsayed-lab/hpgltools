@@ -19,6 +19,7 @@ simple_goseq(
   expand_categories = TRUE,
   excel = NULL,
   enrich = TRUE,
+  minimum_interesting = 1,
   ...
 )
 }

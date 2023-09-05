@@ -170,7 +170,13 @@ print.goseq_result <- function(x) {
 #' @param x list of results from gostats.
 #' @export
 print.gostats_result <- function(x) {
-  message("A set of ontologies produced by gostats.")
+  bp_entries <- nrow(x[["tables"]][["bp_over_enriched"]])
+  mf_entries <- nrow(x[["tables"]][["mf_over_enriched"]])
+  cc_entries <- nrow(x[["tables"]][["cc_over_enriched"]])
+  summary_string <- glue("topgo found {bp_entries} BP categories, {mf_entries} MF categories, and \\
+{cc_entries} CC categories.")
+  message(summary_string)
+  enrichplot::dotplot(x[["enrich_results"]][["bp"]])
   return(invisible(x))
 }
 
@@ -313,8 +319,12 @@ Shapes are defined by ", batch_levels, ".")
 #' @param x Result from plot_libsize_prepost().
 #' @export
 print.prepost_filter <- function(x) {
-  min_range <- min(x[["table"]][["sub_low"]], na.rm = TRUE)
-  max_range <- max(x[["table"]][["sub_low"]], na.rm = TRUE)
+  na_idx <- is.na(x[["table"]][["sub_low"]])
+  x[["table"]][na_idx, "sub_low"] <- 0
+  changed_idx <- x[["table"]][["sub_low"]] > 0
+  changed <- x[["table"]][changed_idx, "sub_low"]
+  min_range <- min(changed)
+  max_range <- max(changed)
   summary_string <- glue("A comparison of the counts before and after filtering.
 The number of genes with low coverage changes by {min_range}-{max_range} genes.")
   message(summary_string)
@@ -435,7 +445,13 @@ print.snps_genes <- function(x) {
 #' @param x list of results from topgo.
 #' @export
 print.topgo_result <- function(x) {
-  message("A set of ontologies produced by topgo.")
+  bp_entries <- nrow(x[["tables"]][["bp_over_enriched"]])
+  mf_entries <- nrow(x[["tables"]][["mf_over_enriched"]])
+  cc_entries <- nrow(x[["tables"]][["cc_over_enriched"]])
+  summary_string <- glue("topgo found {bp_entries} BP categories, {mf_entries} MF categories, and \\
+{cc_entries} CC categories.")
+  message(summary_string)
+  enrichplot::dotplot(x[["enrich_results"]][["bp"]])
   return(invisible(x))
 }
 

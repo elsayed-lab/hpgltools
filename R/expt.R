@@ -1177,51 +1177,8 @@ get_backup_expression_data <- function(expt) {
   return(backup)
 }
 
-#' Small hack of limma's exampleData() to allow for arbitrary data set
-#' sizes.
-#'
-#' exampleData has a set number of genes/samples it creates. This
-#' relaxes that restriction.
-#'
-#' @param ngenes How many genes in the fictional data set?
-#' @param columns How many samples in this data set?
-#' @return Matrix of pretend counts.
-#' @seealso [limma] [DESeq2] [stats]
-#' @examples
-#' \dontrun{
-#'  pretend = make_exampledata()
-#' }
+#' Runs median_by_factor with fun set to 'mean'.
 #' @export
-make_exampledata <- function(ngenes = 1000, columns = 5) {
-  q0 <- stats::rexp(ngenes, rate = 1/250)
-  is_DE <- stats::runif(ngenes) < 0.3
-  lfc <- stats::rnorm(ngenes, sd = 2)
-  q0A <- ifelse(is_DE, q0 * 2^ (lfc / 2), q0)
-  q0B <- ifelse(is_DE, q0 * 2^ (-lfc / 2), q0)
-  ##    true_sf <- c(1, 1.3, 0.7, 0.9, 1.6)
-  true_sf <- abs(stats::rnorm(columns, mean = 1, sd = 0.4))
-  cond_types <- ceiling(sqrt(columns))
-  conds <- sample(LETTERS[1:cond_types], columns, replace = TRUE)
-  m <- t(sapply(seq_len(ngenes),
-                function(i) sapply(1:columns,
-                                   function(j) rnbinom(1,
-                                                       mu = true_sf[j] * ifelse(conds[j] == "A",
-                                                                                q0A[i], q0B[i]),
-                                                       size = 1/0.2))))
-  rownames(m) <- paste("gene", seq_len(ngenes), ifelse(is_DE, "T", "F"), sep = "_")
-  colnames(m) <- paste0("sample", seq_len(ncol(m)))
-  design <- as.data.frame(conds)
-  rownames(design) <- colnames(m)
-  colnames(design) <- "condition"
-  for (i in seq_len(ncol(m))) {
-    m[, i] <- as.integer(m[, i])
-  }
-  design[["condition"]] <- as.factor(design[["condition"]])
-  example <- sm(DESeq2::DESeqDataSetFromMatrix(countData = m,
-                                               colData = design, design = ~condition))
-  return(example)
-}
-
 mean_by_factor <- function(data, fact = "condition") {
   median_by_factor(data, fact = fact, fun = "mean")
 }

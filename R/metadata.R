@@ -1445,6 +1445,10 @@ sanitize_expt_fData <- function(expt,
   return(expt)
 }
 
+#' Adding an alias to sanitize_metadata until I decide how I want to name this.
+#'
+#' @param ... Arguments for sanitize_metadata().
+#' @export
 sanitize_expt_pData <- function(expt,
                                 columns = NULL, na_value = "notapplicable",
                                 lower = TRUE, punct = TRUE, factorize = "heuristic",
@@ -1511,7 +1515,8 @@ sanitize_metadata <- function(meta, columns = NULL, na_value = "notapplicable",
         na_idx <- is.na(meta[[todo]])
         meta[na_idx, todo] <- na_value
         mesg("Setting numeric NAs to ", na_value, ".")
-        meta[[todo]] <- as.numeric(meta[[todo]])
+        ## I assume it is ok to suppress warnings here given my explicit setting of NA values.
+        meta[[todo]] <- suppressWarnings(as.numeric(meta[[todo]]))
       }
     } else {
       if (isTRUE(lower)) {

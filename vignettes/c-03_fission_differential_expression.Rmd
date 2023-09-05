@@ -245,10 +245,21 @@ all_comparisons
 all_combined <- combine_de_tables(all_comparisons, excel = "excel/wt30_vs_wt120.xlsx")
 all_combined
 
-save(file="de_table.rda", list="all_combined")
-devtools::load_all("~/hpgltools")
-slide_de_threshold(all_combined)
+save(file = "de_table.rda", list = "all_combined")
+```
 
+## Shiny shenanigans
+
+I am not sure how this will render in a rmarkdown.
+
+```{r shiny, eval=FALSE}
+## This is a neat interactive shiny widget which I forgot I wrote
+slide_de_threshold(all_combined)
+```
+
+## Back to regularly scheduled programming
+
+```{r all_comparisons}
 ## Here we see that edger and deseq agree the least:
 all_comparisons[["comparison"]][["comp"]]
 
@@ -318,6 +329,7 @@ pombe <- GenomicFeatures::makeTxDbFromGFF(link, format = "gff3", taxonomyId = 48
 pombe_transcripts <- as.data.frame(GenomicFeatures::transcriptsBy(pombe))
 lengths <- pombe_transcripts[, c("group_name","width")]
 colnames(lengths) <- c("ID","width")
+lengths[["ID"]] <- gsub(x = lengths[["ID"]], pattern = "^gene:", replacement = "")
 ## Something useful I didn't notice before:
 ## makeTranscriptDbFromGFF()  ## From GenomicFeatures, much like my own gff2df()
 gff_from_txdb <- GenomicFeatures::asGFF(pombe)
@@ -331,18 +343,18 @@ written_gff <- rtracklayer::export.gff3(gff_from_txdb, con = "pombe.gff")
 ```{r test_goseq}
 summary(updown_genes)
 test_genes <- updown_genes[["down_genes"]]
-rownames(test_genes) <- paste0(rownames(test_genes), ".1")
-lengths[["ID"]] <- paste0(lengths[["ID"]], ".1")
-goseq_result <- sm(simple_goseq(sig_genes = test_genes, go_db = pombe_goids,
-                                length_db = lengths))
+##rownames(test_genes) <- paste0(rownames(test_genes), ".1")
+##lengths[["ID"]] <- paste0(lengths[["ID"]], ".1")
+goseq_result <- simple_goseq(sig_genes = test_genes, go_db = pombe_goids,
+                                length_db = lengths)
 head(goseq_result[["all_data"]])
 goseq_result[["pvalue_plots"]][["mfp_plot_over"]]
 goseq_result[["pvalue_plots"]][["bpp_plot_over"]]
 
 test_genes <- updown_genes[["up_genes"]]
-rownames(test_genes) <- paste0(rownames(test_genes), ".1")
-goseq_result <- sm(simple_goseq(sig_genes = test_genes, go_db = pombe_goids,
-                                length_db = lengths))
+##rownames(test_genes) <- paste0(rownames(test_genes), ".1")
+goseq_result <- simple_goseq(sig_genes = test_genes, go_db = pombe_goids,
+                                length_db = lengths)
 head(goseq_result[["all_data"]])
 goseq_result[["pvalue_plots"]][["mfp_plot_over"]]
 goseq_result[["pvalue_plots"]][["bpp_plot_over"]]
@@ -378,26 +390,24 @@ cp_result[["pvalue_plots"]][["ego_all_mf"]]
 
 ```{r test_tp}
 ## Get rid of those stupid terminal .1s.
-rownames(test_genes) <- gsub(pattern = ".1$", replacement = "", x = rownames(test_genes))
-pombe_goids[["ID"]] <- gsub(pattern = ".1$", replacement = "", x = pombe_goids[["ID"]])
-tp_result <- sm(simple_topgo(sig_genes = test_genes, go_db = pombe_goids, pval_column = "limma_adjp"))
-
-tp_result[["pvalue_plots"]][["mfp_plot_over"]]
-tp_result[["pvalue_plots"]][["bpp_plot_over"]]
+#rownames(test_genes) <- gsub(pattern = ".1$", replacement = "", x = rownames(test_genes))
+#pombe_goids[["ID"]] <- gsub(pattern = ".1$", replacement = "", x = pombe_goids[["ID"]])
+tp_result <- simple_topgo(sig_genes = test_genes,
+                          go_db = pombe_goids, pval_column = "limma_adjp")
+tp_result
 ```
 
 ```{r gst_test}
 ## Get rid of those stupid terminal .1s.
 ##rownames(test_genes) <- gsub(pattern = ".1$", replacement = "", x = rownames(test_genes))
-pombe_goids[["ID"]] <- gsub(pattern = ".1$", replacement = "", x = pombe_goids[["ID"]])
+##pombe_goids[["ID"]] <- gsub(pattern = ".1$", replacement = "", x = pombe_goids[["ID"]])
 ## universe_merge is the column in the final data frame when.
 ## gff_type is the field in the gff file providing the id, this may be redundant with
 ## universe merge, that is something to check on...
-gst_result <- sm(simple_gostats(sig_genes = test_genes, go_db = pombe_goids, universe_merge = "id",
-                                gff_type = "gene",
-                                gff = "pombe.gff", pval_column = "limma_adjp"))
-gst_result[["pvalue_plots"]][["mfp_plot_over"]]
-gst_result[["pvalue_plots"]][["bpp_plot_over"]]
+gst_result <- simple_gostats(sig_genes = test_genes, go_db = pombe_goids, universe_merge = "id",
+                             gff_type = "gene",
+                             gff = "pombe.gff", pval_column = "limma_adjp")
+gst_result
 ```
 
 ```{r sysinfo, results = "asis"}

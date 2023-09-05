@@ -1261,11 +1261,11 @@ gostats_trees <- function(gostats_result, goid_map = "id2go.map", score_limit = 
     cc_GOdata <- new("topGOdata", description = "CC", ontology = "CC", allGenes = pvals,
                      geneSel = get(selector), annot = topGO::annFUN.gene2GO, gene2GO = geneID2GO)
   }
-  mf_over <- gostats_result[["tables"]][["mf_over_all"]]
+  mf_over <- gostats_result[["tables"]][["mf_subset"]]
   mf_over_enriched_ids <- mf_over[["GOMFID"]]
-  bp_over <- gostats_result[["tables"]][["bp_over_all"]]
+  bp_over <- gostats_result[["tables"]][["bp_subset"]]
   bp_over_enriched_ids <- bp_over[["GOBPID"]]
-  cc_over <- gostats_result[["tables"]][["cc_over_all"]]
+  cc_over <- gostats_result[["tables"]][["cc_subset"]]
   cc_over_enriched_ids <- cc_over[["GOCCID"]]
   mf_over_enriched_scores <- mf_over[["Pvalue"]]
   names(mf_over_enriched_scores) <- mf_over_enriched_ids

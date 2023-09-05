@@ -251,7 +251,8 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     tmp_file <- tempfile(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
-    PROPER::plotPower(powers)
+    ## PROPER's plotting functions result in a bunch of annoying warnings.
+    suppressWarnings(PROPER::plotPower(powers))
     if (isTRUE(add_coverage)) {
       abline(v = x_intercept)
     }
@@ -262,7 +263,7 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     tmp_file <- tempfile(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
-    PROPER::plotPowerTD(powers)
+    suppressWarnings(PROPER::plotPowerTD(powers))
     if (isTRUE(add_coverage)) {
       abline(v = x_intercept)
     }
@@ -273,7 +274,7 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     tmp_file <- tempfile(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
-    PROPER::plotPowerFD(powers)
+    suppressWarnings(PROPER::plotPowerFD(powers))
     if (isTRUE(add_coverage)) {
       abline(v = x_intercept)
     }
@@ -284,7 +285,7 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     tmp_file <- tempfile(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
-    PROPER::plotFDcost(powers)
+    suppressWarnings(PROPER::plotFDcost(powers))
     if (isTRUE(add_coverage)) {
       abline(v = x_intercept)
     }
@@ -295,7 +296,7 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     tmp_file <- tempfile(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
-    PROPER::plotPowerHist(powerOutput = powers, simResult = simulation_result)
+    suppressWarnings(PROPER::plotPowerHist(powerOutput = powers, simResult = simulation_result))
     if (isTRUE(add_coverage)) {
       abline(v = x_intercept)
     }
@@ -306,7 +307,7 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     tmp_file <- tempfile(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
-    PROPER::plotPowerAlpha(powers)
+    suppressWarnings(PROPER::plotPowerAlpha(powers))
     if (isTRUE(add_coverage)) {
       abline(v = x_intercept)
     }

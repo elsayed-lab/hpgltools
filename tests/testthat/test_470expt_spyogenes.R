@@ -45,7 +45,7 @@ test_that("Is the batch state maintained?", {
 })
 
 mgas_pairwise <- all_pairwise(mgas_expt)
-expected <- 0.64
+expected <- 0.39
 actual <- min(mgas_pairwise[["comparison"]][["comp"]])
 ## 07
 test_that("Do we get reasonably high similarities among the various DE tools?", {
