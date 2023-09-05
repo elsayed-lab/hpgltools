@@ -66,8 +66,7 @@ install_bioconductor:
 prereq:
 	@echo "Checking a few prerequisites that seem to fall between the cracks sometimes."
 	R -e "if (! 'BiocManager' %in% installed.packages()) { install.packages('BiocManager', repo='http://cran.rstudio.com/') }"
-	R -e "bioc_prereq <- c('devtools', 'R.utils', 'pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr','ggplot2','data.table','foreach','survival');\
-for (req in bioc_prereq) { if (! req %in% installed.packages()) { BiocManager::install(req) } }"
+	R -e "bioc_prereq <- c('devtools', 'R.utils', 'pasilla','testthat','roxygen2','Biobase','preprocessCore','devtools','rmarkdown','knitr','ggplot2','data.table','foreach','survival'); BiocManager::install(bioc_prereq)"
 
 push:
 	echo "Pushing to github."
