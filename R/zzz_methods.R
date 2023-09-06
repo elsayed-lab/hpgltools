@@ -703,10 +703,10 @@ setMethod(
 setMethod(
   "plot_meta_sankey", signature = signature(design = "expt"),
   definition = function(design, factors = c("condition", "batch"),
-                        color_choices = NULL, html = "sankey.html") {
+                        color_choices = NULL) {
     design <- pData(design)
     plot_meta_sankey(design, factors = factors,
-                     color_choices = color_choices, html = html)
+                     color_choices = color_choices)
   })
 
 #' Plot the sample heatmap of an expt.
