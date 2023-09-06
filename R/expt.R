@@ -1518,7 +1518,8 @@ If this is not correctly performed, very few genes will be observed")
     ## Use this codepath when we are working with htseq
     count_table <- read.table(files[1], header = header, stringsAsFactors = FALSE)
     colnames(count_table) <- c("rownames", ids[1])
-    count_table[, 2] <- as.numeric(count_table[, 2])
+    ## We are going to immediately check for NA, so I think we can suppress warnings.
+    count_table[, 2] <- suppressWarnings(as.numeric(count_table[, 2]))
     na_idx <- is.na(count_table[[2]])
     ## This is a bit more circuituous than I would like.
     ## I want to make sure that na_rownames does not evaluate to something

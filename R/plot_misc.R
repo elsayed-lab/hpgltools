@@ -123,9 +123,9 @@ pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
 #' @export
 plot_meta_sankey <- function(design, factors = c("condition", "batch"), fill = "node",
                              font_size = 18, node_width = 30,
-                             color_choices = NULL, html = NULL,
+                             color_choices = NULL,
                              drill_down = TRUE) {
-
+  warning("FIXME: I separated the interactive and ggplot functions, but haven't figured out what need to be kept.")
   found <- factors %in% colnames(design)
   if (sum(found) < length(factors)) {
     missing <- factors[!found]
@@ -191,20 +191,6 @@ plot_meta_sankey <- function(design, factors = c("condition", "batch"), fill = "
   links_to_nodes <- merge(my_links, my_nodes, by.x = "target",
                           by.y = "node")
   links_to_nodes <- links_to_nodes[, c("name", "value")]
-
-
-  plt <- NULL
-  if (!is.null(html)) {
-    plt = networkD3::sankeyNetwork(Links = my_links, Nodes = my_nodes,
-                                   Source = "source", Target = "target",
-                                   Value = "value", fontSize = font_size, nodeWidth = node_width)
-  }
-  retlist <- list(
-    "permutations" = permutations,
-    "plot" = plt)
-  if (!is.null(html)) {
-    retlist[["html"]] <- htmlwidgets::saveWidget(plt, file = html, selfcontained = TRUE)
-  }
 
   sub_design <- design[, c(factors)]
   if (isTRUE(drill_down)) {
@@ -292,6 +278,94 @@ plot_meta_sankey <- function(design, factors = c("condition", "batch"), fill = "
   }
   retlist[["ggplot"]] <- ggplt
   class(retlist) <- "meta_sankey"
+  return(retlist)
+}
+
+## I might want to just delete this, I think the ggplot version is better.
+plot_meta_interactive_sankey <- function(design, factors = c("condition", "batch"), fill = "node",
+                                         font_size = 18, node_width = 30,
+                                         color_choices = NULL, html = NULL,
+                                         drill_down = TRUE) {
+
+  found <- factors %in% colnames(design)
+  if (sum(found) < length(factors)) {
+    missing <- factors[!found]
+    message("These columns are not in the metadata: ", toString(missing))
+    factors <- factors[found]
+  }
+
+  permutations <- c()
+  states <- list()
+  for (f in factors) {
+    state_levels <- levels(as.factor(design[[f]]))
+    states[[f]] <- state_levels
+    new_permutations <- tidyr::expand_grid(!!!states) |> purrr::pmap_chr(paste)
+    permutations <- c(permutations, new_permutations)
+  }
+
+  start_node <- c("all", "0")
+  names(start_node) <- c("name", "node")
+  my_nodes <- data.frame(name = permutations)
+  my_nodes[["node"]] <- rownames(my_nodes)
+  my_nodes <- rbind(start_node, my_nodes)
+
+  my_links <- data.frame(row.names = 0)
+  my_links[["source"]] <- 0
+  my_links[["target"]] <- 0
+  my_links[["value"]] <- nrow(design)
+
+  result <- list("all" = nrow(design))
+  for (p in seq_len(length(permutations))) {
+    element <- permutations[p]
+    pieces <- strsplit(x = element, split = " ")[[1]]
+
+    working_meta <- design
+    for (cat_num in seq_len(length(pieces))) {
+      category <- pieces[cat_num]
+      factor <- factors[cat_num]
+      idx <- working_meta[[factor]] == category
+      working_meta <- working_meta[idx, ]
+    }
+    if (nrow(working_meta) > 0) {
+      result[[element]] <- nrow(working_meta)
+
+      target_node_idx <- my_nodes[["name"]] == element
+      target_node <- my_nodes[target_node_idx, "node"]
+      if (length(pieces) > 1) {
+        source_node_pieces <- pieces[1:length(pieces) - 1]
+        source_node_name <- stringi::stri_paste(source_node_pieces, collapse = " ")
+        source_node_idx <- my_nodes[["name"]] == source_node_name
+        source_node <- my_nodes[source_node_idx, "node"]
+      } else {
+        source_node <- "0"
+      }
+      link <- c(source_node, target_node, nrow(working_meta))
+      my_links <- rbind(my_links, link)
+    }
+  }
+
+  my_links <- my_links[-1, ]
+  my_links[["value"]] <- as.numeric(my_links[["value"]])
+  my_links[["source"]] <- as.numeric(my_links[["source"]])
+  my_links[["target"]] <- as.numeric(my_links[["target"]])
+
+  links_to_nodes <- merge(my_links, my_nodes, by.x = "target",
+                          by.y = "node")
+  links_to_nodes <- links_to_nodes[, c("name", "value")]
+
+
+  plt <- NULL
+  if (!is.null(html)) {
+    plt = networkD3::sankeyNetwork(Links = my_links, Nodes = my_nodes,
+                                   Source = "source", Target = "target",
+                                   Value = "value", fontSize = font_size, nodeWidth = node_width)
+  }
+  retlist <- list(
+    "permutations" = permutations,
+    "plot" = plt)
+  if (!is.null(html)) {
+    retlist[["html"]] <- htmlwidgets::saveWidget(plt, file = html, selfcontained = TRUE)
+  }
   return(retlist)
 }
 
