@@ -26,7 +26,7 @@ Suggests:
   EBSeq, EDASeq, edgeR, enrichplot, EuPathDB,
   fastcluster, fastICA, ffpe, fission,
   genbankr, genefilter, GenomicRanges, GenomeInfoDb, genoPlotR, ggdendro,
-  ggrepel, ggstatsplot, ggthemes, goseq, GO.db, GOstats,
+  ggrepel, ggsankey, ggstatsplot, ggthemes, goseq, GO.db, GOstats,
   graph, GSVA, GSVAdata, gtools, gplots, gProfileR, gprofiler2,
   Heatplus, Hmisc, Homo.sapiens, htmlwidgets, hpgldata, httr,
   iDA, igraph, IHW, inflection, IRanges, isva, iterators,
