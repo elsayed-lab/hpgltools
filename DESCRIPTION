@@ -34,6 +34,7 @@ Suggests:
   KEGGREST, KEGGgraph, kmer,
   lattice, limma, locfit, lubridate,
   MatrixGenerics, matrixStats, miscTools, motifRG, mygene, mzR,
+  NOISeq,
   openxlsx, OrganismDbi,
   pander, parallel, pasilla, pathfindR, pathview, pcaMethods, Peptides, plyr, preprocessCore, PROPER,
   qvalue,
