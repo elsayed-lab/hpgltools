@@ -243,9 +243,10 @@ plot_meta_sankey <- function(design, factors = c("condition", "batch"), fill = "
       color_fact <- new_color_fact
     }
   }
-  retlist[["design"]] <- design
-  retlist[["factors"]] <- factors
-  retlist[["observed_nodes"]] <- unique(plot_df[["node"]])
+  retlist <- list(
+    "design" = design,
+    "factor" = factors,
+    "observed_nodes" = unique(plot_df[["node"]]))
 
   if (fill == "node") {
     ggplt <- ggplot(plot_df, aes(x = x, next_x = next_x, node = node,
