@@ -1190,7 +1190,7 @@ plot_sankey_de <- function(de_table, lfc = 1.0, p = 0.05,
   meta[["adjusted_p"]] <- factor(meta[["adjusted_p"]], levels = c("significant", "insignificant"))
 
   #  color_choices <-
-  test <- plot_meta_sankey(meta, drill_down = FALSE, factors = c("lfc", "adjusted_p"), html = NULL)
+  test <- plot_meta_sankey(meta, drill_down = FALSE, factors = c("lfc", "adjusted_p"))
   return(test[["ggplot"]])
 }
 
