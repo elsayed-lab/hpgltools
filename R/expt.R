@@ -1267,7 +1267,10 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
         cv[nan_idx] <- 0
       } else if (fun == "mean") {
         message("The factor ", type, " has ", sum(columns), " rows.")
-        med <- BiocGenerics::rowMeans(data[, columns], na.rm = TRUE)
+        ## Strangely, recently R says BiocGenerics does not export rowMeans.
+        ## I stil see its S4 dispatch; but I will assume that R will figure this out.
+        ## med <- BiocGenerics::rowMeans(data[, columns], na.rm = TRUE)
+        med <- rowMeans(data[, columns], na.rm = TRUE)
         cv <- matrixStats::rowSds(data[, columns], na.rm = TRUE)
         cv <- cv / med
         nan_idx <- is.nan(cv)

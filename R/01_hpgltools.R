@@ -32,6 +32,12 @@ NULL
 #' @importFrom foreach %dopar%
 NULL
 
+#' Make sure BiocGenerics' version of rowMeans is available.
+#' @import methods
+#' @importFrom BiocGenerics
+#' @importMethodsFrom BiocGenerics rowMeans
+NULL
+
 #' Plotly for interactive 3-D plotting in the Shiny App
 #'
 #' @name plot_ly
