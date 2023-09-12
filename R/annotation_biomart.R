@@ -463,14 +463,14 @@ load_biomart_go <- function(species = "hsapiens", overwrite = FALSE, do_save = T
     martlst <- find_working_mart(default_hosts = host, trymart = trymart,
                                  archive = FALSE)
   }
-  used_mart <- NULL
-  mart <- NULL
-  host <- NULL
-  if (!is.null(martlst)) {
-    used_mart <- martlst[["used_mart"]]
-    host <- martlst[["host"]]
-    mart <- martlst[["mart"]]
+
+  ## If we do not get a working mart, just return NULL now.
+  if (is.null(martlst[["mart"]])) {
+    return(NULL)
   }
+  used_mart <- martlst[["used_mart"]]
+  host <- martlst[["host"]]
+  mart <- martlst[["mart"]]
 
   ensembl <- find_working_dataset(mart, trydataset, species)
 
