@@ -130,6 +130,14 @@ of two DE tables.")
   return(invisible(x))
 }
 
+#' Print the result of running deseq_lrt().
+#'
+#' @param x The list provided by deseq_lrt().
+#' @export
+print.deseq_lrt <- function(x) {
+  summary_string <- glue("The result from deseq_lrt().")
+}
+
 #' Print a summary of the result from plot_density().
 #'
 #' @param x The density plot and associated data in question.

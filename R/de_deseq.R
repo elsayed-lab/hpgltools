@@ -103,6 +103,14 @@ deseq_lrt <- function(expt, interactor_column = "visitnumber",
   cluster_data <- try(DEGreport::degPatterns(assay(clustering_amounts), metadata = col_data,
                                              time = interactor_column, col = interest_column,
                                              minc = minc))
+  if ("try-error" %in% class(cluster_data)) {
+    ## On my container image, I don't have DISPLAY causing this to fail.
+    retlist <- list(
+      "deseq_result" = deseq_lrt,
+      "deseq_table" = deseq_lrt_table)
+    class(retlist) <- "deseq_lrt_noclusters"
+    return(retlist)
+  }
 
   group_lst <- NULL
   if (! "try-error" %in% class(cluster_data)) {
