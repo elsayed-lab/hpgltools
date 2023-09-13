@@ -33,8 +33,8 @@ NULL
 NULL
 
 #' Make sure BiocGenerics' version of rowMeans is available.
+#' @name rowMeans
 #' @import methods
-#' @importFrom BiocGenerics
 #' @importMethodsFrom BiocGenerics rowMeans
 NULL
 

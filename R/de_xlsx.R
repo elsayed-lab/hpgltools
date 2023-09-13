@@ -35,6 +35,7 @@
 #' @param excel_title Title for the excel sheet(s).  If it has the
 #'  string 'YYY', that will be replaced by the contrast name.
 #' @param rda Write a rda file of the results.
+#' @param rda_input Include the input all_pairwise() result in the rda?
 #' @param start_worksheet This will now increment worksheet titles
 #'  from this point forward.
 #' @param label Label this number of top-n genes on the plots?
@@ -74,7 +75,7 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
                               de_types = c("limma", "deseq", "edger"),
                               excel_title = "Table SXXX: Combined Differential Expression of YYY",
                               increment_start = "SXXX", start_worksheet_num = 2,
-                              rda = NULL, label = 10, label_column = "hgncsymbol",
+                              rda = NULL, rda_input = FALSE, label = 10, label_column = "hgncsymbol",
                               format_sig = 4, excel = NULL, plot_columns = 10,
                               alpha = 0.4, z = 1.5, z_lines = FALSE) {
   xlsx <- init_xlsx(excel)
@@ -286,6 +287,11 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
   if (!is.null(rda)) {
     varname <- gsub(x = basename(rda), pattern = "\\.rda$", replacement = "")
     assigned <- assign(varname, ret)
+    ## When saving a rda of the combined tables, it is less likely that one wants a copy of the
+    ## entire differential expression analysis produced by all_pairwise().
+    if (!isTRUE(rda_input)) {
+      varname[["input"]] <- NULL
+    }
     message("Saving de result as ", varname, " to ", rda, ".")
     saved <- save(list = varname, file = rda)
     removed <- rm(varname)

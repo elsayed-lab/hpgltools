@@ -2152,6 +2152,25 @@ set_expt_factors <- function(expt, condition = NULL, batch = NULL, ids = NULL,
   return(expt)
 }
 
+#' Switch the gene names of an expressionset using a column from fData.
+#'
+#' I am not sure if set_expt_genenames() is smart enough to check for
+#' missing values.  It definitely handles duplicates.
+#'
+#' @param expt Current expressionSet.
+#' @param new_column Column from the gene annotations containing the
+#'  new gene IDs.
+#' @return The expressionset with swapped out IDs.
+#' @export
+set_expt_genename_column <- function(expt, new_column) {
+  start_df <- fData(expt)
+  start_df[["start"]] <- rownames(start_df)
+  start_df[["end"]] <- start_df[[new_column]]
+  start_df <- start_df[, c("start", "end")]
+  new <- set_expt_genenames(expt, start_df)
+  return(new)
+}
+
 #' Change the gene names of an expt.
 #'
 #' I want to change all the gene names of a big expressionset to the
