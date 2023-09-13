@@ -36,6 +36,8 @@ categories?}
 }
 \value{
 enrichResult object ready to pass to things like dotplot.
+
+The same 'enrich' datastructure produced by clusterProfiler.
 }
 \description{
 I would like to use the various clusterProfiler plots more easily.
