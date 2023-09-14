@@ -54,7 +54,6 @@ NULL
 #'
 #' @name enrichResult-class
 #' @rdname enrichResult
-#' @export
 #' @importClassesFrom DOSE enrichResult
 NULL
 
