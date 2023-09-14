@@ -32,6 +32,32 @@ NULL
 #' @importFrom foreach %dopar%
 NULL
 
+#' The enrichResult class.
+#'
+#' I create enrichResult objects in each of the xxx2enrich().
+#'
+#' I am not completely certain how to properly use roxygen to make
+#' available classes from another package.  It looks like I should
+#' just need to do 'importClassesFrom package class', but I thought I
+#' already did that? I have a series of functions which coerce various
+#' enrichment results to DOSE's enrichResult.  I thought this class
+#' was actually in a package named soemthing like 'enrich' but I think
+#' that was just one of my fever dreams.  In any event, I am going to
+#' mess around here and try to stop the error:
+#' '## Error in getClass(Class, where = topenv(parent.frame())):
+#'  ## "enrichResult" is not a defined class'
+#' from making me sad.
+#'
+#' One note, this seems only to be a problem in my containerized
+#' version of hpgltools, opening the possibility that this is
+#' dependency mismanagement.
+#'
+#' @name enrichResult-class
+#' @rdname enrichResult
+#' @export
+#' @importClassesFrom DOSE enrichResult
+NULL
+
 #' Make sure BiocGenerics' version of rowMeans is available.
 #' @name rowMeans
 #' @import methods
