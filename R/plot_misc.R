@@ -22,6 +22,10 @@ pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
     warning("The directory: ", file_dir, " does not exist, will attempt to create it.")
     dir.create(file_dir, recursive = TRUE)
   }
+  write_permission <- as.numeric(file.access(file_dir, 2))
+  if (write_permission < 0) {
+    warning("The directory: ", file_dir, " does not have write permission, this will fail.")
+  }
 
   start_dev <- dev.list()
   result <- NULL

@@ -65,6 +65,11 @@ init_xlsx <- function(excel = "excel/something.xlsx") {
   if (!file.exists(excel_dir)) {
     created <- dir.create(excel_dir, recursive = TRUE)
   }
+  write_permission <- as.numeric(file.access(excel_dir, 2))
+  if (write_permission < 0) {
+    warning("The directory: ", excel_dir, " does not have write permission, this will fail.")
+  }
+
   if (file.exists(excel)) {
     message("Deleting the file ", excel, " before writing the tables.")
     removed <- file.remove(excel)

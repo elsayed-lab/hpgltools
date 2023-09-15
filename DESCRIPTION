@@ -50,8 +50,8 @@ Suggests:
   Vennerable, venneuler
 Imports:
   data.table, dplyr,
-  foreach,
-  ggplot2, GenomicFeatures, GSEABase,
+  forcats, foreach,
+  GenomicFeatures, ggplot2, glue, GSEABase,
   knitr,
   magrittr, methods,
   plotly,

@@ -1285,6 +1285,8 @@ compare_de_results <- function(first, second, cor_method = "pearson",
 #' @param py Column containing the y-axis p-value.
 #' @param first_table If the input data are actually of type de_table, then find the table(s) inside them.
 #' @param second_table Ibid.
+#' @return List result from plot_linear_scatter
+#' @export
 compare_de_tables <- function(first, second, fcx = "deseq_logfc", px = "deseq_adjp",
                               fcy = "deseq_logfc", py = "deseq_adjp",
                               first_table = NULL, second_table = NULL) {
