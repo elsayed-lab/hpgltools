@@ -87,6 +87,7 @@ plot_libsize <- function(data, condition = NULL, colors = NULL,
   class(retlist) <- "libsize_plot"
   return(retlist)
 }
+setGeneric("plot_libsize")
 
 #' Visualize genes observed before/after filtering.
 #'

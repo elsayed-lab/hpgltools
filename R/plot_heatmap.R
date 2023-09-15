@@ -29,6 +29,7 @@ plot_corheat <- function(expt_data, expt_colors = NULL, expt_design = NULL,
   map_list <- plot_heatmap(expt_data, expt_colors = expt_colors, expt_design = expt_design,
                            method = method, expt_names = expt_names, type = "correlation",
                            batch_row = batch_row, plot_title = plot_title, label_chars = label_chars, ...)
+  class(map_list) <- "correlation_heatmap"
   return(map_list)
 }
 
@@ -61,6 +62,7 @@ plot_disheat <- function(expt_data, expt_colors = NULL, expt_design = NULL,
                            method = method, expt_names = expt_names, type = "distance",
                            batch_row = batch_row, plot_title = plot_title,
                            label_chars = label_chars, ...)
+  class(map_list) <- "distance_heatmap"
   return(map_list)
 }
 
@@ -202,6 +204,7 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
                   "data" = heatmap_data)
   return(retlist)
 }
+setGeneric("plot_heatmap")
 
 #' Potential replacement for heatmap.2 based plots.
 #'
@@ -361,6 +364,7 @@ plot_sample_heatmap <- function(data, colors = NULL, design = NULL, heatmap_colo
   removed <- file.remove(tmp_file)
   return(hpgl_heatmap_plot)
 }
+setGeneric("plot_sample_heatmap")
 
 #' An experiment to see if I can visualize the genes with the highest variance.
 #'

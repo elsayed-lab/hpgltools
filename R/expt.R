@@ -2319,6 +2319,7 @@ state <- function(expt) {
   expt[["state"]] <- value
   return(expt)
 }
+setGeneric("state<-")
 
 #' Extract a subset of samples following some rule(s) from an
 #' experiment class.
@@ -2473,6 +2474,7 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
           length(final_samples), " samples.")
   return(new_expt)
 }
+setGeneric("subset_expt")
 
 #' Try a very literal subtraction
 #'

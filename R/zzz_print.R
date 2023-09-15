@@ -116,6 +116,41 @@ print.combined_table <- function(x) {
   return(invisible(x))
 }
 
+#' Print the result of plot_corheat().
+#'
+#' @param x plot_corheat()
+#' @export
+print.correlation_heatmap <- function(x) {
+  min_cor <- min(x[["data"]])
+  non_one_idx <- x[["data"]] == 1
+  non_one <- as.data.frame(x[["data"]])
+  non_one[non_one_idx] <- 0
+  max_cor <- max(non_one)
+  summary_string <- glue("A heatmap of pairwise sample correlations ranging from: \
+{min_cor} to {max_cor}.")
+  message(summary_string)
+  print(x[["plot"]])
+  return(invisible(x))
+}
+
+#' Print the result of plot_disheat().
+#'
+#' @param x plot_disheat()
+#' @export
+print.distance_heatmap <- function(x) {
+  max_distance <- max(x[["data"]])
+  non_zero_idx <- x[["data"]] == 0
+  non_zero <- as.data.frame(x[["data"]])
+  non_zero[non_zero_idx] <- Inf
+  min_distance <- min(non_zero)
+  summary_string <- glue("A heatmap of pairwise sample distances ranging from: \
+{min_distance} to {max_distance}.")
+  message(summary_string)
+  print(x[["plot"]])
+  return(invisible(x))
+}
+
+
 #' Print a representation of compare_de_tables().
 #' Note I think I want to have that function return slightly different types
 #' depending on how the function call was set up.
@@ -268,7 +303,7 @@ print.legend_plot <- function(x) {
 print.libsize_plot <- function(x) {
   min_value <- min(x[["table"]][["sum"]])
   max_value <- max(x[["table"]][["sum"]])
-  message("Library sizes of ", nrow(x[["table"]]), " samples, \\
+  message("Library sizes of ", nrow(x[["table"]]), " samples, \
 ranging from ", prettyNum(min_value, big.mark = ","),
 " to ", prettyNum(max_value, big.mark = ","), ".")
   plot(x[["plot"]])

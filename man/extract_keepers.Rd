@@ -4,41 +4,7 @@
 \alias{extract_keepers}
 \title{When a list of 'keeper' contrasts is specified, extract it from the data.}
 \usage{
-extract_keepers(
-  extracted,
-  keepers,
-  table_names,
-  all_coefficients,
-  limma,
-  edger,
-  ebseq,
-  deseq,
-  basic,
-  noiseq,
-  adjp,
-  annot_df,
-  include_deseq,
-  include_edger,
-  include_ebseq,
-  include_limma,
-  include_basic,
-  include_noiseq,
-  excludes,
-  padj_type,
-  fancy = FALSE,
-  loess = FALSE,
-  lfc_cutoff = 1,
-  p_cutoff = 0.05,
-  sheet_prefix = NULL,
-  sheet_number = NULL,
-  format_sig = 4,
-  plot_colors = plot_colors,
-  z = 1.5,
-  alpha = 0.4,
-  z_lines = FALSE,
-  label = 10,
-  label_column = "hgncsymbol"
-)
+extract_keepers(extracted, keepers, ...)
 }
 \arguments{
 \item{extracted}{Tables extracted from the all_pairwise data.}

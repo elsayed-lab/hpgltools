@@ -16,18 +16,13 @@ setGeneric("colors", signature = signature(expt = "expt"),
            function(expt) standardGeneric("colors"))
 
 setGeneric("colors<-", signature = signature(expt = "expt"),
-  function(expt, ...) standardGeneric("colors<-", ...))
+           function(expt, ...) standardGeneric("colors<-", ...))
 
-#' Generic method to input data to iDA
-#'
-#' @param object The object to run iDA on
-#' @param ... Additonal arguments passed to object constructors
-#' @return iDA output with clustering, gene weights, and cell weights
-#' @export
-setGeneric("iDA", signature = c("object"),
-           function(object, ...) {
-             standardGeneric("iDA")
-           })
+setGeneric("extract_keepers", signature = c("extracted", "keepers"),
+           function(extracted, keepers, ...) standardGeneric("extract_keepers"))
+
+setGeneric("get_backup_expression_data", signature = c("expt"),
+           function(expt) standardGeneric("get_backup_expression_data"))
 
 #' Generic method to get colors from expression data.
 #'
@@ -36,9 +31,17 @@ setGeneric("iDA", signature = c("object"),
 #' @return colors!
 #' @rdname methods
 #' @export
-setGeneric("getColors",
-  function(expt) standardGeneric("getColors"),
-  signature = signature(expt = "expt"))
+setGeneric("getColors", signature = signature(expt = "expt"),
+           function(expt) standardGeneric("getColors"))
+
+#' Generic method to input data to iDA
+#'
+#' @param object The object to run iDA on
+#' @param ... Additonal arguments passed to object constructors
+#' @return iDA output with clustering, gene weights, and cell weights
+#' @export
+setGeneric("iDA", signature = c("object"),
+           function(object, ...) standardGeneric("iDA"))
 
 setGeneric("normalizeData",
   function(expt, ...) standardGeneric("normalizeData"),
@@ -48,9 +51,8 @@ setGeneric("state",
   function(expt) standardGeneric("state"),
   signature = signature(expt = "expt"))
 
-setGeneric("subsetExpt",
-  function(expt, ...) standardGeneric("subsetExpt"),
-  signature = signature(expt = "expt"))
+#setGeneric("subset_expt", signature = c("expt"),
+#           function(expt, ...) standardGeneric("subset_expt"))
 
 #' A getter for the annotation databased used to create an expt/se.
 #'

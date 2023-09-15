@@ -418,7 +418,9 @@ plot_sm <- function(data, design = NULL, colors = NULL, method = "pearson", plot
     "quantile" = prop_spread,
     "plot" = sm_plot
   )
+  class(retlist) <- "standardmedian_plot"
   return(retlist)
 }
+setGeneric("plot_sm")
 
 ## EOF

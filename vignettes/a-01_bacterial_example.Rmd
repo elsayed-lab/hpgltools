@@ -75,7 +75,6 @@ The count tables and meta-data were loaded through the create_expt()
 function and the genome annotations were loaded with gff2df().
 
 ```{r loading_data}
-library(hpgltools)
 data_file <- system.file("share/cdm_expt.rda", package = "hpgldata")
 cdm <- new.env()
 load(data_file, envir = cdm)

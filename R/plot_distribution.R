@@ -805,5 +805,6 @@ plot_variance_coefficients <- function(data, design = NULL, x_axis = "condition"
   class(retlst) <- "varcoef_plot"
   return(retlst)
 }
+setGeneric("plot_variance_coefficients")
 
 ## EOF

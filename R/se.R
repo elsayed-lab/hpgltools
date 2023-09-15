@@ -603,18 +603,18 @@ subset_se <- function(se, subset = NULL, ids = NULL,
   subset_batches <- starting_batches[subset_positions, drop = TRUE]
   current_libsize <- se[["libsize"]]
   subset_current_libsize <- current_libsize[subset_positions, drop = TRUE]
-  subset_expressionset <- starting_expressionset[, subset_positions]
+  subset_se <- starting_se[, subset_positions]
 
   notes <- se[["notes"]]
   if (!is.null(note_appended)) {
     notes <- glue("{notes}{note_appended}")
   }
 
-  current_pd <- pData(subset_expressionset)
+  current_pd <- pData(subset_se)
   for (col in seq_len(ncol(current_pd))) {
     if (class(current_pd[[col]]) == "factor") {
-      pData(subset_expressionset)[[col]] <- droplevels(
-        pData(subset_expressionset)[[col]])
+      pData(subset_se)[[col]] <- droplevels(
+        pData(subset_se)[[col]])
     }
   }
   ## pData(subset_expressionset) <- subset_design

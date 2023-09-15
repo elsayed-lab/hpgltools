@@ -285,6 +285,7 @@ plot_meta_sankey <- function(design, factors = c("condition", "batch"), fill = "
   class(retlist) <- "meta_sankey"
   return(retlist)
 }
+setGeneric("plot_meta_sankey")
 
 ## I might want to just delete this, I think the ggplot version is better.
 plot_meta_interactive_sankey <- function(design, factors = c("condition", "batch"), fill = "node",
