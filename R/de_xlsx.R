@@ -2210,7 +2210,7 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
       } ## End pulling the significants by selectors.
       sets <- Vennerable::Venn(Sets = lst[[dir]][[table]])
       intersections <- sets@IntersectionSets
-      tmp_file <- tempfile(pattern = "venn", fileext = ".png")
+      tmp_file <- tmpmd5file(pattern = "venn", fileext = ".png")
       this_plot <- png(filename = tmp_file)
       controlled <- dev.control("enable")
       plt <- Vennerable::plot(sets, doWeights = FALSE)

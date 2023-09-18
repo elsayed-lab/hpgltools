@@ -332,7 +332,7 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
   silly_colors <- grDevices::colorRampPalette(c("purple", "black", "yellow"))(100)
   cor_df <- cor_df[complete.cases(cor_df), ]
 
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   pc_factor_corheat <- heatmap.3(as.matrix(cor_df), scale = "none", trace = "none",
@@ -343,7 +343,7 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
   dev.off()
 
   anova_f_colors <- grDevices::colorRampPalette(c("blue", "black", "red"))(100)
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   anova_f_heat <- heatmap.3(as.matrix(anova_f), scale = "none", trace = "none",
@@ -354,7 +354,7 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
   dev.off()
 
   anova_fstat_colors <- grDevices::colorRampPalette(c("blue", "white", "red"))(100)
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   anova_fstat_heat <- heatmap.3(as.matrix(anova_fstats), scale = "none", trace = "none",
@@ -369,7 +369,7 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
   neglog_p <- -1 * log(as.matrix(anova_p) + 0.00001)
   anova_neglogp_colors <- grDevices::colorRampPalette(c("blue", "white", "red"))(100)
 
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   anova_neglogp_heat <- heatmap.3(as.matrix(neglog_p), scale = "none", trace = "none",
@@ -443,14 +443,14 @@ pca_highscores <- function(expt, n = 20, cor = TRUE, vs = "means", logged = TRUE
     }
   }
 
-  tmp_file <- tempfile(pattern = "princomp", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "princomp", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   another_pca <- try(princomp(x = data, cor = cor))
   plot(another_pca)
   pca_hist <- grDevices::recordPlot()
   dev.off()
-  tmp_file <- tempfile(pattern = "biplot", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "biplot", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   biplot(another_pca)
@@ -1960,7 +1960,7 @@ u_plot <- function(plotted_us) {
   plotted_us[, "ID"] <- rownames(plotted_us)
   mesg("More shallow curves in these plots suggest more genes in this principle component.")
 
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   plot(plotted_us)

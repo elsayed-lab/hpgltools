@@ -179,7 +179,7 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
   map <- NULL
   na_idx <- is.na(heatmap_data)
   heatmap_data[na_idx] <- 0
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   if (type == "correlation") {
@@ -285,7 +285,7 @@ plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_
     data, dendrogram = mydendro, annotation = myannot,
     cluster = myclust, labels = mylabs, scale = scale, col = heatmap_colors)
 
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   plot(final_map)
@@ -353,7 +353,7 @@ plot_sample_heatmap <- function(data, colors = NULL, design = NULL, heatmap_colo
   ## drop NAs to help hclust()
   na_idx <- is.na(data)
   data[na_idx] <- -20
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   heatmap.3(data, keysize = 0.8, labRow = row_label, col = heatmap_colors, dendrogram = dendrogram,
@@ -424,7 +424,7 @@ plot_sample_cvheatmap <- function(expt, fun = "mean", fact = "condition",
     names <- colnames(data)
   }
 
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   heatmap.3(cvs, keysize = 0.8, labRow = rownames(cvs), col = heatmap_colors, dendrogram = dendrogram,

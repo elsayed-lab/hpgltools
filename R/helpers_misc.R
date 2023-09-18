@@ -743,6 +743,51 @@ sp <- function(...) {
   suppressWarnings(print(...))
 }
 
+#' A hopefully more robust version of tempfile().
+#'
+#' @param pattern Filename prefix.
+#' @param suffix Filename suffix.
+#' @param digits Currently I use Sys.time() with this number of digits.
+#' @param body No implemented, intended to use other sources of digest()
+#' @param fileext Filename extension as per tempfile().
+#' @return md5 based tempfilename.
+#' @export
+tmpmd5file <- function(pattern = "", suffix = "", digits = 6,
+                       body = NULL, fileext = "") {
+  if (!grepl(pattern = "^\\.", x = fileext)) {
+    pattern <- paste0(".", pattern)
+  }
+  op <- options(digits.secs = digits)
+  body_string <- digest::digest(Sys.time())
+  new <- options(op)
+  outdir <- "."
+  found_tempdir <- NULL
+  tmp_env <- Sys.getenv("TMP")
+  temp_env <- Sys.getenv("TEMP")
+  tmpdir_env <- Sys.getenv("TMPDIR")
+  if (nchar(tmp_env) > 0) {
+    found_tempdir <- tmp_env
+  }
+  if (nchar(temp_env) > 0) {
+    found_tempdir <- temp_env
+  }
+  if (nchar(tmpdir_env) > 0) {
+    found_tempdir <- tmpdir_env
+  }
+  if (is.null(found_tempdir)) {
+    tried_dir <- tempdir()
+    if (! "try-error" %in% class(tried_dir)) {
+      found_tempdir <- tried_dir
+    }
+  }
+  if (!is.null(found_tempdir)) {
+    outdir <- found_tempdir
+  }
+  file_string <- paste0(prefix, body_string, suffix, fileext)
+  file_path <- file.path(outdir, file_string)
+  return(file_path)
+}
+
 #' Remove the AsIs attribute from some data structure.
 #'
 #' Notably, when using some gene ontology libraries, the returned data

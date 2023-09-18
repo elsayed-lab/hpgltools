@@ -476,11 +476,11 @@ xlsx_insert_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6,
     }
     dev.off()
   }
-  png_name <- try(tempfile(pattern = "figureImage", fileext = glue(".{file_type}")))
+  png_name <- try(tmpmd5file(pattern = "figureImage", fileext = glue(".{file_type}")))
   if ("try-error" %in% class(png_name)) {
     warning("There are too many tmp files in your current Rtmp directory.")
     warning("You need to clean it out ASAP.")
-    png_name <- try(tempfile(pattern = "figureImage2", fileext = glue(".{file_type}")))
+    png_name <- try(tmpmd5file(pattern = "figureImage2", fileext = glue(".{file_type}")))
   }
   png_ret <- try(png(filename = png_name,
                      width = width,

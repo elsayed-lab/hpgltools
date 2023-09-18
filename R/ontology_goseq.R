@@ -452,7 +452,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
       merged_ids_lengths[["ID"]]), unique = TRUE)
 
   pwf_plot <- NULL
-  tmp_file <- tempfile(pattern = "goseq", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "goseq", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   pwf <- sm(suppressWarnings(goseq::nullp(DEgenes = de_vector, bias.data = length_vector,

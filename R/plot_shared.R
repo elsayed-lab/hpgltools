@@ -371,7 +371,7 @@ plot_legend <- function(stuff) {
   tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(plot))
   leg <- which(sapply(tmp[["grobs"]], function(x) x[["name"]]) == "guide-box")
   legend <- tmp[["grobs"]][[leg]]
-  tmp_file <- tempfile(pattern = "legend", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "legend", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   grid::grid.newpage()

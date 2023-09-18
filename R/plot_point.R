@@ -518,8 +518,8 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = FALSE
     ggplot2::scale_fill_manual(name = "Condition",
                                guide = "legend",
                                values = color_list) +
-    ggplot2::ylab("Number of non-zero genes observed.") +
-    ggplot2::xlab("Reads mapped in millions.") +
+    ggplot2::ylab("Number of non-zero genes observed") +
+    ggplot2::xlab("Number of reads mapped (millions)") +
     ggplot2::theme_bw(base_size = base_size)
 
   if (is.null(plot_labels)) {
@@ -623,7 +623,7 @@ plot_pairwise_ma <- function(data, log = NULL, ...) {
       m <- first - second
       a <- (first + second) / 2
 
-      tmp_file <- tempfile(pattern = "ma", fileext = ".png")
+      tmp_file <- tmpmd5file(pattern = "ma", fileext = ".png")
       this_plot <- png(filename = tmp_file)
       controlled <- dev.control("enable")
       affy::ma.plot(A = a, M = m, plot.method = "smoothScatter",

@@ -382,7 +382,7 @@ plot_qq_all <- function(data, labels = "short", ...) {
     count <- count + 1
   }
 
-  tmp_file <- tempfile(pattern = "multi", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "multi", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   result <- plot_multiplot(logs)
@@ -390,7 +390,7 @@ plot_qq_all <- function(data, labels = "short", ...) {
   dev.off()
   file.remove(tmp_file)
 
-  tmp_file <- tempfile(pattern = "multi", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "multi", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   plot_multiplot(ratios)

@@ -61,7 +61,7 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
                                  target.by = target,
                                  delta = delta)
 
-  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   PROPER::plotPower(powers)
@@ -69,7 +69,7 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
   dev.off()
   file.remove(tmp_file)
 
-  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   PROPER::plotPowerTD(powers)
@@ -77,7 +77,7 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
   dev.off()
   file.remove(tmp_file)
 
-  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   PROPER::plotPowerFD(powers)
@@ -85,7 +85,7 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
   dev.off()
   file.remove(tmp_file)
 
-  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   PROPER::plotFDcost(powers)
@@ -93,7 +93,7 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
   dev.off()
   file.remove(tmp_file)
 
-  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   PROPER::plotPowerHist(powerOutput = powers, simResult = simulation_result)
@@ -101,7 +101,7 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
   dev.off()
   file.remove(tmp_file)
 
-  tmp_file <- tempfile(pattern = "power", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   PROPER::plotPowerAlpha(powers)
@@ -248,7 +248,7 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
                                    target.by = target,
                                    delta = delta)
 
-    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     ## PROPER's plotting functions result in a bunch of annoying warnings.
@@ -260,7 +260,7 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     off <- dev.off()
     removed <- file.remove(tmp_file)
 
-    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     suppressWarnings(PROPER::plotPowerTD(powers))
@@ -271,7 +271,7 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     off <- dev.off()
     removed <- file.remove(tmp_file)
 
-    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     suppressWarnings(PROPER::plotPowerFD(powers))
@@ -282,7 +282,7 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     off <- dev.off()
     removed <- file.remove(tmp_file)
 
-    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     suppressWarnings(PROPER::plotFDcost(powers))
@@ -293,7 +293,7 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     off <- dev.off()
     removed <- file.remove(tmp_file)
 
-    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     suppressWarnings(PROPER::plotPowerHist(powerOutput = powers, simResult = simulation_result))
@@ -304,7 +304,7 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     off <- dev.off()
     removed <- file.remove(tmp_file)
 
-    tmp_file <- tempfile(pattern = "power", fileext = ".png")
+    tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     suppressWarnings(PROPER::plotPowerAlpha(powers))
