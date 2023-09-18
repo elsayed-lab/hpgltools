@@ -420,7 +420,7 @@ recolor_points <- function(plot, df, ids, color = "red", ...) {
 #' }
 #' @export
 plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = FALSE,
-                         expt_names = NULL, label_chars = 10, plot_legend = FALSE,
+                         expt_names = NULL, max_overlaps = 3, label_chars = 10, plot_legend = FALSE,
                          plot_title = NULL, cutoff = 0.65, ...) {
   arglist <- list(...)
   names <- NULL
@@ -542,7 +542,7 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = FALSE
       directlabels::geom_dl(aes(label = .data[["id"]]), method = "smart.grid")
   } else if (plot_labels == "repel") {
     non_zero_plot <- non_zero_plot +
-      ggrepel::geom_text_repel(ggplot2::aes(label = .data[["id"]]))
+      ggrepel::geom_text_repel(ggplot2::aes(label = .data[["id"]]), max.overlaps = max_overlaps)
   } else {
     non_zero_plot <- non_zero_plot +
       directlabels::geom_dl(ggplot2::aes(label = .data[["id"]]), method = "first.qp")
