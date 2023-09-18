@@ -531,7 +531,7 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = FALSE
     non_zero_plot <- non_zero_plot +
       ggplot2::geom_text(aes(x = .data[["cpm"]], y = .data[["nonzero_genes"]],
                              label = .data[["id"]], angle = 45, size = 4, vjust = 2))
-  } else if (plot_labels == "repel") {
+  } else if (plot_labels == "oldrepel") {
     non_zero_plot <- non_zero_plot +
       ggrepel::geom_text_repel(ggplot2::aes(label = .data[["id"]]),
                                size = 5, box.padding = ggplot2::unit(0.5, "lines"),
@@ -540,6 +540,9 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = FALSE
   } else if (plot_labels == "dlsmart") {
     non_zero_plot <- non_zero_plot +
       directlabels::geom_dl(aes(label = .data[["id"]]), method = "smart.grid")
+  } else if (plot_labels == "repel") {
+    non_zero_plot <- non_zero_plot +
+      ggrepel::geom_text_repel(ggplot2::aes(label = .data[["id"]]))
   } else {
     non_zero_plot <- non_zero_plot +
       directlabels::geom_dl(ggplot2::aes(label = .data[["id"]]), method = "first.qp")
