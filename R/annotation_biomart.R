@@ -429,7 +429,7 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
 #'  dim(hs_biomart_ontology$go)
 #' @export
 load_biomart_go <- function(species = "hsapiens", overwrite = FALSE, do_save = TRUE,
-                            host = NULL, trymart = "ENSEMBL_MART_ENSEMBL", archive = FALSE,
+                            host = NULL, trymart = "ENSEMBL_MART_ENSEMBL", archive = TRUE,
                             default_hosts = c("useast.ensembl.org", "uswest.ensembl.org",
                                               "www.ensembl.org", "asia.ensembl.org"),
                             year = NULL, month = NULL, trydataset = NULL,
@@ -499,7 +499,9 @@ load_biomart_go <- function(species = "hsapiens", overwrite = FALSE, do_save = T
       "mart" = ensembl,
       "host" = host,
       "mart_name" = used_mart,
-      "attributes" = dl_rows)
+      "attributes" = dl_rows,
+      "species" = species)
+  class(retlist) <- "biomart_go"
   return(retlist)
 }
 

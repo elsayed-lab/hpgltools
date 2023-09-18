@@ -2,13 +2,15 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.varpart}
 \alias{print.varpart}
-\title{Print a summary of variance partition results.}
+\title{Print variance partition results.}
 \usage{
 \method{print}{varpart}(x)
 }
 \arguments{
-\item{x}{list of results from simple_varpart().}
+\item{x}{List of results from variancePartition including the model
+information, percent/partition plots, dataframes of the
+fitted/sorted data by variance, etc.}
 }
 \description{
-Print a summary of variance partition results.
+Print variance partition results.
 }

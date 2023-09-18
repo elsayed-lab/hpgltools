@@ -7,7 +7,8 @@
 \method{print}{snps_genes}(x)
 }
 \arguments{
-\item{x}{list of results from snps_vs_genes().}
+\item{x}{List containing granges of variants, variants observed by
+chromosome, gene, and summaries of the result.}
 }
 \description{
 Print the result of snps_vs_genes().

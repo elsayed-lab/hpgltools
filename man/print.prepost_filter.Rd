@@ -7,7 +7,8 @@
 \method{print}{prepost_filter}(x)
 }
 \arguments{
-\item{x}{Result from plot_libsize_prepost().}
+\item{x}{List containing the information before/after filtering,
+the plots, and summary information.}
 }
 \description{
 Print a representation of the pre vs. post filtered data.

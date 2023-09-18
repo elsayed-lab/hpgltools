@@ -594,8 +594,22 @@ rex <- function(display = ":0") {
 #' @return Final filename including the prefix rundate.
 #' @seealso [rmarkdown]
 #' @export
-renderme <- function(file, format = "html_document") {
+renderme <- function(file, format = "html_document", overwrite = TRUE) {
+  original <- Sys.getenv("TMPDIR")
+  new_tmpdir <- paste0("render_tmp_", file)
+  if (file.exists(new_tmpdir)) {
+    if (isTRUE(overwrite)) {
+      message("The TMPDIR: ", new_tmpdir, " exists, removing and recreating it.")
+      removed <- unlink(new_tmpdir, recursive = TRUE)
+      recreated <- dir.create(new_tmpdir)
+    } else {
+      message("The TMPDIR: ", new_tmpdir, " exists, leaving it alone.")
+    }
+  }
+  Sys.setenv("TMPDIR" = new_tmpdir)
   ret <- rmarkdown::render(file, output_format = format, envir = globalenv())
+  removed <- unlink(new_tmpdir, recursive = TRUE)
+  Sys.setenv("TMPDIR" = original)
   rundate <- format(Sys.Date(), format = "%Y%m%d")
   outdir <- dirname(ret)
   base <- basename(ret)

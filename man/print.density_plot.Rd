@@ -2,13 +2,14 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.density_plot}
 \alias{print.density_plot}
-\title{Print a summary of the result from plot_density().}
+\title{Print the result from plot_density().}
 \usage{
 \method{print}{density_plot}(x)
 }
 \arguments{
-\item{x}{The density plot and associated data in question.}
+\item{x}{List containing the plot, summary of the
+conditions/batches/samples, and the melted table of reads/gene.}
 }
 \description{
-Print a summary of the result from plot_density().
+Print the result from plot_density().
 }

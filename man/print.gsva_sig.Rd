@@ -2,13 +2,14 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.gsva_sig}
 \alias{print.gsva_sig}
-\title{Print a summary of gsva categories deemed 'significant'.}
+\title{Print gsva categories deemed 'significant'.}
 \usage{
 \method{print}{gsva_sig}(x)
 }
 \arguments{
-\item{x}{list of results from gprofiler.}
+\item{x}{List of scored GSVA results, including some plots,
+likelihood tables, subsets of significant categories, etc.}
 }
 \description{
-Print a summary of gsva categories deemed 'significant'.
+Print gsva categories deemed 'significant'.
 }

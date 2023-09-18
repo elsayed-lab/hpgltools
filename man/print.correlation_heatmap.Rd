@@ -7,7 +7,7 @@
 \method{print}{correlation_heatmap}(x)
 }
 \arguments{
-\item{x}{plot_corheat()}
+\item{x}{List containing the correlations observed and a recorded heatmap.3().}
 }
 \description{
 Print the result of plot_corheat().

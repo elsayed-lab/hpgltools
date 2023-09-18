@@ -2,13 +2,15 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.clusterprofiler_result}
 \alias{print.clusterprofiler_result}
-\title{Print a summary of a clusterprofiler over representation search.}
+\title{Print a clusterprofiler over representation search.}
 \usage{
 \method{print}{clusterprofiler_result}(x)
 }
 \arguments{
-\item{x}{list of results from clusterprofiler.}
+\item{x}{Monstrous list of the various results, including but not
+limited to plots, go-gene mappings, enrichmed, kegg, david, GO
+analyses.}
 }
 \description{
-Print a summary of a clusterprofiler over representation search.
+Print a clusterprofiler over representation search.
 }

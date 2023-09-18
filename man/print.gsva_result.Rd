@@ -2,13 +2,14 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.gsva_result}
 \alias{print.gsva_result}
-\title{Print a summary of a gsva category search.}
+\title{Print a gsva category search.}
 \usage{
 \method{print}{gsva_result}(x)
 }
 \arguments{
-\item{x}{list of results from gprofiler.}
+\item{x}{List containing signature annotations, the result from
+GSVA, a modified expressionset, the signatures used, and method.}
 }
 \description{
-Print a summary of a gsva category search.
+Print a gsva category search.
 }

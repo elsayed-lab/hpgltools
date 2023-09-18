@@ -2,13 +2,14 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.meta_sankey}
 \alias{print.meta_sankey}
-\title{Print a summary of a metadata sankey plot.}
+\title{Print a metadata sankey plot.}
 \usage{
 \method{print}{meta_sankey}(x)
 }
 \arguments{
-\item{x}{list of results from plot_meta_sankey().}
+\item{x}{List containing the table of connected nodes and a ggplot2
+sankey.}
 }
 \description{
-Print a summary of a metadata sankey plot.
+Print a metadata sankey plot.
 }

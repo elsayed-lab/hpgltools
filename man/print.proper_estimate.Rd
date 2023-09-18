@@ -2,13 +2,15 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.proper_estimate}
 \alias{print.proper_estimate}
-\title{Print a summary of the result from simple_proper().}
+\title{Print the result from simple_proper().}
 \usage{
 \method{print}{proper_estimate}(x)
 }
 \arguments{
-\item{x}{list of results from simple_proper().}
+\item{x}{List including the various plots from PROPER, the
+associated tables, simulation options, and example text for a
+paper/grant.}
 }
 \description{
-Print a summary of the result from simple_proper().
+Print the result from simple_proper().
 }

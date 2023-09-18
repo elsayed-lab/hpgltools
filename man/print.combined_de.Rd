@@ -2,13 +2,15 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.combined_de}
 \alias{print.combined_de}
-\title{Print a summary of a combined differential expression analysis.}
+\title{Print a combined differential expression analysis.}
 \usage{
 \method{print}{combined_de}(x)
 }
 \arguments{
-\item{x}{Set of DE results in one big pile.}
+\item{x}{List containing the dataframes for each contrast, the
+various plots, the set of wanted contrasts, models used, and
+summaries of the data.}
 }
 \description{
-Print a summary of a combined differential expression analysis.
+Print a combined differential expression analysis.
 }

@@ -7,7 +7,8 @@
 \method{print}{expt}(x)
 }
 \arguments{
-\item{x}{expt to print}
+\item{x}{List from create_expt containing the expressionSet,
+annotation data, batches, conditions, colors, libsizes, etc.}
 }
 \description{
 I am trying to understand how R collates functions.

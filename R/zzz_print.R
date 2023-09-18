@@ -7,7 +7,8 @@
 
 #' Print a summary of a set of abundant genes.
 #'
-#' @param x Abundant gene list.
+#' @param x Abundant gene list comprising an element 'high' and 'low'
+#'  for the most and least abundant genes observed.
 #' @export
 print.abundant_genes <- function(x) {
   message("A set of genes deemed abundant.")
@@ -16,7 +17,8 @@ print.abundant_genes <- function(x) {
 
 #' Print the result of all_gprofiler()
 #'
-#' @param x The set of results produced by all_gprofiler().
+#' @param x List composed of simple_gprofiler() results for every
+#'  up/down set provided by extract_significant_genes().
 #' @export
 print.all_gprofiler <- function(x) {
   summary_df <- data.frame()
@@ -32,7 +34,9 @@ print.all_gprofiler <- function(x) {
 
 #' Print function for a pairwise differential expression result.
 #'
-#' @param x pairwise comparisons.
+#' @param x List containing basic, deseq, edger, ebseq, limma, and
+#'  noiseq pairwise comparisons as well as some information about the
+#'  contrasts and models used.
 #' @export
 print.all_pairwise <- function(x) {
   included <- c()
@@ -54,9 +58,10 @@ print.all_pairwise <- function(x) {
   return(invisible(x))
 }
 
-#' Print a summary of the result from calculate_aucc().
+#' Print the result from calculate_aucc().
 #'
-#' @param x list of results from calculate_aucc().
+#' @param x List containing the AUCC, correlation, and a plot
+#'  describing the AUCC.
 #' @export
 print.aucc_info <- function(x) {
   summary_string <- glue("These two tables have an aucc value of: \\
@@ -67,9 +72,22 @@ print.aucc_info <- function(x) {
   return(invisible(x))
 }
 
-#' Print a summary of the result from self_evaluate_model().
+#' Print the results of load_biomart_go().
 #'
-#' @param x list of results from self_evaluate_model().
+#' @param x List from load_biomart_go() containing the table of data,
+#'  mart used, host used, name of the mart, and attributes.
+#' @export
+print.biomart_go <- function(x) {
+  summary_string <- glue("The GO annotations from biomart host {host} for species {species}
+provided {nrow(x[['go']])} rows.")
+  message(summary_string)
+  return(invisible(x))
+}
+
+#' Print the result from self_evaluate_model().
+#'
+#' @param x List showing AUC/ROC curves of the test performed, summary
+#'  thereof, the confusion matrix, and vector of incorrectly called samples.
 #' @export
 print.classifier_evaluation <- function(x) {
   message("The summary of the (in)correct calls is: ")
@@ -83,18 +101,22 @@ print.classifier_evaluation <- function(x) {
   return(invisible(x))
 }
 
-#' Print a summary of a clusterprofiler over representation search.
+#' Print a clusterprofiler over representation search.
 #'
-#' @param x list of results from clusterprofiler.
+#' @param x Monstrous list of the various results, including but not
+#'  limited to plots, go-gene mappings, enrichmed, kegg, david, GO
+#'  analyses.
 #' @export
 print.clusterprofiler_result <- function(x) {
   message("A set of ontologies produced by clusterprofiler.")
   return(invisible(x))
 }
 
-#' Print a summary of a combined differential expression analysis.
+#' Print a combined differential expression analysis.
 #'
-#' @param x Set of DE results in one big pile.
+#' @param x List containing the dataframes for each contrast, the
+#'  various plots, the set of wanted contrasts, models used, and
+#'  summaries of the data.
 #' @export
 print.combined_de <- function(x) {
   message("A set of combined differential expression results.")
@@ -106,9 +128,9 @@ print.combined_de <- function(x) {
   return(invisible(x))
 }
 
-#' Print a summary of a single combined DE result.
+#' Print a single combined DE result.
 #'
-#' @param x Big table and some summaries.
+#' @param x Data table of combined differential expression results.
 #' @export
 print.combined_table <- function(x) {
   message("A combined differential expression table.")
@@ -118,7 +140,7 @@ print.combined_table <- function(x) {
 
 #' Print the result of plot_corheat().
 #'
-#' @param x plot_corheat()
+#' @param x List containing the correlations observed and a recorded heatmap.3().
 #' @export
 print.correlation_heatmap <- function(x) {
   min_cor <- min(x[["data"]])
@@ -135,7 +157,7 @@ print.correlation_heatmap <- function(x) {
 
 #' Print the result of plot_disheat().
 #'
-#' @param x plot_disheat()
+#' @param x List containing the distances observed and a recorded heatmap.3().
 #' @export
 print.distance_heatmap <- function(x) {
   max_distance <- max(x[["data"]])
@@ -155,7 +177,8 @@ print.distance_heatmap <- function(x) {
 #' Note I think I want to have that function return slightly different types
 #' depending on how the function call was set up.
 #'
-#' @param x Result from compare_de_tables().
+#' @param x List provided by plot_linear_scatter() containing
+#'  correlations, plots, linear model.
 #' @export
 print.cross_table_comparison <- function(x) {
   summary_string <- glue("Comparison of the {x[['fcx_column']]} vs {x[['fcy_column']]}
@@ -167,15 +190,18 @@ of two DE tables.")
 
 #' Print the result of running deseq_lrt().
 #'
-#' @param x The list provided by deseq_lrt().
+#' @param x List containing the DESeq2 result, the associated table,
+#'  clusters from degPatterns, list of associated genes, and dataframes
+#'  of the most significant genes.
 #' @export
 print.deseq_lrt <- function(x) {
   summary_string <- glue("The result from deseq_lrt().")
 }
 
-#' Print a summary of the result from plot_density().
+#' Print the result from plot_density().
 #'
-#' @param x The density plot and associated data in question.
+#' @param x List containing the plot, summary of the
+#'  conditions/batches/samples, and the melted table of reads/gene.
 #' @export
 print.density_plot <- function(x) {
   summary_string <- glue("Density plot describing {nrow(x[['sample_summary']])} samples.")
@@ -187,7 +213,8 @@ print.density_plot <- function(x) {
 #' Modified print function for an expt.
 #'
 #' I am trying to understand how R collates functions.
-#' @param x expt to print
+#' @param x List from create_expt containing the expressionSet,
+#'  annotation data, batches, conditions, colors, libsizes, etc.
 #' @export
 print.expt <- function(x) {
   summary_string <- glue("An expressionSet containing experiment with {nrow(exprs(x))}
@@ -199,18 +226,20 @@ Its current state is: {what_happened(x)}.")
   return(invisible(x))
 }
 
-#' Print a summary of a goseq over representation search.
+#' Print a goseq over representation search.
 #'
-#' @param x list of results from goseq.
+#' @param x List containing the various goseq results, plots,
+#'  significant subsets, enrichResult coercions, etc.
 #' @export
 print.goseq_result <- function(x) {
   message("A set of ontologies produced by goseq.")
   return(invisible(x))
 }
 
-#' Print a summary of a gostats over representation search.
+#' Print a gostats over representation search.
 #'
-#' @param x list of results from gostats.
+#' @param x List containing the various gostats results, plots,
+#'  significant subsets, enrichResult coercions, etc.
 #' @export
 print.gostats_result <- function(x) {
   bp_entries <- nrow(x[["tables"]][["bp_over_enriched"]])
@@ -223,9 +252,12 @@ print.gostats_result <- function(x) {
   return(invisible(x))
 }
 
-#' Print a summary of a gprofiler over representation search.
+#' Print a gprofiler over representation search.
 #'
-#' @param x list of results from gprofiler.
+#' @param x List from gProfiler2 containing its various plots, tables
+#'  of significant categories for GO, reactome, KEGG, miRNA,
+#'  transcription factors, CORUM, wiki pathways, etc; along with the
+#'  coerced enrichResult versions.
 #' @export
 print.gprofiler_result <- function(x) {
   hit_string <- glue("A set of ontologies produced by gprofiler using {x[['num_genes']]}
@@ -259,9 +291,10 @@ KEGG hits, {nrow(x[['REAC']])} reactome hits, \\
   return(invisible(x))
 }
 
-#' Print a summary of a gsva category search.
+#' Print a gsva category search.
 #'
-#' @param x list of results from gprofiler.
+#' @param x List containing signature annotations, the result from
+#'  GSVA, a modified expressionset, the signatures used, and method.
 #' @export
 print.gsva_result <- function(x) {
   summary_string <- glue("GSVA result using method: {x[['method']]} against the \\
@@ -272,9 +305,10 @@ to: {prettyNum(max(exprs(x[['expt']])))}.")
   return(invisible(x))
 }
 
-#' Print a summary of gsva categories deemed 'significant'.
+#' Print gsva categories deemed 'significant'.
 #'
-#' @param x list of results from gprofiler.
+#' @param x List of scored GSVA results, including some plots,
+#'  likelihood tables, subsets of significant categories, etc.
 #' @export
 print.gsva_sig <- function(x) {
   summary_string <- glue("The set of GSVA categories deemed significantly higher than the
@@ -286,7 +320,7 @@ distribution of all scores.  It comprises {nrow(x[['subset_table']])} gene sets.
 
 #' Print a legend of an expressionset.
 #'
-#' @param x list of results from plot_legend().
+#' @param x List containing the condition factor, colors used, and plot.
 #' @export
 print.legend_plot <- function(x) {
   summary_string <- glue("The colors used in the expressionset are: \\
@@ -296,9 +330,10 @@ print.legend_plot <- function(x) {
   return(invisible(x))
 }
 
-#' Print a summary of the library sizes from an experiment.
+#' Print the library sizes from an experiment.
 #'
-#' @param x list of results from plot_libsize().
+#' @param x List containing a summary of the library sizes, the plot,
+#'  and table.
 #' @export
 print.libsize_plot <- function(x) {
   min_value <- min(x[["table"]][["sum"]])
@@ -310,9 +345,10 @@ ranging from ", prettyNum(min_value, big.mark = ","),
   return(invisible(x))
 }
 
-#' Print a summary of a metadata sankey plot.
+#' Print a metadata sankey plot.
 #'
-#' @param x list of results from plot_meta_sankey().
+#' @param x List containing the table of connected nodes and a ggplot2
+#'  sankey.
 #' @export
 print.meta_sankey <- function(x) {
   summary_string <- glue("A sankey plot describing the metadata of {nrow(x[['design']])} samples,
@@ -324,9 +360,9 @@ and traversing metadata factors:
   return(invisible(x))
 }
 
-#' Print a summary of a nonzero plot.
+#' Print a nonzero plot.
 #'
-#' @param x list of results from plot_libsize().
+#' @param x List containing the plot and table describing the data.
 #' @export
 print.nonzero_plot <- function(x) {
   summary_string <- glue("A non-zero genes plot of {nrow(x[['table']])} samples.
@@ -339,9 +375,10 @@ These samples have an average {prettyNum(mean(x[['table']][['cpm']]))} CPM cover
   return(invisible(x))
 }
 
-#' Print a summary of the result from one of the various dimension reductions.
+#' Print the result from one of the various dimension reductions.
 #'
-#' @param x Result from plot_pca()
+#' @param x List comprised of the residuals, variance summary, tables,
+#'  the PCA-esque plot, experimental design, etc.
 #' @export
 print.pca_result <- function(x) {
   cond_column <- x[["cond_column"]]
@@ -359,7 +396,8 @@ Shapes are defined by ", batch_levels, ".")
 
 #' Print a representation of the pre vs. post filtered data.
 #'
-#' @param x Result from plot_libsize_prepost().
+#' @param x List containing the information before/after filtering,
+#'  the plots, and summary information.
 #' @export
 print.prepost_filter <- function(x) {
   na_idx <- is.na(x[["table"]][["sub_low"]])
@@ -375,9 +413,10 @@ The number of genes with low coverage changes by {min_range}-{max_range} genes."
   return(invisible(x))
 }
 
-#' Print a summary of the result from gather_preprocessing_metadata().
+#' Print the result from gather_preprocessing_metadata().
 #'
-#' @param x Result from gather_preprocessing_metadata()
+#' @param x List composed of the xlsx output file, new columns added
+#'  to it, and copies of the metadata before/after modification.
 #' @export
 print.preprocessing_metadata <- function(x) {
   cond_column <- x[["cond_column"]]
@@ -393,9 +432,11 @@ Shapes are defined by ", batch_levels, ".")
   return(invisible(x))
 }
 
-#' Print a summary of the result from simple_proper().
+#' Print the result from simple_proper().
 #'
-#' @param x list of results from simple_proper().
+#' @param x List including the various plots from PROPER, the
+#'  associated tables, simulation options, and example text for a
+#'  paper/grant.
 #' @export
 print.proper_estimate <- function(x) {
   message(x[[1]][["interpolated_text"]])
@@ -403,9 +444,10 @@ print.proper_estimate <- function(x) {
   return(invisible(x))
 }
 
-#' Print a summary of some significantly differentially expressed genes.
+#' Print some significantly differentially expressed genes.
 #'
-#' @param x Significant gene data structure.
+#' @param x List containing the parameters used, gene subset tables,
+#'  plots, xlsx output file, etc.
 #' @export
 print.sig_genes <- function(x) {
   message("A set of genes deemed significant according to ", toString(x[["according"]]), ".")
@@ -431,9 +473,10 @@ print.sig_genes <- function(x) {
   return(invisible(x))
 }
 
-#' Print a summary of a set of intersection significant genes from multiple analyses.
+#' Print the intersection of significant genes from multiple analyses.
 #'
-#' @param x Intersection gene lists.
+#' @param x List containing some venn diagrams, summaries of
+#'  intersections, subsets of the intersections, etc.
 #' @export
 print.sig_intersect <- function(x) {
   message("A set of genes deemed significant by multiple methods.")
@@ -442,7 +485,8 @@ print.sig_intersect <- function(x) {
 
 #' Print some information about the result of snp_intersections().
 #'
-#' @param x list of results from snp_intersections().
+#' @param x List containing a datatable of intersections, summaries by
+#'  chromosome and gene.
 #' @export
 print.snp_intersections <- function(x) {
   summary_string <- glue("The combinations of variants, \\
@@ -455,7 +499,9 @@ and combination of factors in the data.")
 
 #' Print the result of get_snp_sets().
 #'
-#' @param x list of results from get_snp_sets().
+#' @param x List containing the cross references of variants by
+#'  factor, the set of observed variants, the possible combinations of
+#'  the factor, etc.
 #' @export
 print.snp_sets <- function(x) {
   summary_string <- glue("A set of variants observed when cross referencing all variants against
@@ -469,7 +515,8 @@ density of variants ranging from {min(x[['density']])} to {max(x[['density']])}.
 
 #' Print the result of snps_vs_genes().
 #'
-#' @param x list of results from snps_vs_genes().
+#' @param x List containing granges of variants, variants observed by
+#'  chromosome, gene, and summaries of the result.
 #' @export
 print.snps_genes <- function(x) {
   gt_zero <- sum(x[["count_by_gene"]] > 0)
@@ -483,9 +530,10 @@ print.snps_genes <- function(x) {
   return(invisible(x))
 }
 
-#' Print a summary of a topgo over representation search.
+#' Print a topgo over representation search.
 #'
-#' @param x list of results from topgo.
+#' @param x List of the various over/under representation analyses
+#'  provided by topGO, the associated plots, and coerced enrichResults.
 #' @export
 print.topgo_result <- function(x) {
   bp_entries <- nrow(x[["tables"]][["bp_over_enriched"]])
@@ -500,7 +548,7 @@ print.topgo_result <- function(x) {
 
 #' Print a result from plot_topn().
 #'
-#' @param x list of results from plot_topn().
+#' @param x List with the topn plot and summary table.
 #' @export
 print.topn_plot <- function(x) {
   summary_string <- glue("Plot describing the top-n genes from every sample of a dataset.")
@@ -511,7 +559,7 @@ print.topn_plot <- function(x) {
 
 #' Print a result from plot_variance_coefficients().
 #'
-#' @param x list of results from plot_variance_coefficients().
+#' @param x List containing the coefficient of variance plot and summary.
 #' @export
 print.varcoef_plot <- function(x) {
   summary_string <- glue("Plot describing the observed variance coefficients on a per-gene basis.")
@@ -520,9 +568,11 @@ print.varcoef_plot <- function(x) {
   return(invisible(x))
 }
 
-#' Print a summary of variance partition results.
+#' Print variance partition results.
 #'
-#' @param x list of results from simple_varpart().
+#' @param x List of results from variancePartition including the model
+#'  information, percent/partition plots, dataframes of the
+#'  fitted/sorted data by variance, etc.
 #' @export
 print.varpart <- function(x) {
   summary_string <- glue("The result of using variancePartition with the model: \\
@@ -532,9 +582,9 @@ x[['model_string']]")
   return(invisible(x))
 }
 
-#' Print a summary from write_expt.
+#' Print the result from write_expt.
 #'
-#' @param x result of write_expt()
+#' @param x List containing all the many plots, the dataframes, etc.
 #' @export
 print.written_expt <- function(x) {
   result_string <- glue("The result from write_expt() sent to:

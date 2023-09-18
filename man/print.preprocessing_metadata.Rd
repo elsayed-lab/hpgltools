@@ -2,13 +2,14 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.preprocessing_metadata}
 \alias{print.preprocessing_metadata}
-\title{Print a summary of the result from gather_preprocessing_metadata().}
+\title{Print the result from gather_preprocessing_metadata().}
 \usage{
 \method{print}{preprocessing_metadata}(x)
 }
 \arguments{
-\item{x}{Result from gather_preprocessing_metadata()}
+\item{x}{List composed of the xlsx output file, new columns added
+to it, and copies of the metadata before/after modification.}
 }
 \description{
-Print a summary of the result from gather_preprocessing_metadata().
+Print the result from gather_preprocessing_metadata().
 }

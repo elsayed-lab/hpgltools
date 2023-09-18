@@ -2,13 +2,14 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.classifier_evaluation}
 \alias{print.classifier_evaluation}
-\title{Print a summary of the result from self_evaluate_model().}
+\title{Print the result from self_evaluate_model().}
 \usage{
 \method{print}{classifier_evaluation}(x)
 }
 \arguments{
-\item{x}{list of results from self_evaluate_model().}
+\item{x}{List showing AUC/ROC curves of the test performed, summary
+thereof, the confusion matrix, and vector of incorrectly called samples.}
 }
 \description{
-Print a summary of the result from self_evaluate_model().
+Print the result from self_evaluate_model().
 }

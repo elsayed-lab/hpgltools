@@ -9,7 +9,8 @@ depending on how the function call was set up.}
 \method{print}{cross_table_comparison}(x)
 }
 \arguments{
-\item{x}{Result from compare_de_tables().}
+\item{x}{List provided by plot_linear_scatter() containing
+correlations, plots, linear model.}
 }
 \description{
 Print a representation of compare_de_tables().

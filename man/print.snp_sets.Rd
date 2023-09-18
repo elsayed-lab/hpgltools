@@ -7,7 +7,9 @@
 \method{print}{snp_sets}(x)
 }
 \arguments{
-\item{x}{list of results from get_snp_sets().}
+\item{x}{List containing the cross references of variants by
+factor, the set of observed variants, the possible combinations of
+the factor, etc.}
 }
 \description{
 Print the result of get_snp_sets().

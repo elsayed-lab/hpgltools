@@ -2,13 +2,16 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.gprofiler_result}
 \alias{print.gprofiler_result}
-\title{Print a summary of a gprofiler over representation search.}
+\title{Print a gprofiler over representation search.}
 \usage{
 \method{print}{gprofiler_result}(x)
 }
 \arguments{
-\item{x}{list of results from gprofiler.}
+\item{x}{List from gProfiler2 containing its various plots, tables
+of significant categories for GO, reactome, KEGG, miRNA,
+transcription factors, CORUM, wiki pathways, etc; along with the
+coerced enrichResult versions.}
 }
 \description{
-Print a summary of a gprofiler over representation search.
+Print a gprofiler over representation search.
 }

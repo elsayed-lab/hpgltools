@@ -7,7 +7,9 @@
 \method{print}{deseq_lrt}(x)
 }
 \arguments{
-\item{x}{The list provided by deseq_lrt().}
+\item{x}{List containing the DESeq2 result, the associated table,
+clusters from degPatterns, list of associated genes, and dataframes
+of the most significant genes.}
 }
 \description{
 Print the result of running deseq_lrt().

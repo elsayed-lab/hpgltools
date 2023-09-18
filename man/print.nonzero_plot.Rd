@@ -2,13 +2,13 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.nonzero_plot}
 \alias{print.nonzero_plot}
-\title{Print a summary of a nonzero plot.}
+\title{Print a nonzero plot.}
 \usage{
 \method{print}{nonzero_plot}(x)
 }
 \arguments{
-\item{x}{list of results from plot_libsize().}
+\item{x}{List containing the plot and table describing the data.}
 }
 \description{
-Print a summary of a nonzero plot.
+Print a nonzero plot.
 }

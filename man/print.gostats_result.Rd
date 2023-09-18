@@ -2,13 +2,14 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.gostats_result}
 \alias{print.gostats_result}
-\title{Print a summary of a gostats over representation search.}
+\title{Print a gostats over representation search.}
 \usage{
 \method{print}{gostats_result}(x)
 }
 \arguments{
-\item{x}{list of results from gostats.}
+\item{x}{List containing the various gostats results, plots,
+significant subsets, enrichResult coercions, etc.}
 }
 \description{
-Print a summary of a gostats over representation search.
+Print a gostats over representation search.
 }

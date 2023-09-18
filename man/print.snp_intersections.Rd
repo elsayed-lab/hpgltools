@@ -7,7 +7,8 @@
 \method{print}{snp_intersections}(x)
 }
 \arguments{
-\item{x}{list of results from snp_intersections().}
+\item{x}{List containing a datatable of intersections, summaries by
+chromosome and gene.}
 }
 \description{
 Print some information about the result of snp_intersections().

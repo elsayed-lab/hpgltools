@@ -7,7 +7,7 @@
 \method{print}{distance_heatmap}(x)
 }
 \arguments{
-\item{x}{plot_disheat()}
+\item{x}{List containing the distances observed and a recorded heatmap.3().}
 }
 \description{
 Print the result of plot_disheat().

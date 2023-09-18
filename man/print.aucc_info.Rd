@@ -2,13 +2,14 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.aucc_info}
 \alias{print.aucc_info}
-\title{Print a summary of the result from calculate_aucc().}
+\title{Print the result from calculate_aucc().}
 \usage{
 \method{print}{aucc_info}(x)
 }
 \arguments{
-\item{x}{list of results from calculate_aucc().}
+\item{x}{List containing the AUCC, correlation, and a plot
+describing the AUCC.}
 }
 \description{
-Print a summary of the result from calculate_aucc().
+Print the result from calculate_aucc().
 }
