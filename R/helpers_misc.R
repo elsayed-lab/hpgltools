@@ -783,6 +783,10 @@ tmpmd5file <- function(pattern = "", suffix = "", digits = 6,
   if (!is.null(found_tempdir)) {
     outdir <- found_tempdir
   }
+  if (!file.exists(outdir)) {
+    created <- dir.create(outdir, recursive = TRUE)
+  }
+
   file_string <- paste0(pattern, body_string, suffix, fileext)
   file_path <- file.path(outdir, file_string)
   return(file_path)

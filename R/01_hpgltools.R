@@ -60,7 +60,7 @@ NULL
 #' Make sure BiocGenerics' version of rowMeans is available.
 #' @name rowMeans
 #' @import methods
-#' @importMethodsFrom BiocGenerics rowMeans
+#' @importMethodsFrom Matrix rowMeans
 NULL
 
 #' Plotly for interactive 3-D plotting in the Shiny App

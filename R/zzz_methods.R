@@ -882,7 +882,7 @@ setMethod(
 setMethod(
   "rowData<-", signature = signature(x = "expt"),
   definition = function(x, i, withDimnames = TRUE, ..., value) {
-    Biobase::fData(x[["expressionset"]]) <- value
+    x <- Biobase::fData(x[["expressionset"]]) <- value
     return(x)
   })
 
