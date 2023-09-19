@@ -637,7 +637,9 @@ plot_pairwise_ma <- function(data, log = NULL, ...) {
       title(glue("MA of {firstname} vs {secondname}."))
       plot_list[[name]] <- grDevices::recordPlot()
       dev.off()
-      file.remove(tmp_file)
+      removed <- suppressWarnings(file.remove(tmp_file))
+      removed <- unlink(dirname(tmp_file))
+
     }
   }
   return(plot_list)

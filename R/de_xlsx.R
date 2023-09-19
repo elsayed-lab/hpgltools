@@ -300,6 +300,8 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
   for (img in image_files) {
     removed <- try(suppressWarnings(file.remove(img)), silent = TRUE)
   }
+  nodir <- unlink(dirname(img))
+
   return(ret)
 }
 

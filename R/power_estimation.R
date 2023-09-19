@@ -67,7 +67,8 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
   PROPER::plotPower(powers)
   power_plot <- grDevices::recordPlot()
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
   this_plot <- png(filename = tmp_file)
@@ -75,7 +76,8 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
   PROPER::plotPowerTD(powers)
   powertd_plot <- grDevices::recordPlot()
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
   this_plot <- png(filename = tmp_file)
@@ -83,7 +85,8 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
   PROPER::plotPowerFD(powers)
   powerfd_plot <- grDevices::recordPlot()
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
   this_plot <- png(filename = tmp_file)
@@ -91,7 +94,8 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
   PROPER::plotFDcost(powers)
   fdcost_plot <- grDevices::recordPlot()
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
   this_plot <- png(filename = tmp_file)
@@ -99,7 +103,8 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
   PROPER::plotPowerHist(powerOutput = powers, simResult = simulation_result)
   powerhist_plot <- grDevices::recordPlot()
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
   this_plot <- png(filename = tmp_file)
@@ -107,7 +112,10 @@ default_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 2
   PROPER::plotPowerAlpha(powers)
   poweralpha_plot <- grDevices::recordPlot()
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
+
+
   grant_text <- glue("Assume the transcriptome mean and variation profiles are similar to those from mouse
 striatum cells in previous studies, and the magnitude of true differential expression is similar
 to the level observed between two strains of mice. If we expect to identify 80% of DE genes
@@ -258,7 +266,8 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     }
     power_plot <- grDevices::recordPlot()
     off <- dev.off()
-    removed <- file.remove(tmp_file)
+    removed <- suppressWarnings(file.remove(tmp_file))
+    removed <- unlink(dirname(tmp_file))
 
     tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
@@ -269,7 +278,8 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     }
     powertd_plot <- grDevices::recordPlot()
     off <- dev.off()
-    removed <- file.remove(tmp_file)
+    removed <- suppressWarnings(file.remove(tmp_file))
+    removed <- unlink(dirname(tmp_file))
 
     tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
@@ -280,7 +290,8 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     }
     powerfd_plot <- grDevices::recordPlot()
     off <- dev.off()
-    removed <- file.remove(tmp_file)
+    removed <- suppressWarnings(file.remove(tmp_file))
+    removed <- unlink(dirname(tmp_file))
 
     tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
@@ -291,7 +302,8 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     }
     fdcost_plot <- grDevices::recordPlot()
     off <- dev.off()
-    removed <- file.remove(tmp_file)
+    removed <- suppressWarnings(file.remove(tmp_file))
+    removed <- unlink(dirname(tmp_file))
 
     tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
@@ -302,7 +314,8 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     }
     powerhist_plot <- grDevices::recordPlot()
     off <- dev.off()
-    removed <- file.remove(tmp_file)
+    removed <- suppressWarnings(file.remove(tmp_file))
+    removed <- unlink(dirname(tmp_file))
 
     tmp_file <- tmpmd5file(pattern = "power", fileext = ".png")
     this_plot <- png(filename = tmp_file)
@@ -313,7 +326,8 @@ simple_proper <- function(de_tables, p = 0.05, experiment = "cheung", nsims = 20
     }
     poweralpha_plot <- grDevices::recordPlot()
     off <- dev.off()
-    removed <- file.remove(tmp_file)
+    removed <- suppressWarnings(file.remove(tmp_file))
+    removed <- unlink(dirname(tmp_file))
 
     ## Stealing from plotPower to get the relevant cutoffs
     nsims = dim(powers[["power"]])[3]

@@ -198,7 +198,9 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
   }
   recorded_heatmap_plot <- grDevices::recordPlot()
   dev.off()
-  removed <- file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
+
   retlist <- list("map" = map,
                   "plot" = recorded_heatmap_plot,
                   "data" = heatmap_data)
@@ -291,7 +293,9 @@ plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_
   plot(final_map)
   rec_plot <- grDevices::recordPlot()
   dev.off()
-  removed <- file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
+
   retlist <- list(
     "annotations" = myannot,
     "clusters" = myclust,
@@ -361,7 +365,9 @@ plot_sample_heatmap <- function(data, colors = NULL, design = NULL, heatmap_colo
             linewidth = 0.5, main = plot_title, Rowv = Rowv, Colv = Colv)
   hpgl_heatmap_plot <- grDevices::recordPlot()
   dev.off()
-  removed <- file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
+
   return(hpgl_heatmap_plot)
 }
 setGeneric("plot_sample_heatmap")
@@ -432,6 +438,8 @@ plot_sample_cvheatmap <- function(expt, fun = "mean", fact = "condition",
             linewidth = 0.5, main = plot_title, Rowv = Rowv, Colv = Colv)
   cv_heatmap_plot <- grDevices::recordPlot()
   dev.off()
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   point_df <- cvs[, c(x_factor, y_factor)]
 

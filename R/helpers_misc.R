@@ -760,33 +760,10 @@ tmpmd5file <- function(pattern = "", suffix = "", digits = 6,
   op <- options(digits.secs = digits)
   body_string <- digest::digest(Sys.time())
   new <- options(op)
-  outdir <- "."
-  found_tempdir <- NULL
-  tmp_env <- Sys.getenv("TMP")
-  temp_env <- Sys.getenv("TEMP")
-  tmpdir_env <- Sys.getenv("TMPDIR")
-  if (nchar(tmp_env) > 0) {
-    found_tempdir <- tmp_env
-  }
-  if (nchar(temp_env) > 0) {
-    found_tempdir <- temp_env
-  }
-  if (nchar(tmpdir_env) > 0) {
-    found_tempdir <- tmpdir_env
-  }
-  if (is.null(found_tempdir)) {
-    tried_dir <- tempdir()
-    if (! "try-error" %in% class(tried_dir)) {
-      found_tempdir <- tried_dir
-    }
-  }
-  if (!is.null(found_tempdir)) {
-    outdir <- found_tempdir
-  }
+  outdir <- tempdir()
   if (!file.exists(outdir)) {
     created <- dir.create(outdir, recursive = TRUE)
   }
-
   file_string <- paste0(pattern, body_string, suffix, fileext)
   file_path <- file.path(outdir, file_string)
   return(file_path)

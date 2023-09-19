@@ -311,6 +311,7 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
   down_venn_noweight <- grDevices::recordPlot()
   dev.off()
   removed <- file.remove(tmp_file)
+  removed <- unlink(dirname(tmp_file))
 
   retlist <- list(
     "up_venn" = up_venn,

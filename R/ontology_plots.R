@@ -53,7 +53,9 @@ plot_topgo_densities <- function(godata, table) {
     print(hpgl_GroupDensity(godata, id, ranks = TRUE))
     added_plot <- recordPlot()
     dev.off()
-    file.remove(tmp_file)
+    removed <- suppressWarnings(file.remove(tmp_file))
+    removed <- unlink(dirname(tmp_file))
+
     ret[[id]] <- added_plot
   }
   return(ret)
@@ -816,7 +818,8 @@ goseq_trees <- function(goseq, goid_map = "id2go.map",
     mf_tree <- recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   ## Print the biological process tree
   bp_avail_nodes <- as.list(bp_GOdata@graph@nodes)
@@ -839,7 +842,8 @@ goseq_trees <- function(goseq, goid_map = "id2go.map",
     bp_tree <- recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   ## And the cellular component tree
   cc_avail_nodes <- as.list(cc_GOdata@graph@nodes)
@@ -862,7 +866,8 @@ goseq_trees <- function(goseq, goid_map = "id2go.map",
     cc_tree <- recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   trees <- list(
     "MF_over" = mf_tree,
@@ -958,7 +963,8 @@ cluster_trees <- function(de_genes, cpdata, goid_map = "id2go.map", go_db = NULL
     mf_tree <- grDevices::recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   bp_included <- length(which(bp_all_scores <= score_limit))
 
@@ -975,7 +981,8 @@ cluster_trees <- function(de_genes, cpdata, goid_map = "id2go.map", go_db = NULL
     bp_tree <- grDevices::recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   cc_included <- length(which(cc_all_scores <= score_limit))
 
@@ -992,7 +999,8 @@ cluster_trees <- function(de_genes, cpdata, goid_map = "id2go.map", go_db = NULL
     cc_tree <- grDevices::recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   trees <- list(
     "MF_over" = mf_tree,
@@ -1031,7 +1039,8 @@ single_topgo_tree <- function(tg, score_column = "mf_fisher", node_data = "fmf_g
       tree_plot <- try(grDevices::recordPlot())
     }
     dev.off()
-    file.remove(tmp_file)
+    removed <- suppressWarnings(file.remove(tmp_file))
+    removed <- unlink(dirname(tmp_file))
   } else {
     tree_plot <- NULL
   }
@@ -1294,7 +1303,8 @@ gostats_trees <- function(gostats_result, goid_map = "id2go.map", score_limit = 
     mf_over_tree <- grDevices::recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   bp_avail_nodes <- as.list(bp_GOdata@graph@nodes)
   names(bp_avail_nodes) <- bp_GOdata@graph@nodes
@@ -1316,7 +1326,8 @@ gostats_trees <- function(gostats_result, goid_map = "id2go.map", score_limit = 
     bp_over_tree <- grDevices::recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   cc_avail_nodes <- as.list(cc_GOdata@graph@nodes)
   names(cc_avail_nodes) <- cc_GOdata@graph@nodes
@@ -1338,7 +1349,8 @@ gostats_trees <- function(gostats_result, goid_map = "id2go.map", score_limit = 
     cc_over_tree <- grDevices::recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   trees <- list(
     "MF_over" = mf_over_tree,

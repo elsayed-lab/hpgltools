@@ -341,6 +341,8 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
                                  Colv = FALSE, main = "cor(factor, PC)")
   pc_factor_corheat <- grDevices::recordPlot()
   dev.off()
+  removed <- file.remove(tmp_file)
+  removed <- unlink(dirname(tmp_file))
 
   anova_f_colors <- grDevices::colorRampPalette(c("blue", "black", "red"))(100)
   tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
@@ -352,6 +354,8 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
                             Colv = FALSE, main = "anova fstats for (factor, PC)")
   anova_f_heat <- grDevices::recordPlot()
   dev.off()
+  removed <- file.remove(tmp_file)
+  removed <- unlink(dirname(tmp_file))
 
   anova_fstat_colors <- grDevices::colorRampPalette(c("blue", "white", "red"))(100)
   tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
@@ -363,6 +367,8 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
                                 Colv = FALSE, main = "anova fstats for (factor, PC)")
   anova_fstat_heat <- grDevices::recordPlot()
   dev.off()
+  removed <- file.remove(tmp_file)
+  removed <- unlink(dirname(tmp_file))
 
   ## I had this as log(anova_p + 1) !! I am a doofus; too many times I have been log2-ing counts.
   ## The messed up part is that I did not notice this for multiple years.
@@ -378,6 +384,8 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
                                   Colv = FALSE, main = "-log(anova_p values)")
   anova_neglogp_heat <- grDevices::recordPlot()
   dev.off()
+  removed <- file.remove(tmp_file)
+  removed <- unlink(dirname(tmp_file))
 
   ## Another option: -log10 p-value of the ftest for this heatmap.
   ## covariate vs PC score
@@ -450,12 +458,16 @@ pca_highscores <- function(expt, n = 20, cor = TRUE, vs = "means", logged = TRUE
   plot(another_pca)
   pca_hist <- grDevices::recordPlot()
   dev.off()
+  removed <- file.remove(tmp_file)
+  removed <- unlink(dirname(tmp_file))
   tmp_file <- tmpmd5file(pattern = "biplot", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   biplot(another_pca)
   pca_biplot <- grDevices::recordPlot()
   dev.off()
+  removed <- file.remove(tmp_file)
+  removed <- unlink(dirname(tmp_file))
 
   highest <- NULL
   lowest <- NULL
@@ -1966,6 +1978,8 @@ u_plot <- function(plotted_us) {
   plot(plotted_us)
   u_plot <- grDevices::recordPlot()
   dev.off()
+  removed <- file.remove(tmp_file)
+  removed <- unlink(dirname(tmp_file))
 
   return(u_plot)
 }

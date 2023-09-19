@@ -388,7 +388,8 @@ plot_qq_all <- function(data, labels = "short", ...) {
   result <- plot_multiplot(logs)
   log_plots <- grDevices::recordPlot()
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   tmp_file <- tmpmd5file(pattern = "multi", fileext = ".png")
   this_plot <- png(filename = tmp_file)
@@ -396,7 +397,8 @@ plot_qq_all <- function(data, labels = "short", ...) {
   plot_multiplot(ratios)
   ratio_plots <- grDevices::recordPlot()
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   plots <- list(logs = log_plots, ratios = ratio_plots, medians = means)
   return(plots)

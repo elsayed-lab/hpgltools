@@ -378,7 +378,9 @@ plot_legend <- function(stuff) {
   grid::grid.draw(legend)
   legend_plot <- grDevices::recordPlot()
   dev.off()
-  removed <- file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
+
   ret <- list(
     "color_fact" = color_fact,
     "colors" = plot[["data"]][, c("condition", "batch", "colors")],

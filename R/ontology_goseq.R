@@ -461,7 +461,8 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
     pwf_plot <- recordPlot()
   }
   dev.off()
-  removed <- file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   godata <- sm(goseq::goseq(pwf, gene2cat = godf, use_genes_without_cat = TRUE,
                             method = goseq_method))
