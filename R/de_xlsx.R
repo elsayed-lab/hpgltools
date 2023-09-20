@@ -1566,6 +1566,7 @@ extract_keepers <- function(extracted, keepers, table_names,
   extracted[["denominators"]] <- denominators
   return(extracted)
 }
+setGeneric("extract_keepers")
 
 #' Extract the sets of genes which are significantly more abundant than the rest.
 #'

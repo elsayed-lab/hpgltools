@@ -18,8 +18,9 @@ setGeneric("colors", signature = signature(expt = "expt"),
 setGeneric("colors<-", signature = signature(expt = "expt"),
            function(expt, ...) standardGeneric("colors<-", ...))
 
-setGeneric("extract_keepers", signature = c("extracted", "keepers"),
-           function(extracted, keepers, ...) standardGeneric("extract_keepers"))
+## I cannot seem to define this generic correctly.
+#setGeneric("extract_keepers", signature = signature(extracted = "list", keepers = "list"),
+#           function(extracted, keepers, ...) standardGeneric("extract_keepers"))
 
 setGeneric("get_backup_expression_data", signature = c("expt"),
            function(expt) standardGeneric("get_backup_expression_data"))
@@ -315,7 +316,7 @@ setMethod(
 #' @param keepers Character vector of keepers.
 #' @export
 setMethod(
-  "extract_keepers", signature = signature(keepers = "character"),
+  "extract_keepers", signature = signature(extracted = "list", keepers = "character"),
   definition = function(extracted, keepers, table_names,
                         all_coefficients,
                         limma, edger, ebseq, deseq, basic, noiseq,
