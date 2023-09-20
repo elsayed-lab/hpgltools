@@ -297,10 +297,12 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
     removed <- rm(varname)
   }
   ## Cleanup the saved image files.
+  image_dir <- ""
   for (img in image_files) {
     removed <- try(suppressWarnings(file.remove(img)), silent = TRUE)
+    image_dir <- dirname(img)
   }
-  nodir <- unlink(dirname(img))
+  nodir <- try(unlink(image_dir), silent = TRUE)
 
   return(ret)
 }

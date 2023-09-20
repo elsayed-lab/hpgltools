@@ -109,7 +109,6 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
                 "rtracklayer::import.gff(gff, format='gtf')",
                 "rtracklayer::import.gff(gff)")
   if (!is.null(try)) {
-    ##  attempts <- c(paste0(try, "(gff)"), attempts)
     attempts <- c(glue("{try}(gff)"), attempts)
   }
 
@@ -133,24 +132,27 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
     }
   }
   ret <- NULL
-  if (class(annot)[[1]] == "GRanges" & ret_type == "data.frame") {
+  if (class(annot)[[1]] == "GRanges" && ret_type == "data.frame") {
     ret <- GenomicRanges::as.data.frame(annot)
     rm(annot)
     if (!is.null(type)) {
       index <- ret[, "type"] == type
       ret <- ret[index, ]
     }
-    message("Returning a df with ", ncol(ret), " columns and ", nrow(ret), " rows.")
-  } else if (class(annot)[[1]] == "GRanges" & ret_type == "GRanges") {
+    message("Returning a df with ", ncol(ret), " columns and ",
+            nrow(ret), " rows.")
+  } else if (class(annot)[[1]] == "GRanges" && ret_type == "GRanges") {
     ret <- annot
     rm(annot)
-    message("Returning a GRanges with ", ncol(ret), " columns and ", nrow(ret), " rows.")
+    message("Returning a GRanges with ", ncol(ret), " columns and ",
+            nrow(ret), " rows.")
   } else {
     stop("Unable to load gff file.")
   }
 
-  ## Sometimes we get some pretty weird data structures inside the gff data, the
-  ## following two blocks should theoretically simplify the resulting output.
+  ## Sometimes we get some pretty weird data structures inside the gff
+  ## data, the following two blocks should theoretically simplify the
+  ## resulting output.
   for (col in colnames(ret)) {
     ret[[col]] <- unAsIs(ret[[col]])
   }
@@ -167,7 +169,6 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
   if (!is.null(row.names)) {
     rownames(ret) <- ret[[row.names]]
   }
-
   if (isTRUE(compressed)) {
     removed <- file.remove(gff)
   }
@@ -200,7 +201,8 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
 #'  ta_count <- pattern_count_genome(pa_fasta, pa_gff)
 #'  head(ta_count)
 #' @export
-pattern_count_genome <- function(fasta, gff = NULL, pattern = "TA", type = "gene", key = NULL) {
+pattern_count_genome <- function(fasta, gff = NULL, pattern = "TA",
+                                 type = "gene", key = NULL) {
   rawseq <- Rsamtools::FaFile(fasta)
   if (is.null(key)) {
     key <- c("ID", "locus_tag")
@@ -231,14 +233,16 @@ pattern_count_genome <- function(fasta, gff = NULL, pattern = "TA", type = "gene
       "num" = as.data.frame(t(result)),
       stringsAsFactors = FALSE)
   colnames(num_pattern) <- c("name", "number")
+  class(num_pattern) <- "pattern_counted"
   return(num_pattern)
 }
 
 #' Given a data frame of exon counts and annotation information, sum the exons.
 #'
-#' This function will merge a count table to an annotation table by the child column.
-#' It will then sum all rows of exons by parent gene and sum the widths of the exons.
-#' Finally it will return a list containing a df of gene lengths and summed counts.
+#' This function will merge a count table to an annotation table by
+#' the child column. It will then sum all rows of exons by parent gene
+#' and sum the widths of the exons. Finally it will return a list
+#' containing a df of gene lengths and summed counts.
 #'
 #' @param data Count tables of exons.
 #' @param gff Gff filename.
@@ -265,14 +269,16 @@ sum_exon_widths <- function(data = NULL, gff = NULL, annotdf = NULL,
   rownames(tmp_data) <- tmp_data[["Row.names"]]
   tmp_data <- tmp_data[-1]
   ## Start out by summing the gene widths
-  column <- aggregate(tmp_data[, "width"], by = list(Parent = tmp_data[, parent]), FUN = sum)
+  column <- aggregate(tmp_data[, "width"],
+                      by = list(Parent = tmp_data[, parent]), FUN = sum)
   new_data <- data.frame(column[["x"]], stringsAsFactors = FALSE)
   rownames(new_data) <- column[["Parent"]]
   colnames(new_data) <- c("width")
 
   for (c in seq_along(colnames(data))) {
     column_name <- colnames(data)[[c]]
-    column <- aggregate(tmp_data[, column_name], by = list(Parent = tmp_data[, parent]), FUN = sum)
+    column <- aggregate(tmp_data[, column_name],
+                        by = list(Parent = tmp_data[, parent]), FUN = sum)
     rownames(column) <- column[["Parent"]]
     new_data <- cbind(new_data, column[["x"]])
   } ## End for loop

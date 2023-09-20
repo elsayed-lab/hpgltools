@@ -347,6 +347,7 @@ graph_metrics <- function(expt, cormethod = "pearson", distmethod = "euclidean",
     "tsne_table" = tsne[["table"]]
   )
   new_options <- options(old_options)
+  class(ret_data) <- "graphed_metrics"
   return(ret_data)
 }
 

@@ -27,9 +27,10 @@ sum_exon_widths(
 List of 2 data frames, counts and lengths by summed exons.
 }
 \description{
-This function will merge a count table to an annotation table by the child column.
-It will then sum all rows of exons by parent gene and sum the widths of the exons.
-Finally it will return a list containing a df of gene lengths and summed counts.
+This function will merge a count table to an annotation table by
+the child column. It will then sum all rows of exons by parent gene
+and sum the widths of the exons. Finally it will return a list
+containing a df of gene lengths and summed counts.
 }
 \examples{
 \dontrun{

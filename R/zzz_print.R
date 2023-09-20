@@ -291,6 +291,18 @@ KEGG hits, {nrow(x[['REAC']])} reactome hits, \\
   return(invisible(x))
 }
 
+#' Print a message about the results from graph_metrics().
+#'
+#' @param x List containing a large number of plots and some tables.
+#' @export
+print.graphed_metrics <- function(x) {
+  summary_string <- glue("A large number of plots produced by graph_metrics(), \
+here are the elements:")
+  message(summary_string)
+  print(names(x))
+  return(invisible(x))
+}
+
 #' Print a gsva category search.
 #'
 #' @param x List containing signature annotations, the result from
@@ -372,6 +384,18 @@ These samples have an average {prettyNum(mean(x[['table']][['cpm']]))} CPM cover
 {as.integer(max(x[['table']][['nonzero_genes']]))}.")
   message(summary_string)
   plot(x[["plot"]])
+  return(invisible(x))
+}
+
+#' Print some information about a pattern counted genome
+#'
+#' @param x Dataframe containing how many instances of the pattern
+#'  were observed in every gene.
+#' @export
+print.pattern_counted <- function(x) {
+  summary_string <-
+    glue("The pattern was observed {sum(x[['number']])} times ober {nrow(x)} genes.")
+  message(summary_string)
   return(invisible(x))
 }
 

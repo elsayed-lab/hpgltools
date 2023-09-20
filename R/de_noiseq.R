@@ -43,7 +43,6 @@ noiseq_pairwise <- function(input = NULL, conditions = NULL,
   norm <- NOISeq::ARSyNseq(noiseq_input, factor = "condition", batch = FALSE,
                            norm = "rpkm", logtransf = FALSE)
 
-
   ## Yes I know NOISeq doesn't use models in the same way as other
   ## methods I have applied, but this will make it easier to set up
   ## the contrasts.
@@ -75,10 +74,10 @@ noiseq_pairwise <- function(input = NULL, conditions = NULL,
       pct_done <- con / length(apc[["names"]])
       utils::setTxtProgressBar(bar, pct_done)
     }
-    noiseq_table <- NOISeq::noiseqbio(
+    noiseq_table <- sm(NOISeq::noiseqbio(
       norm, k = 0.5, norm = "rpkm", factor = "condition", lc = 1,
       r = 20, adj = 1.5, plot = TRUE, a0per = 0.9, filter = 1,
-      conditions = c(numerator, denominator))
+      conditions = c(numerator, denominator)))
     noiseq_result <- noiseq_table@results[[1]]
     rename_col <- colnames(noiseq_result) == "log2FC"
     colnames(noiseq_result)[rename_col] <- "logFC"
