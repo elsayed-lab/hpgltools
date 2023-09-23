@@ -93,6 +93,7 @@ init_xlsx <- function(excel = "excel/something.xlsx") {
 #' @param df When provided, a data frame from which to extract the
 #'  numbers.
 #' @return Either the numbers or dataframe with the sanitized information.
+#' @export
 sanitize_percent <- function(numbers, df = NULL) {
   number_column <- NULL
   if (!is.null(df)) {

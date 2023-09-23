@@ -14,32 +14,26 @@ mgas_expt <- sm(create_expt(count_dataframe = mgas_data[["cdm_counts"]],
 
 expected <- c("dnaA", "dnaN", "M5005_Spy_0003", "ychF", "pth", "trcF")
 actual <- head(fData(mgas_expt)[["Name"]])
-## 01
 test_that("Did the gene information load?", {
   expect_equal(expected, actual)
 })
 
 mgas_norm <- normalize_expt(mgas_expt, transform = "log2",
                             convert = "cbcbcpm", filter = TRUE)
-## 02
 test_that("Is the filter state maintained?", {
   expect_equal("cbcb", mgas_norm[["state"]][["filter"]])
 })
-## 03
 test_that("Is the normalization state maintained?", {
   expect_equal("raw", mgas_norm[["state"]][["normalization"]])
 })
-## 04
 test_that("Is the conversion state maintained?", {
   expect_equal("cbcbcpm", mgas_norm[["state"]][["conversion"]])
 })
-## 06
 test_that("Is the transformation state maintained?", {
   expect_equal("log2", mgas_norm[["state"]][["transform"]])
 })
 
 mgas_norm <- normalize_expt(mgas_norm, batch = "combat_scale")
-## 05
 test_that("Is the batch state maintained?", {
   expect_equal("combat_scale", mgas_norm[["state"]][["batch"]])
 })
@@ -47,7 +41,6 @@ test_that("Is the batch state maintained?", {
 mgas_pairwise <- all_pairwise(mgas_expt)
 expected <- 0.39
 actual <- min(mgas_pairwise[["comparison"]][["comp"]])
-## 07
 test_that("Do we get reasonably high similarities among the various DE tools?", {
   expect_gt(actual, expected)
 })
@@ -56,7 +49,6 @@ mgas_combined <- combine_de_tables(mgas_pairwise, excel = FALSE)
 mgas_sig <- extract_significant_genes(mgas_combined, excel = FALSE)
 expected <- 150
 actual <- nrow(mgas_sig[["deseq"]][["ups"]][["wtllcf_vs_mga1llcf"]])
-## 08
 test_that("Do we find some significant genes in the mga/wt fructose analysis?", {
   expect_gt(actual, expected)
 })
@@ -65,21 +57,18 @@ mgas_data <- load_genbank_annotations(accession = "AE009949")
 expected <- 1895017
 actual <- GenomicRanges::width(mgas_data[["seq"]])  ## This fails on travis?
 actual_width <- actual
-## 09
 test_that("Can I extract the chromosome sequence from a genbank file? (widths)", {
   expect_equal(expected, actual)
 })
 
 expected <- c(1845, 17)
 actual <- dim(as.data.frame(mgas_data[["exons"]]))
-## 10
 test_that("Can I extract the chromosome sequence from a genbank file? (exons)", {
   expect_equal(expected, actual)
 })
 
 expected <- c("dnaA", "dnaN", NA, "pth", "trcF", NA)
 actual <- head(as.data.frame(mgas_data[["genes"]])[["gene"]])
-## 11
 test_that("Can I extract the chromosome sequence from a genbank file? (gene names)", {
   expect_equal(expected, actual)
 })
@@ -89,7 +78,6 @@ mgas_df <- load_microbesonline_annotations(id = taxon)
 mgas_df[["sysName"]] <- gsub(pattern = "Spy_", replacement = "Spy", x = mgas_df[["sysName"]])
 expected <- c("dnaA","dnaN","M5005_Spy_0003","M5005_Spy_0004","pth","trcF")
 actual <- as.character(head(mgas_df[["name"]]))
-## 12
 test_that("Did the mgas annotations download?", {
   expect_equal(expected, actual)
 })
@@ -99,7 +87,6 @@ colnames(mgas_go) <- c("ID", "GO")
 mgas_go <- unique(mgas_go)
 expected <- c(4161, 2)
 actual <- dim(mgas_go)
-## 13
 test_that("Do we get expected gene ontology information?", {
   expect_equal(expected, actual)
 })
@@ -138,7 +125,6 @@ circos_tile_wtmga <- circos_tile(circos_test, wtvmga_glucose,
                                  colname = "logFC", outer = circos_hist_ll_cg)
 circos_suffix(circos_test)
 circos_made <- circos_make(circos_test, target = "mgas")
-
 expected <- "circos/mgas.svg"
 test_that("Did circos run?", {
   expect_true(file.exists(expected))
