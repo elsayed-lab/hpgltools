@@ -554,6 +554,23 @@ print.snps_genes <- function(x) {
   return(invisible(x))
 }
 
+#' Print the result of plot_sm()
+#'
+#' @param x List containing the pairwise distances/correlations, median/mean values,
+#'  quartiles, and the standard median plot.
+#' @export
+print.standardmedian_plot <- function(x) {
+  min_comp <- min(x[["measurement"]])
+  max_comp <- max(x[["measurement"]])
+  first_quart <- x[["quantile"]][1]
+  third_quat <- x[["quantile"]][2]
+  summary_string <- glue("When the standard median metric was plotted, the values observed range
+from {min_comp} to {max_comp} with quartiles at {first_quart} and {third_quart}.")
+  message(summary_string)
+  plot(x[["plot"]])
+  return(invisible(x))
+}
+
 #' Print a topgo over representation search.
 #'
 #' @param x List of the various over/under representation analyses
