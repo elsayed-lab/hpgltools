@@ -216,6 +216,9 @@ concatenate_runs <- function(expt, column = "replicate") {
 
 #' Wrap bioconductor's expressionset to include some extra information.
 #'
+#' Note: You should just be using create_se().  It does everything the
+#' expt does, but better.
+#'
 #' The primary innovation of this function is that it will check the metadata
 #' for columns containing filenames for the count tables, thus hopefully making
 #' the collation and care of metadata/counts easier.  For example, I have some

@@ -327,7 +327,7 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count", verbose =
     mesg("Reading sample: ", first_sample, ".")
   }
   first_file <- file_lst[1]
-  first_read <- readr::read_tsv(first_file, show_col_types = FALSE)
+  first_read <- sm(readr::read_tsv(first_file, show_col_types = FALSE))
   colnames(first_read) <- make.names(
       gsub(x = colnames(first_read), pattern = "\\.+\\d+$", replacement = ""),
       unique = TRUE)
@@ -354,8 +354,6 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count", verbose =
       setTxtProgressBar(bar, pct_done)
     }
     sample <- samples[sample_num]
-    mesg("Reading sample: ", sample, ", number ", sample_num, " of ",
-         length(samples), ".")
     file <- file_lst[sample_num]
     if (is.na(file)) {
       mesg("There is no file listed for ", sample, ".")
@@ -365,7 +363,7 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count", verbose =
       mesg("Unable to find file: ", file, " for ", sample, ", skipping it.")
       next
     }
-    new_table <- try(readr::read_tsv(file, show_col_types = FALSE))
+    new_table <- sm(try(readr::read_tsv(file, show_col_types = FALSE)))
     colnames(new_table) <- make.names(
         gsub(x = colnames(new_table), pattern = "\\.+\\d+$", replacement = ""),
         unique = TRUE)
