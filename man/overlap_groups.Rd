@@ -4,12 +4,12 @@
 \alias{overlap_groups}
 \title{Extract overlapping groups from an upset}
 \usage{
-overlap_groups(lst, sort = TRUE)
+overlap_groups(input_mtrx, sort = TRUE)
 }
 \arguments{
-\item{lst}{upset data structure.}
-
 \item{sort}{Sort the result?}
+
+\item{lst}{upset data structure.}
 }
 \description{
 Taken from: https://github.com/hms-dbmi/UpSetR/issues/85

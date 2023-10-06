@@ -22,6 +22,10 @@ pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
     warning("The directory: ", file_dir, " does not exist, will attempt to create it.")
     dir.create(file_dir, recursive = TRUE)
   }
+  write_permission <- as.numeric(file.access(file_dir, 2))
+  if (write_permission < 0) {
+    warning("The directory: ", file_dir, " does not have write permission, this will fail.")
+  }
 
   start_dev <- dev.list()
   result <- NULL
@@ -123,8 +127,171 @@ pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
 #' @export
 plot_meta_sankey <- function(design, factors = c("condition", "batch"), fill = "node",
                              font_size = 18, node_width = 30,
-                             color_choices = NULL, html = "sankey.html",
+                             color_choices = NULL,
                              drill_down = TRUE) {
+  warning("FIXME: I separated the interactive and ggplot functions, but haven't figured out what need to be kept.")
+  found <- factors %in% colnames(design)
+  if (sum(found) < length(factors)) {
+    missing <- factors[!found]
+    message("These columns are not in the metadata: ", toString(missing))
+    factors <- factors[found]
+  }
+
+  permutations <- c()
+  states <- list()
+  for (f in factors) {
+    state_levels <- levels(as.factor(design[[f]]))
+    states[[f]] <- state_levels
+    new_permutations <- tidyr::expand_grid(!!!states) |> purrr::pmap_chr(paste)
+    permutations <- c(permutations, new_permutations)
+  }
+
+  start_node <- c("all", "0")
+  names(start_node) <- c("name", "node")
+  my_nodes <- data.frame(name = permutations)
+  my_nodes[["node"]] <- rownames(my_nodes)
+  my_nodes <- rbind(start_node, my_nodes)
+
+  my_links <- data.frame(row.names = 0)
+  my_links[["source"]] <- 0
+  my_links[["target"]] <- 0
+  my_links[["value"]] <- nrow(design)
+
+  result <- list("all" = nrow(design))
+  for (p in seq_len(length(permutations))) {
+    element <- permutations[p]
+    pieces <- strsplit(x = element, split = " ")[[1]]
+
+    working_meta <- design
+    for (cat_num in seq_len(length(pieces))) {
+      category <- pieces[cat_num]
+      factor <- factors[cat_num]
+      idx <- working_meta[[factor]] == category
+      working_meta <- working_meta[idx, ]
+    }
+    if (nrow(working_meta) > 0) {
+      result[[element]] <- nrow(working_meta)
+
+      target_node_idx <- my_nodes[["name"]] == element
+      target_node <- my_nodes[target_node_idx, "node"]
+      if (length(pieces) > 1) {
+        source_node_pieces <- pieces[1:length(pieces) - 1]
+        source_node_name <- stringi::stri_paste(source_node_pieces, collapse = " ")
+        source_node_idx <- my_nodes[["name"]] == source_node_name
+        source_node <- my_nodes[source_node_idx, "node"]
+      } else {
+        source_node <- "0"
+      }
+      link <- c(source_node, target_node, nrow(working_meta))
+      my_links <- rbind(my_links, link)
+    }
+  }
+
+  my_links <- my_links[-1, ]
+  my_links[["value"]] <- as.numeric(my_links[["value"]])
+  my_links[["source"]] <- as.numeric(my_links[["source"]])
+  my_links[["target"]] <- as.numeric(my_links[["target"]])
+
+  links_to_nodes <- merge(my_links, my_nodes, by.x = "target",
+                          by.y = "node")
+  links_to_nodes <- links_to_nodes[, c("name", "value")]
+
+  sub_design <- design[, c(factors)]
+  if (isTRUE(drill_down)) {
+    for (col in seq_len(ncol(sub_design))) {
+      if (col == 1) {
+        next
+      }
+      col_name <- colnames(sub_design)[col]
+      previous_col <- colnames(sub_design)[col - 1]
+      new_values <- paste0(sub_design[[previous_col]], " ",
+                           sub_design[[col_name]])
+      sub_design[[col_name]] <- new_values
+    }
+  }
+
+  plot_df <- sub_design %>%
+    ggsankey::make_long(factors)
+  plot_df[["name"]] <- plot_df[["node"]]
+  plot_df <- merge(plot_df, links_to_nodes, by.x = "node", by.y = "name")
+  plot_df[["name"]] <- paste0(plot_df[["name"]], ":",
+                              plot_df[["value"]])
+
+  color_fact <- NULL
+  if (!is.null(color_choices)) {
+    color_levels <- levels(as.factor(plot_df[["node"]]))
+    all_colors <- unlist(color_choices)
+    names(all_colors) <- gsub(x = names(all_colors),
+                              pattern = ".*\\.", replacement = "")
+    color_fact_idx <- names(all_colors) %in% color_levels
+    color_fact <- all_colors[color_fact_idx]
+    if (isTRUE(drill_down)) {
+      ## Set the plot name and color names:
+      plot_df[["name"]] <- gsub(x = plot_df[["node"]],
+        pattern = "^.* (\\w+$)",
+        replacement = "\\1")
+      plot_df[["name"]] <- paste0(plot_df[["name"]], ":",
+                                  plot_df[["value"]])
+      color_level_suffixes <- gsub(x = color_levels,
+        pattern = "^.* (\\w+$)",
+        replacement = "\\1")
+      color_fact_idx <- names(all_colors) %in% color_level_suffixes
+      color_suffix_fact <- all_colors[color_fact_idx]
+      new_color_fact <- rep("#000000", length(color_level_suffixes))
+      names(new_color_fact) <- color_levels
+      for (col in seq_len(length(new_color_fact))) {
+        color_name <- color_level_suffixes[col]
+        color_suffix <- as.character(color_suffix_fact[color_name])
+        new_color_fact[col] <- color_suffix
+      }
+      color_fact <- new_color_fact
+    }
+  }
+  retlist <- list(
+    "design" = design,
+    "factor" = factors,
+    "observed_nodes" = unique(plot_df[["node"]]))
+
+  if (fill == "node") {
+    ggplt <- ggplot(plot_df, aes(x = x, next_x = next_x, node = node,
+                                 next_node = next_node, fill = factor(node), label = name))
+  } else if (fill == "next") {
+    message("Filling to next node?")
+    ggplt <- ggplot(plot_df, aes(x = x, next_x = next_x, node = node,
+                                 next_node = next_node, fill = factor(next_node), label = name))
+  }
+  ggplt <- ggplt +
+    ggsankey::geom_sankey(flow.alpha = 0.6,
+                          node.color = "gray30") +
+    ggsankey::geom_sankey_label()
+
+  ## I want to figure out how to set up my own colors...
+  if (is.null(color_choices)) {
+    ggplt <- ggplt +
+      ggplot2::scale_fill_viridis_d() +
+      ggsankey::theme_sankey(base_size = 18) +
+      ggplot2::labs(x = NULL) +
+      theme(legend.position = "none",
+            plot.title = element_text(hjust = 0.5))
+  } else {
+    ggplt <- ggplt +
+      ggplot2::scale_fill_manual(values = color_fact) +
+      ggsankey::theme_sankey(base_size = font_size) +
+      ggplot2::labs(x = NULL) +
+      theme(legend.position = "none",
+            plot.title = element_text(hjust = 0.5))
+  }
+  retlist[["ggplot"]] <- ggplt
+  class(retlist) <- "meta_sankey"
+  return(retlist)
+}
+setGeneric("plot_meta_sankey")
+
+## I might want to just delete this, I think the ggplot version is better.
+plot_meta_interactive_sankey <- function(design, factors = c("condition", "batch"), fill = "node",
+                                         font_size = 18, node_width = 30,
+                                         color_choices = NULL, html = NULL,
+                                         drill_down = TRUE) {
 
   found <- factors %in% colnames(design)
   if (sum(found) < length(factors)) {
@@ -193,102 +360,18 @@ plot_meta_sankey <- function(design, factors = c("condition", "batch"), fill = "
   links_to_nodes <- links_to_nodes[, c("name", "value")]
 
 
-  plt = networkD3::sankeyNetwork(Links = my_links, Nodes = my_nodes,
-                                 Source = "source", Target = "target",
-                                 Value = "value", fontSize = font_size, nodeWidth = node_width)
+  plt <- NULL
+  if (!is.null(html)) {
+    plt = networkD3::sankeyNetwork(Links = my_links, Nodes = my_nodes,
+                                   Source = "source", Target = "target",
+                                   Value = "value", fontSize = font_size, nodeWidth = node_width)
+  }
   retlist <- list(
     "permutations" = permutations,
     "plot" = plt)
   if (!is.null(html)) {
     retlist[["html"]] <- htmlwidgets::saveWidget(plt, file = html, selfcontained = TRUE)
   }
-
-  sub_design <- design[, c(factors)]
-  if (isTRUE(drill_down)) {
-    for (col in seq_len(ncol(sub_design))) {
-      if (col == 1) {
-        next
-      }
-      col_name <- colnames(sub_design)[col]
-      previous_col <- colnames(sub_design)[col - 1]
-      new_values <- paste0(sub_design[[previous_col]], " ",
-                           sub_design[[col_name]])
-      sub_design[[col_name]] <- new_values
-    }
-  }
-
-  plot_df <- sub_design %>%
-    ggsankey::make_long(factors)
-  plot_df[["name"]] <- plot_df[["node"]]
-  plot_df <- merge(plot_df, links_to_nodes, by.x = "node", by.y = "name")
-  plot_df[["name"]] <- paste0(plot_df[["name"]], ":",
-                              plot_df[["value"]])
-
-  color_fact <- NULL
-  if (!is.null(color_choices)) {
-    color_levels <- levels(as.factor(plot_df[["node"]]))
-    all_colors <- unlist(color_choices)
-    names(all_colors) <- gsub(x = names(all_colors),
-                              pattern = ".*\\.", replacement = "")
-    color_fact_idx <- names(all_colors) %in% color_levels
-    color_fact <- all_colors[color_fact_idx]
-    if (isTRUE(drill_down)) {
-      ## Set the plot name and color names:
-      plot_df[["name"]] <- gsub(x = plot_df[["node"]],
-        pattern = "^.* (\\w+$)",
-        replacement = "\\1")
-      plot_df[["name"]] <- paste0(plot_df[["name"]], ":",
-                                  plot_df[["value"]])
-      color_level_suffixes <- gsub(x = color_levels,
-        pattern = "^.* (\\w+$)",
-        replacement = "\\1")
-      color_fact_idx <- names(all_colors) %in% color_level_suffixes
-      color_suffix_fact <- all_colors[color_fact_idx]
-      new_color_fact <- rep("#000000", length(color_level_suffixes))
-      names(new_color_fact) <- color_levels
-      for (col in seq_len(length(new_color_fact))) {
-        color_name <- color_level_suffixes[col]
-        color_suffix <- as.character(color_suffix_fact[color_name])
-        new_color_fact[col] <- color_suffix
-      }
-      color_fact <- new_color_fact
-    }
-  }
-  retlist[["design"]] <- design
-  retlist[["factors"]] <- factors
-  retlist[["observed_nodes"]] <- unique(plot_df[["node"]])
-
-  if (fill == "node") {
-    ggplt <- ggplot(plot_df, aes(x = x, next_x = next_x, node = node,
-                                 next_node = next_node, fill = factor(node), label = name))
-  } else if (fill == "next") {
-    message("Filling to next node?")
-    ggplt <- ggplot(plot_df, aes(x = x, next_x = next_x, node = node,
-                                 next_node = next_node, fill = factor(next_node), label = name))
-  }
-  ggplt <- ggplt +
-    ggsankey::geom_sankey(flow.alpha = 0.6,
-                          node.color = "gray30") +
-    ggsankey::geom_sankey_label()
-
-  ## I want to figure out how to set up my own colors...
-  if (is.null(color_choices)) {
-    ggplt <- ggplt +
-      ggplot2::scale_fill_viridis_d() +
-      ggsankey::theme_sankey(base_size = 18) +
-      ggplot2::labs(x = NULL) +
-      theme(legend.position = "none",
-            plot.title = element_text(hjust = 0.5))
-  } else {
-    ggplt <- ggplt +
-      ggplot2::scale_fill_manual(values = color_fact) +
-      ggsankey::theme_sankey(base_size = font_size) +
-      ggplot2::labs(x = NULL) +
-      theme(legend.position = "none",
-            plot.title = element_text(hjust = 0.5))
-  }
-  retlist[["ggplot"]] <- ggplt
-  class(retlist) <- "meta_sankey"
   return(retlist)
 }
 

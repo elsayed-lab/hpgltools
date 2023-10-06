@@ -13,6 +13,10 @@ write_xlsx(
   start_row = 1,
   start_col = 1,
   title = NULL,
+  number_format = "0.000",
+  data_table = TRUE,
+  freeze_first_row = TRUE,
+  freeze_first_column = TRUE,
   ...
 )
 }

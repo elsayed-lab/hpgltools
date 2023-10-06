@@ -7,7 +7,9 @@
 \method{print}{all_pairwise}(x)
 }
 \arguments{
-\item{x}{pairwise comparisons.}
+\item{x}{List containing basic, deseq, edger, ebseq, limma, and
+noiseq pairwise comparisons as well as some information about the
+contrasts and models used.}
 }
 \description{
 Print function for a pairwise differential expression result.

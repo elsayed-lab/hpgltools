@@ -15,6 +15,7 @@ combine_extracted_plots(
   plot_edger = TRUE,
   plot_limma = TRUE,
   plot_ebseq = FALSE,
+  plot_noiseq = FALSE,
   loess = FALSE,
   logfc = 1,
   pval = 0.05,

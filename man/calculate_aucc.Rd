@@ -11,6 +11,7 @@ calculate_aucc(
   py = "edger_adjp",
   lx = "deseq_logfc",
   ly = "edger_logfc",
+  cor_method = "pearson",
   topn = 0.1
 )
 }

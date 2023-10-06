@@ -2,13 +2,13 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.combined_table}
 \alias{print.combined_table}
-\title{Print a summary of a single combined DE result.}
+\title{Print a single combined DE result.}
 \usage{
 \method{print}{combined_table}(x)
 }
 \arguments{
-\item{x}{Big table and some summaries.}
+\item{x}{Data table of combined differential expression results.}
 }
 \description{
-Print a summary of a single combined DE result.
+Print a single combined DE result.
 }

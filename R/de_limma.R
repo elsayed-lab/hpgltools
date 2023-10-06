@@ -285,6 +285,7 @@ hpgl_voom <- function(dataframe, model = NULL, libsize = NULL,
 #'  pairwise_comparisons = The result from eBayes()
 #'  limma_result = The result from calling write_limma()
 #' @seealso [limma] [Biobase] [deseq_pairwise()] [edger_pairwise()] [basic_pairwise()]
+#'  DOI:10.1093/nar/gkv007
 #' @examples
 #' \dontrun{
 #'  pretend <- limma_pairwise(expt)
@@ -565,7 +566,7 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
     "single_table" = all_tables,
     "voom_design" = fun_design,
     "voom_result" = fun_voom)
-  class(retlist) <- c("limma_result", "list")
+  class(retlist) <- c("limma_pairwise", "list")
   if (!is.null(arglist[["limma_excel"]])) {
     retlist[["limma_excel"]] <- write_limma(retlist, excel = arglist[["limma_excel"]])
   }

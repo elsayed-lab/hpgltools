@@ -7,7 +7,7 @@
 \method{print}{legend_plot}(x)
 }
 \arguments{
-\item{x}{list of results from plot_legend().}
+\item{x}{List containing the condition factor, colors used, and plot.}
 }
 \description{
 Print a legend of an expressionset.

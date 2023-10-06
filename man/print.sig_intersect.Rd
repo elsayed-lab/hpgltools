@@ -2,13 +2,14 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.sig_intersect}
 \alias{print.sig_intersect}
-\title{Print a summary of a set of intersection significant genes from multiple analyses.}
+\title{Print the intersection of significant genes from multiple analyses.}
 \usage{
 \method{print}{sig_intersect}(x)
 }
 \arguments{
-\item{x}{Intersection gene lists.}
+\item{x}{List containing some venn diagrams, summaries of
+intersections, subsets of the intersections, etc.}
 }
 \description{
-Print a summary of a set of intersection significant genes from multiple analyses.
+Print the intersection of significant genes from multiple analyses.
 }

@@ -47,13 +47,15 @@ plot_topgo_densities <- function(godata, table) {
   for (id in table[["GO.ID"]]) {
     message(id)
 
-    tmp_file <- tempfile(pattern = "topgodensity", fileext = ".png")
+    tmp_file <- tmpmd5file(pattern = "topgodensity", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     print(hpgl_GroupDensity(godata, id, ranks = TRUE))
     added_plot <- recordPlot()
     dev.off()
-    file.remove(tmp_file)
+    removed <- suppressWarnings(file.remove(tmp_file))
+    removed <- unlink(dirname(tmp_file))
+
     ret[[id]] <- added_plot
   }
   return(ret)
@@ -801,7 +803,7 @@ goseq_trees <- function(goseq, goid_map = "id2go.map",
   mf_nodes <- enriched_scores[names(enriched_scores) %in% names(mf_avail_nodes)]
   mf_included <- length(which(mf_nodes <= score_limit))
 
-  tmp_file <- tempfile(pattern = "topgo_tree_mf", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "topgo_tree_mf", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   mf_tree_data <- try(sm(topGO::showSigOfNodes(
@@ -816,7 +818,8 @@ goseq_trees <- function(goseq, goid_map = "id2go.map",
     mf_tree <- recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   ## Print the biological process tree
   bp_avail_nodes <- as.list(bp_GOdata@graph@nodes)
@@ -824,7 +827,7 @@ goseq_trees <- function(goseq, goid_map = "id2go.map",
   bp_nodes <- enriched_scores[names(enriched_scores) %in% names(bp_avail_nodes)]
   bp_included <- length(which(bp_nodes <= score_limit))
 
-  tmp_file <- tempfile(pattern = "topgo_tree_bp", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "topgo_tree_bp", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   bp_tree_data <- try(sm(topGO::showSigOfNodes(
@@ -839,7 +842,8 @@ goseq_trees <- function(goseq, goid_map = "id2go.map",
     bp_tree <- recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   ## And the cellular component tree
   cc_avail_nodes <- as.list(cc_GOdata@graph@nodes)
@@ -847,7 +851,7 @@ goseq_trees <- function(goseq, goid_map = "id2go.map",
   cc_nodes <- enriched_scores[names(enriched_scores) %in% names(cc_avail_nodes)]
   cc_included <- length(which(cc_nodes <= score_limit))
 
-  tmp_file <- tempfile(pattern = "topgo_tree_cc", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "topgo_tree_cc", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   cc_tree_data <- try(sm(topGO::showSigOfNodes(
@@ -862,7 +866,8 @@ goseq_trees <- function(goseq, goid_map = "id2go.map",
     cc_tree <- recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   trees <- list(
     "MF_over" = mf_tree,
@@ -945,7 +950,7 @@ cluster_trees <- function(de_genes, cpdata, goid_map = "id2go.map", go_db = NULL
   names(cc_all_scores) <- cc_all_ids
   mf_included <- length(which(mf_all_scores <= score_limit))
 
-  tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "topgo", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   mf_tree_data <- try(suppressWarnings(
@@ -958,11 +963,12 @@ cluster_trees <- function(de_genes, cpdata, goid_map = "id2go.map", go_db = NULL
     mf_tree <- grDevices::recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   bp_included <- length(which(bp_all_scores <= score_limit))
 
-  tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "topgo", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   bp_tree_data <- try(suppressWarnings(
@@ -975,11 +981,12 @@ cluster_trees <- function(de_genes, cpdata, goid_map = "id2go.map", go_db = NULL
     bp_tree <- grDevices::recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   cc_included <- length(which(cc_all_scores <= score_limit))
 
-  tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "topgo", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   cc_tree_data <- try(suppressWarnings(
@@ -992,7 +999,8 @@ cluster_trees <- function(de_genes, cpdata, goid_map = "id2go.map", go_db = NULL
     cc_tree <- grDevices::recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   trees <- list(
     "MF_over" = mf_tree,
@@ -1016,7 +1024,7 @@ single_topgo_tree <- function(tg, score_column = "mf_fisher", node_data = "fmf_g
   sig_results <- topGO::score(tg[["results"]][[score_column]]) <= score_limit
   num_included <- length(sig_results)
   if (length(num_included) > 0) {
-    tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
+    tmp_file <- tmpmd5file(pattern = "topgo", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     nodes <- try(sm(topGO::showSigOfNodes(
@@ -1031,7 +1039,8 @@ single_topgo_tree <- function(tg, score_column = "mf_fisher", node_data = "fmf_g
       tree_plot <- try(grDevices::recordPlot())
     }
     dev.off()
-    file.remove(tmp_file)
+    removed <- suppressWarnings(file.remove(tmp_file))
+    removed <- unlink(dirname(tmp_file))
   } else {
     tree_plot <- NULL
   }
@@ -1261,11 +1270,11 @@ gostats_trees <- function(gostats_result, goid_map = "id2go.map", score_limit = 
     cc_GOdata <- new("topGOdata", description = "CC", ontology = "CC", allGenes = pvals,
                      geneSel = get(selector), annot = topGO::annFUN.gene2GO, gene2GO = geneID2GO)
   }
-  mf_over <- gostats_result[["tables"]][["mf_over_all"]]
+  mf_over <- gostats_result[["tables"]][["mf_subset"]]
   mf_over_enriched_ids <- mf_over[["GOMFID"]]
-  bp_over <- gostats_result[["tables"]][["bp_over_all"]]
+  bp_over <- gostats_result[["tables"]][["bp_subset"]]
   bp_over_enriched_ids <- bp_over[["GOBPID"]]
-  cc_over <- gostats_result[["tables"]][["cc_over_all"]]
+  cc_over <- gostats_result[["tables"]][["cc_subset"]]
   cc_over_enriched_ids <- cc_over[["GOCCID"]]
   mf_over_enriched_scores <- mf_over[["Pvalue"]]
   names(mf_over_enriched_scores) <- mf_over_enriched_ids
@@ -1280,7 +1289,7 @@ gostats_trees <- function(gostats_result, goid_map = "id2go.map", score_limit = 
   mf_over_nodes <- mf_over_enriched_scores[kidx]
   mf_over_included <- length(which(mf_over_nodes <= score_limit))
 
-  tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "topgo", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   mf_over_tree_data <- try(suppressWarnings(
@@ -1294,7 +1303,8 @@ gostats_trees <- function(gostats_result, goid_map = "id2go.map", score_limit = 
     mf_over_tree <- grDevices::recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   bp_avail_nodes <- as.list(bp_GOdata@graph@nodes)
   names(bp_avail_nodes) <- bp_GOdata@graph@nodes
@@ -1302,7 +1312,7 @@ gostats_trees <- function(gostats_result, goid_map = "id2go.map", score_limit = 
   bp_over_nodes <- bp_over_enriched_scores[kidx]
   bp_over_included <- length(which(bp_over_nodes <= score_limit))
 
-  tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "topgo", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   bp_over_tree_data <- try(suppressWarnings(
@@ -1316,7 +1326,8 @@ gostats_trees <- function(gostats_result, goid_map = "id2go.map", score_limit = 
     bp_over_tree <- grDevices::recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   cc_avail_nodes <- as.list(cc_GOdata@graph@nodes)
   names(cc_avail_nodes) <- cc_GOdata@graph@nodes
@@ -1324,7 +1335,7 @@ gostats_trees <- function(gostats_result, goid_map = "id2go.map", score_limit = 
   cc_over_nodes <- cc_over_enriched_scores[kidx]
   cc_over_included <- length(which(cc_over_nodes <= score_limit))
 
-  tmp_file <- tempfile(pattern = "topgo", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "topgo", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   cc_over_tree_data <- try(suppressWarnings(
@@ -1338,7 +1349,8 @@ gostats_trees <- function(gostats_result, goid_map = "id2go.map", score_limit = 
     cc_over_tree <- grDevices::recordPlot()
   }
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   trees <- list(
     "MF_over" = mf_over_tree,

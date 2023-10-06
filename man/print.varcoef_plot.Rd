@@ -7,7 +7,7 @@
 \method{print}{varcoef_plot}(x)
 }
 \arguments{
-\item{x}{list of results from plot_variance_coefficients().}
+\item{x}{List containing the coefficient of variance plot and summary.}
 }
 \description{
 Print a result from plot_variance_coefficients().

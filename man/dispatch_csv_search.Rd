@@ -11,6 +11,7 @@ dispatch_csv_search(
   file_type = "csv",
   chosen_func = NULL,
   species = "*",
+  type = "genome",
   basedir = "preprocessing",
   which = "first",
   verbose = FALSE,

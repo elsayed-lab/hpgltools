@@ -65,6 +65,11 @@ init_xlsx <- function(excel = "excel/something.xlsx") {
   if (!file.exists(excel_dir)) {
     created <- dir.create(excel_dir, recursive = TRUE)
   }
+  write_permission <- as.numeric(file.access(excel_dir, 2))
+  if (write_permission < 0) {
+    warning("The directory: ", excel_dir, " does not have write permission, this will fail.")
+  }
+
   if (file.exists(excel)) {
     message("Deleting the file ", excel, " before writing the tables.")
     removed <- file.remove(excel)
@@ -88,6 +93,7 @@ init_xlsx <- function(excel = "excel/something.xlsx") {
 #' @param df When provided, a data frame from which to extract the
 #'  numbers.
 #' @return Either the numbers or dataframe with the sanitized information.
+#' @export
 sanitize_percent <- function(numbers, df = NULL) {
   number_column <- NULL
   if (!is.null(df)) {
@@ -213,8 +219,10 @@ sanitize_number_encoding <- function(numbers, df = NULL) {
 #'                           sheet = "hpgl_data", start_row = xls_coords$end_col)
 #'  }
 #' @export
-write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, rownames = TRUE,
-                       start_row = 1, start_col = 1, title = NULL, ...) {
+write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL,
+                       rownames = TRUE, start_row = 1, start_col = 1,
+                       title = NULL, number_format = "0.000", data_table = TRUE,
+                       freeze_first_row = TRUE, freeze_first_column = TRUE, ...) {
   arglist <- list(...)
   if (is.null(data)) {
     return(NULL)
@@ -228,8 +236,11 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, ro
         wb <- written[["workbook"]]
         print(names(wb))
       }
-      written <- write_xlsx(data = one_df, wb = wb, sheet = sheet_name, excel = excel, rownames = rownames,
-                            start_row = start_row, start_col = start_col, title = title)
+      written <- write_xlsx(
+        data = one_df, wb = wb, sheet = sheet_name, excel = excel, rownames = rownames,
+        start_row = start_row, start_col = start_col,
+        freeze_first_column = freeze_first_column, title = title,
+        freeze_first_row = freeze_first_row)
       print(names(written[["workbook"]]))
     }
 
@@ -249,9 +260,13 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, ro
     }
   }
 
+  if (!is.null(number_format)) {
+    old_options <- options("openxlsx.numFmt" = number_format)
+  }
   ## Heading style 1 (For titles)
-  hs1 <- openxlsx::createStyle(fontColour = "#000000", halign = "LEFT", textDecoration = "bold",
-                               border = "Bottom", fontSize = "30")
+  hs1 <- openxlsx::createStyle(fontColour = "#000000", halign = "LEFT",
+                               textDecoration = "bold", border = "Bottom",
+                               fontSize = "30")
 
   ## Create the new worksheet.
   wb_sheet <- check_xlsx_worksheet(wb, sheet)
@@ -306,10 +321,18 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, ro
   ## apparently excel doesn't like that sometimes (but others it doesn't care)
   colnames(final_data) = gsub(x = colnames(final_data),
                               pattern = "\\.", replacement = "_")
-
-  written <- try(openxlsx::writeDataTable(wb = wb, sheet = sheet, x = final_data, startCol = new_col,
-                                          startRow = new_row, tableStyle = table_style,
-                                          rowNames = rownames, colNames = TRUE))
+  written <- NULL
+  if (isTRUE(data_table)) {
+  written <- try(openxlsx::writeDataTable(
+    wb = wb, sheet = sheet, x = final_data,
+    startCol = new_col, startRow = new_row, tableStyle = table_style,
+    rowNames = rownames, colNames = TRUE))
+  } else {
+  written <- try(openxlsx::writeData(
+    wb = wb, sheet = sheet, x = final_data,
+    startCol = new_col, startRow = new_row,
+    rowNames = rownames, colNames = TRUE))
+  }
   new_row <- new_row + nrow(final_data) + 2
 
   ## Set the column lengths, hard set the first to 20,
@@ -341,9 +364,21 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, ro
   }
   end_col <- new_col + ncol(final_data) + 1
 
+  new_options <- options(old_options)
+
+  frozen <- NULL
+  if (isTRUE(freeze_first_row) && isTRUE(freeze_first_column)) {
+    frozen <- openxlsx::freezePane(wb, sheet, firstCol = TRUE, firstRow = TRUE)
+  } else if (isTRUE(freeze_first_column)) {
+    frozen <- openxlsx::freezePane(wb, sheet, firstCol = TRUE)
+  } else if (isTRUE(freeze_first_row)) {
+    frozen <- openxlsx::freezePane(wb, sheet, firstRow = TRUE)
+  }
+
   ret <- list(
       "workbook" = wb,
       "sheet" = sheet,
+      "frozen" = frozen,
       "end_row" = new_row,
       "end_col" = end_col)
   if (!is.null(excel)) {
@@ -442,11 +477,11 @@ xlsx_insert_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6,
     }
     dev.off()
   }
-  png_name <- try(tempfile(pattern = "figureImage", fileext = glue(".{file_type}")))
+  png_name <- try(tmpmd5file(pattern = "figureImage", fileext = glue(".{file_type}")))
   if ("try-error" %in% class(png_name)) {
     warning("There are too many tmp files in your current Rtmp directory.")
     warning("You need to clean it out ASAP.")
-    png_name <- try(tempfile(pattern = "figureImage2", fileext = glue(".{file_type}")))
+    png_name <- try(tmpmd5file(pattern = "figureImage2", fileext = glue(".{file_type}")))
   }
   png_ret <- try(png(filename = png_name,
                      width = width,

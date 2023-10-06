@@ -11,6 +11,7 @@ combine_mapped_table(
   include_edger = TRUE,
   include_ebseq = TRUE,
   include_limma = TRUE,
+  include_noiseq = TRUE,
   adjp = TRUE,
   padj_type = "fdr",
   annot_df = NULL,

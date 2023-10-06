@@ -17,10 +17,13 @@
 #' @param annot_df Extra annotations.
 #' @param ... Extra arguments.
 #' @return List similar to deseq_pairwise/edger_pairwise/etc.
+#' @seealso DOI:10.1093/nar/gkv711
 #' @export
 noiseq_pairwise <- function(input = NULL, conditions = NULL,
                             batches = NULL, model_cond = TRUE,
                             model_batch = TRUE, annot_df = NULL,
+                            k = 0.5, norm = "rpkm", factor = "condition",
+                            lc = 1, r = 20, adj = 1.5, a0per = 0.9, filter = 1,
                             ...) {
   arglist <- list(...)
 
@@ -39,7 +42,6 @@ noiseq_pairwise <- function(input = NULL, conditions = NULL,
   noiseq_input <- NOISeq::readData(input_data[["data"]], factors = pData(input))
   norm <- NOISeq::ARSyNseq(noiseq_input, factor = "condition", batch = FALSE,
                            norm = "rpkm", logtransf = FALSE)
-
 
   ## Yes I know NOISeq doesn't use models in the same way as other
   ## methods I have applied, but this will make it easier to set up
@@ -72,15 +74,14 @@ noiseq_pairwise <- function(input = NULL, conditions = NULL,
       pct_done <- con / length(apc[["names"]])
       utils::setTxtProgressBar(bar, pct_done)
     }
-    noiseq_table <- NOISeq::noiseqbio(
+    noiseq_table <- sm(NOISeq::noiseqbio(
       norm, k = 0.5, norm = "rpkm", factor = "condition", lc = 1,
       r = 20, adj = 1.5, plot = TRUE, a0per = 0.9, filter = 1,
-      conditions = c(numerator, denominator))
+      conditions = c(numerator, denominator)))
     noiseq_result <- noiseq_table@results[[1]]
     rename_col <- colnames(noiseq_result) == "log2FC"
     colnames(noiseq_result)[rename_col] <- "logFC"
     ## It looks to me like noiseq flips the logFC compared to other methods.
-    # noiseq_result[["logFC"]] <- -1.0 * noiseq_result[["logFC"]]
     noiseq_result[["p"]] <- 1.0 - noiseq_result[["prob"]]
     noiseq_result[["adjp"]] <- p.adjust(noiseq_result[["p"]])
     result_list[[name]] <- noiseq_result
@@ -102,7 +103,7 @@ noiseq_pairwise <- function(input = NULL, conditions = NULL,
       "method" = "noiseq",
       "model" = model_data,
       "model_string" = model_string)
-  class(retlist) <- c("noiseq_result", "list")
+  class(retlist) <- c("noiseq_pairwise", "list")
   return(retlist)
 }
 

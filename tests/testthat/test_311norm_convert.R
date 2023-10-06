@@ -21,8 +21,10 @@ test_that("cpm conversions are equivalent?", {
 })
 
 ## Check that the different ways of calling rpkm() are identical
-pasilla_convert <- convert_counts(pasilla_expt, convert = "rpkm", column = "cds_length")
-pasilla_norm <- sm(normalize_expt(pasilla_expt, convert = "rpkm", column = "cds_length"))
+pasilla_convert <- convert_counts(pasilla_expt, convert = "rpkm", column = "cds_length",
+                                  start_column = "start_position", end_column = "end_position")
+pasilla_norm <- sm(normalize_expt(pasilla_expt, convert = "rpkm", column = "cds_length",
+                                  start_column = "start_position", end_column = "end_position"))
 expected <- pasilla_convert[["count_table"]]
 actual <- exprs(pasilla_norm)
 test_that("calling convert_counts and normalize_expt are equivalent?", {
@@ -31,6 +33,10 @@ test_that("calling convert_counts and normalize_expt are equivalent?", {
 
 ## Similarly check that edgeR's rpkm() comes out the same
 ## Make sure that we remove undefined numbers from fdata(length)
+fData(pasilla_expt)[["start_position"]] <- as.numeric(fData(pasilla_expt)[["start_position"]])
+fData(pasilla_expt)[["end_position"]] <- as.numeric(fData(pasilla_expt)[["end_position"]])
+fData(pasilla_expt)[["cds_length"]] <- abs(fData(pasilla_expt)[["start_position"]] -
+                                             fData(pasilla_expt)[["end_position"]])
 undef <- fData(pasilla_expt)[["cds_length"]] == "undefined"
 lengths <- fData(pasilla_expt)[["cds_length"]]
 lengths[undef] <- NA

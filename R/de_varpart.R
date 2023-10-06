@@ -44,6 +44,7 @@
 #'  pairwise_comparisons = The result from eBayes()
 #'  limma_result = The result from calling write_limma()
 #' @seealso [limma] [Biobase] [deseq_pairwise()] [edger_pairwise()] [basic_pairwise()]
+#'  DOI:10.1101/2023.03.17.533005
 #' @examples
 #' \dontrun{
 #'  pretend <- limma_pairwise(expt)
@@ -194,7 +195,7 @@ dream_pairwise <- function(input = NULL, conditions = NULL,
     "single_table" = all_tables,
     "voom_design" = fun_design,
     "voom_result" = fun_voom)
-  class(retlist) <- c("dream_result", "list")
+  class(retlist) <- c("dream_pairwise", "list")
   if (!is.null(arglist[["limma_excel"]])) {
     retlist[["dream_excel"]] <- write_limma(retlist, excel = arglist[["limma_excel"]])
   }

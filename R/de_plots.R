@@ -33,13 +33,31 @@
 #'  prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
-extract_de_plots <- function(pairwise, combined, type = "edger",
+extract_de_plots <- function(pairwise, combined = NULL, type = NULL,
                              invert = FALSE, invert_colors = c(),
-                             numerator = NULL, denominator = NULL, alpha = 0.4, z = 1.5,
-                             logfc = 1, pval = 0.05, found_table = NULL, p_type = "adj",
+                             numerator = NULL, denominator = NULL, alpha = 0.4, z = 1.5, n = NULL,
+                             logfc = 1.0, pval = 0.05, found_table = NULL, p_type = "adj",
                              color_high = NULL, color_low = NULL, loess = FALSE,
                              z_lines = FALSE, label = 10, label_column = "hgncsymbol") {
 
+  if (is.null(type)) {
+    if (grepl(pattern = "pairwise", x = class(pairwise)[1])) {
+      type <- gsub(x = class(pairwise)[1], pattern = "_pairwise$", replacement = "")
+    }
+    if (is.null(found_table)) {
+      message("No table was provided, choosing the first.")
+      found_table <- names(pairwise[["all_tables"]])[1]
+    }
+  }
+  if (is.null(combined)) {
+    combined = pairwise
+  }
+  if (is.null(numerator) && is.null(denominator)) {
+    message("No numerator nor denominator was provided, arbitrarily choosing the first.")
+    num_den_names <- get_num_den(names(pairwise[["all_tables"]])[1])
+    numerator <- num_den_names[["numerator"]]
+    denominator <- num_den_names[["denominator"]]
+  }
   source_info <- get_plot_columns(combined, type, p_type = p_type)
   input <- source_info[["the_table"]]
   expr_col <- source_info[["expr_col"]]
@@ -281,7 +299,7 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
 
   up_venn <- Vennerable::Venn(Sets = up_venn_lst)
   down_venn <- Vennerable::Venn(Sets = down_venn_lst)
-  tmp_file <- tempfile(pattern = "venn", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "venn", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   up_res <- Vennerable::plot(up_venn, doWeights = FALSE)
@@ -293,6 +311,7 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
   down_venn_noweight <- grDevices::recordPlot()
   dev.off()
   removed <- file.remove(tmp_file)
+  removed <- unlink(dirname(tmp_file))
 
   retlist <- list(
     "up_venn" = up_venn,
@@ -354,7 +373,6 @@ get_plot_columns <- function(data, type, p_type = "adj") {
     }
     wanted_table <- wanted_tablename
     input <- data[["input"]]
-    print(wanted_table)
   } else if ("combined_table" %in% class(data)) {
     table_source <- "combined_table"
   } else if (class(data)[1] == "all_pairwise") {
@@ -964,7 +982,6 @@ plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qv
   return(retlist)
 }
 
-
 plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
                                  fc_col = "logFC", p_col = "qvalue",
                                  color_high = "red", color_low = "blue",
@@ -1013,9 +1030,12 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
   newdf <- data.frame("avg" = input[[expr_col]],
                       "logfc" = input[[fc_col]],
                       "pval" = input[[p_col]])
-  if (!is.null(label_column)) {
+  if (is.null(label_column)) {
+    newdf[["label"]] <- rownames(input)
+  } else if (label_column %in% colnames(input)) {
     newdf[["label"]] <- input[[label_column]]
   } else {
+    message("The column: ", label_column, " is not in the data, using rownames.")
     newdf[["label"]] <- rownames(input)
   }
   rownames(newdf) <- rownames(input)
@@ -1033,6 +1053,7 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
   ## Set up the state of significant/insiginificant vs. p-value and/or fold-change.
   newdf[["pval"]] <- as.numeric(format(newdf[["pval"]], scientific = FALSE))
   newdf[["pcut"]] <- newdf[["pval"]] <= pval
+  newdf[["state"]] <- "c_insig"
   newdf[["state"]] <- ifelse(newdf[["pval"]] > pval, "c_insig",
                              ifelse(newdf[["pval"]] <= pval &
                                       newdf[["logfc"]] >= logfc, "a_upsig",
@@ -1067,6 +1088,13 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
     names(state_shapes) <- c("a_upsig", "b_downsig", "c_insig")
   }
 
+  ## I am not sure why something is setting color high/low to NULL.
+  if (is.null(color_high)) {
+    color_high <- "red"
+  }
+  if (is.null(color_low)) {
+    color_low <- "blue"
+  }
   plot_colors <- c("#555555", color_high, color_low)
   names(plot_colors) <- c("c_insig", "a_upsig", "b_downsig")
 
@@ -1163,7 +1191,7 @@ plot_sankey_de <- function(de_table, lfc = 1.0, p = 0.05,
   meta[["adjusted_p"]] <- factor(meta[["adjusted_p"]], levels = c("significant", "insignificant"))
 
   #  color_choices <-
-  test <- plot_meta_sankey(meta, drill_down = FALSE, factors = c("lfc", "adjusted_p"), html = NULL)
+  test <- plot_meta_sankey(meta, drill_down = FALSE, factors = c("lfc", "adjusted_p"))
   return(test[["ggplot"]])
 }
 
@@ -1442,6 +1470,13 @@ plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
   df[denominator_sig, "state"] <- "down"
   df[["state"]] <- as.factor(df[["state"]])
 
+  ## I am not sure why something is setting color high/low to NULL.
+  if (is.null(color_high)) {
+    color_high <- "red"
+  }
+  if (is.null(color_low)) {
+    color_low <- "blue"
+  }
   plot_colors <- c("#555555", color_high, color_low)
   names(plot_colors) <- c("insignificant", "up", "down")
 
@@ -1911,7 +1946,15 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
 #' @param lst upset data structure.
 #' @param sort Sort the result?
 #' @export
-overlap_groups <- function (lst, sort = TRUE) {
+overlap_groups <- function(input_mtrx, sort = TRUE) {
+
+  ## FIXME: Make use of S4 here
+  if ("list" %in% class(input_mtrx)) {
+    input_mtrx <- UpSetR::fromList(input_mtrx) == 1
+  } else if ("upset" %in% class(input_mtrx)) {
+    input_mtrx <- input_mtrx == 1
+  }
+
   ## lst could look like this:
   ## $one
   ## [1] "a" "b" "c" "e" "g" "h" "k" "l" "m"
@@ -1919,7 +1962,7 @@ overlap_groups <- function (lst, sort = TRUE) {
   ## [1] "a" "b" "d" "e" "j"
   ## $three
   ## [1] "a" "e" "f" "g" "h" "i" "j" "l" "m"
-  input_mtrx <- UpSetR::fromList(lst) == 1
+
   ##     one   two three
   ## a  TRUE  TRUE  TRUE
   ## b  TRUE  TRUE FALSE
@@ -1928,7 +1971,7 @@ overlap_groups <- function (lst, sort = TRUE) {
   unique_lst <- unique(input_mtrx)
   groups <- list()
   ## going through all unique combinations and collect elements for each in a list
-  for (i in 1:nrow(unique_lst)) {
+  for (i in seq_along(unique_lst)) {
     current_row <- unique_lst[i,]
     my_elements <- which(apply(input_mtrx, 1, function(x) all(x == current_row)))
     attr(my_elements, "groups") <- current_row

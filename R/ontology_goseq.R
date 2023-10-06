@@ -297,13 +297,10 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
                          length_keytype = "transcripts", go_keytype = "entrezid",
                          goseq_method = "Wallenius", padjust_method = "BH",
                          expand_categories = TRUE, excel = NULL, enrich = TRUE,
+                         minimum_interesting = 1,
                          ...) {
   arglist <- list(...)
 
-  minimum_interesting <- 1
-  if (!is.null(arglist[["minimum_interesting"]])) {
-    minimum_interesting <- arglist[["minimum_interesting"]]
-  }
   length_df <- data.frame()
   length_vector <- vector()
   de_vector <- vector()
@@ -455,7 +452,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
       merged_ids_lengths[["ID"]]), unique = TRUE)
 
   pwf_plot <- NULL
-  tmp_file <- tempfile(pattern = "goseq", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "goseq", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   pwf <- sm(suppressWarnings(goseq::nullp(DEgenes = de_vector, bias.data = length_vector,
@@ -464,7 +461,8 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
     pwf_plot <- recordPlot()
   }
   dev.off()
-  removed <- file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   godata <- sm(goseq::goseq(pwf, gene2cat = godf, use_genes_without_cat = TRUE,
                             method = goseq_method))

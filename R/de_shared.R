@@ -65,7 +65,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
                          model_intercept = FALSE, extra_contrasts = NULL,
                          alt_model = NULL, libsize = NULL, test_pca = TRUE,
                          annot_df = NULL, parallel = TRUE,
-                         do_basic = TRUE, do_deseq = TRUE, do_ebseq = FALSE,
+                         do_basic = TRUE, do_deseq = TRUE, do_ebseq = TRUE,
                          do_edger = TRUE, do_limma = TRUE, do_noiseq = TRUE,
                          do_dream = FALSE,
                          convert = "cpm", norm = "quant", verbose = TRUE,
@@ -313,7 +313,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
 #'  whole).
 #' @export
 calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp",
-                           lx = "deseq_logfc", ly = "edger_logfc",
+                           lx = "deseq_logfc", ly = "edger_logfc", cor_method = "pearson",
                            topn = 0.1) {
   ## If the topn argument is an integer, the just ask for that number.
   ## If it is a floating point 0<x<1, then set topn to that proportion
@@ -349,7 +349,7 @@ calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp
   y_df <- tbl[x_order, c(py, ly)]
 
   ## Do a simple correlation test just to have it as a comparison point
-  simple_cor <- cor.test(tbl[[lx]], tbl[[ly]])
+  simple_cor <- cor.test(tbl[[lx]], tbl[[ly]], method = cor_method)
 
   ## curve (AUCC), we ranked genes in both the single-cell and bulk datasets in
   ## descending order by the statistical significance of their differential expression.
@@ -407,6 +407,7 @@ calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp
     "aucc" = aucc,
     "cor" = simple_cor,
     "plot" = intersection_plot)
+  class(retlist) <- "aucc_info"
   return(retlist)
 }
 
@@ -1284,6 +1285,8 @@ compare_de_results <- function(first, second, cor_method = "pearson",
 #' @param py Column containing the y-axis p-value.
 #' @param first_table If the input data are actually of type de_table, then find the table(s) inside them.
 #' @param second_table Ibid.
+#' @return List result from plot_linear_scatter
+#' @export
 compare_de_tables <- function(first, second, fcx = "deseq_logfc", px = "deseq_adjp",
                               fcy = "deseq_logfc", py = "deseq_adjp",
                               first_table = NULL, second_table = NULL) {
@@ -1305,6 +1308,11 @@ compare_de_tables <- function(first, second, fcx = "deseq_logfc", px = "deseq_ad
   merged <- merged[, kept_columns]
   colnames(merged) <- c("first_lfc", "first_p", "second_lfc", "second_p")
   scatter <- plot_linear_scatter(merged[, c("first_lfc", "second_lfc")])
+  class(scatter) <- "cross_table_comparison"
+  scatter[["first_table"]] <- first_table
+  scatter[["fcx_column"]] <- fcx
+  scatter[["fcy_column"]] <- fcy
+  scatter[["second_table"]] <- second_table
   return(scatter)
 }
 
@@ -1336,29 +1344,33 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
   ## contrast performed
   retlst <- list()
   methods <- c()
-  if (class(results[["limma"]])[1] == "limma_result") {
+  if (class(results[["limma"]])[1] == "limma_pairwise") {
     retlst[["limma"]] <- results[["limma"]][["all_tables"]]
     methods <- c(methods, "limma")
   }
-  if (class(results[["deseq"]])[1] == "deseq_result") {
+  if (class(results[["deseq"]])[1] == "deseq_pairwise") {
     retlst[["deseq"]] <- results[["deseq"]][["all_tables"]]
     methods <- c(methods, "deseq")
   }
-  if (class(results[["edger"]])[1] == "edger_result") {
+  if (class(results[["edger"]])[1] == "edger_pairwise") {
     retlst[["edger"]] <- results[["edger"]][["all_tables"]]
     methods <- c(methods, "edger")
   }
-  if (class(results[["ebseq"]])[1] == "ebseq_result") {
+  if (class(results[["ebseq"]])[1] == "ebseq_pairwise") {
     retlst[["ebseq"]] <- results[["ebseq"]][["all_tables"]]
     methods <- c(methods, "ebseq")
   }
-  if (class(results[["basic"]])[1] == "basic_result") {
+  if (class(results[["basic"]])[1] == "basic_pairwise") {
     retlst[["basic"]] <- results[["basic"]][["all_tables"]]
     methods <- c(methods, "basic")
   }
-  if (class(results[["noiseq"]])[1] == "noiseq_result") {
+  if (class(results[["noiseq"]])[1] == "noiseq_pairwise") {
     retlst[["noiseq"]] <- results[["noiseq"]][["all_tables"]]
     methods <- c(methods, "noiseq")
+  }
+  if (class(results[["dream"]])[1] == "dream_pairwise") {
+    retlst[["dream"]] <- results[["dream"]][["all_tables"]]
+    methods <- c(methods, "dream")
   }
 
   extra_eval_names <- NULL
@@ -1378,11 +1390,6 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
   meth <- methods[1]
   len <- length(names(retlst[[meth]]))
   ## FIXME: This is wrong.
-  total_comparisons <- (length(methods) - 1) * len
-  progress_count <- 0
-  if (isTRUE(verbose)) {
-    bar <- utils::txtProgressBar(style = 3)
-  }
   for (c in seq_len(lenminus)) {
     c_name <- methods[c]
     nextc <- c + 1
@@ -1391,11 +1398,6 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
       method_comp_name <- glue("{c_name}_vs_{d_name}")
       contrast_name_list <- c()
       for (l in seq_len(len)) {
-        progress_count <- progress_count + 1
-        if (isTRUE(verbose)) {
-          pct_done <- progress_count / total_comparisons
-          utils::setTxtProgressBar(bar, pct_done)
-        }
         contr <- names(retlst[[c_name]])[l]
         if (contr %in% extra_eval_names) {
           next
@@ -1445,9 +1447,6 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
       } ## End iterating through the contrasts
     } ## End the second method loop
   } ## End the first method loop
-  if (isTRUE(verbose)) {
-    close(bar)
-  }
 
   comparison_df <- as.matrix(comparison_df)
   ## I think this next line is a likely source of errors because
@@ -1690,19 +1689,34 @@ disjunct_pvalues <- function(contrast_fit, cellmeans_fit, conj_contrasts, disj_c
 #' @export
 do_pairwise <- function(type, ...) {
   res <- NULL
-  if (type == "limma") {
-    res <- try(limma_pairwise(...))
-  } else if (type == "ebseq") {
-    res <- try(ebseq_pairwise(...))
-  } else if (type == "edger") {
-    res <- try(edger_pairwise(...))
-  } else if (type == "deseq") {
-    res <- try(deseq2_pairwise(...))
-  } else if (type == "basic") {
-    res <- try(basic_pairwise(...))
-  } else if (type == "noiseq") {
-    res <- try(noiseq_pairwise(...))
-  }
+
+  switchret <- switch(
+    type,
+    "basic" = {
+      res <- try(basic_pairwise(...))
+    },
+    "limma" = {
+      res <- try(limma_pairwise(...))
+    },
+    "ebseq" = {
+      res <- try(ebseq_pairwise(...))
+    },
+    "edger" = {
+      res <- try(edger_pairwise(...))
+    },
+    "deseq" = {
+      res <- try(deseq2_pairwise(...))
+    },
+    "noiseq" = {
+      res <- try(noiseq_pairwise(...))
+    },
+    "dream" = {
+      res <- try(dream_pairwise(...))
+    },
+    {
+      message("I do not understand this argument, running DESeq2.")
+      res <- try(deseq2_pairwise(...))
+    })
   res[["type"]] <- type
   return(res)
 }
@@ -1937,6 +1951,7 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
   ## We need to know the method used, because the values returned are not
   ## necessarily in the scale expected by IHW.
   if (is.null(type)) {
+    ## This little if statement is dumb.  FIXME.
     if (grepl(pattern = "^limma", x = pvalue_column)) {
       type <- "limma"
     } else if (grepl(pattern = "^deseq", x = pvalue_column)) {
@@ -1947,6 +1962,8 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
       type <- "basic"
     } else if (grepl(pattern = "^ebseq", x = pvalue_column)) {
       type <- "ebseq"
+    } else if (grepl(pattern = "^noiseq", x = pvalue_column)) {
+      type <- "noiseq"
     } else {
       stop("Unable to determine the type of pvalues in this data.")
     }
@@ -1964,6 +1981,9 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
   } else if (type == "basic") {
     tmp_table[["base10_median"]] <- 2 ^ ((tmp_table[["basic_num"]] + tmp_table[["basic_den"]]) / 2)
     mean_column <- "base10_median"
+  } else if (type == "noiseq") {
+    tmp_table[["base10_mean"]] <- 2 ^ ((tmp_table[["noiseq_num"]] + tmp_table[["noiseq_den"]]) / 2)
+    mean_column <- "base10_mean"
   }
 
   ## Add a hopefully unneccessary check that everything is numeric (which is currently not true
@@ -2216,6 +2236,10 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
       eval_strings <- append(eval_strings, extra_contrast)
       eval_names <- append(eval_names, new_name)
       all_pairwise[new_name] <- extra_contrast
+      extra_numerator <- gsub(x = new_name, pattern = "(.*)_vs_.*", replacement = "\\1")
+      extra_denominator <- gsub(x = new_name, pattern = ".*_vs_(.*)", replacement = "\\1")
+      numerators <- c(numerators, extra_numerator)
+      denominators <- c(denominators, extra_denominator)
     }
     names(eval_strings) <- eval_names
   }

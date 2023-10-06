@@ -97,6 +97,11 @@ perhaps change gff_type to make the merge work.")
   colnames(universe) <- c("geneid", "width")
   universe[["id"]] <- rownames(universe)
   universe <- universe[complete.cases(universe), ]
+  ## Adding this removal in case the gff file used to extract the annotations
+  ## includes a prefix of the feature type.
+  remove_pattern <- glue("^{gff_type}.")
+  universe[["geneid"]] <- gsub(x = universe[["geneid"]], pattern = remove_pattern,
+                               replacement = "")
 
   if (is.null(sig_genes[["ID"]])) {
     sig_genes[["ID"]] <- rownames(sig_genes)
@@ -374,6 +379,15 @@ perhaps change gff_type to make the merge work.")
     message("Writing data to: ", excel, ".")
     excel_ret <- sm(try(write_gostats_data(retlist, excel = excel)))
   }
+
+  enrich_results <- list()
+  for (ont in c("bp", "mf", "cc")) {
+    message("Getting enrichResult for ontology: ", ont, ".")
+    enrich_results[[ont]] <- gostats2enrich(retlist, ontology = ont, cutoff = pcutoff,
+                                            cutoff_column = "Pvalue")
+  }
+  retlist[["enrich_results"]] <- enrich_results
+
   return(retlist)
 }
 

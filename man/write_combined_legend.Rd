@@ -19,6 +19,8 @@ write_combined_legend(
   include_ebseq,
   basic,
   include_basic,
+  noiseq,
+  include_noiseq,
   padj_type,
   fancy = FALSE
 )

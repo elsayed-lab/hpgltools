@@ -87,6 +87,7 @@ plot_libsize <- function(data, condition = NULL, colors = NULL,
   class(retlist) <- "libsize_plot"
   return(retlist)
 }
+setGeneric("plot_libsize")
 
 #' Visualize genes observed before/after filtering.
 #'
@@ -119,8 +120,8 @@ plot_libsize_prepost <- function(expt, low_limit = 2, filter = TRUE, ...) {
   start_tab[["alpha"]] <- ggplot2::alpha(start_tab[["colors"]], 0.75)
   ## Get the number of low genes in each sample.
   start_tab[["low"]] <- lt_min_start
-  start_tab[["sub_low"]] <- ""
-  start_tab[["subtraction"]] <- ""
+  start_tab[["sub_low"]] <- 0
+  start_tab[["subtraction"]] <- 0
   start_tab[["subtraction_string"]] <- ""
 
   ## Get the number of counts after filtering.
@@ -132,11 +133,14 @@ plot_libsize_prepost <- function(expt, low_limit = 2, filter = TRUE, ...) {
   end_tab[["subtraction"]] <- subtract_count_sums
   ## Get the number of genes after filtering.
   end_tab[["low"]] <- lt_min_end
-  end_tab[["sub_low"]] <- ""
+  end_tab[["sub_low"]] <- 0
   end_tab[["subtraction_string"]] <- ""
 
   ## Get the number of genes lost from filtering.
   subtract_gene_sums <- start_tab[["low"]] - end_tab[["low"]]
+  undef <- is.na(subtract_gene_sums)
+  ## When this comes up NA, just use the original number.
+  subtract_gene_sums[undef] <- start_tab[undef, "low"]
   start_tab[["sub_low"]] <- subtract_gene_sums
   start_tab[["subtraction_string"]] <- paste0(subtract_count_sums, " counts from ",
                                               subtract_gene_sums, " genes.")
@@ -144,6 +148,7 @@ plot_libsize_prepost <- function(expt, low_limit = 2, filter = TRUE, ...) {
 
   count_title <- glue("Counts remaining after filtering less than {low_limit} reads,
 labeled by counts/genes removed.")
+  ## Suppressing 'Using alpha for a discrete variable is not advised.'
   count_columns <- ggplot(all_tab,
                           aes(x = .data[["id"]], y = .data[["sum"]])) +
     ggplot2::geom_col(position = "identity", color = "black",
@@ -158,7 +163,6 @@ labeled by counts/genes removed.")
                    legend.position = "none") +
     ggplot2::scale_y_continuous(trans = "log10", labels = scales::scientific) +
     ggplot2::ggtitle(count_title)
-
   low_title <- glue("Genes with less than {low_limit} reads, labeled by delta.")
   low_columns <- ggplot(all_tab, aes(x = .data[["id"]], y = .data[["low"]])) +
     ggplot2::geom_col(position = "identity", color = "black",
@@ -170,13 +174,13 @@ labeled by counts/genes removed.")
                    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5),
                    legend.position = "none") +
     ggplot2::ggtitle(low_title)
-
   retlist <- list(
     "start" = start,
     "end" = end,
     "table" = all_tab,
     "count_plot" = count_columns,
     "lowgene_plot" = low_columns)
+  class(retlist) <- "prepost_filter"
   return(retlist)
 }
 

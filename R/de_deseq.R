@@ -15,15 +15,16 @@
 #' @param cutoff Significance cutoff
 #' @param minc Minimum number of elements for a group
 #' @param interaction Use an interaction model?
+#' @seealso DOI:10.1186/s13059-014-0550-8
 #' @export
 deseq_lrt <- function(expt, interactor_column = "visitnumber",
                       interest_column = "clinicaloutcome", transform = "rlog",
                       factors = NULL, cutoff = 0.05, minc = 3, interaction = TRUE) {
-  reduced_string <- glue::glue("~ {interest_column}")
-  full_string <- glue::glue("~ {interactor_column} + {interest_column}")
+  reduced_string <- glue("~ {interest_column}")
+  full_string <- glue("~ {interactor_column} + {interest_column}")
   if (isTRUE(interaction)) {
-    reduced_string <- glue::glue("~ {interactor_column} + {interest_column}")
-    full_string <- glue::glue("{full_string} + \\
+    reduced_string <- glue("~ {interactor_column} + {interest_column}")
+    full_string <- glue("{full_string} + \\
  {interactor_column}:{interest_column}")
   }
   full_model <- as.formula(full_string)
@@ -99,10 +100,17 @@ deseq_lrt <- function(expt, interactor_column = "visitnumber",
     rlog_matrix <- DESeq2::rlog(deseq_input)
   }
   clustering_amounts <- rlog_matrix[lrt_significant[["gene"]], ]
-
   cluster_data <- try(DEGreport::degPatterns(assay(clustering_amounts), metadata = col_data,
                                              time = interactor_column, col = interest_column,
                                              minc = minc))
+  if ("try-error" %in% class(cluster_data)) {
+    ## On my container image, I don't have DISPLAY causing this to fail.
+    retlist <- list(
+      "deseq_result" = deseq_lrt,
+      "deseq_table" = deseq_lrt_table)
+    class(retlist) <- "deseq_lrt_noclusters"
+    return(retlist)
+  }
 
   group_lst <- NULL
   if (! "try-error" %in% class(cluster_data)) {
@@ -120,6 +128,7 @@ deseq_lrt <- function(expt, interactor_column = "visitnumber",
       "cluster_data" = cluster_data,
       "group_list" = group_lst,
       "favorite_genes" = cluster_data[["df"]])
+  class(retlist) <- "deseq_lrt"
   return(retlist)
 }
 
@@ -174,6 +183,7 @@ deseq_pairwise <- function(...) {
 #'  coefficients = list of coefficients making the contrasts
 #'  all_tables = list of DE tables
 #' @seealso [DESeq2] [basic_pairwise()] [limma_pairwise()] [edger_pairwise()] [ebseq_pairwise()]
+#'  DOI:10.1186/s13059-014-0550-8.
 #' @examples
 #' \dontrun{
 #'  pretend = deseq2_pairwise(data, conditions, batches)
@@ -199,7 +209,6 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
   conditions_table <- table(conditions)
   batches_table <- table(batches)
   condition_levels <- levels(as.factor(conditions))
-  ## batch_levels <- levels(as.factor(batches))
 
   ## Make a model matrix which will have one entry for
   ## each of the condition/batches
@@ -216,11 +225,6 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
                                model_cond = model_cond, model_intercept = model_intercept,
                                alt_model = alt_model,
                                ...)
-  ## model_choice <- choose_model(input, conditions, batches,
-  ##                              model_batch = model_batch,
-  ##                              model_cond = model_cond,
-  ##                              model_intercept = model_intercept,
-  ##                              alt_model = alt_model)
   model_data <- model_choice[["chosen_model"]]
   model_including <- model_choice[["including"]]
   model_string <- model_choice[["chosen_string"]]
@@ -564,6 +568,7 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
   if (!is.null(arglist[["deseq_excel"]])) {
     retlist[["deseq_excel"]] <- write_deseq(retlist, excel = arglist[["deseq_excel"]])
   }
+  class(retlist) <- c("deseq_pairwise", "list")
   return(retlist)
 }
 

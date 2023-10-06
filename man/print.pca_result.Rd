@@ -2,13 +2,14 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.pca_result}
 \alias{print.pca_result}
-\title{Print a summary of the result from one of the various dimension reductions.}
+\title{Print the result from one of the various dimension reductions.}
 \usage{
 \method{print}{pca_result}(x)
 }
 \arguments{
-\item{x}{Result from plot_pca()}
+\item{x}{List comprised of the residuals, variance summary, tables,
+the PCA-esque plot, experimental design, etc.}
 }
 \description{
-Print a summary of the result from one of the various dimension reductions.
+Print the result from one of the various dimension reductions.
 }

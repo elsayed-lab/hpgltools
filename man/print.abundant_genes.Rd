@@ -7,7 +7,8 @@
 \method{print}{abundant_genes}(x)
 }
 \arguments{
-\item{x}{Abundant gene list.}
+\item{x}{Abundant gene list comprising an element 'high' and 'low'
+for the most and least abundant genes observed.}
 }
 \description{
 Print a summary of a set of abundant genes.

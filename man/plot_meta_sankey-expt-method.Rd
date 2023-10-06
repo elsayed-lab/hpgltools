@@ -7,8 +7,7 @@
 \S4method{plot_meta_sankey}{expt}(
   design,
   factors = c("condition", "batch"),
-  color_choices = NULL,
-  html = "sankey.html"
+  color_choices = NULL
 )
 }
 \description{

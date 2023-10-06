@@ -316,6 +316,14 @@ hpgl_rpkm <- function(count_table, ...) {
   arglist <- list(...)
   annotations <- arglist[["annotations"]]
   chosen_column <- arglist[["column"]]
+  start_column <- "start"
+  if (!is.null(arglist[["start_column"]])) {
+    start_column <- arglist[["start_column"]]
+  }
+  end_column <- "end"
+  if (!is.null(arglist[["end_column"]])) {
+    end_column <- arglist[["end_column"]]
+  }
   ## holy crapola I wrote this when I had no clue what I was doing.
   if (class(count_table)[1] == "edgeR") {
     count_table <- count_table[["counts"]]
@@ -352,7 +360,7 @@ hpgl_rpkm <- function(count_table, ...) {
   ## Sometimes I am stupid and call it length...
   lenvec <- NULL
   if (is.null(chosen_column) &
-      is.null(merged_annot[["length"]]) &
+      is.null(merged_annot[["length"]]) &&
       is.null(merged_annot[["width"]])) {
     message("There appears to be no gene length annotation data, here are the possible columns:")
     message(toString(colnames(annotations)))
@@ -372,12 +380,13 @@ hpgl_rpkm <- function(count_table, ...) {
   }
 
   if (is.null(merged_annot[[chosen_column]])) {
-    if (!is.null(merged_annot[["start"]]) &
-        !is.null(merged_annot[["end"]])) {
-      merged_annot[["width"]] <- abs(merged_annot[["end"]] - merged_annot[["start"]])
+    if (!is.null(merged_annot[[start_column]]) &&
+        !is.null(merged_annot[[end_column]])) {
+      merged_annot[["width"]] <- abs(as.numeric(merged_annot[[start_column]]) -
+                                       as.numeric(merged_annot[[end_column]]))
       chosen_column <- "width"
     } else {
-      stop("Unable to make a width column.")
+      stop("There is no column, ", chosen_column, ", unable to make a width column.")
     }
   }
 

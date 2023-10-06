@@ -21,7 +21,7 @@ all_pairwise(
   parallel = TRUE,
   do_basic = TRUE,
   do_deseq = TRUE,
-  do_ebseq = FALSE,
+  do_ebseq = TRUE,
   do_edger = TRUE,
   do_limma = TRUE,
   do_noiseq = TRUE,

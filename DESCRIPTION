@@ -19,37 +19,39 @@ Description: This is a set of functions I have been using in my various analyses
 License: GPL-2 | file LICENSE
 Suggests:
   affy, AnnotationDbi, AnnotationForge, AnnotationHub,
-  BiocGenerics, BiocManager, biomaRt, Biostrings, bluster, BRAIN, BSgenome,
+  BiocGenerics, BiocManager, biomaRt, Biostrings, bluster, BSgenome,
   caret, Category, cleaver, clusterProfiler, corpcor, corrplot, curl,
-  DBI, DEGreport, desc, DESeq2, devEMF, devtools, directlabels, doParallel,
+  DALEX, DBI, DEGreport, desc, DESeq2, devEMF, devtools, directlabels, doParallel,
   dorothea, DOSE, doSNOW, DSS,
   EBSeq, EDASeq, edgeR, enrichplot, EuPathDB,
   fastcluster, fastICA, ffpe, fission,
   genbankr, genefilter, GenomicRanges, GenomeInfoDb, genoPlotR, ggdendro,
-  ggrepel, ggstatsplot, ggthemes, goseq, GO.db, GOstats,
+  ggrepel, ggsankey, ggstatsplot, ggthemes, goseq, GO.db, GOstats,
   graph, GSVA, GSVAdata, gtools, gplots, gProfileR, gprofiler2,
   Heatplus, Hmisc, Homo.sapiens, htmlwidgets, hpgldata, httr,
   iDA, igraph, IHW, inflection, IRanges, isva, iterators,
   jsonlite,
   KEGGREST, KEGGgraph, kmer,
   lattice, limma, locfit, lubridate,
-  MatrixGenerics, matrixStats, miscTools, MLSeq, motifRG, MSnbase, mygene, mzR,
+  MatrixGenerics, matrixStats, miscTools, motifRG, mygene, mzR,
+  NOISeq,
   openxlsx, OrganismDbi,
   pander, parallel, pasilla, pathfindR, pathview, pcaMethods, Peptides, plyr, preprocessCore, PROPER,
   qvalue,
-  R.utils, RColorBrewer, RCurl, readr, reactome.db, readODS, readxl, reshape2, rGADEM, Rgraphviz,
-  rhdf5, rjson, rmarkdown, robust, robustbase, Rsamtools, RSQLite, Rtsne,
+  R.utils, RColorBrewer, RCurl, readr, reactome.db, readODS, reshape2, rGADEM, Rgraphviz,
+  rhdf5, Rhdf5lib, rjson, rmarkdown, robust, robustbase, Rsamtools, RSQLite, Rtsne,
   rtracklayer, ruv, RUVSeq, rvest,
   scales, SeqTools, Seurat, seqLogo, skimr, SmartSVA, spgs, statmod, stringi,
   stringr, survJamda, SWATH2stats,
   taxize, testthat, tibble, tidyr, tidyselect, topGO, tximport,
   UniProt.ws, UpSetR, uwot, webp,
+  WGCNA,
   xCell, xml2,
   Vennerable, venneuler
 Imports:
   data.table, dplyr,
-  foreach,
-  ggplot2, GenomicFeatures, glue, GSEABase,
+  forcats, foreach,
+  GenomicFeatures, ggplot2, glue, GSEABase,
   knitr,
   magrittr, methods,
   plotly,
@@ -57,7 +59,7 @@ Imports:
   shiny, sva,
   variancePartition
 Depends:
-  Biobase, SummarizedExperiment, S4Vectors
+  Biobase, SummarizedExperiment, S4Vectors, glue
 VignetteBuilder: knitr
 ByteCompile: true
 biocViews: DifferentialExpression
@@ -111,6 +113,7 @@ Collate:
   'ontology_plots.R'
   'ontology_xlsx.R'
   'ontology_kegg.R'
+  'pcr.R'
   'peptides.R'
   'phylo.R'
   'plot_shared.R'

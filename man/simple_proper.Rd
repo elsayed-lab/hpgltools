@@ -17,7 +17,12 @@ simple_proper(
   target = "lfc",
   mean_or_median = "mean",
   filter = "none",
-  delta = 0.5
+  delta = 1,
+  add_coverage = TRUE,
+  target_power = 0.8,
+  mean_gene_length = 2000,
+  nt_per_read = 200,
+  describe_samples = 5
 )
 }
 \arguments{
@@ -63,5 +68,5 @@ version of 'default_proper()' above and invokes PROPER after re-formatting a
 given dataset in the way expected by PROPER.
 }
 \seealso{
-[PROPER]
+[PROPER] DOI:10.1093/bioinformatics/btu640
 }

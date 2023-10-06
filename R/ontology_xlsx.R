@@ -94,6 +94,7 @@ gather_ontology_genes <- function(result, ontology = NULL,
   }
   input <- result[["input"]]
   filtered_categories <- categories[categories[[column]] <= pval, ]
+  rownames(filtered_categories) <- filtered_categories[[1]]
   cats <- rownames(filtered_categories)
   go_db <- result[["go_db"]]
   genes_per_ont <- function(cat) {
@@ -439,6 +440,7 @@ write_cp_data <- function(cp_result, excel = "excel/clusterprofiler.xlsx",
   for (img in image_list) {
     removed <- file.remove(img)
   }
+  class(res) <- "written_clusterprofiler"
   return(res)
 }
 
@@ -606,6 +608,7 @@ write_goseq_data <- function(goseq_result, excel = "excel/goseq.xlsx", wb = NULL
   for (img in image_files) {
     removed <- file.remove(img)
   }
+  class(res) <- "written_goseq"
   return(res)
 }
 
@@ -708,6 +711,7 @@ write_gostats_data <- function(gostats_result, excel = "excel/gostats.xlsx",
     categories <- categories[keeper_idx, ]
     genes_per_category <- gather_ontology_genes(gostats_result, ontology = ont,
                                                 column = "Pvalue", pval = pval)
+    rownames(categories) <- categories[[1]]
     categories <- merge(categories, genes_per_category, by = "row.names")
     rownames(categories) <- categories[["Row.names"]]
     categories[["ontology"]] <- ont
@@ -757,6 +761,7 @@ write_gostats_data <- function(gostats_result, excel = "excel/gostats.xlsx",
   for (img in image_files) {
     removed <- file.remove(img)
   }
+  class(res) <- "written_gostats"
   return(res)
 }
 
@@ -1187,6 +1192,7 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
   for (img in image_files) {
     removed <- file.remove(img)
   }
+  class(excel_ret) <- "written_gprofiler"
   return(excel_ret)
 }
 
@@ -1372,6 +1378,7 @@ write_topgo_data <- function(topgo_result, excel = "excel/topgo.xlsx", wb = NULL
            " does not exist, there is likely a missing image in the xlsx document.")
     }
   }
+  class(res) <- "written_topgo"
   return(res)
 }
 

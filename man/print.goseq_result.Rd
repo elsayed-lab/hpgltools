@@ -2,13 +2,14 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.goseq_result}
 \alias{print.goseq_result}
-\title{Print a summary of a goseq over representation search.}
+\title{Print a goseq over representation search.}
 \usage{
 \method{print}{goseq_result}(x)
 }
 \arguments{
-\item{x}{list of results from goseq.}
+\item{x}{List containing the various goseq results, plots,
+significant subsets, enrichResult coercions, etc.}
 }
 \description{
-Print a summary of a goseq over representation search.
+Print a goseq over representation search.
 }

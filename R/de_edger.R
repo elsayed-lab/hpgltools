@@ -45,6 +45,7 @@
 #'  I do this to avoid running into the limit on # of contrasts addressable by topTags()
 #'  all_tables = a list of tables for the contrasts performed.
 #' @seealso [edgeR] [deseq_pairwise()] [ebseq_pairwise()] [limma_pairwise()] [basic_pairwise()]
+#'  DOI:10.12688/f1000research.8987.2
 #' @examples
 #' \dontrun{
 #'  expt <- create_expt(metadata = "metadata.xlsx", gene_info = annotations)
@@ -242,10 +243,11 @@ edger_pairwise <- function(input = NULL, conditions = NULL,
       "method" = "edger",
       "model" = model_data,
       "model_string" = model_string)
-  class(retlist) <- c("edger_result", "list")
+  class(retlist) <- c("edger_pairwise", "list")
   if (!is.null(arglist[["edger_excel"]])) {
     retlist[["edger_excel"]] <- write_edger(retlist, excel = arglist[["edger_excel"]])
   }
+  class(retlist) <- c("edger_pairwise", "list")
   return(retlist)
 }
 

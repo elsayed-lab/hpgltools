@@ -363,6 +363,7 @@ plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FAL
     "first_mad" = first_mad,
     "second_median" = second_median,
     "second_mad" = second_mad)
+  class(plots) <- "linear_scatter"
   return(plots)
 }
 
@@ -418,8 +419,8 @@ recolor_points <- function(plot, df, ids, color = "red", ...) {
 #'  nonzero_plot <- plot_nonzero(expt = expt)
 #' }
 #' @export
-plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = FALSE,
-                         expt_names = NULL, label_chars = 10, plot_legend = FALSE,
+plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = "repel",
+                         expt_names = NULL, max_overlaps = 5, label_chars = 10, plot_legend = FALSE,
                          plot_title = NULL, cutoff = 0.65, ...) {
   arglist <- list(...)
   names <- NULL
@@ -517,10 +518,13 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = FALSE
     ggplot2::scale_fill_manual(name = "Condition",
                                guide = "legend",
                                values = color_list) +
-    ggplot2::ylab("Number of non-zero genes observed.") +
-    ggplot2::xlab("Reads mapped in millions.") +
+    ggplot2::ylab("Number of non-zero genes observed") +
+    ggplot2::xlab("Number of reads mapped (millions)") +
     ggplot2::theme_bw(base_size = base_size)
 
+  if (isTRUE(plot_labels)) {
+    plot_labels <- "repel"
+  }
   if (is.null(plot_labels)) {
     plot_labels <- "repel"
   }
@@ -530,7 +534,7 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = FALSE
     non_zero_plot <- non_zero_plot +
       ggplot2::geom_text(aes(x = .data[["cpm"]], y = .data[["nonzero_genes"]],
                              label = .data[["id"]], angle = 45, size = 4, vjust = 2))
-  } else if (plot_labels == "repel") {
+  } else if (plot_labels == "oldrepel") {
     non_zero_plot <- non_zero_plot +
       ggrepel::geom_text_repel(ggplot2::aes(label = .data[["id"]]),
                                size = 5, box.padding = ggplot2::unit(0.5, "lines"),
@@ -539,6 +543,9 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = FALSE
   } else if (plot_labels == "dlsmart") {
     non_zero_plot <- non_zero_plot +
       directlabels::geom_dl(aes(label = .data[["id"]]), method = "smart.grid")
+  } else if (plot_labels == "repel") {
+    non_zero_plot <- non_zero_plot +
+      ggrepel::geom_text_repel(ggplot2::aes(label = .data[["id"]]), max.overlaps = max_overlaps)
   } else {
     non_zero_plot <- non_zero_plot +
       directlabels::geom_dl(ggplot2::aes(label = .data[["id"]]), method = "first.qp")
@@ -622,7 +629,7 @@ plot_pairwise_ma <- function(data, log = NULL, ...) {
       m <- first - second
       a <- (first + second) / 2
 
-      tmp_file <- tempfile(pattern = "ma", fileext = ".png")
+      tmp_file <- tmpmd5file(pattern = "ma", fileext = ".png")
       this_plot <- png(filename = tmp_file)
       controlled <- dev.control("enable")
       affy::ma.plot(A = a, M = m, plot.method = "smoothScatter",
@@ -630,7 +637,9 @@ plot_pairwise_ma <- function(data, log = NULL, ...) {
       title(glue("MA of {firstname} vs {secondname}."))
       plot_list[[name]] <- grDevices::recordPlot()
       dev.off()
-      file.remove(tmp_file)
+      removed <- suppressWarnings(file.remove(tmp_file))
+      removed <- unlink(dirname(tmp_file))
+
     }
   }
   return(plot_list)

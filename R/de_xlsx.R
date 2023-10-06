@@ -35,6 +35,7 @@
 #' @param excel_title Title for the excel sheet(s).  If it has the
 #'  string 'YYY', that will be replaced by the contrast name.
 #' @param rda Write a rda file of the results.
+#' @param rda_input Include the input all_pairwise() result in the rda?
 #' @param start_worksheet This will now increment worksheet titles
 #'  from this point forward.
 #' @param label Label this number of top-n genes on the plots?
@@ -67,13 +68,14 @@
 combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes = NULL,
                               adjp = TRUE, include_limma = TRUE, include_deseq = TRUE,
                               include_edger = TRUE, include_ebseq = TRUE, include_basic = TRUE,
+                              include_noiseq = TRUE,
                               rownames = TRUE, add_plots = TRUE, loess = FALSE, plot_dim = 6,
                               compare_plots = TRUE, padj_type = "ihw", fancy = FALSE,
                               lfc_cutoff = 1.0, p_cutoff = 0.05,
                               de_types = c("limma", "deseq", "edger"),
                               excel_title = "Table SXXX: Combined Differential Expression of YYY",
                               increment_start = "SXXX", start_worksheet_num = 2,
-                              rda = NULL, label = 10, label_column = "hgncsymbol",
+                              rda = NULL, rda_input = FALSE, label = 10, label_column = "hgncsymbol",
                               format_sig = 4, excel = NULL, plot_columns = 10,
                               alpha = 0.4, z = 1.5, z_lines = FALSE) {
   xlsx <- init_xlsx(excel)
@@ -94,6 +96,17 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
   edger <- apr[["edger"]]
   ebseq <- apr[["ebseq"]]
   basic <- apr[["basic"]]
+  noiseq <- apr[["noiseq"]]
+
+  model_used <- NULL
+  ## I want to be able to print the model
+  ## When summarizing the result, I think in most cases
+  ## checking for a deseq or limma model should suffice.
+  if (!is.null(deseq[["model_string"]])) {
+    model_used <- deseq[["model_string"]]
+  } else if (!is.null(limma[["model_string"]])) {
+    model_used <- limma[["model_string"]]
+  }
 
   if ("try-error" %in% class(limma) || is.null(limma)) {
     include_limma <- FALSE
@@ -110,6 +123,9 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
   if ("try-error" %in% class(basic) || is.null(basic)) {
     include_basic <- FALSE
   }
+  if ("try-error" %in% class(noiseq) || is.null(noiseq)) {
+    include_noiseq <- FALSE
+  }
 
   ## A common request is to have the annotation data added to the table.  Do that here.
   annot_df <- fData(apr[["input"]])
@@ -120,9 +136,14 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
   }
 
   ## Write the legend.
-  legend <- write_combined_legend(
-    wb, excel_basename, plot_dim, apr, limma, include_limma, deseq, include_deseq,
-    edger, include_edger, ebseq, include_ebseq, basic, include_basic, padj_type)
+  legend <- write_combined_legend(wb, excel_basename, plot_dim, apr,
+                                  limma, include_limma,
+                                  deseq, include_deseq,
+                                  edger, include_edger,
+                                  ebseq, include_ebseq,
+                                  basic, include_basic,
+                                  noiseq, include_noiseq,
+                                  padj_type, fancy = fancy)
   image_files <- c(legend[["image_files"]], image_files)
   table_names <- legend[["table_names"]]
 
@@ -145,9 +166,14 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
   ## flip the logFCs.
   extracted <- extract_keepers(
     extracted, keepers, table_names, all_coefficients,
-    limma, edger, ebseq, deseq, basic, adjp, annot_df, include_deseq, include_edger,
-    include_ebseq, include_limma, include_basic, excludes, padj_type, loess =  loess,
-    lfc_cutoff = lfc_cutoff, p_cutoff =  p_cutoff, sheet_prefix = sheet_prefix,
+    limma = limma, edger = edger, ebseq = ebseq,
+    deseq = deseq, basic = basic, noiseq = noiseq,
+    adjp = adjp, annot_df = annot_df,
+    include_deseq = include_deseq, include_edger = include_edger,
+    include_ebseq = include_ebseq, include_limma = include_limma,
+    include_basic = include_basic, include_noiseq = include_noiseq,
+    excludes = excludes, padj_type = padj_type, loess = loess,
+    lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff, sheet_prefix = sheet_prefix,
     sheet_number = sheet_number, format_sig = format_sig,
     plot_colors = plot_colors, z = z, alpha = alpha, z_lines = z_lines,
     label = label, label_column = label_column)
@@ -254,20 +280,30 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
     "keepers" = keepers,
     ## Kept is currently broken.
     "kept" = extracted[["kept"]],
+    "model_used" = model_used,
     "de_summary" = extracted[["summaries"]])
   class(ret) <- c("combined_de", "list")
 
   if (!is.null(rda)) {
     varname <- gsub(x = basename(rda), pattern = "\\.rda$", replacement = "")
     assigned <- assign(varname, ret)
+    ## When saving a rda of the combined tables, it is less likely that one wants a copy of the
+    ## entire differential expression analysis produced by all_pairwise().
+    if (!isTRUE(rda_input)) {
+      varname[["input"]] <- NULL
+    }
     message("Saving de result as ", varname, " to ", rda, ".")
     saved <- save(list = varname, file = rda)
     removed <- rm(varname)
   }
   ## Cleanup the saved image files.
+  image_dir <- ""
   for (img in image_files) {
     removed <- try(suppressWarnings(file.remove(img)), silent = TRUE)
+    image_dir <- dirname(img)
   }
+  nodir <- try(unlink(image_dir), silent = TRUE)
+
   return(ret)
 }
 
@@ -306,7 +342,7 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
 combine_extracted_plots <- function(name, combined, denominator, numerator, plot_inputs,
                                     plot_basic = TRUE, plot_deseq = TRUE,
                                     plot_edger = TRUE, plot_limma = TRUE,
-                                    plot_ebseq = FALSE, loess = FALSE,
+                                    plot_ebseq = FALSE, plot_noiseq = FALSE, loess = FALSE,
                                     logfc = 1, pval = 0.05, found_table = NULL, p_type = "all",
                                     plot_colors = NULL, fancy = FALSE,
                                     do_inverse = FALSE, invert_colors = FALSE,
@@ -335,6 +371,13 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
     plots[["limma_vol_plots"]] <- list()
     plots[["limma_p_plots"]] <- list()
     types <- c("limma", types)
+  }
+  if (isTRUE(plot_noiseq)) {
+    plots[["noiseq_scatter_plots"]] <- list()
+    plots[["noiseq_ma_plots"]] <- list()
+    plots[["noiseq_vol_plots"]] <- list()
+    plots[["noiseq_p_plots"]] <- list()
+    types <- c("noiseq", types)
   }
 
   for (t in seq_along(types)) {
@@ -397,11 +440,21 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
   return(plots)
 }
 
-check_single_de_table <- function(pairwise, table_name, wanted_numerator,
-                                  wanted_denominator, extra = FALSE, type = "deseq") {
-  num_den_names <- strsplit(x = table_name, split = "_vs_")[[1]]
+get_num_den <- function(string, split = "_vs_") {
+  num_den_names <- strsplit(x = string, split = split)[[1]]
   num_name <- num_den_names[[1]]
   den_name <- num_den_names[[2]]
+  ret <- list(
+    "numerator" = num_name,
+    "denominator" = den_name)
+  return(ret)
+}
+
+check_single_de_table <- function(pairwise, table_name, wanted_numerator,
+                                  wanted_denominator, extra = FALSE, type = "deseq") {
+  num_den_names <- get_num_den(table_name)
+  num_name <- num_den_names[["numerator"]]
+  den_name <- num_den_names[["denominator"]]
   inverse_name <- paste0(den_name, "_vs_", num_name)
   forward_test_table <- pairwise[["all_tables"]][[table_name]]
   reverse_test_table <- pairwise[["all_tables"]][[inverse_name]]
@@ -463,7 +516,8 @@ check_single_de_table <- function(pairwise, table_name, wanted_numerator,
 #' @param sheet_count Start with these sheet number and increment for excel.
 combine_mapped_table <- function(entry, include_basic = TRUE, include_deseq = TRUE,
                                  include_edger = TRUE, include_ebseq = TRUE,
-                                 include_limma = TRUE, adjp = TRUE, padj_type = "fdr",
+                                 include_limma = TRUE, include_noiseq = TRUE,
+                                 adjp = TRUE, padj_type = "fdr",
                                  annot_df = NULL, excludes = NULL, lfc_cutoff = 1,
                                  p_cutoff = 0.05, format_sig = 4, sheet_count = 0) {
   if (padj_type[1] != "ihw" && !padj_type %in% p.adjust.methods) {
@@ -487,6 +541,10 @@ Defaulting to fdr.")
                      "ebseq_postfc" = 0, "ebseq_ppee" = 0, "ebseq_ppde" = 0,
                      "ebseq_adjp" = 0)
   rownames(ebdf) <- "dropme"
+  nodf <- data.frame("noiseq_num" = 0, "noiseq_den" = 0, "noiseq_theta" = 0,
+                     "noiseq_prob" = 0, "noiseq_logfc" = 0, "noiseq_p" = 0, "noiseq_adjp" = 0)
+  rownames(nodf) <- "dropme"
+
   badf <- data.frame("numerator" = 0, "denominator" = 0, "numerator_var" = 0,
                      "denominator_var" = 0, "logFC" = 0, "t" = 0, "p" = 0, "adjp" = 0)
   rownames(badf) <- "dropme"
@@ -499,13 +557,15 @@ Defaulting to fdr.")
     "deseq" = TRUE,
     "ebseq" = TRUE,
     "edger" = TRUE,
-    "limma" = TRUE)
+    "limma" = TRUE,
+    "noiseq" = TRUE)
   inverts <- list(
     "basic" = FALSE,
     "deseq" = FALSE,
     "ebseq" = FALSE,
     "edger" = FALSE,
-    "limma" = FALSE)
+    "limma" = FALSE,
+    "noiseq" = FALSE)
   for (query in names(includes)) {
     data_key <- paste0(query, "_data")
     orientation_key <- paste0(query, "_orientation")
@@ -519,6 +579,10 @@ Defaulting to fdr.")
         entry[[orientation_key]] == "unexpected") {
         inverts[[query]] <- TRUE
       }
+
+      ## These little stanzas are a little redundant because I specify the column names above,
+      ## but it does provide me a chance to play with the names in case I am using different
+      ## metrics (like mean vs median).
       if (query == "basic") {
         badf <- entry[["basic_data"]]
         ## I recently changed basic to optionally do means or medians.  I need to take that into
@@ -560,6 +624,13 @@ Defaulting to fdr.")
         li_stats <- lidf[, c("limma_ave", "limma_t", "limma_b", "limma_p")]
         li_lfc_adjp <- lidf[, c("limma_logfc", "limma_adjp")]
       }
+      if (query == "noiseq") {
+        nodf <- entry[["noiseq_data"]]
+        colnames(nodf) <- c("noiseq_num", "noiseq_den", "noiseq_theta", "noiseq_logfc",
+                            "noiseq_p", "noiseq_adjp")
+        no_stats <- nodf[, c("noiseq_num", "noiseq_den", "noiseq_theta", "noiseq_p")]
+        no_lfc_adjp <- nodf[, c("noiseq_logfc", "noiseq_adjp")]
+      }
     }
 
     if (isTRUE(inverts[[query]])) {
@@ -594,6 +665,12 @@ Defaulting to fdr.")
     datalst[["limma"]][["rownames"]] <- rownames(li_lfc_adjp)
     statslst[["limma"]] <- data.table::as.data.table(li_stats)
     statslst[["limma"]][["rownames"]] <- rownames(li_stats)
+  }
+  if (isTRUE(includes[["noiseq"]])) {
+    datalst[["noiseq"]] <- data.table::as.data.table(no_lfc_adjp)
+    datalst[["noiseq"]][["rownames"]] <- rownames(no_lfc_adjp)
+    statslst[["noiseq"]] <- data.table::as.data.table(no_stats)
+    statslst[["noiseq"]][["rownames"]] <- rownames(no_stats)
   }
 
   ## Make the initial data structure
@@ -643,6 +720,9 @@ Defaulting to fdr.")
         tmp <- comb[["deseq_num"]]
         comb[["deseq_num"]] <- comb[["deseq_den"]]
         comb[["deseq_den"]] <- tmp
+        tmp <- comb[["noiseq_num"]]
+        comb[["noiseq_num"]] <- comb[["noiseq_den"]]
+        comb[["noiseq_den"]] <- tmp
       }
     }
   }
@@ -686,6 +766,13 @@ Defaulting to fdr.")
     extra_adjust_columns <- c(extra_adjust_columns, colname)
     comb[[colname]] <- hpgl_padjust(comb, pvalue_column = "basic_p",
                                     mean_column = "basic_num",
+                                    method = padj_type, significance = p_cutoff)
+  }
+  if (!is.null(comb[["noiseq_p"]])) {
+    colname <- glue("noiseq_adjp_{padj_type}")
+    extra_adjust_columns <- c(extra_adjust_columns, colname)
+    comb[[colname]] <- hpgl_padjust(comb, pvalue_column = "noiseq_p",
+                                    mean_column = "noiseq_num",
                                     method = padj_type, significance = p_cutoff)
   }
 
@@ -1206,6 +1293,14 @@ Defaulting to fdr.")
   return(ret)
 }
 
+#' Find the correct tables given a set of definitions of desired tables, numerators/denominators.
+#'
+#' This is responsible for hunting down tables which correspond to the various ways one may
+#' represent them.
+#'
+#' @param keepers List/scalar representation of desired tables.
+#' @param table_names The actual list of results produced by the various methods employed.
+#' @param data The full dataset.
 map_keepers <- function(keepers, table_names, data) {
   keeper_table_map <- list()
   numerators <- denominators <- c()
@@ -1252,6 +1347,7 @@ map_keepers <- function(keepers, table_names, data) {
       keeper_table_map[[name]] <- list(
         "string" = FALSE,
         "orientation" = FALSE)
+      next
     }
     keeper_table_map[[name]][["wanted_numerator"]] <- numerator
     keeper_table_map[[name]][["wanted_denominator"]] <- denominator
@@ -1265,7 +1361,7 @@ map_keepers <- function(keepers, table_names, data) {
     individual_tables <- list()
     for (type in names(data)) {
       if (!is.null(data[[type]])) {
-        ## mesg("Checking ", type, " all_tables index ", position, " for ", keeper_table_map[[name]][["string"]])
+        ## message("Checking ", type, " all_tables index ", position, " for name ", name, ":", keeper_table_map[[name]][["string"]])
         test_name <- names(data[[type]][["all_tables"]])[position]
         data_key <- paste0(type, "_data")
         data_orientation_key <- paste0(type, "_orientation")
@@ -1332,11 +1428,12 @@ map_keepers <- function(keepers, table_names, data) {
 #' @param label_column Try using this column for labeling genes.
 extract_keepers <- function(extracted, keepers, table_names,
                             all_coefficients,
-                            limma, edger, ebseq, deseq, basic,
+                            limma, edger, ebseq, deseq, basic, noiseq,
                             adjp, annot_df,
                             include_deseq, include_edger,
                             include_ebseq, include_limma,
-                            include_basic, excludes, padj_type,
+                            include_basic, include_noiseq,
+                            excludes, padj_type,
                             fancy = FALSE, loess = FALSE,
                             lfc_cutoff = 1.0, p_cutoff = 0.05,
                             sheet_prefix = NULL, sheet_number = NULL,
@@ -1351,6 +1448,10 @@ extract_keepers <- function(extracted, keepers, table_names,
   ## the name of the table should remain constant and the
   ## numerator/denominator will be ignored because they should have
   ## been defined when setting up the weirdo contrast.
+
+  ## This only considers deseq/edger/limma because those are (at least currently)
+  ## the 'first class' methods I consider; my basic method, ebseq, noiseq, dream
+  ## do not get as much consideration at this time.
   found_names_edger_idx <- names(edger[["all_tables"]]) %in% keeper_names
   found_names_deseq_idx <- names(deseq[["all_tables"]]) %in% keeper_names
   found_names_limma_idx <- names(limma[["all_tables"]]) %in% keeper_names
@@ -1376,10 +1477,14 @@ extract_keepers <- function(extracted, keepers, table_names,
   ## I do not think this unique() should be needed.
   ## but it appears that sometimes the above if() statements are causing duplicates.
   table_names <- unique(c(table_names, extra_names))
-  keeper_table_map <- map_keepers(keepers, table_names,
-                                  list("basic" = basic, "deseq" = deseq,
-                                       "ebseq" = ebseq, "edger" = edger,
-                                       "limma" = limma))
+  datum <- list(
+    "basic" = basic,
+    "deseq" = deseq,
+    "ebseq" = ebseq,
+    "edger" = edger,
+    "limma" = limma,
+    "noiseq" = noiseq)
+  keeper_table_map <- map_keepers(keepers, table_names, datum)
   numerators <- c()
   denominators <- c()
   mapped <- length(keeper_table_map)
@@ -1401,7 +1506,7 @@ extract_keepers <- function(extracted, keepers, table_names,
     combined <- combine_mapped_table(
       entry, include_basic = include_basic, include_deseq = include_deseq,
       include_edger = include_edger, include_ebseq = include_ebseq,
-      include_limma = include_limma,
+      include_limma = include_limma, include_noiseq = include_noiseq,
       adjp = adjp, padj_type = padj_type,
       annot_df = annot_df, excludes = excludes,
       lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff, format_sig = format_sig)
@@ -1463,6 +1568,7 @@ extract_keepers <- function(extracted, keepers, table_names,
   extracted[["denominators"]] <- denominators
   return(extracted)
 }
+setGeneric("extract_keepers")
 
 #' Extract the sets of genes which are significantly more abundant than the rest.
 #'
@@ -1527,7 +1633,7 @@ extract_abundant_genes <- function(pairwise, according_to = "deseq", n = 100,
   wanted_coefficients <- levels(pairwise[["deseq"]][["conditions"]])
   for (according in names(abundant_lists)) {
     for (coef in wanted_coefficients) {
-      sheetname <- glue::glue("{according}_high_{coef}")
+      sheetname <- glue("{according}_high_{coef}")
       annotations <- fData(pairwise[["input"]])
       high_abundances <- abundant_lists[[according]][["high"]][[coef]]
       kept_annotations <- names(high_abundances)
@@ -1546,12 +1652,12 @@ extract_abundant_genes <- function(pairwise, according_to = "deseq", n = 100,
       }
       start_row <- 1
       if (class(excel)[1] == "character") {
-        title <- glue::glue("Table SXXX: High abundance genes in {coef} according to {according}.")
+        title <- glue("Table SXXX: High abundance genes in {coef} according to {according}.")
         xls_result <- write_xlsx(data = high_data, wb = wb, sheet = sheetname, title = title)
         start_row <- start_row + xls_result[["end_row"]] + 2
       }
 
-      sheetname <- glue::glue("{according}_low_{coef}")
+      sheetname <- glue("{according}_low_{coef}")
       low_abundances <- abundant_lists[[according]][["low"]][[coef]]
       kept_annotations <- names(low_abundances)
       kept_idx <- rownames(annotations) %in% kept_annotations
@@ -1568,7 +1674,7 @@ extract_abundant_genes <- function(pairwise, according_to = "deseq", n = 100,
         low_data <- as.data.frame(low_abundances)
       }
       if (class(excel)[1] == "character") {
-        title <- glue::glue("Table SXXX: Low abundance genes in {coef} according to {according}.")
+        title <- glue("Table SXXX: Low abundance genes in {coef} according to {according}.")
         xls_result <- write_xlsx(data = low_data, wb = wb, sheet = sheetname, title = title)
       }
     } ## End the for loop
@@ -1714,19 +1820,19 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
   sig_list <- list()
   title_append <- ""
   if (!is.null(lfc)) {
-    title_append <- glue::glue("{title_append} |log2fc| >= {lfc}")
+    title_append <- glue("{title_append} |log2fc| >= {lfc}")
   }
   if (!is.null(p)) {
-    title_append <- glue::glue("{title_append} p <= {p}")
+    title_append <- glue("{title_append} p <= {p}")
   }
   if (!is.null(min_mean_exprs)) {
-    title_append <- glue::glue("{title_append} minimum expression >= {min_mean_exprs}")
+    title_append <- glue("{title_append} minimum expression >= {min_mean_exprs}")
   }
   if (!is.null(z)) {
-    title_append <- glue::glue("{title_append} |z| >= {z}")
+    title_append <- glue("{title_append} |z| >= {z}")
   }
   if (!is.null(n)) {
-    title_append <- glue::glue("{title_append} top|bottom n={n}")
+    title_append <- glue("{title_append} top|bottom n={n}")
   }
 
   if (according_to[[1]] == "all") {
@@ -1747,10 +1853,10 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
     according <- according_to[summary_count]
     test_fc_param <- fc_column  ## Check if a column was provided by the user
     ## Otherwise make a column name from the method employed followed by the suffix.
-    test_fc_column <- glue::glue("{according}{logfc_suffix}")
+    test_fc_column <- glue("{according}{logfc_suffix}")
     test_p_param <- p_column
-    test_p_column <- glue::glue("{according}{p_suffix}")
-    test_adjp_column <- glue::glue("{according}{adjp_suffix}")
+    test_p_column <- glue("{according}{p_suffix}")
+    test_adjp_column <- glue("{according}{adjp_suffix}")
     skip <- TRUE
     if (test_fc_param %in% colnames(combined[["data"]][[1]])) {
       chosen_columns[[according]][["fc"]] <- test_fc_param
@@ -1820,10 +1926,10 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
         change_counts_up[[table_name]] <- nrow(trimmed_up[[table_name]])
         trimmed_down[[table_name]] <- trimming[["down_genes"]]
         change_counts_down[[table_name]] <- nrow(trimmed_down[[table_name]])
-        up_title <- glue::glue("Table SXXX: Genes deemed significantly up in \\
+        up_title <- glue("Table SXXX: Genes deemed significantly up in \\
                        {table_name} with {title_append} according to {according}.")
         up_titles[[table_name]] <- up_title
-        down_title <- glue::glue("Table SXXX: Genes deemed significantly down in \\
+        down_title <- glue("Table SXXX: Genes deemed significantly down in \\
                          {table_name} with {title_append} according to {according}.")
         down_titles[[table_name]] <- down_title
       }
@@ -1834,7 +1940,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
     colnames(change_counts) <- c("up", "down")
     rownames(change_counts)[table_count] <- table_name
 
-    summary_title <- glue::glue("Counting the number of changed genes by contrast according to \\
+    summary_title <- glue("Counting the number of changed genes by contrast according to \\
                           {according} with {title_append}.")
 
     ret[[according]] <- list(
@@ -1902,12 +2008,12 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
       rownames(tmp_df) <- names(ret[[according]][["ups"]])
       colnames(tmp_df) <- paste0(according, "_", colnames(tmp_df))
       summary_df <- cbind(summary_df, tmp_df)
-      sig_message <- as.character(glue::glue("Significant {according} genes."))
+      sig_message <- as.character(glue("Significant {according} genes."))
       xls_result <- openxlsx::writeData(
         wb = wb, sheet = "number_changed", x = sig_message,
         startRow = plot_row, startCol = plot_col)
       plot_row <- plot_row + 1
-      plotname <- glue::glue("sigbar_{according}")
+      plotname <- glue("sigbar_{according}")
       try_result <- xlsx_insert_png(
         a_plot = sig_bar_plots[[according]], wb = wb, sheet = "number_changed",
         plotname = plotname, savedir = excel_basename, width = 9, height = 6,
@@ -2061,7 +2167,7 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
   possible_columns <- colnames(combined[["data"]][[1]])
   for (c in seq_along(selectors)) {
     rawname <- selectors[c]
-    conjugate <- glue::glue("{rawname}_logfc")
+    conjugate <- glue("{rawname}_logfc")
     if (rawname %in% possible_columns) {
       chosen_selectors <- c(chosen_selectors, rawname)
       alternate_selectors <- c(alternate_selectors, rawname)
@@ -2109,7 +2215,7 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
       } ## End pulling the significants by selectors.
       sets <- Vennerable::Venn(Sets = lst[[dir]][[table]])
       intersections <- sets@IntersectionSets
-      tmp_file <- tempfile(pattern = "venn", fileext = ".png")
+      tmp_file <- tmpmd5file(pattern = "venn", fileext = ".png")
       this_plot <- png(filename = tmp_file)
       controlled <- dev.control("enable")
       plt <- Vennerable::plot(sets, doWeights = FALSE)
@@ -2173,8 +2279,8 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
           } else {
             text_dir <- "down"
           }
-          xlsx_table <- glue::glue("{text_dir}_{table}")
-          xlsx_title <- glue::glue("Genes deemed {text_dir} significant via logFC: {lfc}\\
+          xlsx_table <- glue("{text_dir}_{table}")
+          xlsx_title <- glue("Genes deemed {text_dir} significant via logFC: {lfc}\\
                              , p-value: {p}; by {clean_sname}.")
           if (!is.null(excel)) {
             xl_result <- write_xlsx(data = table_subset, wb = wb, sheet = xlsx_table,
@@ -2187,7 +2293,7 @@ intersect_significant <- function(combined, lfc = 1.0, p = 0.05, padding_rows = 
 
     up_plot <- lst[["ups"]][[table]][["plot"]]
     down_plot <- lst[["downs"]][[table]][["plot"]]
-    venn_title <- glue::glue("Summary of intersections among {toString(chosen_selectors)} \\
+    venn_title <- glue("Summary of intersections among {toString(chosen_selectors)} \\
                        for {table}.")
 
     summary_df <- rbind(t(Vennerable::Weights(lst[["ups"]][[table]][["sets"]])),
@@ -2267,8 +2373,8 @@ print_ups_downs <- function(upsdowns, wb, excel_basename, according = "limma",
   xls_result <- NULL
   for (table_count in seq_along(names(ups))) {
     base_name <- names(ups)[table_count]
-    up_name <- glue::glue("up_{according}_{base_name}")
-    down_name <- glue::glue("down_{according}_{base_name}")
+    up_name <- glue("up_{according}_{base_name}")
+    down_name <- glue("down_{according}_{base_name}")
     up_table <- ups[[table_count]]
     up_title <- up_titles[[table_count]]
     if (nrow(up_table) > 0) {
@@ -2280,7 +2386,7 @@ print_ups_downs <- function(upsdowns, wb, excel_basename, according = "limma",
         ma_row <- 1
         ma_col <- xls_result[["end_col"]] + 1
         if (!is.null(ma_plots[[base_name]])) {
-          plot_name <- glue::glue("ma_{according}_{base_name}")
+          plot_name <- glue("ma_{according}_{base_name}")
           try_result <- xlsx_insert_png(ma_plots[[base_name]], wb = wb, sheet = sheet_name,
                                         plotname = plot_name, savedir = excel_basename,
                                         start_row = ma_row, start_col = ma_col, fancy = fancy)
@@ -2331,6 +2437,7 @@ write_combined_legend <- function(wb, excel_basename, plot_dim, apr,
                                   edger, include_edger,
                                   ebseq, include_ebseq,
                                   basic, include_basic,
+                                  noiseq, include_noiseq,
                                   padj_type, fancy = FALSE) {
   ## I want to print a string reminding the user what kind of model was used in
   ## the analysis. Do that here.  Noting that if 'batch' is actually from a
@@ -2372,7 +2479,7 @@ write_combined_legend <- function(wb, excel_basename, plot_dim, apr,
     c("deseq_lfcse", "The standard error observed given the log2 fold change."),
     c("deseq_stat", "T-statistic reported by DESeq2 given the log2FC and observed variances."),
     c("deseq_p", "Resulting p-value."),
-    c(glue::glue("deseq_adjp_{padj_type}"), glue::glue("p-value adjusted with {padj_type}")),
+    c(glue("deseq_adjp_{padj_type}"), glue("p-value adjusted with {padj_type}")),
     c("deseq_q", "False-positive corrected p-value."),
     c("deseq_num", "Numerator coefficients from deseq for this contrast."),
     c("deseq_den", "Denominator coefficients from deseq for this contrast.")
@@ -2386,7 +2493,7 @@ write_combined_legend <- function(wb, excel_basename, plot_dim, apr,
       "Similar DESeq2's basemean, except only including the samples in the comparison."),
     c("edger_lr", "Undocumented, I think it is the T-statistic calculated by edgeR."),
     c("edger_p", "The observed p-value from edgeR."),
-    c(glue::glue("edger_adjp_{padj_type}"), glue::glue("p-value adjusted with {padj_type}")),
+    c(glue("edger_adjp_{padj_type}"), glue("p-value adjusted with {padj_type}")),
     c("edger_q", "The observed corrected p-value from edgeR.")
   ),
   stringsAsFactors = FALSE)
@@ -2409,7 +2516,7 @@ stringsAsFactors = FALSE)
     c("limma_ave", "Average log2 expression observed by limma across all samples."),
     c("limma_t", "T-statistic reported by limma given the log2FC and variances."),
     c("limma_p", "Derived from limma_t, the p-value asking 'is this logfc significant?'"),
-    c(glue::glue("limma_adjp_{padj_type}"), glue::glue("p-value adjusted with {padj_type}")),
+    c(glue("limma_adjp_{padj_type}"), glue("p-value adjusted with {padj_type}")),
     c("limma_b", "Bayesian estimate of the log-odds significance."),
     c("limma_q", "A q-value FDR adjustment of the p-value above.")
   ),
@@ -2423,8 +2530,19 @@ stringsAsFactors = FALSE)
     c("basic_logfc", "The log2 fold change observed by the basic analysis."),
     c("basic_t", "T-statistic from basic."),
     c("basic_p", "Resulting p-value."),
-    c(glue::glue("basic_adjp_{padj_type}"), glue::glue("p-value adjusted with {padj_type}")),
+    c(glue("basic_adjp_{padj_type}"), glue("p-value adjusted with {padj_type}")),
     c("basic_adjp", "BH correction of the p-value.")
+  ),
+  stringsAsFactors = FALSE)
+  noiseq_legend <- data.frame(rbind(
+    c("The next 7 columns", "Statistics generated by the basic analysis."),
+    c("noiseq_numean", "log2 median values of the numerator for this comparison."),
+    c("noiseq_denmean", "log2 median values of the denominator for this comparison."),
+    c("noiseq_theta", "The theta value from noiseq, I forgot what this means (hey you reread that paper)."),
+    c("noiseq_prob", "I assume this is the t statistic produced by noiseq, again I need to reread the paper."),
+    c("noiseq_logfc", "The log2 fold change observed by noiseq analysis."),
+    c("noiseq_p", "The p-value from noiseq."),
+    c("noiseq_adjp", "The adjusted p-value, again I haven't spent enough time to know the details.")
   ),
   stringsAsFactors = FALSE)
   summary_legend <- data.frame(rbind(
@@ -2494,6 +2612,12 @@ stringsAsFactors = FALSE)
   } else {
     ebseq <- NULL
   }
+  if (isTRUE(include_noiseq)) {
+    legend <- rbind(legend, noiseq_legend)
+    table_names <- c(table_names, names(noiseq[["all_tables"]]))
+  } else {
+    noiseq <- NULL
+  }
   if (isTRUE(include_basic)) {
     legend <- rbind(legend, basic_legend)
     table_names <- c(table_names, names(basic[["all_tables"]]))
@@ -2548,7 +2672,7 @@ stringsAsFactors = FALSE)
     }
     xl_result <- openxlsx::writeData(
       wb = wb, sheet = "legend",
-      x = as.character(glue::glue("PCA after surrogate estimation with: {chosen_estimate}")),
+      x = as.character(glue("PCA after surrogate estimation with: {chosen_estimate}")),
       startRow = 36, startCol = 10)
     try_result <- xlsx_insert_png(
       apr[["post_batch"]][["plot"]], wb = wb, sheet = "legend", start_row = 37,
@@ -2626,7 +2750,7 @@ write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_p
           xls_result <- openxlsx::writeData(
             wb = wb, sheet = sheetname,
             startRow = new_row - 2, startCol = tmpcol,
-            x = glue::glue("Comparing DE tools for the \\
+            x = glue("Comparing DE tools for the \\
                                           comparison of: {logfc_names[c]}"))
           xl_results <- c(xl_results, xls_result)
           xls_result <- openxlsx::writeData(
@@ -2739,7 +2863,7 @@ write_de_table <- function(data, type = "limma", excel = "de_table.xlsx", ...) {
 
     written <- try(write_xlsx(
       data = table, wb = wb, sheet = comparison,
-      title = glue::glue("{type} results for: {comparison}.")))
+      title = glue("{type} results for: {comparison}.")))
   }
 
   save_result <- try(openxlsx::saveWorkbook(wb, excel, overwrite = TRUE))
@@ -2839,7 +2963,8 @@ write_sample_design <- function(wb, apr) {
 }
 
 write_plots_de_xlsx <- function(de_types, extracted, sheetname, current_row, current_column, tab,
-                                xls_result, wb, plot_dim, excel_basename, image_files, plot_rows = 31, plot_columns = 10) {
+                                xls_result, wb, plot_dim, excel_basename, image_files,
+                                plot_rows = 31, plot_columns = 10) {
   ## Now add the coefficients, ma, and volcanoes below the venns.
   ## Text on row 18, plots from 19-49 (30 rows)
   for (t in seq_along(de_types)) {
@@ -2861,7 +2986,7 @@ write_plots_de_xlsx <- function(de_types, extracted, sheetname, current_row, cur
     ## Note that these are lists now.
     if (class(plt)[1] != "try-error" && length(plt) > 0) {
       printme <- as.character(
-        glue::glue("{cap} expression coefficients for {tab}; R^2: \\
+        glue("{cap} expression coefficients for {tab}; R^2: \\
                           {signif(x=plt[['lm_rsq']], digits=3)}; equation: \\
                           {ymxb_print(plt[['lm_model']])}"))
       xl_result <- openxlsx::writeData(

@@ -97,23 +97,20 @@ test_that("Are the comparisons between DE tools sufficiently similar? (deseq/bas
 })
 combined_table <- combine_de_tables(hpgl_all, excel = FALSE)
 
+expected_cols <- 61
 expected_annotations <- c(
-  "ensembltranscriptid", "ensemblgeneid",
-  "description", "genebiotype",
-  "cdslength", "chromosomename", "strand",
-  "startposition", "endposition", "deseq_logfc",
-  "deseq_adjp", "edger_logfc", "edger_adjp",
-  "limma_logfc", "limma_adjp", "basic_num",
-  "basic_den", "basic_numvar", "basic_denvar",
-  "basic_logfc", "basic_t", "basic_p",
-  "basic_adjp", "deseq_basemean", "deseq_lfcse",
-  "deseq_stat", "deseq_p", "deseq_num", "deseq_den",
-  "edger_logcpm", "edger_lr", "edger_p",
-  "limma_ave", "limma_t", "limma_b",
-  "limma_p", "limma_adjp_ihw", "deseq_adjp_ihw",
-  "edger_adjp_ihw", "basic_adjp_ihw",
-  "lfc_meta", "lfc_var", "lfc_varbymed", "p_meta",
+  "ensembltranscriptid", "ensemblgeneid", "description", "genebiotype", "chromosomename", "strand",
+  "startposition", "endposition", "deseq_logfc", "deseq_adjp", "edger_logfc", "edger_adjp",
+  "limma_logfc", "limma_adjp", "noiseq_logfc", "noiseq_adjp", "basic_num", "basic_den",
+  "basic_numvar", "basic_denvar", "basic_logfc", "basic_t", "basic_p", "basic_adjp",
+  "deseq_basemean", "deseq_lfcse", "deseq_stat", "deseq_p", "deseq_num", "deseq_den",
+  "ebseq_fc", "ebseq_logfc", "ebseq_c1mean", "ebseq_c2mean", "ebseq_mean", "ebseq_var",
+  "ebseq_postfc", "ebseq_ppee", "ebseq_p", "ebseq_adjp", "edger_logcpm", "edger_lr",
+  "edger_p", "limma_ave", "limma_t", "limma_b", "limma_p", "noiseq_num",
+  "noiseq_den", "noiseq_theta", "noiseq_p", "limma_adjp_ihw", "deseq_adjp_ihw", "edger_adjp_ihw",
+  "basic_adjp_ihw", "noiseq_adjp_ihw", "lfc_meta", "lfc_var", "lfc_varbymed", "p_meta",
   "p_var")
+
 num_cols <- length(expected_annotations)
 expected <- c(7531, num_cols)
 actual <- dim(combined_table[["data"]][[1]])
@@ -212,7 +209,6 @@ test_that("Does combine_de_tables create an excel file?", {
 ## How many significant up genes did limma find?
 actual <- dim(significant_excel[["limma"]][["ups"]][[table]])
 expected_rows <- 90
-expected_cols <- num_cols
 test_that("Is the number of significant up genes as expected? (limma)", {
   expect_gt(actual[1], expected_rows)
   expect_equal(actual[2], expected_cols)

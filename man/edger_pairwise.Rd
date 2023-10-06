@@ -85,4 +85,5 @@ the force argument will round the data and shoe-horn it into EdgeR.
 }
 \seealso{
 [edgeR] [deseq_pairwise()] [ebseq_pairwise()] [limma_pairwise()] [basic_pairwise()]
+ DOI:10.12688/f1000research.8987.2
 }

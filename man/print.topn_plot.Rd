@@ -7,7 +7,7 @@
 \method{print}{topn_plot}(x)
 }
 \arguments{
-\item{x}{list of results from plot_topn().}
+\item{x}{List with the topn plot and summary table.}
 }
 \description{
 Print a result from plot_topn().

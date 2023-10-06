@@ -216,6 +216,9 @@ concatenate_runs <- function(expt, column = "replicate") {
 
 #' Wrap bioconductor's expressionset to include some extra information.
 #'
+#' Note: You should just be using create_se().  It does everything the
+#' expt does, but better.
+#'
 #' The primary innovation of this function is that it will check the metadata
 #' for columns containing filenames for the count tables, thus hopefully making
 #' the collation and care of metadata/counts easier.  For example, I have some
@@ -1177,49 +1180,10 @@ get_backup_expression_data <- function(expt) {
   return(backup)
 }
 
-#' Small hack of limma's exampleData() to allow for arbitrary data set
-#' sizes.
-#'
-#' exampleData has a set number of genes/samples it creates. This
-#' relaxes that restriction.
-#'
-#' @param ngenes How many genes in the fictional data set?
-#' @param columns How many samples in this data set?
-#' @return Matrix of pretend counts.
-#' @seealso [limma] [DESeq2] [stats]
-#' @examples
-#' \dontrun{
-#'  pretend = make_exampledata()
-#' }
+#' Runs median_by_factor with fun set to 'mean'.
 #' @export
-make_exampledata <- function(ngenes = 1000, columns = 5) {
-  q0 <- stats::rexp(ngenes, rate = 1/250)
-  is_DE <- stats::runif(ngenes) < 0.3
-  lfc <- stats::rnorm(ngenes, sd = 2)
-  q0A <- ifelse(is_DE, q0 * 2^ (lfc / 2), q0)
-  q0B <- ifelse(is_DE, q0 * 2^ (-lfc / 2), q0)
-  ##    true_sf <- c(1, 1.3, 0.7, 0.9, 1.6)
-  true_sf <- abs(stats::rnorm(columns, mean = 1, sd = 0.4))
-  cond_types <- ceiling(sqrt(columns))
-  conds <- sample(LETTERS[1:cond_types], columns, replace = TRUE)
-  m <- t(sapply(seq_len(ngenes),
-                function(i) sapply(1:columns,
-                                   function(j) rnbinom(1,
-                                                       mu = true_sf[j] * ifelse(conds[j] == "A",
-                                                                                q0A[i], q0B[i]),
-                                                       size = 1/0.2))))
-  rownames(m) <- paste("gene", seq_len(ngenes), ifelse(is_DE, "T", "F"), sep = "_")
-  colnames(m) <- paste0("sample", seq_len(ncol(m)))
-  design <- as.data.frame(conds)
-  rownames(design) <- colnames(m)
-  colnames(design) <- "condition"
-  for (i in seq_len(ncol(m))) {
-    m[, i] <- as.integer(m[, i])
-  }
-  design[["condition"]] <- as.factor(design[["condition"]])
-  example <- sm(DESeq2::DESeqDataSetFromMatrix(countData = m,
-                                               colData = design, design = ~condition))
-  return(example)
+mean_by_factor <- function(data, fact = "condition") {
+  median_by_factor(data, fact = fact, fun = "mean")
 }
 
 #' Create a data frame of the medians of rows by a given factor in the data.
@@ -1306,7 +1270,10 @@ median_by_factor <- function(data, fact = "condition", fun = "median") {
         cv[nan_idx] <- 0
       } else if (fun == "mean") {
         message("The factor ", type, " has ", sum(columns), " rows.")
-        med <- BiocGenerics::rowMeans(data[, columns], na.rm = TRUE)
+        ## Strangely, recently R says BiocGenerics does not export rowMeans.
+        ## I stil see its S4 dispatch; but I will assume that R will figure this out.
+        ## med <- BiocGenerics::rowMeans(data[, columns], na.rm = TRUE)
+        med <- rowMeans(data[, columns], na.rm = TRUE)
         cv <- matrixStats::rowSds(data[, columns], na.rm = TRUE)
         cv <- cv / med
         nan_idx <- is.nan(cv)
@@ -1557,7 +1524,8 @@ If this is not correctly performed, very few genes will be observed")
     ## Use this codepath when we are working with htseq
     count_table <- read.table(files[1], header = header, stringsAsFactors = FALSE)
     colnames(count_table) <- c("rownames", ids[1])
-    count_table[, 2] <- as.numeric(count_table[, 2])
+    ## We are going to immediately check for NA, so I think we can suppress warnings.
+    count_table[, 2] <- suppressWarnings(as.numeric(count_table[, 2]))
     na_idx <- is.na(count_table[[2]])
     ## This is a bit more circuituous than I would like.
     ## I want to make sure that na_rownames does not evaluate to something
@@ -2096,12 +2064,12 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL,
     ## a hash of states->color which could/should be a named vector.
     color_state_names <- names(colors)
     found_colors <- sum(color_state_names %in% condition_states)
-    found_name <- fact_name %in% color_state_names
+    found_names <- sum(fact_name %in% color_state_names)
     ## In this first instance, the choices should be in this element.
-    if (fact_name %in% color_state_names) {
+    if (found_names > 0) {
       mesg("The colors appear to be a list delineated by state name.")
-      colors <- color[[fact]]
-    } else if (found_colors) {
+      colors <- colors[[fact]]
+    } else if (found_colors > 0) {
       mesg("The colors appear to be a single list delineated by condition.")
     } else {
       message("A list of colors was provided, but element ", fact,
@@ -2181,6 +2149,25 @@ set_expt_factors <- function(expt, condition = NULL, batch = NULL, ids = NULL,
   pData(expt[["expressionset"]]) <- pd
   fData(expt[["expressionset"]]) <- fd
   return(expt)
+}
+
+#' Switch the gene names of an expressionset using a column from fData.
+#'
+#' I am not sure if set_expt_genenames() is smart enough to check for
+#' missing values.  It definitely handles duplicates.
+#'
+#' @param expt Current expressionSet.
+#' @param new_column Column from the gene annotations containing the
+#'  new gene IDs.
+#' @return The expressionset with swapped out IDs.
+#' @export
+set_expt_genename_column <- function(expt, new_column) {
+  start_df <- fData(expt)
+  start_df[["start"]] <- rownames(start_df)
+  start_df[["end"]] <- start_df[[new_column]]
+  start_df <- start_df[, c("start", "end")]
+  new <- set_expt_genenames(expt, start_df)
+  return(new)
 }
 
 #' Change the gene names of an expt.
@@ -2331,6 +2318,7 @@ state <- function(expt) {
   expt[["state"]] <- value
   return(expt)
 }
+setGeneric("state<-")
 
 #' Extract a subset of samples following some rule(s) from an
 #' experiment class.
@@ -2485,6 +2473,7 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
           length(final_samples), " samples.")
   return(new_expt)
 }
+setGeneric("subset_expt")
 
 #' Try a very literal subtraction
 #'
@@ -2596,23 +2585,40 @@ sum_eupath_exon_counts <- function(counts) {
 #' Add some gene annotations based on the mean/variance in the data.
 #'
 #' Why?  Maria Adelaida is interested in pulling the least-variant
-#' genes in our data, this seems like it might be generally applicable.
+#' genes in our data, this seems like it might be generally
+#' applicable.  Note, I made this slightly redundant by doing a cpm on
+#' the data; as a result the proportion and mean values are
+#' effectively identical.
 #'
 #' @param expt Expressionset to which to add this information.
 #' @return Slightly modified gene annotations including the mean/variance.
 #' @export
-variance_expt <- function(expt) {
-  df <- exprs(expt)
+variance_expt <- function(expt, convert = "cpm", transform = "raw", norm = "raw") {
+  start <- normalize_expt(expt, convert = convert,
+                          transform = transform, norm = norm)
+  df <- exprs(start)
+  na_idx <- is.na(df)
+  if (sum(na_idx) > 0) {
+    warning("There are ", sum(na_idx), " NAs in this data, removing them.")
+    message("There are ", sum(na_idx), " NAs in this data, removing them.")
+    df[na_idx] <- 0
+  }
+  raw_sum <- rowSums(exprs(expt))
+  raw_total <- sum(raw_sum)
+  sums <- rowSums(df)
+  total <- sum(sums)
   vars <- matrixStats::rowVars(df)
   sds <- matrixStats::rowSds(df)
   meds <- matrixStats::rowMedians(df)
   iqrs <- matrixStats::rowIQRs(df)
   mean <- rowMeans(df)
+  fData(expt)[["exprs_gene_prop"]] <- sums / total
+  fData(expt)[["exprs_gene_rawprop"]] <- raw_sum / raw_total
   fData(expt)[["exprs_gene_variance"]] <- vars
   fData(expt)[["exprs_gene_stdev"]] <- sds
   fData(expt)[["exprs_gene_mean"]] <- mean
   fData(expt)[["exprs_gene_median"]] <- meds
-  fData(expt)[["exprs_gene_interquart"]] <- iqrs
+  fData(expt)[["exprs_gene_iqrs"]] <- iqrs
   fData(expt)[["exprs_cv"]] <- sds / mean
   return(expt)
 }

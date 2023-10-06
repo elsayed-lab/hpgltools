@@ -2,13 +2,14 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.topgo_result}
 \alias{print.topgo_result}
-\title{Print a summary of a topgo over representation search.}
+\title{Print a topgo over representation search.}
 \usage{
 \method{print}{topgo_result}(x)
 }
 \arguments{
-\item{x}{list of results from topgo.}
+\item{x}{List of the various over/under representation analyses
+provided by topGO, the associated plots, and coerced enrichResults.}
 }
 \description{
-Print a summary of a topgo over representation search.
+Print a topgo over representation search.
 }

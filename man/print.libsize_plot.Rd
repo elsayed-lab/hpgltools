@@ -2,13 +2,14 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.libsize_plot}
 \alias{print.libsize_plot}
-\title{Print a summary of the library sizes from an experiment.}
+\title{Print the library sizes from an experiment.}
 \usage{
 \method{print}{libsize_plot}(x)
 }
 \arguments{
-\item{x}{list of results from plot_libsize().}
+\item{x}{List containing a summary of the library sizes, the plot,
+and table.}
 }
 \description{
-Print a summary of the library sizes from an experiment.
+Print the library sizes from an experiment.
 }

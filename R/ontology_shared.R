@@ -78,6 +78,90 @@ goseq2enrich <- function(retlist, ontology = "MF", cutoff = 1,
   return(ret)
 }
 
+#' Create a clusterProfiler compatible enrichResult data structure from a gostats result.
+#'
+#' The metrics and visualization methods in clusterProfiler are the
+#' best.  It is not always trivial to get non-model organisms working
+#' well with clusterProfiler.  Therefore I still like using tools like
+#' topgo/goseq/gostats/gprofiler.  This function and its companions
+#' seek to make them cross-compatible.  Ideally, they will lead me to
+#' being able to rip out a lot of superfluous material.
+#'
+#' @param retlist Result from simple_gostats().
+#' @param ontology Ontology sub-tree of interest.
+#' @param cutoff (adjusted)p cutoff.
+#' @param cutoff_column Choose a column of p-values.
+#' @param organism Currently unused.
+#' @param padjust_method Define the desired p.adjust method.
+#' @return enrichResult object ready to pass to things like dotplot.
+#' @export
+gostats2enrich <- function(retlist, ontology = "MF", cutoff = 0.1,
+                           cutoff_column = "qvalue",
+                           organism = NULL, padjust_method = "BH") {
+  godf <- retlist[["go_db"]]
+  sig_genes <- rownames(retlist[["input"]])
+  interesting_name <- glue("{tolower(ontology)}_subset")
+  interesting <- retlist[["tables"]][[interesting_name]]
+  ## I think having both an adjusted and qvalue is redundant?
+  interesting[["adjusted"]] <- p.adjust(interesting[["Pvalue"]], method = padjust_method)
+  if (is.null(interesting)) {
+    return(NULL)
+  }
+  if (nrow(interesting) == 0) {
+    return(NULL)
+  }
+  ## I would like to write this data as an enrichResult as per
+  ## DOSE/clusterProfiler so that I may use their plotting functions
+  ## without fighting. Therefore I will coerce the various results I
+  ## create into that data structure's format.
+  ## The enrichResult is a class created with the following code:
+  bg_genes <- sum(!duplicated(sort(godf[["ID"]])))
+  interesting[["tmp"]] <- bg_genes
+  interesting_cutoff_idx <- interesting[[cutoff_column]] <= cutoff
+  message("Given the cutoff of ", cutoff, ", ", sum(interesting_cutoff_idx),
+          " categories appear interesting.")
+  interesting_cutoff <- interesting[interesting_cutoff_idx, ]
+  message("Gathering genes/category, this may be slow.")
+  genes_per_category <- gather_ontology_genes(
+    retlist, ontology = ontology, column = "Pvalue",
+    pval = cutoff)
+  category_genes <- gsub(pattern = ", ", replacement = "/", x = genes_per_category[["sig"]])
+  interesting_cutoff[["term_nohtml"]] <- gsub(x = interesting_cutoff[["Term"]], pattern = "^<a href.*>(.*)</a>", replacement = "\\1")
+
+  ## FIXME: This is _definitely_ wrong for BgRatio
+  representation_df <- data.frame(
+      "ID" = interesting_cutoff[[1]],
+      "Description" = interesting_cutoff[["term_nohtml"]],
+      ## The following two lines are ridiculous, but required for the enrichplots to work.
+      "GeneRatio" = paste0(interesting_cutoff[["Count"]], "/", interesting_cutoff[["Size"]]),
+      "BgRatio" = paste0(interesting_cutoff[["Count"]], "/", interesting_cutoff[["tmp"]]),
+      "pvalue" = interesting_cutoff[["Pvalue"]],
+      "p.adjust" = interesting_cutoff[["adjusted"]],
+      "qvalue" = interesting_cutoff[["qvalue"]],
+      ## "geneID" = category_genes,
+      "Count" = interesting_cutoff[["Count"]],
+      stringsAsFactors = FALSE)
+  rownames(representation_df) <- representation_df[["ID"]]
+  if (is.null(organism)) {
+    organism <- "UNKNOWN"
+  }
+  ret <- new("enrichResult",
+             result = representation_df,
+             pvalueCutoff = cutoff,
+             pAdjustMethod = padjust_method,
+             qvalueCutoff = cutoff,
+             gene = sig_genes,
+             universe = godf[["ID"]],
+             ## universe = extID,
+             geneSets = list(up=sig_genes),
+             ## geneSets = geneSets,
+             organism = organism,
+             keytype = "UNKNOWN",
+             ontology = ontology,
+             readable = FALSE)
+  return(ret)
+}
+
 #' Recast gProfiler data to the output class produced by clusterProfiler.
 #'
 #' I would like to use the various clusterProfiler plots more easily.

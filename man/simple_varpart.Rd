@@ -52,5 +52,5 @@ The arguments and usage of variancePartition are a bit opaque.  This function
 attempts to fill in reasonable values and simplify its invocation.
 }
 \seealso{
-[variancePartition]
+[variancePartition] DOI:10.1186/s12859-016-1323-z.
 }

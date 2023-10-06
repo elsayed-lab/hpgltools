@@ -2,13 +2,13 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.written_expt}
 \alias{print.written_expt}
-\title{Print a summary from write_expt.}
+\title{Print the result from write_expt.}
 \usage{
 \method{print}{written_expt}(x)
 }
 \arguments{
-\item{x}{result of write_expt()}
+\item{x}{List containing all the many plots, the dataframes, etc.}
 }
 \description{
-Print a summary from write_expt.
+Print the result from write_expt.
 }

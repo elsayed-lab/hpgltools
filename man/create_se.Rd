@@ -68,3 +68,6 @@ create_se(
 \description{
 This function was taken from create_expt() and repurposed to create SummarizedExperiments.
 }
+\seealso{
+[summarizedExperiment]
+}

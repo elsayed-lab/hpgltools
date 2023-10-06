@@ -15,6 +15,7 @@ combine_de_tables(
   include_edger = TRUE,
   include_ebseq = TRUE,
   include_basic = TRUE,
+  include_noiseq = TRUE,
   rownames = TRUE,
   add_plots = TRUE,
   loess = FALSE,
@@ -29,6 +30,7 @@ combine_de_tables(
   increment_start = "SXXX",
   start_worksheet_num = 2,
   rda = NULL,
+  rda_input = FALSE,
   label = 10,
   label_column = "hgncsymbol",
   format_sig = 4,
@@ -87,6 +89,8 @@ plotting?}
 string 'YYY', that will be replaced by the contrast name.}
 
 \item{rda}{Write a rda file of the results.}
+
+\item{rda_input}{Include the input all_pairwise() result in the rda?}
 
 \item{label}{Label this number of top-n genes on the plots?}
 

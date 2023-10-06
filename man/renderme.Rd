@@ -5,7 +5,7 @@
 \title{Add a little logic to rmarkdown::render to date the final outputs as per a
 request from Najib.}
 \usage{
-renderme(file, format = "html_document")
+renderme(file, format = "html_document", overwrite = TRUE)
 }
 \arguments{
 \item{file}{Rmd file to render.}

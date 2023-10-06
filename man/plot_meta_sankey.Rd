@@ -11,7 +11,6 @@ plot_meta_sankey(
   font_size = 18,
   node_width = 30,
   color_choices = NULL,
-  html = "sankey.html",
   drill_down = TRUE
 )
 }
@@ -25,13 +24,13 @@ plot_meta_sankey(
 \item{color_choices}{Either a named vector of states and colors, or NULL
 (in which case it will use viridis.)}
 
-\item{html}{Write the interactive plot to this file.}
-
 \item{drill_down}{When true, this will end in the product of the
  factor levels number of final states. (e.g. if there are 2 sexes,
  3 visits, and 4 genotypes, there will be 2, 6, 24 states going
 from right to left).  If FALSE, there will be 2,3,4 states going
 from right to left.}
+
+\item{html}{Write the interactive plot to this file.}
 }
 \value{
 List containing a couple of plots, one interactive, one gg.

@@ -2,13 +2,14 @@
 % Please edit documentation in R/zzz_print.R
 \name{print.sig_genes}
 \alias{print.sig_genes}
-\title{Print a summary of some significantly differentially expressed genes.}
+\title{Print some significantly differentially expressed genes.}
 \usage{
 \method{print}{sig_genes}(x)
 }
 \arguments{
-\item{x}{Significant gene data structure.}
+\item{x}{List containing the parameters used, gene subset tables,
+plots, xlsx output file, etc.}
 }
 \description{
-Print a summary of some significantly differentially expressed genes.
+Print some significantly differentially expressed genes.
 }

@@ -594,8 +594,22 @@ rex <- function(display = ":0") {
 #' @return Final filename including the prefix rundate.
 #' @seealso [rmarkdown]
 #' @export
-renderme <- function(file, format = "html_document") {
+renderme <- function(file, format = "html_document", overwrite = TRUE) {
+  original <- Sys.getenv("TMPDIR")
+  new_tmpdir <- paste0("render_tmp_", file)
+  if (file.exists(new_tmpdir)) {
+    if (isTRUE(overwrite)) {
+      message("The TMPDIR: ", new_tmpdir, " exists, removing and recreating it.")
+      removed <- unlink(new_tmpdir, recursive = TRUE)
+      recreated <- dir.create(new_tmpdir)
+    } else {
+      message("The TMPDIR: ", new_tmpdir, " exists, leaving it alone.")
+    }
+  }
+  Sys.setenv("TMPDIR" = new_tmpdir)
   ret <- rmarkdown::render(file, output_format = format, envir = globalenv())
+  removed <- unlink(new_tmpdir, recursive = TRUE)
+  Sys.setenv("TMPDIR" = original)
   rundate <- format(Sys.Date(), format = "%Y%m%d")
   outdir <- dirname(ret)
   base <- basename(ret)
@@ -727,6 +741,32 @@ sm <- function(..., wrap = TRUE) {
 #' @export
 sp <- function(...) {
   suppressWarnings(print(...))
+}
+
+#' A hopefully more robust version of tempfile().
+#'
+#' @param pattern Filename prefix.
+#' @param suffix Filename suffix.
+#' @param digits Currently I use Sys.time() with this number of digits.
+#' @param body No implemented, intended to use other sources of digest()
+#' @param fileext Filename extension as per tempfile().
+#' @return md5 based tempfilename.
+#' @export
+tmpmd5file <- function(pattern = "", suffix = "", digits = 6,
+                       body = NULL, fileext = "") {
+  if (!grepl(pattern = "^\\.", x = fileext)) {
+    pattern <- paste0(".", pattern)
+  }
+  op <- options(digits.secs = digits)
+  body_string <- digest::digest(Sys.time())
+  new <- options(op)
+  outdir <- tempdir()
+  if (!file.exists(outdir)) {
+    created <- dir.create(outdir, recursive = TRUE)
+  }
+  file_string <- paste0(pattern, body_string, suffix, fileext)
+  file_path <- file.path(outdir, file_string)
+  return(file_path)
 }
 
 #' Remove the AsIs attribute from some data structure.

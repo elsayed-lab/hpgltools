@@ -382,21 +382,23 @@ plot_qq_all <- function(data, labels = "short", ...) {
     count <- count + 1
   }
 
-  tmp_file <- tempfile(pattern = "multi", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "multi", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   result <- plot_multiplot(logs)
   log_plots <- grDevices::recordPlot()
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
-  tmp_file <- tempfile(pattern = "multi", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "multi", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   plot_multiplot(ratios)
   ratio_plots <- grDevices::recordPlot()
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   plots <- list(logs = log_plots, ratios = ratio_plots, medians = means)
   return(plots)
@@ -805,5 +807,6 @@ plot_variance_coefficients <- function(data, design = NULL, x_axis = "condition"
   class(retlst) <- "varcoef_plot"
   return(retlst)
 }
+setGeneric("plot_variance_coefficients")
 
 ## EOF

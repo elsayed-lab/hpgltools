@@ -29,6 +29,7 @@ plot_corheat <- function(expt_data, expt_colors = NULL, expt_design = NULL,
   map_list <- plot_heatmap(expt_data, expt_colors = expt_colors, expt_design = expt_design,
                            method = method, expt_names = expt_names, type = "correlation",
                            batch_row = batch_row, plot_title = plot_title, label_chars = label_chars, ...)
+  class(map_list) <- "correlation_heatmap"
   return(map_list)
 }
 
@@ -61,6 +62,7 @@ plot_disheat <- function(expt_data, expt_colors = NULL, expt_design = NULL,
                            method = method, expt_names = expt_names, type = "distance",
                            batch_row = batch_row, plot_title = plot_title,
                            label_chars = label_chars, ...)
+  class(map_list) <- "distance_heatmap"
   return(map_list)
 }
 
@@ -177,7 +179,7 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
   map <- NULL
   na_idx <- is.na(heatmap_data)
   heatmap_data[na_idx] <- 0
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   if (type == "correlation") {
@@ -196,12 +198,15 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
   }
   recorded_heatmap_plot <- grDevices::recordPlot()
   dev.off()
-  removed <- file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
+
   retlist <- list("map" = map,
                   "plot" = recorded_heatmap_plot,
                   "data" = heatmap_data)
   return(retlist)
 }
+setGeneric("plot_heatmap")
 
 #' Potential replacement for heatmap.2 based plots.
 #'
@@ -282,13 +287,15 @@ plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_
     data, dendrogram = mydendro, annotation = myannot,
     cluster = myclust, labels = mylabs, scale = scale, col = heatmap_colors)
 
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   plot(final_map)
   rec_plot <- grDevices::recordPlot()
   dev.off()
-  removed <- file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
+
   retlist <- list(
     "annotations" = myannot,
     "clusters" = myclust,
@@ -350,7 +357,7 @@ plot_sample_heatmap <- function(data, colors = NULL, design = NULL, heatmap_colo
   ## drop NAs to help hclust()
   na_idx <- is.na(data)
   data[na_idx] <- -20
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   heatmap.3(data, keysize = 0.8, labRow = row_label, col = heatmap_colors, dendrogram = dendrogram,
@@ -358,9 +365,12 @@ plot_sample_heatmap <- function(data, colors = NULL, design = NULL, heatmap_colo
             linewidth = 0.5, main = plot_title, Rowv = Rowv, Colv = Colv)
   hpgl_heatmap_plot <- grDevices::recordPlot()
   dev.off()
-  removed <- file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
+
   return(hpgl_heatmap_plot)
 }
+setGeneric("plot_sample_heatmap")
 
 #' An experiment to see if I can visualize the genes with the highest variance.
 #'
@@ -420,7 +430,7 @@ plot_sample_cvheatmap <- function(expt, fun = "mean", fact = "condition",
     names <- colnames(data)
   }
 
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   heatmap.3(cvs, keysize = 0.8, labRow = rownames(cvs), col = heatmap_colors, dendrogram = dendrogram,
@@ -428,6 +438,8 @@ plot_sample_cvheatmap <- function(expt, fun = "mean", fact = "condition",
             linewidth = 0.5, main = plot_title, Rowv = Rowv, Colv = Colv)
   cv_heatmap_plot <- grDevices::recordPlot()
   dev.off()
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   point_df <- cvs[, c(x_factor, y_factor)]
 

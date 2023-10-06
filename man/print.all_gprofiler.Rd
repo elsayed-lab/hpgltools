@@ -7,7 +7,8 @@
 \method{print}{all_gprofiler}(x)
 }
 \arguments{
-\item{x}{The set of results produced by all_gprofiler().}
+\item{x}{List composed of simple_gprofiler() results for every
+up/down set provided by extract_significant_genes().}
 }
 \description{
 Print the result of all_gprofiler()

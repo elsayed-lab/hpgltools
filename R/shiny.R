@@ -10,6 +10,7 @@
 #' @param p Starting pvalue cutoff.
 #' @param according_to Which method to deem the arbiter of truth?
 #' @import shiny
+#' @export
 slide_de_threshold <- function(de_table, contrast = 1, lfc = 1.0, p = 0.05,
                                according_to = "deseq") {
   df <- de_table[["data"]][[contrast]][, c("deseq_logfc", "deseq_adjp")]

@@ -10,7 +10,9 @@ dispatch_count_lines(
   input_file_spec,
   verbose = verbose,
   species = "*",
-  basedir = "preprocessing"
+  basedir = "preprocessing",
+  type = "genome",
+  inverse = FALSE
 )
 }
 \arguments{

@@ -10,7 +10,7 @@ load_biomart_go(
   do_save = TRUE,
   host = NULL,
   trymart = "ENSEMBL_MART_ENSEMBL",
-  archive = FALSE,
+  archive = TRUE,
   default_hosts = c("useast.ensembl.org", "uswest.ensembl.org", "www.ensembl.org",
     "asia.ensembl.org"),
   year = NULL,

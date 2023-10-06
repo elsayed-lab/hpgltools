@@ -191,6 +191,7 @@ plot_batchsv <- function(expt, svs, sv = 1, batch_column = "batch", factor_type 
     "sample_factor" = sample_factor,
     "factor_svs" = factor_svs,
     "svs_sample" = svs_sample)
+  class(plots) <- "sv_plots"
   return(plots)
 }
 
@@ -416,9 +417,10 @@ plot_sm <- function(data, design = NULL, colors = NULL, method = "pearson", plot
     "measurement" = properties,
     "medians" = prop_median,
     "quantile" = prop_spread,
-    "plot" = sm_plot
-  )
+    "plot" = sm_plot)
+  class(retlist) <- "standardmedian_plot"
   return(retlist)
 }
+setGeneric("plot_sm")
 
 ## EOF
