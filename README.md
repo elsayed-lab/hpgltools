@@ -22,17 +22,13 @@ computer with nothing pre-installed.
 ## Compiled Prerequisites
 
 Quite a few packages used by hpgltools have compiled code, here is an incomplete list of
-requisites and the likely Debian-based (circa 201811) solution.
+requisites and the likely Debian-based.
 
 * The basics: gcc,g++,gfortran,make,boost,build-essential,automake,autoconf
 * curl
-* graphviz (This has problems, I ended up using the Rgraphviz from github and fiddling around in
-    the src/ directory to get it to compile.)
-* java
 * libgvc
 * libnlopt
 * libxml2
-* mysqlclient (mariadb)
 * pandoc
 * pkg-config
 * texlive
@@ -43,21 +39,14 @@ requisites and the likely Debian-based (circa 201811) solution.
 
 ## For the basics:
 apt-get install gcc g++ cc1plus gfortran gawk sed bison libboost-all-dev build-essential \
-  curl libcurl4-gnutls-dev:amd64 libcurl4:amd64 default-jdk automake autoconf autotools-dev \
+  curl libcurl4-gnutls-dev:amd64 libcurl4:amd64 automake autoconf autotools-dev \
   pkg-config
-
-## For a large set of potentially relevant development tools:
-apt-get install kdesdk
 
 ## For the prerequisite tools:
 apt-get install udunits2-bin libudunit2-0 libudunits2-dev libnlopt0 libnlopt-dev \
   libxml2-dev pandoc texlive-latex-recommended texlive-science texlive-extra-utils \
-  texlive-fonts-extra texlive-latex-extra libgvc6 libgraphviz-dev libmariadbclient-dev
+  texlive-fonts-extra texlive-latex-extra
 ```
-
-### Caveats
-
-1.  Rgraphviz compilation fails with 'too few arguments to agedge' and similar problems.
 
 ## The actual R installation
 
@@ -65,7 +54,6 @@ Download the package via 'git pull' or from the github download link, go
 into the hpgltools/ directory and:
 
 ```bash
-R CMD javareconf -e
 make prereq  ## install knitr, devtools, and friends.
 make deps  ## Pick up dependencies from the DESCRIPTION file.
 make install  ## Perform the installation
@@ -85,32 +73,10 @@ make build
 make check
 ## Cleanup this tree
 make clean
-## Clean after making vignettes
-make clean_vignette
-## Install dependencies
-make dep
 ## Rerun roxygen, rebuild the vignettes, and the reference manual
 make document
 ## Install this via R CMD INSTALL
 make install
-## Install _ALL_ of bioconductor!
-make install_bioconductor
-## Install prerequisite packages which are not explicitly dependencies, but are useful
-make prereq
-## push to github
-make push
-## remake the roxygen docs
-make roxygen
-## Remake the reference manual
-make reference
-## Install suggested packages
-make suggests
-## Run the test suite
-make test
-## Update R packages via bioconductor
-make update
-## Update bioconductor
-make update_bioc
 ## Rebuild the vignettes
 make vignette
 ```

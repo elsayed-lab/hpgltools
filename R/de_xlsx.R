@@ -272,9 +272,9 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
 
   ## Finished!  Dump the important stuff into a return list.
   ret <- list(
+    "input" = apr,
     "data" = extracted[["data"]],
     "table_names" = extracted[["table_names"]],
-    "input" = apr,
     "plots" = extracted[["plots"]],
     "comp_plot" = comp,
     "keepers" = keepers,
@@ -286,14 +286,18 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
 
   if (!is.null(rda)) {
     varname <- gsub(x = basename(rda), pattern = "\\.rda$", replacement = "")
-    assigned <- assign(varname, ret)
+    tmp <- ret
+    if (!isTRUE(rda_input)) {
+      message("Removing the input and plots from the rda result.")
+      tmp[["plots"]] <- NULL
+      tmp[["input"]] <- NULL
+    }
+    assigned <- assign(varname, tmp)
+    removed <- rm(list = "tmp")
     ## When saving a rda of the combined tables, it is less likely that one wants a copy of the
     ## entire differential expression analysis produced by all_pairwise().
-    if (!isTRUE(rda_input)) {
-      varname[["input"]] <- NULL
-    }
     message("Saving de result as ", varname, " to ", rda, ".")
-    saved <- save(list = varname, file = rda)
+    saved <- save(list = varname, file = rda, compress = "xz")
     removed <- rm(varname)
   }
   ## Cleanup the saved image files.

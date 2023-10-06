@@ -548,8 +548,8 @@ print.snps_genes <- function(x) {
   most_idx <- x[["count_by_gene"]] == most_num
   most_name <- names(x[["count_by_gene"]])[most_idx]
   summary_string <- glue("When the variants observed were cross referenced against annotated genes,
-{gt_zero} genes were observed with at least 1 variant.  {most_name} had the most variants, with
-{most_num}.")
+{gt_zero} genes were observed with at least 1 variant.
+{most_name} had the most variants, with {most_num}.")
   message(summary_string)
   return(invisible(x))
 }
