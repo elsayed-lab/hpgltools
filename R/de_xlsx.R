@@ -1987,7 +1987,7 @@ extract_significant_genes <- function(combined, according_to = "all", lfc = 1.0,
     sig_bar_plots <- significant_barplots(
       combined, lfc_cutoffs = siglfc_cutoffs, invert = invert_barplots,
       p = p, z = z, p_type = p_type,
-      according_to = according_to)
+      according_to = according_to, ...)
     plot_row <- 1
     plot_col <- 1
     mesg("Adding significance bar plots.")
