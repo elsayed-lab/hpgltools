@@ -1946,13 +1946,15 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
 #' @param lst upset data structure.
 #' @param sort Sort the result?
 #' @export
-overlap_groups <- function(input_mtrx, sort = TRUE) {
-
+overlap_groups <- function(input, sort = TRUE) {
   ## FIXME: Make use of S4 here
-  if ("list" %in% class(input_mtrx)) {
-    input_mtrx <- UpSetR::fromList(input_mtrx) == 1
-  } else if ("upset" %in% class(input_mtrx)) {
-    input_mtrx <- input_mtrx == 1
+  input_mtrx <- NULL
+  element_names <- NULL
+  if ("list" %in% class(input)) {
+    input_mtrx <- UpSetR::fromList(input) == 1
+    element_names <- unlist(input)
+  } else if ("upset" %in% class(input)) {
+    stop("The upsetR fromList seems to strip out the gene names, don't use it until I figure out what is up.")
   }
 
   ## lst could look like this:
@@ -1968,15 +1970,16 @@ overlap_groups <- function(input_mtrx, sort = TRUE) {
   ## b  TRUE  TRUE FALSE
   ##...
   ## condensing matrix to unique combinations elements
-  unique_lst <- unique(input_mtrx)
+  combination_mtrx <- unique(input_mtrx)
   groups <- list()
+  num_combinations <- nrow(unique_mtrx)
   ## going through all unique combinations and collect elements for each in a list
-  for (i in seq_along(unique_lst)) {
-    current_row <- unique_lst[i,]
-    my_elements <- which(apply(input_mtrx, 1, function(x) all(x == current_row)))
-    attr(my_elements, "groups") <- current_row
-    groups[[paste(colnames(unique_lst)[current_row], collapse = ":")]] <- my_elements
-    my_elements
+  for (i in seq_len(num_combinations)) {
+    combination <- combination_mtrx[i, ]
+    my_elements <- which(apply(input_mtrx, 1, function(x) all(x == combination)))
+    attr(my_elements, "groups") <- combination
+    groups[[paste(colnames(combination_mtrx)[combination], collapse = ":")]] <- my_elements
+    #my_elements
     ## attr(,"groups")
     ##   one   two three
     ## FALSE FALSE  TRUE
@@ -1986,7 +1989,7 @@ overlap_groups <- function(input_mtrx, sort = TRUE) {
   if (sort) {
     groups <- groups[order(sapply(groups, function(x) length(x)), decreasing = TRUE)]
   }
-  attr(groups, "elements") <- unique(unlist(lst))
+  attr(groups, "elements") <- element_names
   return(groups)
   ## save element list to facilitate access using an index in case rownames are not named
 }
