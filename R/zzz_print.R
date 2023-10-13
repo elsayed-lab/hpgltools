@@ -468,6 +468,15 @@ print.proper_estimate <- function(x) {
   return(invisible(x))
 }
 
+#' Print the result of a reordered variance partition analysis.
+#'
+#' @param x List of a resorted variance partition analysis and its plot.
+#' @export
+print.reordered_varpart <- function(x) {
+  plot(x[["plot"]])
+  return(invisible(x))
+}
+
 #' Print some significantly differentially expressed genes.
 #'
 #' @param x List containing the parameters used, gene subset tables,
@@ -616,7 +625,7 @@ print.varcoef_plot <- function(x) {
 #'  fitted/sorted data by variance, etc.
 #' @export
 print.varpart <- function(x) {
-  summary_string <- glue("The result of using variancePartition with the model: \\
+  summary_string <- glue("The result of using variancePartition with the model:
 x[['model_string']]")
   message(summary_string)
   plot(x[["partition_plot"]])

@@ -3005,8 +3005,8 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   new_row <- new_row + 1
   smc_plot <- metrics[["smc"]]
   try_result <- xlsx_insert_png(smc_plot, wb = wb, sheet = sheet, width = plot_dim,
-                              height = plot_dim, start_col = new_col, start_row = new_row,
-                              plotname = "10_smc", savedir = excel_basename, fancy_type = "svg")
+                                height = plot_dim, start_col = new_col, start_row = new_row,
+                                plotname = "10_smc", savedir = excel_basename, fancy_type = "svg")
   if ("try-error" %in% class(try_result)) {
     warning("Failed to add the raw correlation standard median plot.")
   } else {
@@ -3015,8 +3015,8 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   new_col <- new_col + plot_cols + 1
   smd_plot <- metrics[["smd"]]
   try_result <- xlsx_insert_png(smd_plot, wb = wb, sheet = sheet, width = plot_dim,
-                              height = plot_dim, start_col = new_col, start_row = new_row,
-                              plotname = "11_smd", savedir = excel_basename, fancy_type = "svg")
+                                height = plot_dim, start_col = new_col, start_row = new_row,
+                                plotname = "11_smd", savedir = excel_basename, fancy_type = "svg")
   if ("try-error" %in% class(try_result)) {
     warning("Failed to add the raw distance standard median plot.")
   } else {
@@ -3113,7 +3113,7 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   ## Violin plots
   if (isTRUE(violin)) {
     filt <- sm(normalize_expt(expt, filter = "simple"))
-    varpart_raw <- suppressWarnings(try(simple_varpart(filt)))
+    varpart_raw <- sm(suppressWarnings(try(simple_varpart(filt), silent = TRUE)))
     if (! "try-error" %in% class(varpart_raw)) {
       violin_plot <- varpart_raw[["partition_plot"]]
       new_row <- new_row + plot_rows + 2
