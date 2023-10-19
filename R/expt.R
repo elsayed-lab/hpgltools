@@ -1606,42 +1606,35 @@ If this is not correctly performed, very few genes will be observed")
 #' @param file Csv/xls file to read.
 #' @param ... Arguments for arglist, used by sep, header and similar
 #'  read_csv/read.table parameters.
+#' @param sep Used by read.csv, the separator
+#' @param header Used by read.csv, is there a header?
+#' @param sheet Used for excel/etc, which sheet to read?
 #' @return Df of metadata.
 #' @seealso [openxlsx] [readODS]
 #' @export
-read_metadata <- function(file, ...) {
+read_metadata <- function(file, sep = ",", header = TRUE, sheet = 1, ...) {
   arglist <- list(...)
-  if (is.null(arglist[["sep"]])) {
-    arglist[["sep"]] <- ","
-  }
-  if (is.null(arglist[["header"]])) {
-    arglist[["header"]] <- TRUE
-  }
   extension <- tools::file_ext(file)
   if (extension == "csv") {
     definitions <- read.csv(file = file, comment.char = "#",
-                            sep = arglist[["sep"]], header = arglist[["header"]])
+                            sep = sep, header = header)
   } else if (extension == "tsv") {
     definitions <- try(readr::read_tsv(file, ...))
   } else if (extension == "xlsx") {
     ## xls = loadWorkbook(file, create = FALSE)
     ## tmp_definitions = readWorksheet(xls, 1)
-    definitions <- try(openxlsx::read.xlsx(xlsxFile = file, sheet = 1))
+    definitions <- try(openxlsx::read.xlsx(xlsxFile = file, sheet = sheet))
     if (class(definitions)[1] == "try-error") {
       stop("Unable to read the metadata file: ", file)
     }
   } else if (extension == "xls") {
     ## This is not correct, but it is a start
-    definitions <- readxl::read_excel(path = file, sheet = 1)
+    definitions <- readxl::read_excel(path = file, sheet = sheet)
   } else if (extension == "ods") {
-    sheet <- 1
-    if (!is.null(arglist[["sheet"]])) {
-      sheet <- arglist[["sheet"]]
-    }
     definitions <- readODS::read_ods(path = file, sheet = sheet)
   } else {
-    definitions <- read.table(file = file, sep = arglist[["sep"]],
-                              header = arglist[["header"]])
+    definitions <- read.table(file = file, sep = sep,
+                              header = header)
   }
   colnames(definitions) <- tolower(gsub(pattern = "[[:punct:]]",
                                         replacement = "",

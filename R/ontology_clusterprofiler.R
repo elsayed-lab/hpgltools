@@ -51,7 +51,7 @@ simple_clusterprofiler <- function(sig_genes, de_table = NULL, orgdb = "org.Dm.e
                                    second_fc_column = "deseq_logfc",
                                    updown = "up", permutations = 1000, min_groupsize = 5,
                                    kegg_prefix = NULL, kegg_organism = NULL, do_gsea = TRUE,
-                                   categories = 12, excel = NULL, do_david = FALSE,
+                                   categories = 12, excel = NULL, do_david = FALSE, do_kegg = FALSE,
                                    david_id = "ENTREZ_GENE_ID",
                                    david_user = "unknown@unknown.org") {
   sm(requireNamespace(package = "clusterProfiler", quietly = TRUE))
@@ -210,8 +210,8 @@ simple_clusterprofiler <- function(sig_genes, de_table = NULL, orgdb = "org.Dm.e
       "CC_all" = as.data.frame(ego_all_cc, stringsAsFactors = FALSE),
       "CC_sig" = as.data.frame(ego_sig_cc, stringsAsFactors = FALSE))
   mesg("Found ", nrow(enrich_go[["MF_sig"]]),
-          " MF, ", nrow(enrich_go[["BP_sig"]]),
-          " BP, and ", nrow(enrich_go[["CC_sig"]]), " CC enriched hits.")
+       " MF, ", nrow(enrich_go[["BP_sig"]]),
+       " BP, and ", nrow(enrich_go[["CC_sig"]]), " CC enriched hits.")
 
   gse_go <- list()
   de_table_merged <- NULL

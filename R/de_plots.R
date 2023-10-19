@@ -1972,7 +1972,7 @@ overlap_groups <- function(input, sort = TRUE) {
   ## condensing matrix to unique combinations elements
   combination_mtrx <- unique(input_mtrx)
   groups <- list()
-  num_combinations <- nrow(unique_mtrx)
+  num_combinations <- nrow(combination_mtrx)
   ## going through all unique combinations and collect elements for each in a list
   for (i in seq_len(num_combinations)) {
     combination <- combination_mtrx[i, ]
