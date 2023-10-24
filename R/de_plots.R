@@ -1149,8 +1149,8 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
     reordered <- df[reordered_idx, ]
     ## I am now taking 1/2 of the number of desired labeled genes on each side.
     ## I think this more accurately fits the spirit of this idea.
-    top <- head(reordered, n = (ceiling(label / 2))
-    bottom <- tail(reordered, n = (ceiling(label / 2))
+    top <- head(reordered, n = (ceiling(label / 2)))
+    bottom <- tail(reordered, n = (ceiling(label / 2)))
     df_subset <- rbind(top, bottom)
     plt <- plt +
       ggrepel::geom_text_repel(
