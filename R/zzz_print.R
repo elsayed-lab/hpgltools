@@ -58,6 +58,19 @@ print.all_pairwise <- function(x) {
   return(invisible(x))
 }
 
+#' Print function for a set of annotations downloaded from biomart.
+#'
+#' @param x List containing the relevant information gathered from ensembl's biomart.
+#' @export
+print.annotations_biomart <- function(x) {
+  num_genes <- nrow(x[["annotation"]])
+  num_annot <- ncol(x[["annotation"]])
+  summary_string <- glue("{num_annot} annotation types for {prettyNum(num_genes, big.mark = ',')} \\
+genes/transcripts downloaded from {x[['host']]}.")
+  message(summary_string)
+  return(invisible(x))
+}
+
 #' Print the result from calculate_aucc().
 #'
 #' @param x List containing the AUCC, correlation, and a plot
@@ -78,8 +91,8 @@ print.aucc_info <- function(x) {
 #'  mart used, host used, name of the mart, and attributes.
 #' @export
 print.biomart_go <- function(x) {
-  summary_string <- glue("The GO annotations from biomart host {host} for species {species}
-provided {nrow(x[['go']])} rows.")
+  summary_string <- glue("The GO annotations from biomart host {x[['host']]} \\
+for species {x[['species']]} provided {prettyNum(nrow(x[['go']]), big.mark = ',')} rows.")
   message(summary_string)
   return(invisible(x))
 }

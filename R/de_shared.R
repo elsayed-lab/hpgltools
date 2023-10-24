@@ -2029,7 +2029,8 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
 #' @export
 get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
                           min_mean_exprs = NULL, exprs_column = "deseq_basemean",
-                          column = "logFC", fold = "plusminus", p_column = "adj.P.Val") {
+                          column = "logFC", fold = "plusminus", p_column = "adj.P.Val",
+                          comparison = "orequal") {
   if (is.null(z) && is.null(n) && is.null(lfc) && is.null(p)) {
     message("No n, z, p, nor lfc provided, setting p to 0.05 and lfc to 1.0.")
     p <- 0.05
@@ -2046,9 +2047,15 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
 
   if (!is.null(p)) {
     up_idx <- as.numeric(up_genes[[p_column]]) <= p
+    if (comparison != "orequal") {
+      up_idx <- as.numeric(up_genes[[p_column]]) < p
+    }
     ## Remember we have these reformatted as scientific
     up_genes <- up_genes[up_idx, ]
     down_idx <- as.numeric(down_genes[[p_column]]) <= p
+    if (comparison != "orequal") {
+      down_idx <- as.numeric(down_genes[[p_column]]) < p
+    }
     down_genes <- down_genes[down_idx, ]
     ## Going to add logic in case one does not ask for fold change
     ## In that case, a p-value assertion should still know the difference
@@ -2064,23 +2071,38 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
       ## plusminus refers to a positive/negative number of logfold changes from
       ## a logFC(1) = 0
       up_idx <- as.numeric(up_genes[[column]]) >= 1.0
+      if (comparison != "orequal") {
+        up_idx <- as.numeric(up_genes[[column]]) > 1.0
+      }
       up_genes <- up_genes[up_idx, ]
       down_idx <- as.numeric(down_genes[[column]]) <= -1.0
+      if (comparison != "orequal") {
+        down_idx <- as.numeric(down_genes[[column]]) < -1.0
+      }
       down_genes <- down_genes[down_idx, ]
     }
   }
 
   if (!is.null(lfc)) {
     up_idx <- as.numeric(up_genes[[column]]) >= lfc
+    if (comparison != "orequal") {
+      up_idx <- as.numeric(up_genes[[column]]) > lfc
+    }
     up_genes <- up_genes[up_idx, ]
     if (fold == "plusminus" || fold == "log") {
       ## plusminus refers to a positive/negative number of logfold changes from
       ## a logFC(1) = 0
       down_idx <- as.numeric(down_genes[[column]]) <= (lfc * -1.0)
+      if (comparison != "orequal") {
+        down_idx <- as.numeric(down_genes[[column]]) < (lfc * -1.0)
+      }
       down_genes <- down_genes[down_idx, ]
     } else {
       ## If it isn't log fold change, then values go from 0..x where 1 is unchanged
       down_idx <- as.numeric(down_genes[[column]]) <= (1.0 / lfc)
+      if (comparison != "orequal") {
+        down_idx <- as.numeric(down_genes[[column]]) < (1.0 / lfc)
+      }
       down_genes <- down_genes[down_idx, ]
     }
   }
@@ -2095,8 +2117,14 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
     down_median_dist <- out_summary["Median"] - (out_mad * z)
     ## But use the (potentially already trimmed) up/down tables for indexing
     up_idx <- as.numeric(up_genes[[column]]) >= up_median_dist
+    if (comparison != "orequal") {
+      up_idx <- as.numeric(up_genes[[column]]) > up_median_dist
+    }
     up_genes <- up_genes[up_idx, ]
     down_idx <- as.numeric(down_genes[[column]]) <= down_median_dist
+    if (comparison != "orequal") {
+      down_idx <- as.numeric(down_genes[[column]]) < down_median_dist
+    }
     down_genes <- down_genes[down_idx, ]
   }
 

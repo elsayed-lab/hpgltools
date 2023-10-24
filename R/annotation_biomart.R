@@ -259,7 +259,11 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
         "host" = "savefile",
         "mart_name" = "savefile",
         "rows" = "savefile",
-        "dataset" = "savefile")
+        "dataset" = "savefile",
+        "year" = year,
+        "month" = month,
+        "species" = species)
+    class(retlist) <- "annotations_biomart"
     return(retlist)
   }
   martlst <- NULL
@@ -387,7 +391,11 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
       "host" = host,
       "mart_name" = used_mart,
       "columns" = chosen_annotations,
-      "possible_attribs" = available_attribs)
+      "possible_attribs" = available_attribs,
+      "year" = year,
+      "month" = month,
+      "species" = species)
+  class(retlist) <- "annotations_biomart"
   return(retlist)
 }
 
@@ -450,6 +458,7 @@ load_biomart_go <- function(species = "hsapiens", overwrite = FALSE, do_save = T
         "mart_name" = "savefile",
         "rows" = "savefile",
         "dataset" = "savefile")
+    class(retlist) <- "biomart_go"
     return(retlist)
   }
 
