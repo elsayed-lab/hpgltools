@@ -1382,6 +1382,7 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
     extra_eval_names <- gsub(pattern = "^\\s+", replacement = "", x = extra_eval_names, perl = TRUE)
   }
 
+  contrast_name_list <- c()
   complst <- list()
   plotlst <- list()
   comparison_df <- data.frame()
@@ -1389,85 +1390,85 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
   mesg("Comparing analyses.")
   meth <- methods[1]
   len <- length(names(retlst[[meth]]))
-  ## FIXME: This is wrong.
-  for (c in seq_len(lenminus)) {
-    c_name <- methods[c]
-    nextc <- c + 1
-    for (d in seq(from = nextc, to = length(methods))) {
-      d_name <- methods[d]
-      method_comp_name <- glue("{c_name}_vs_{d_name}")
-      contrast_name_list <- c()
-      for (l in seq_len(len)) {
-        contr <- names(retlst[[c_name]])[l]
-        if (contr %in% extra_eval_names) {
-          next
-        }
+  if (len > 1) {
+    ## FIXME: This is wrong.
+    for (c in seq_len(lenminus)) {
+      c_name <- methods[c]
+      nextc <- c + 1
+      for (d in seq(from = nextc, to = length(methods))) {
+        d_name <- methods[d]
+        method_comp_name <- glue("{c_name}_vs_{d_name}")
+        for (l in seq_len(len)) {
+          contr <- names(retlst[[c_name]])[l]
+          if (contr %in% extra_eval_names) {
+            next
+          }
 
-        ## assume all three have the same names() -- note that limma has more
-        ## than the other two though
-        num_den_names <- strsplit(x = contr, split = "_vs_")[[1]]
-        num_name <- num_den_names[1]
-        den_name <- num_den_names[2]
-        rev_contr <- glue("{den_name}_vs_{num_name}")
-        num_reversed <- 0
-        fst <- retlst[[c_name]][[contr]]
-        scd <- retlst[[d_name]][[contr]]
-        if (is.null(fst)) {
-          fst <- retlst[[c_name]][[rev_contr]]
-          fst[["logFC"]] <- fst[["logFC"]] * -1
-          mesg("Used reverse contrast for ", c_name, ".")
-          num_reversed <- num_reversed + 1
-        }
-        if (is.null(scd)) {
-          scd <- retlst[[d_name]][[rev_contr]]
-          scd[["logFC"]] <- scd[["logFC"]] * -1
-          mesg("Used reverse contrast for ", d_name, ".")
-          num_reversed <- num_reversed + 1
-        }
-        ## An extra test condition in case of extra contrasts not performed by all methods.
-        if (is.na(contr)) {
-          next
-        }
-        contrast_name_list <- c(contr, contrast_name_list)
-        fs <- merge(fst, scd, by = "row.names")
-        if (nrow(fs) == 0) {
-          warning("The merge of ", c_name, ", ", contr, " and ",
-                  d_name, ", ", contr, " failed.")
-          next
-        }
-        fs <- fs[, c("logFC.x", "logFC.y")]
-        colnames(fs) <- c(glue("{c_name} logFC"), glue("{d_name} logFC"))
-        fs_cor <- stats::cor.test(x = fs[, 1], y = fs[, 2])[["estimate"]]
-        comparison_df[method_comp_name, contr] <- fs_cor
-        fs_plt <- plot_scatter(fs) +
-          ggplot2::labs(title = glue("{contr}: {c_name} vs. {d_name}.")) +
-          ggplot2::geom_abline(intercept = 0.0, slope = 1.0, colour = "blue")
-        complst[[method_comp_name]] <- fs_cor
-        plotlst[[method_comp_name]] <- fs_plt
-      } ## End iterating through the contrasts
-    } ## End the second method loop
-  } ## End the first method loop
+          ## assume all three have the same names() -- note that limma has more
+          ## than the other two though
+          num_den_names <- strsplit(x = contr, split = "_vs_")[[1]]
+          num_name <- num_den_names[1]
+          den_name <- num_den_names[2]
+          rev_contr <- glue("{den_name}_vs_{num_name}")
+          num_reversed <- 0
+          fst <- retlst[[c_name]][[contr]]
+          scd <- retlst[[d_name]][[contr]]
+          if (is.null(fst)) {
+            fst <- retlst[[c_name]][[rev_contr]]
+            fst[["logFC"]] <- fst[["logFC"]] * -1
+            mesg("Used reverse contrast for ", c_name, ".")
+            num_reversed <- num_reversed + 1
+          }
+          if (is.null(scd)) {
+            scd <- retlst[[d_name]][[rev_contr]]
+            scd[["logFC"]] <- scd[["logFC"]] * -1
+            mesg("Used reverse contrast for ", d_name, ".")
+            num_reversed <- num_reversed + 1
+          }
+          ## An extra test condition in case of extra contrasts not performed by all methods.
+          if (is.na(contr)) {
+            next
+          }
+          contrast_name_list <- c(contr, contrast_name_list)
+          fs <- merge(fst, scd, by = "row.names")
+          if (nrow(fs) == 0) {
+            warning("The merge of ", c_name, ", ", contr, " and ",
+                    d_name, ", ", contr, " failed.")
+            next
+          }
+          fs <- fs[, c("logFC.x", "logFC.y")]
+          colnames(fs) <- c(glue("{c_name} logFC"), glue("{d_name} logFC"))
+          fs_cor <- stats::cor.test(x = fs[, 1], y = fs[, 2])[["estimate"]]
+          comparison_df[method_comp_name, contr] <- fs_cor
+          fs_plt <- plot_scatter(fs) +
+            ggplot2::labs(title = glue("{contr}: {c_name} vs. {d_name}.")) +
+            ggplot2::geom_abline(intercept = 0.0, slope = 1.0, colour = "blue")
+          complst[[method_comp_name]] <- fs_cor
+          plotlst[[method_comp_name]] <- fs_plt
+        } ## End iterating through the contrasts
+      } ## End the second method loop
+    } ## End the first method loop
+    comparison_df <- as.matrix(comparison_df)
+    ## I think this next line is a likely source of errors because
+    ## of differences when using extra_contrasts.
+    ## colnames(comparison_df) <- names(retlst[["deseq"]])
+    colnames(comparison_df) <- contrast_name_list
 
-  comparison_df <- as.matrix(comparison_df)
-  ## I think this next line is a likely source of errors because
-  ## of differences when using extra_contrasts.
-  ## colnames(comparison_df) <- names(retlst[["deseq"]])
-  colnames(comparison_df) <- contrast_name_list
-
-  heat_colors <- grDevices::colorRampPalette(c("white", "black"))
-  original <- par(mar = c(7, 4, 4, 2) + 0.1)
-  comparison_heatmap <- try(heatmap.3(comparison_df, scale = "none",
-                                      trace = "none", keysize = 1.5,
-                                      cexCol = 1.0, cexRow = 1.0,
-                                      linewidth = 0.5, margins = c(12, 8),
-                                      col = heat_colors, dendrogram = "none",
-                                      Rowv = FALSE, Colv = FALSE,
-                                      main = "Compare DE tools"), silent = TRUE)
-  new <- par(original)
-  heat <- NULL
-  if (! "try-error" %in% class(comparison_heatmap)) {
-    heat <- recordPlot()
-  }
+    heat_colors <- grDevices::colorRampPalette(c("white", "black"))
+    original <- par(mar = c(7, 4, 4, 2) + 0.1)
+    comparison_heatmap <- try(heatmap.3(comparison_df, scale = "none",
+                                        trace = "none", keysize = 1.5,
+                                        cexCol = 1.0, cexRow = 1.0,
+                                        linewidth = 0.5, margins = c(12, 8),
+                                        col = heat_colors, dendrogram = "none",
+                                        Rowv = FALSE, Colv = FALSE,
+                                        main = "Compare DE tools"), silent = TRUE)
+    new <- par(original)
+    heat <- NULL
+    if (! "try-error" %in% class(comparison_heatmap)) {
+      heat <- recordPlot()
+    }
+  } ## End checking if there is more than 1 method to compare.
   ret <- append(complst, plotlst)
   ret[["comp"]] <- comparison_df
   ret[["heat"]] <- heat

@@ -639,7 +639,7 @@ print.varcoef_plot <- function(x) {
 #' @export
 print.varpart <- function(x) {
   summary_string <- glue("The result of using variancePartition with the model:
-x[['model_string']]")
+{x[['model_string']]}")
   message(summary_string)
   plot(x[["partition_plot"]])
   return(invisible(x))
