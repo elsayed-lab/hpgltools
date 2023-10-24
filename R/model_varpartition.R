@@ -30,6 +30,7 @@ replot_varpart_percent <- function(varpart_output, n = 30, column = NULL, decrea
   retlist <- list(
       "resorted" = sorted,
       "plot" = new_plot)
+  class(retlist) <- "reordered_varpart"
   return(retlist)
 }
 

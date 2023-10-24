@@ -278,7 +278,7 @@ graph_metrics <- function(expt, cormethod = "pearson", distmethod = "euclidean",
   }
 
   mesg("Printing a color to condition legend.")
-  legend <- try(plot_legend(expt))
+  legend <- try(suppressWarnings(plot_legend(expt)))
   if ("try-error" %in% class(legend)) {
     legend <- list()
   }

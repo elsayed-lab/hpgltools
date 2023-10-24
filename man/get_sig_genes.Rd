@@ -14,7 +14,8 @@ get_sig_genes(
   exprs_column = "deseq_basemean",
   column = "logFC",
   fold = "plusminus",
-  p_column = "adj.P.Val"
+  p_column = "adj.P.Val",
+  comparison = "orequal"
 )
 }
 \arguments{

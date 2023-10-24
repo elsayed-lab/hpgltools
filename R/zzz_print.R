@@ -58,6 +58,19 @@ print.all_pairwise <- function(x) {
   return(invisible(x))
 }
 
+#' Print function for a set of annotations downloaded from biomart.
+#'
+#' @param x List containing the relevant information gathered from ensembl's biomart.
+#' @export
+print.annotations_biomart <- function(x) {
+  num_genes <- nrow(x[["annotation"]])
+  num_annot <- ncol(x[["annotation"]])
+  summary_string <- glue("{num_annot} annotation types for {prettyNum(num_genes, big.mark = ',')} \\
+genes/transcripts downloaded from {x[['host']]}.")
+  message(summary_string)
+  return(invisible(x))
+}
+
 #' Print the result from calculate_aucc().
 #'
 #' @param x List containing the AUCC, correlation, and a plot
@@ -78,8 +91,8 @@ print.aucc_info <- function(x) {
 #'  mart used, host used, name of the mart, and attributes.
 #' @export
 print.biomart_go <- function(x) {
-  summary_string <- glue("The GO annotations from biomart host {host} for species {species}
-provided {nrow(x[['go']])} rows.")
+  summary_string <- glue("The GO annotations from biomart host {x[['host']]} \\
+for species {x[['species']]} provided {prettyNum(nrow(x[['go']]), big.mark = ',')} rows.")
   message(summary_string)
   return(invisible(x))
 }
@@ -468,6 +481,15 @@ print.proper_estimate <- function(x) {
   return(invisible(x))
 }
 
+#' Print the result of a reordered variance partition analysis.
+#'
+#' @param x List of a resorted variance partition analysis and its plot.
+#' @export
+print.reordered_varpart <- function(x) {
+  plot(x[["plot"]])
+  return(invisible(x))
+}
+
 #' Print some significantly differentially expressed genes.
 #'
 #' @param x List containing the parameters used, gene subset tables,
@@ -548,8 +570,8 @@ print.snps_genes <- function(x) {
   most_idx <- x[["count_by_gene"]] == most_num
   most_name <- names(x[["count_by_gene"]])[most_idx]
   summary_string <- glue("When the variants observed were cross referenced against annotated genes,
-{gt_zero} genes were observed with at least 1 variant.  {most_name} had the most variants, with
-{most_num}.")
+{gt_zero} genes were observed with at least 1 variant.
+{most_name} had the most variants, with {most_num}.")
   message(summary_string)
   return(invisible(x))
 }
@@ -563,7 +585,7 @@ print.standardmedian_plot <- function(x) {
   min_comp <- min(x[["measurement"]])
   max_comp <- max(x[["measurement"]])
   first_quart <- x[["quantile"]][1]
-  third_quat <- x[["quantile"]][2]
+  third_quart <- x[["quantile"]][2]
   summary_string <- glue("When the standard median metric was plotted, the values observed range
 from {min_comp} to {max_comp} with quartiles at {first_quart} and {third_quart}.")
   message(summary_string)
@@ -616,8 +638,8 @@ print.varcoef_plot <- function(x) {
 #'  fitted/sorted data by variance, etc.
 #' @export
 print.varpart <- function(x) {
-  summary_string <- glue("The result of using variancePartition with the model: \\
-x[['model_string']]")
+  summary_string <- glue("The result of using variancePartition with the model:
+{x[['model_string']]}")
   message(summary_string)
   plot(x[["partition_plot"]])
   return(invisible(x))

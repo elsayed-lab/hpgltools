@@ -4,7 +4,7 @@
 \alias{overlap_groups}
 \title{Extract overlapping groups from an upset}
 \usage{
-overlap_groups(input_mtrx, sort = TRUE)
+overlap_groups(input, sort = TRUE)
 }
 \arguments{
 \item{sort}{Sort the result?}

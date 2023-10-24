@@ -24,6 +24,7 @@ simple_clusterprofiler(
   categories = 12,
   excel = NULL,
   do_david = FALSE,
+  do_kegg = FALSE,
   david_id = "ENTREZ_GENE_ID",
   david_user = "unknown@unknown.org"
 )
