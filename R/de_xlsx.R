@@ -136,14 +136,11 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
   }
 
   ## Write the legend.
-  legend <- write_combined_legend(wb, excel_basename, plot_dim, apr,
-                                  limma, include_limma,
-                                  deseq, include_deseq,
-                                  edger, include_edger,
-                                  ebseq, include_ebseq,
-                                  basic, include_basic,
-                                  noiseq, include_noiseq,
-                                  padj_type, fancy = fancy)
+  legend <- write_combined_legend(
+    wb, excel_basename, plot_dim, apr, limma, include_limma,
+    deseq, include_deseq, edger, include_edger, ebseq, include_ebseq,
+    basic, include_basic, noiseq, include_noiseq,
+    padj_type, fancy = fancy)
   image_files <- c(legend[["image_files"]], image_files)
   table_names <- legend[["table_names"]]
 
@@ -524,7 +521,7 @@ combine_mapped_table <- function(entry, include_basic = TRUE, include_deseq = TR
                                  adjp = TRUE, padj_type = "fdr",
                                  annot_df = NULL, excludes = NULL, lfc_cutoff = 1,
                                  p_cutoff = 0.05, format_sig = 4, sheet_count = 0) {
-  if (padj_type[1] != "ihw" && !padj_type %in% p.adjust.methods) {
+  if (padj_type[1] != "ihw" && !(padj_type %in% p.adjust.methods)) {
     warning("The p adjustment ", padj_type, " is not in the set of p.adjust.methods.
 Defaulting to fdr.")
     padj_type <- "fdr"
@@ -866,7 +863,6 @@ Defaulting to fdr.")
   class(ret) <- c("combined_table", "list")
   return(ret)
 }
-
 
 #' Given a limma, edger, and deseq table, combine them into one.
 #'
@@ -1355,17 +1351,16 @@ map_keepers <- function(keepers, table_names, data) {
     }
     keeper_table_map[[name]][["wanted_numerator"]] <- numerator
     keeper_table_map[[name]][["wanted_denominator"]] <- denominator
-    position <- which(table_names %in% keeper_table_map[[name]][["string"]])
-    keeper_table_map[[name]][["idx"]] <- position
     mesg("Keeper ", name, " is ", numerator, "/", denominator,
          ": ", keeper_table_map[[name]][["orientation"]], " ",
-         keeper_table_map[[name]][["string"]], " position ",
-         position, ".")
+         keeper_table_map[[name]][["string"]], ".")
     ## Let us check that the individual pairwise contrasts have the same tables in the same order.
     individual_tables <- list()
     for (type in names(data)) {
       if (!is.null(data[[type]])) {
-        ## message("Checking ", type, " all_tables index ", position, " for name ", name, ":", keeper_table_map[[name]][["string"]])
+        message("Checking ", type, " for name ", name, ":", keeper_table_map[[name]][["string"]])
+        table_names <- names(data[[type]][["all_tables"]])
+        position <- which(table_names %in% keeper_table_map[[name]][["string"]])
         test_name <- names(data[[type]][["all_tables"]])[position]
         data_key <- paste0(type, "_data")
         data_orientation_key <- paste0(type, "_orientation")
@@ -1380,6 +1375,7 @@ map_keepers <- function(keepers, table_names, data) {
           keeper_table_map[[name]][[data_key]] <- data[[type]][["all_tables"]][[position]]
           keeper_table_map[[name]][[data_orientation_key]] <- "unexpected"
         } else {
+          message("The name did not match the keeper_table_map[[name]].")
           keeper_table_map[[name]][[data_key]] <- NULL
           keeper_table_map[[name]][[data_orientation_key]] <- "none"
         }
@@ -1444,7 +1440,7 @@ extract_keepers <- function(extracted, keepers, table_names,
                             format_sig = 4, plot_colors = plot_colors,
                             z = 1.5, alpha = 0.4, z_lines = FALSE,
                             label = 10, label_column = "hgncsymbol") {
-  ## First check that your set of kepers is in the data
+  ## First check that your set of keepers is in the data
   all_keepers <- as.character(unlist(keepers))
   keeper_names <- names(keepers)
   found_keepers <- sum(all_keepers %in% all_coefficients)
@@ -1495,6 +1491,7 @@ extract_keepers <- function(extracted, keepers, table_names,
   for (en in seq_len(mapped)) {
     entry <- keeper_table_map[[en]]
     entry_name <- names(keeper_table_map)[en]
+    message("Starting on ", en, ": ", entry_name, ".")
     found_table <- entry[["string"]]
     wanted_numerator <- entry[["wanted_numerator"]]
     wanted_denominator <- entry[["wanted_denominator"]]
