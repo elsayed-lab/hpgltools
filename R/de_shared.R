@@ -65,7 +65,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
                          model_intercept = FALSE, extra_contrasts = NULL,
                          alt_model = NULL, libsize = NULL, test_pca = TRUE,
                          annot_df = NULL, parallel = TRUE,
-                         do_basic = TRUE, do_deseq = TRUE, do_ebseq = TRUE,
+                         do_basic = TRUE, do_deseq = TRUE, do_ebseq = NULL,
                          do_edger = TRUE, do_limma = TRUE, do_noiseq = TRUE,
                          do_dream = FALSE,
                          convert = "cpm", norm = "quant", verbose = TRUE,
@@ -301,7 +301,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
 #' Calculate the Area under the Concordance Curve.
 #'
 #' This is taken verbatim from a recent paper sent to me by Julie
-#' Cridland.  I will put the link in shortly, I need to go.
+#' Cridland.
 #'
 #' @param tbl DE table
 #' @param tbl2 Second table
@@ -1400,6 +1400,7 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
         method_comp_name <- glue("{c_name}_vs_{d_name}")
         for (l in seq_len(len)) {
           contr <- names(retlst[[c_name]])[l]
+          message(glue("Comparing {contr} of {c_name} vs. {d_name}."))
           if (contr %in% extra_eval_names) {
             next
           }
@@ -1451,8 +1452,9 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
     comparison_df <- as.matrix(comparison_df)
     ## I think this next line is a likely source of errors because
     ## of differences when using extra_contrasts.
+    ## I am sure there is a reason, but I cannot see why I have either of these right now.
     ## colnames(comparison_df) <- names(retlst[["deseq"]])
-    colnames(comparison_df) <- contrast_name_list
+    ## colnames(comparison_df) <- contrast_name_list
 
     heat_colors <- grDevices::colorRampPalette(c("white", "black"))
     original <- par(mar = c(7, 4, 4, 2) + 0.1)
