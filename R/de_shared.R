@@ -1455,7 +1455,8 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
     ## I am sure there is a reason, but I cannot see why I have either of these right now.
     ## colnames(comparison_df) <- names(retlst[["deseq"]])
     ## colnames(comparison_df) <- contrast_name_list
-
+    new_colnames <- abbreviate(colnames(comparison_df), minlength = 10)
+    colnames(comparison_df) <- new_colnames
     heat_colors <- grDevices::colorRampPalette(c("white", "black"))
     original <- par(mar = c(7, 4, 4, 2) + 0.1)
     comparison_heatmap <- try(heatmap.3(comparison_df, scale = "none",
