@@ -1382,7 +1382,12 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
     extra_eval_names <- gsub(pattern = "^\\s+", replacement = "", x = extra_eval_names, perl = TRUE)
   }
 
+  ## The recorded heatmap comparing the methods/contrasts if there are sufficient methods employed.
+  heat <- NULL
+  ## What it says on the tin, this will provide a shorter version of the contrast names
+  ## so that the heatmap labels are not annoying.
   contrast_name_list <- c()
+  ## These are the lists of the results of comparisons/plots comparing each set of FC values.
   complst <- list()
   plotlst <- list()
   comparison_df <- data.frame()
@@ -1467,7 +1472,6 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
                                         Rowv = FALSE, Colv = FALSE,
                                         main = "Compare DE tools"), silent = TRUE)
     new <- par(original)
-    heat <- NULL
     if (! "try-error" %in% class(comparison_heatmap)) {
       heat <- recordPlot()
     }

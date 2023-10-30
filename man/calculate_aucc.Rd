@@ -33,5 +33,5 @@ whole).}
 }
 \description{
 This is taken verbatim from a recent paper sent to me by Julie
-Cridland.  I will put the link in shortly, I need to go.
+Cridland.
 }

@@ -1129,7 +1129,7 @@ write_gprofiler_data <- function(gprofiler_result, wb = NULL,
   }
   if (isTRUE(do_hpa)) {
     new_row <- 1
-    sheet <- "hp"
+    sheet <- "hpa"
     hpa_data <- gprofiler_result[["HPA"]]
     hpa_order <- order(hpa_data[[order_by]], decreasing = decreasing)
     hpa_data <- hpa_data[hpa_order, ]
