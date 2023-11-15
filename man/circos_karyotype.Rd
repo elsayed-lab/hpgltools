@@ -9,7 +9,8 @@ circos_karyotype(
   segments = 6,
   color = "white",
   fasta = NULL,
-  lengths = NULL
+  lengths = NULL,
+  chromosomes = NULL
 )
 }
 \arguments{

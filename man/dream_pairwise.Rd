@@ -21,6 +21,7 @@ dream_pairwise(
   voom_norm = "quantile",
   limma_trend = FALSE,
   force = FALSE,
+  keepers = NULL,
   ...
 )
 }
@@ -82,7 +83,7 @@ Creates the set of all possible contrasts and performs them using voom/limma.
 }
 \examples{
 \dontrun{
- pretend <- limma_pairwise(expt)
+ pretend <- dream_pairwise(expt)
 }
 }
 \seealso{

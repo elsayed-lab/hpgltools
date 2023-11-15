@@ -15,6 +15,7 @@ deseq2_pairwise(
   extra_contrasts = NULL,
   annot_df = NULL,
   force = FALSE,
+  keepers = NULL,
   deseq_method = "long",
   fittype = "parametric",
   ...

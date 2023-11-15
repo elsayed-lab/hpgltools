@@ -16,6 +16,7 @@ combine_de_tables(
   include_ebseq = TRUE,
   include_basic = TRUE,
   include_noiseq = TRUE,
+  include_dream = FALSE,
   rownames = TRUE,
   add_plots = TRUE,
   loess = FALSE,

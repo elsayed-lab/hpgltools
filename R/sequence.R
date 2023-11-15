@@ -10,7 +10,7 @@
 #' @return Set of counts by sequence.
 #' @export
 count_nmer <- function(genome, pattern = "ATG", mismatch = 0) {
-  if (class(genome)[1] == "character") {
+  if ("character" %in% class(genome) == "character") {
     genome <- Rsamtools::FaFile(genome)
   }
   seq_obj <- Biostrings::getSeq(genome)

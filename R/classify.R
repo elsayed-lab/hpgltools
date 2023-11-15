@@ -17,7 +17,7 @@
 #'   and https://github.com/compgenomr/book/blob/master/05-supervisedLearning.Rmd
 #' @export
 create_partitions <- function(full_df, interesting_meta, outcome_factor = "condition",
-                              p = 0.6, list = FALSE, times = 5) {
+                              p = 0.4, list = FALSE, times = 5) {
   if (length(outcome_factor) == 1) {
     outcome_fct <- as.factor(as.character(interesting_meta[[outcome_factor]]))
   } else {
@@ -76,7 +76,11 @@ create_partitions <- function(full_df, interesting_meta, outcome_factor = "condi
     "trainer_outcomes" = trainer_outcomes,
     "testers" = testers,
     "test_idx" = testers_idx,
-    "tester_outcomes" = tester_outcomes)
+    "tester_outcomes" = tester_outcomes,
+    p = p,
+    outcome_factor = outcome_factor,
+    list = list,
+    times = times)
   class(retlist) <- "partitioned_data"
   return(retlist)
 }

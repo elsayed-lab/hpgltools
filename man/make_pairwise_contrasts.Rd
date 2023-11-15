@@ -10,6 +10,7 @@ make_pairwise_contrasts(
   do_identities = FALSE,
   do_extras = TRUE,
   do_pairwise = TRUE,
+  keepers = NULL,
   extra_contrasts = NULL,
   ...
 )

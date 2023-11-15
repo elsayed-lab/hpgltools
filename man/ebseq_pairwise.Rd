@@ -14,6 +14,7 @@ ebseq_pairwise(
   model_intercept = NULL,
   alt_model = NULL,
   model_batch = NULL,
+  keepers = NULL,
   ng_vector = NULL,
   rounds = 10,
   target_fdr = 0.05,

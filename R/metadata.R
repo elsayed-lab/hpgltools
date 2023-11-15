@@ -79,7 +79,7 @@ extract_metadata <- function(metadata, id_column = "sampleid", fill = NULL, ...)
   }
 
   ## The two primary inputs for metadata are a csv/xlsx file or a dataframe, check for them here.
-  if (is.null(meta_dataframe) & is.null(meta_file)) {
+  if (is.null(meta_dataframe) && is.null(meta_file)) {
     stop("This requires either a csv file or dataframe of metadata describing the samples.")
   } else if (is.null(meta_file)) {
     ## punctuation is the devil
@@ -97,7 +97,7 @@ extract_metadata <- function(metadata, id_column = "sampleid", fill = NULL, ...)
   id_column <- gsub(pattern = "[[:punct:]]",
                     replacement = "",
                     x = id_column)
-
+  sample_definitions <- as.data.frame(sample_definitions)
   ## Get appropriate row and column names.
   current_rownames <- rownames(sample_definitions)
   bad_rownames <- as.character(seq_len(nrow(sample_definitions)))
@@ -112,9 +112,12 @@ extract_metadata <- function(metadata, id_column = "sampleid", fill = NULL, ...)
     } else {
       sample_definitions[[id_column]] <- rownames(sample_definitions)
     }
+  } else {
+    ## 202311: I am not completely certain this logic change is what I want.
+    rownames(sample_definitions) <- make.names(sample_definitions[[id_column]], unique = TRUE)
   }
-
   ## Drop empty rows in the sample sheet
+
   empty_samples <- which(sample_definitions[, id_column] == "" |
                            grepl(x = sample_definitions[, id_column], pattern = "^undef") |
                            is.na(sample_definitions[, id_column]) |

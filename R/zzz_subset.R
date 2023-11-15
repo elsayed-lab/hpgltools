@@ -9,7 +9,7 @@
 `[.expt` <- function(expt, i, j, ...) {
   if (!missing(i)) {
     message("Subsetting on genes.")
-    expt <- subset_genes(expt, ids = i, ...)
+    expt <- subset_genes(expt, ids = i, method = "keep", ...)
   }
   if (!missing(j)) {
     message("Subsetting on samples.")

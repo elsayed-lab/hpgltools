@@ -21,7 +21,7 @@ normalized_expt <- normalize_expt(pasilla_expt, transform = "log2", norm = "quan
 
 ## Interestingly, doParallel does not work when run from packrat.
 test_keepers <- list("treatment" = c("treated", "untreated"))
-hpgl_all <- all_pairwise(pasilla_expt, filter = TRUE)
+hpgl_all <- all_pairwise(pasilla_expt, filter = TRUE, parallel = FALSE, verbose = TRUE)
 hpgl_tables <- combine_de_tables(hpgl_all, keepers = test_keepers,
                                  excel = "excel_test.xlsx")
 
@@ -30,6 +30,13 @@ test_that("Does combine_de_tables create an excel file?", {
     expect_true(file.exists("excel_test.xlsx"))
 })
 removed <- file.remove("excel_test.xlsx")
+
+hpgl_two <- all_pairwise(pasilla_expt, filter = TRUE, keepers = test_keepers)
+hpgl_two_tables <- combine_de_tables(hpgl_two, keepers = test_keepers)
+test_that("Can we provide limited keepers to all_pairwise()?", {
+  expect_equal(names(hpgl_all[["deseq"]][["all_tables"]]),
+               names(hpgl_two[["deseq"]][["all_tables"]]))
+  })
 
 hpgl_sva_result <- all_pairwise(pasilla_expt, model_batch = "sva", which_voom = "limma",
                                 limma_method = "robust", edger_method = "long",
@@ -97,11 +104,12 @@ test_that("Are the comparisons between DE tools sufficiently similar? (deseq/bas
 })
 combined_table <- combine_de_tables(hpgl_all, excel = FALSE)
 
-expected_cols <- 61
+expected_cols <- 62
 expected_annotations <- c(
-  "ensembltranscriptid", "ensemblgeneid", "description", "genebiotype", "chromosomename", "strand",
-  "startposition", "endposition", "deseq_logfc", "deseq_adjp", "edger_logfc", "edger_adjp",
-  "limma_logfc", "limma_adjp", "noiseq_logfc", "noiseq_adjp", "basic_num", "basic_den",
+  "ensembltranscriptid", "ensemblgeneid", "description", "genebiotype", "cdslength",
+  "chromosomename", "strand", "startposition", "endposition", "deseq_logfc",
+  "deseq_adjp", "edger_logfc", "edger_adjp", "limma_logfc", "limma_adjp",
+  "noiseq_logfc", "noiseq_adjp", "basic_num", "basic_den",
   "basic_numvar", "basic_denvar", "basic_logfc", "basic_t", "basic_p", "basic_adjp",
   "deseq_basemean", "deseq_lfcse", "deseq_stat", "deseq_p", "deseq_num", "deseq_den",
   "ebseq_fc", "ebseq_logfc", "ebseq_c1mean", "ebseq_c2mean", "ebseq_mean", "ebseq_var",
@@ -111,8 +119,10 @@ expected_annotations <- c(
   "basic_adjp_ihw", "noiseq_adjp_ihw", "lfc_meta", "lfc_var", "lfc_varbymed", "p_meta",
   "p_var")
 
+filtered <- normalize_expt(pasilla_expt, filter = TRUE)
+expected_rows <- nrow(exprs(filtered))
 num_cols <- length(expected_annotations)
-expected <- c(7531, num_cols)
+expected <- c(expected_rows, num_cols)
 actual <- dim(combined_table[["data"]][[1]])
 test_that("Has the untreated/treated combined table been filled in?", {
     expect_equal(expected, actual)
@@ -122,7 +132,7 @@ table <- "untreated_vs_treated"
 sig_tables <- extract_significant_genes(combined_table,
                                         according_to = "all",
                                         excel = FALSE)
-expected <- 90
+expected <- 100
 actual <- nrow(sig_tables[["limma"]][["ups"]][[table]])
 test_that("Are the limma significant ups expected?", {
     expect_gt(actual, expected)
@@ -134,25 +144,25 @@ test_that("Are the limma significant downs expected?", {
     expect_gt(actual, expected)
 })
 
-expected <- 90
+expected <- 100
 actual <- nrow(sig_tables[["edger"]][["ups"]][[table]])
 test_that("Are the edger significant ups expected?", {
     expect_gt(actual, expected)
 })
 
-expected <- 90
+expected <- 100
 actual <- nrow(sig_tables[["edger"]][["downs"]][[table]])
 test_that("Are the limma significant ups expected?", {
     expect_gt(actual, expected)
 })
 
-expected <- 90
+expected <- 95
 actual <- nrow(sig_tables[["deseq"]][["ups"]][[table]])
 test_that("Are the deseq significant ups expected?", {
     expect_gt(actual, expected)
 })
 
-expected <- 90
+expected <- 95
 actual <- nrow(sig_tables[["deseq"]][["downs"]][[table]])
 test_that("Are the deseq significant downs expected?", {
     expect_gt(actual, expected)

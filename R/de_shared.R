@@ -67,7 +67,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
                          annot_df = NULL, parallel = TRUE,
                          do_basic = TRUE, do_deseq = TRUE, do_ebseq = NULL,
                          do_edger = TRUE, do_limma = TRUE, do_noiseq = TRUE,
-                         do_dream = FALSE,
+                         do_dream = FALSE, keepers = NULL,
                          convert = "cpm", norm = "quant", verbose = TRUE,
                          surrogates = "be", ...) {
   arglist <- list(...)
@@ -82,7 +82,11 @@ all_pairwise <- function(input = NULL, conditions = NULL,
   }
 
   if (isTRUE(model_cond)) {
-    mesg("This DE analysis will perform all pairwise comparisons among:")
+    if (is.null(keepers)) {
+      mesg("This DE analysis will perform all pairwise comparisons among:")
+    } else {
+      mesg("This DE analysis will perform the subset of comparisons provided.")
+    }
     print(table(pData(input)[["condition"]]))
     if (isTRUE(model_batch)) {
       mesg("This analysis will include a batch factor in the model comprised of:")
@@ -221,7 +225,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
         type, input = input, conditions = conditions, batches = batches,
         model_cond = model_cond, model_batch = model_batch, model_intercept = model_intercept,
         extra_contrasts = extra_contrasts, alt_model = alt_model, libsize = libsize,
-        annot_df = annot_df, surrogates = surrogates,
+        annot_df = annot_df, surrogates = surrogates, keepers = keepers,
         ...)
     } ## End foreach() %dopar% { }
     parallel::stopCluster(cl)
@@ -246,7 +250,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
         type, input = input, conditions = conditions, batches = batches,
         model_cond = model_cond, model_batch = model_batch, model_intercept = model_intercept,
         extra_contrasts = extra_contrasts, alt_model = alt_model, libsize = libsize,
-        annot_df = annot_df, surrogates = surrogates,
+        annot_df = annot_df, surrogates = surrogates, keepers = keepers,
         ...)
     }
   } ## End performing a serial comparison
@@ -296,6 +300,21 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     ret[["combined"]] <- combined
   }
   return(ret)
+}
+
+#' Perform all_pairwise only using deseq/edger.
+#'
+#' The thing I want to do which I presume will be of use to Zhezhen is
+#' to have a variant of this which takes the list of interesting
+#' contrasts and only performs them rather than my default of doing
+#' all possible pairwise contrasts.  I think that will only require a
+#' little logic in make_contrasts to skip contrasts not in the list of
+#' interest.
+#'
+#' @export
+binary_paiwise <- function(...) {
+  all_pairwise(..., do_limma = FALSE, do_edger = TRUE, do_basic = FALSE,
+               do_deseq = TRUE, do_ebseq = FALSE, do_noiseq = FALSE, do_dream = FALSE)
 }
 
 #' Calculate the Area under the Concordance Curve.
@@ -1395,73 +1414,73 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
   mesg("Comparing analyses.")
   meth <- methods[1]
   len <- length(names(retlst[[meth]]))
-  if (len > 1) {
-    ## FIXME: This is wrong.
-    for (c in seq_len(lenminus)) {
-      c_name <- methods[c]
-      nextc <- c + 1
-      for (d in seq(from = nextc, to = length(methods))) {
-        d_name <- methods[d]
-        method_comp_name <- glue("{c_name}_vs_{d_name}")
-        for (l in seq_len(len)) {
-          contr <- names(retlst[[c_name]])[l]
-          message(glue("Comparing {contr} of {c_name} vs. {d_name}."))
-          if (contr %in% extra_eval_names) {
-            next
-          }
+  ## FIXME: This is wrong.
+  for (c in seq_len(lenminus)) {
+    c_name <- methods[c]
+    nextc <- c + 1
+    for (d in seq(from = nextc, to = length(methods))) {
+      d_name <- methods[d]
+      method_comp_name <- glue("{c_name}_vs_{d_name}")
+      for (l in seq_len(len)) {
+        contr <- names(retlst[[c_name]])[l]
+        message(glue("Comparing {contr} of {c_name} vs. {d_name}."))
+        if (contr %in% extra_eval_names) {
+          next
+        }
 
-          ## assume all three have the same names() -- note that limma has more
-          ## than the other two though
-          num_den_names <- strsplit(x = contr, split = "_vs_")[[1]]
-          num_name <- num_den_names[1]
-          den_name <- num_den_names[2]
-          rev_contr <- glue("{den_name}_vs_{num_name}")
-          num_reversed <- 0
-          fst <- retlst[[c_name]][[contr]]
-          scd <- retlst[[d_name]][[contr]]
-          if (is.null(fst)) {
-            fst <- retlst[[c_name]][[rev_contr]]
-            fst[["logFC"]] <- fst[["logFC"]] * -1
-            mesg("Used reverse contrast for ", c_name, ".")
-            num_reversed <- num_reversed + 1
-          }
-          if (is.null(scd)) {
-            scd <- retlst[[d_name]][[rev_contr]]
-            scd[["logFC"]] <- scd[["logFC"]] * -1
-            mesg("Used reverse contrast for ", d_name, ".")
-            num_reversed <- num_reversed + 1
-          }
-          ## An extra test condition in case of extra contrasts not performed by all methods.
-          if (is.na(contr)) {
-            next
-          }
-          contrast_name_list <- c(contr, contrast_name_list)
-          fs <- merge(fst, scd, by = "row.names")
-          if (nrow(fs) == 0) {
-            warning("The merge of ", c_name, ", ", contr, " and ",
-                    d_name, ", ", contr, " failed.")
-            next
-          }
-          fs <- fs[, c("logFC.x", "logFC.y")]
-          colnames(fs) <- c(glue("{c_name} logFC"), glue("{d_name} logFC"))
-          fs_cor <- stats::cor.test(x = fs[, 1], y = fs[, 2])[["estimate"]]
-          comparison_df[method_comp_name, contr] <- fs_cor
-          fs_plt <- plot_scatter(fs) +
-            ggplot2::labs(title = glue("{contr}: {c_name} vs. {d_name}.")) +
-            ggplot2::geom_abline(intercept = 0.0, slope = 1.0, colour = "blue")
-          complst[[method_comp_name]] <- fs_cor
-          plotlst[[method_comp_name]] <- fs_plt
-        } ## End iterating through the contrasts
-      } ## End the second method loop
-    } ## End the first method loop
-    comparison_df <- as.matrix(comparison_df)
-    ## I think this next line is a likely source of errors because
-    ## of differences when using extra_contrasts.
-    ## I am sure there is a reason, but I cannot see why I have either of these right now.
-    ## colnames(comparison_df) <- names(retlst[["deseq"]])
-    ## colnames(comparison_df) <- contrast_name_list
-    new_colnames <- abbreviate(colnames(comparison_df), minlength = 10)
-    colnames(comparison_df) <- new_colnames
+        ## assume all three have the same names() -- note that limma has more
+        ## than the other two though
+        num_den_names <- strsplit(x = contr, split = "_vs_")[[1]]
+        num_name <- num_den_names[1]
+        den_name <- num_den_names[2]
+        rev_contr <- glue("{den_name}_vs_{num_name}")
+        num_reversed <- 0
+        fst <- retlst[[c_name]][[contr]]
+        scd <- retlst[[d_name]][[contr]]
+        if (is.null(fst)) {
+          fst <- retlst[[c_name]][[rev_contr]]
+          fst[["logFC"]] <- fst[["logFC"]] * -1
+          mesg("Used reverse contrast for ", c_name, ".")
+          num_reversed <- num_reversed + 1
+        }
+        if (is.null(scd)) {
+          scd <- retlst[[d_name]][[rev_contr]]
+          scd[["logFC"]] <- scd[["logFC"]] * -1
+          mesg("Used reverse contrast for ", d_name, ".")
+          num_reversed <- num_reversed + 1
+        }
+        ## An extra test condition in case of extra contrasts not performed by all methods.
+        if (is.na(contr)) {
+          next
+        }
+        contrast_name_list <- c(contr, contrast_name_list)
+        fs <- merge(fst, scd, by = "row.names")
+        if (nrow(fs) == 0) {
+          warning("The merge of ", c_name, ", ", contr, " and ",
+                  d_name, ", ", contr, " failed.")
+          next
+        }
+        fs <- fs[, c("logFC.x", "logFC.y")]
+        colnames(fs) <- c(glue("{c_name} logFC"), glue("{d_name} logFC"))
+        fs_cor <- stats::cor.test(x = fs[, 1], y = fs[, 2])[["estimate"]]
+        comparison_df[method_comp_name, contr] <- fs_cor
+        fs_plt <- plot_scatter(fs) +
+          ggplot2::labs(title = glue("{contr}: {c_name} vs. {d_name}.")) +
+          ggplot2::geom_abline(intercept = 0.0, slope = 1.0, colour = "blue")
+        complst[[method_comp_name]] <- fs_cor
+        plotlst[[method_comp_name]] <- fs_plt
+      } ## End iterating through the contrasts
+    } ## End the second method loop
+  } ## End the first method loop
+  comparison_df <- as.matrix(comparison_df)
+  ## I think this next line is a likely source of errors because
+  ## of differences when using extra_contrasts.
+  ## I am sure there is a reason, but I cannot see why I have either of these right now.
+  ## colnames(comparison_df) <- names(retlst[["deseq"]])
+  ## colnames(comparison_df) <- contrast_name_list
+  new_colnames <- abbreviate(colnames(comparison_df), minlength = 10)
+  colnames(comparison_df) <- new_colnames
+  if (len > 2) {
     heat_colors <- grDevices::colorRampPalette(c("white", "black"))
     original <- par(mar = c(7, 4, 4, 2) + 0.1)
     comparison_heatmap <- try(heatmap.3(comparison_df, scale = "none",
@@ -1475,7 +1494,9 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
     if (! "try-error" %in% class(comparison_heatmap)) {
       heat <- recordPlot()
     }
-  } ## End checking if there is more than 1 method to compare.
+    ## End checking if there is more than 1 method to compare.
+  }
+
   ret <- append(complst, plotlst)
   ret[["comp"]] <- comparison_df
   ret[["heat"]] <- heat
@@ -2199,7 +2220,8 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
 #' }
 #' @export
 make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
-                                    do_extras = TRUE, do_pairwise = TRUE, extra_contrasts = NULL, ...) {
+                                    do_extras = TRUE, do_pairwise = TRUE,
+                                    keepers = NULL, extra_contrasts = NULL, ...) {
   arglist <- list(...)
   tmpnames <- colnames(model)
   tmpnames <- gsub(pattern = "data[[:punct:]]", replacement = "", x = tmpnames)
@@ -2230,18 +2252,32 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
   lenminus <- length(identities) - 1
   numerators <- c()
   denominators <- c()
-  for (c in seq_len(lenminus)) {
-    c_name <- names(identities[c])
-    nextc <- c + 1
-    for (d in seq(from = nextc, to = length(identities))) {
-      d_name <- names(identities[d])
-      minus_string <- paste(d_name, "_vs_", c_name, sep = "")
-      exprs_string <- paste(minus_string, "=", d_name, "-", c_name, ",", sep = "")
+
+  if (is.null(keepers)) {
+    for (c in seq_len(lenminus)) {
+      c_name <- names(identities[c])
+      nextc <- c + 1
+      for (d in seq(from = nextc, to = length(identities))) {
+        d_name <- names(identities[d])
+        minus_string <- paste0(d_name, "_vs_", c_name)
+        exprs_string <- paste0(minus_string, "=", d_name, "-", c_name, ",")
+        all_pairwise[minus_string] <- exprs_string
+        numerators <- c(numerators, d_name)
+        denominators <- c(denominators, c_name)
+      }
+    }
+  } else {
+    for (keeper in keepers) {
+      c_name <- keeper[1]
+      d_name <- keeper[2]
+      minus_string <- paste0(d_name, "_vs_", c_name)
+      exprs_string <- paste0(minus_string, "=", d_name, "-", c_name, ",")
       all_pairwise[minus_string] <- exprs_string
       numerators <- c(numerators, d_name)
       denominators <- c(denominators, c_name)
     }
   }
+
   ## At this point, I have strings which represent the definition of every
   ## sample condition as well as strings which represent every possible
   ## B-A where B comes somewhere after A in the model matrix.

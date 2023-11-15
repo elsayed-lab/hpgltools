@@ -13,6 +13,7 @@ ebseq_pairwise_subset(
   model_cond = TRUE,
   model_intercept = FALSE,
   alt_model = NULL,
+  keepers = NULL,
   conditions = NULL,
   norm = "median",
   force = FALSE,

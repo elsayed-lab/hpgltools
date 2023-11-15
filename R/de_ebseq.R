@@ -41,7 +41,7 @@
 #' @export
 ebseq_pairwise <- function(input = NULL, patterns = NULL, conditions = NULL,
                            batches = NULL, model_cond = NULL, model_intercept = NULL,
-                           alt_model = NULL, model_batch = NULL,
+                           alt_model = NULL, model_batch = NULL, keepers = NULL,
                            ng_vector = NULL, rounds = 10, target_fdr = 0.05,
                            method = "pairwise_subset", norm = "median",
                            force = FALSE,
@@ -57,7 +57,6 @@ ebseq_pairwise <- function(input = NULL, patterns = NULL, conditions = NULL,
   conditions_table <- table(conditions)
   batches_table <- table(batches)
   condition_levels <- levels(as.factor(conditions))
-
 
   if (method == "pairwise_subset") {
     result <- ebseq_pairwise_subset(input,
@@ -123,7 +122,7 @@ ebseq_pairwise <- function(input = NULL, patterns = NULL, conditions = NULL,
 #' @seealso [ebseq_pairwise()]
 ebseq_pairwise_subset <- function(input, ng_vector = NULL, rounds = 10, target_fdr = 0.05,
                                   model_batch = FALSE, model_cond = TRUE,
-                                  model_intercept = FALSE, alt_model = NULL,
+                                  model_intercept = FALSE, alt_model = NULL, keepers = NULL,
                                   conditions = NULL, norm = "median", force = FALSE, ...) {
   mesg("Starting EBSeq pairwise subset.")
   ## Now that I understand pData a bit more, I should probably remove the
@@ -141,7 +140,8 @@ ebseq_pairwise_subset <- function(input, ng_vector = NULL, rounds = 10, target_f
       model_batch = FALSE, model_cond = TRUE, model_intercept = FALSE, alt_model = NULL,
       ...)
   model_data <- model_choice[["chosen_model"]]
-  apc <- make_pairwise_contrasts(model_data, conditions, do_identities = FALSE, do_extras = FALSE,
+  apc <- make_pairwise_contrasts(model_data, conditions, do_identities = FALSE,
+                                 do_extras = FALSE, keepers = keepers,
                                  ...)
   contrasts_performed <- c()
   retlst <- list()

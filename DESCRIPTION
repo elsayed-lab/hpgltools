@@ -22,7 +22,7 @@ Suggests:
   BiocGenerics, BiocManager, biomaRt, Biostrings, bluster, BSgenome,
   caret, Category, cleaver, clusterProfiler, corpcor, corrplot, curl,
   DALEX, DBI, DEGreport, desc, DESeq2, devEMF, devtools, directlabels, doParallel,
-  dorothea, DOSE, doSNOW, DSS,
+  dorothea, doSNOW, DSS,
   EBSeq, EDASeq, edgeR, enrichplot, EuPathDB,
   fastcluster, fastICA, ffpe, fission,
   genbankr, genefilter, GenomicRanges, GenomeInfoDb, genoPlotR, ggdendro,

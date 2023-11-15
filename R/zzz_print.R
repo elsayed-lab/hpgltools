@@ -400,6 +400,26 @@ These samples have an average {prettyNum(mean(x[['table']][['cpm']]))} CPM cover
   return(invisible(x))
 }
 
+#' Print something useful about the result of create_partitions()
+#'
+#' @param x List containing the n sets of partitioned data test/train.
+#' @export
+print.partitioned_data <- function(x) {
+  train_sets <- list()
+  count <- 0
+  for (tr in x[["trainers"]]) {
+    count <- count + 1
+    name <- names(x[["trainers"]])[[count]]
+    train_sets[[name]] <- rownames(x[["trainers"]][[name]])
+  }
+  upset_input <- UpSetR::fromList(train_sets)
+  upset_plot <- UpSetR::upset(upset_input)
+  print(upset_plot)
+  summary_string <- glue("A series of {x[['times']]} data partitions with a {x[['p']]} proportion of train/test.")
+  message(summary_string)
+  return(invisible(x))
+}
+
 #' Print some information about a pattern counted genome
 #'
 #' @param x Dataframe containing how many instances of the pattern

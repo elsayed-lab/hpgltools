@@ -15,6 +15,7 @@ edger_pairwise(
   extra_contrasts = NULL,
   annot_df = NULL,
   force = FALSE,
+  keepers = NULL,
   edger_method = "long",
   ...
 )

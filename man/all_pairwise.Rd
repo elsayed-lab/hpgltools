@@ -26,6 +26,7 @@ all_pairwise(
   do_limma = TRUE,
   do_noiseq = TRUE,
   do_dream = FALSE,
+  keepers = NULL,
   convert = "cpm",
   norm = "quant",
   verbose = TRUE,

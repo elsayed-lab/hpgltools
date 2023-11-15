@@ -56,7 +56,7 @@ edger_pairwise <- function(input = NULL, conditions = NULL,
                            batches = NULL, model_cond = TRUE,
                            model_batch = TRUE, model_intercept = FALSE,
                            alt_model = NULL, extra_contrasts = NULL,
-                           annot_df = NULL, force = FALSE,
+                           annot_df = NULL, force = FALSE, keepers = NULL,
                            edger_method = "long", ...) {
   arglist <- list(...)
 
@@ -170,7 +170,7 @@ edger_pairwise <- function(input = NULL, conditions = NULL,
   message("EdgeR step 8/9: Making pairwise contrasts.")
   apc <- make_pairwise_contrasts(model_data, conditions,
                                  extra_contrasts = extra_contrasts,
-                                 do_identities = FALSE, ...)
+                                 do_identities = FALSE, keepers = keepers, ...)
   contrast_string <- apc[["contrast_string"]]
 
   ## This section is convoluted because glmLRT only seems to take up to 7

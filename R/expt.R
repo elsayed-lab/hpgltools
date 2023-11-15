@@ -296,7 +296,7 @@ concatenate_runs <- function(expt, column = "replicate") {
 #' @export
 create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
                         sanitize_rownames = TRUE, sample_colors = NULL, title = NULL,
-                        notes = NULL, countdir = NULL, include_type = "all",
+                        notes = NULL, include_type = "all",
                         include_gff = NULL, file_column = "file", id_column = NULL,
                         savefile = NULL, low_files = FALSE, handle_na = "drop",
                         researcher = "elsayed", study_name = NULL,
@@ -1612,11 +1612,11 @@ If this is not correctly performed, very few genes will be observed")
 #' @return Df of metadata.
 #' @seealso [openxlsx] [readODS]
 #' @export
-read_metadata <- function(file, sep = ",", header = TRUE, sheet = 1, ...) {
+read_metadata <- function(file, sep = ",", header = TRUE, sheet = 1, comment = "#", ...) {
   arglist <- list(...)
   extension <- tools::file_ext(file)
   if (extension == "csv") {
-    definitions <- read.csv(file = file, comment.char = "#",
+    definitions <- read.csv(file = file, comment.char = comment,
                             sep = sep, header = header)
   } else if (extension == "tsv") {
     definitions <- try(readr::read_tsv(file, ...))
@@ -1636,6 +1636,13 @@ read_metadata <- function(file, sep = ",", header = TRUE, sheet = 1, ...) {
     definitions <- read.table(file = file, sep = sep,
                               header = header)
   }
+
+  if (!is.null(comment)) {
+    commented <- grepl(x = definitions[[1]], pattern = "^#")
+    ## Drop the commented lines.
+    definitions <- definitions[, !commented]
+  }
+
   colnames(definitions) <- tolower(gsub(pattern = "[[:punct:]]",
                                         replacement = "",
                                         x = colnames(definitions)))

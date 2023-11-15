@@ -11,8 +11,6 @@ context("020annotation_gff.R")
 pa_gff <- system.file("share/paeruginosa_pa14.gff", package = "hpgldata")
 pa_fasta <- system.file("share/paeruginosa_pa14.fasta", package = "hpgldata")
 
-message("Hunting for the function which prints 'attempt to apply non-function.")
-message("About to run gff2irange")
 ## gff2irange()
 pa_irange <- gff2irange(pa_gff)
 ## 01
@@ -22,7 +20,6 @@ test_that("Do we get suitable irange data?", {
 })
 
 ## load_gff_annotations()
-message("About to run load_gff_annotations")
 pa_annot <- load_gff_annotations(pa_gff)
 ## 0203
 test_that("Do we get some gff data for Pseudomonas?", {
@@ -31,7 +28,6 @@ test_that("Do we get some gff data for Pseudomonas?", {
 })
 
 ## pattern_count_genome()
-message("About to run pattern_count_genome")
 pa_tas <- pattern_count_genome(pa_fasta, gff = pa_gff)
 expected <- c(26, 16, 20, 39, 14, 14)
 actual <- head(pa_tas[["number"]])
@@ -41,7 +37,6 @@ test_that("Do we get sensible numbers of TAs in the pseudomonas genome?", {
 })
 
 ## sequence_attributes()
-message("About to run sequence_attributes")
 pa_attribs_genes <- sequence_attributes(pa_fasta, gff = pa_gff)
 expected <- c(0.62589, 0.37411, 0.4757282, 0.5242718)
 actual <- as.numeric(pa_attribs_genes["gene1650835", ])
@@ -50,7 +45,6 @@ test_that("Do we get sensible gene attributes by gene?", {
   expect_equal(expected, actual, tolerance = 0.001)
 })
 
-message("About to run sequence_attributes again")
 pa_attribs_genome <- sequence_attributes(pa_fasta)
 expected <- c(0.6629220, 0.3370763, 0.4998674, 0.5001309)
 actual <- as.numeric(pa_attribs_genome)

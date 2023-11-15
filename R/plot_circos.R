@@ -549,7 +549,7 @@ circos_ideogram <- function(name = "default", conf_dir = "circos/conf", band_url
 #' @return The output filename.
 #' @export
 circos_karyotype <- function(cfg, segments = 6, color = "white", fasta = NULL,
-                             lengths = NULL) {
+                             lengths = NULL, chromosomes = NULL) {
   name <- cfg@name
   conf_dir <- dirname(cfg@cfg_file)
 
@@ -566,6 +566,10 @@ circos_karyotype <- function(cfg, segments = 6, color = "white", fasta = NULL,
     ## genome_length <- sum(as.data.frame(all_seq@ranges)[["width"]])
     chr_df <- data.frame("width" = BiocGenerics::width(all_seq), "names" = names(all_seq))
     chr_df[["names"]] <- gsub(x = chr_df[["names"]], pattern = "^(\\w+) .*", replacement = "\\1")
+  }
+
+  if (!is.null(chromosomes)) {
+    chr_df[["names"]] <- chromosomes
   }
 
   ## Add a check that we pulled the same chromosomes as exist in the annotations.
@@ -633,7 +637,7 @@ circos_make <- function(cfg, target = "", circos = "circos", verbose = FALSE) {
 CIRCOS=\"%s\"
 
 %%.png:\t%%.conf
-\t$(CIRCOS) -conf $< -outputfile $*.png
+\t$(CIRCOS) -conf $< -outputfile $*.png 2>$*_png.stderr 1>$*_png.stdout
 
 clean:
 \trm -rf conf data *.conf *.png *.svg *.html
@@ -642,8 +646,8 @@ clean:
 \t$(CIRCOS) -conf $< -outputfile $*.svg
 
 %%:\t%%.conf
-\t$(CIRCOS) -conf $< -outputfile $*.png & 2>/dev/null 1>&2
-\t$(CIRCOS) -conf $< -outputfile $*.svg
+\t$(CIRCOS) -conf $< -outputfile $*.png 2>$*_png.stderr 1>$*_png.stdout &
+\t$(CIRCOS) -conf $< -outputfile $*.svg 2>$*_svg.stderr 1>$*_svg.stdout
 \techo '<img src=\"$*.svg\" usemap=\"#$*\">' > map.html
 \tcat $*.html >> map.html
 \tmv map.html $*.html

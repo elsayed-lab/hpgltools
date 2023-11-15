@@ -14,6 +14,7 @@ basic_pairwise(
   alt_model = NULL,
   model_batch = FALSE,
   force = FALSE,
+  keepers = NULL,
   fx = "mean",
   ...
 )

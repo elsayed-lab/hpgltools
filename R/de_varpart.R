@@ -47,7 +47,7 @@
 #'  DOI:10.1101/2023.03.17.533005
 #' @examples
 #' \dontrun{
-#'  pretend <- limma_pairwise(expt)
+#'  pretend <- dream_pairwise(expt)
 #' }
 #' @export
 dream_pairwise <- function(input = NULL, conditions = NULL,
@@ -56,7 +56,7 @@ dream_pairwise <- function(input = NULL, conditions = NULL,
                            alt_model = NULL, extra_contrasts = NULL,
                            annot_df = NULL, libsize = NULL,
                            limma_method = "ls", limma_robust = FALSE, voom_norm = "quantile",
-                           limma_trend = FALSE, force = FALSE, ...) {
+                           limma_trend = FALSE, force = FALSE, keepers = NULL, ...) {
   arglist <- list(...)
   ## This is used in the invocation of a voom() implementation for normalization.
   ## This is for the eBayes() call.
@@ -146,7 +146,7 @@ dream_pairwise <- function(input = NULL, conditions = NULL,
   identity_fits <- NULL
   message("Limma/varpart step 3/6: running dream.")
   contrasts <- make_pairwise_contrasts(model = chosen_model, conditions = conditions,
-                                       extra_contrasts = extra_contrasts)
+                                       extra_contrasts = extra_contrasts, keepers = keepers)
   all_pairwise_contrasts <- contrasts[["all_pairwise"]]
   all_pairwise_contrasts <- gsub(x = all_pairwise_contrasts, pattern = ",$", replacement = "")
   contrast_vector <- c()

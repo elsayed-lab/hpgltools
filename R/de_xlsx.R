@@ -68,7 +68,7 @@
 combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes = NULL,
                               adjp = TRUE, include_limma = TRUE, include_deseq = TRUE,
                               include_edger = TRUE, include_ebseq = TRUE, include_basic = TRUE,
-                              include_noiseq = TRUE,
+                              include_noiseq = TRUE, include_dream = FALSE,
                               rownames = TRUE, add_plots = TRUE, loess = FALSE, plot_dim = 6,
                               compare_plots = TRUE, padj_type = "ihw", fancy = FALSE,
                               lfc_cutoff = 1.0, p_cutoff = 0.05,
@@ -157,7 +157,6 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
     "table_names" = list(),
     "plots" = list(),
     "summaries" = data.frame())
-  table_names <- legend[["table_names"]]
   ## Here, we will look for only those elements in the keepers list.
   ## In addition, if someone wanted a_vs_b, but we did b_vs_a, then this will
   ## flip the logFCs.
@@ -1359,9 +1358,12 @@ map_keepers <- function(keepers, table_names, data) {
     for (type in names(data)) {
       if (!is.null(data[[type]])) {
         message("Checking ", type, " for name ", name, ":", keeper_table_map[[name]][["string"]])
-        table_names <- names(data[[type]][["all_tables"]])
-        position <- which(table_names %in% keeper_table_map[[name]][["string"]])
+        this_table_names <- names(data[[type]][["all_tables"]])
+        position <- which(this_table_names %in% keeper_table_map[[name]][["string"]])
         test_name <- names(data[[type]][["all_tables"]])[position]
+        if (length(test_name) == 0) {
+          next
+        }
         data_key <- paste0(type, "_data")
         data_orientation_key <- paste0(type, "_orientation")
         ## This index is not there, hopefully it is an extra.
@@ -1455,6 +1457,7 @@ extract_keepers <- function(extracted, keepers, table_names,
   found_names_edger_idx <- names(edger[["all_tables"]]) %in% keeper_names
   found_names_deseq_idx <- names(deseq[["all_tables"]]) %in% keeper_names
   found_names_limma_idx <- names(limma[["all_tables"]]) %in% keeper_names
+
   extra_names <- c()
   if (sum(found_names_edger_idx) > 0) {
     extra_names <- names(edger[["all_tables"]])[found_names_edger_idx]
@@ -1467,6 +1470,27 @@ extract_keepers <- function(extracted, keepers, table_names,
   }
   extra_names <- unique(extra_names)
 
+  ## Double check that the _vs_ was not removed.
+
+  if (is.null(extra_names)) {
+    no_vs <- gsub(x = keeper_names, pattern = "_vs_", replacement = "_")
+    novs_names_edger <- gsub(x = names(edger[["all_tables"]]), pattern = "_vs_", replacement = "_")
+    novs_names_limma <- gsub(x = names(limma[["all_tables"]]), pattern = "_vs_", replacement = "_")
+    novs_names_deseq <- gsub(x = names(deseq[["all_tables"]]), pattern = "_vs_", replacement = "_")
+    found_names_edger_idx <- novs_names_edger %in% no_vs
+    found_names_limma_idx <- novs_names_limma %in% no_vs
+    found_names_deseq_idx <- novs_names_deseq %in% no_vs
+    if (sum(found_names_edger_idx) > 0) {
+      extra_names <- names(edger[["all_tables"]])[found_names_edger_idx]
+    }
+    if (sum(found_names_deseq_idx) > 0) {
+      extra_names <- c(extra_names, names(deseq[["all_tables"]])[found_names_deseq_idx])
+    }
+    if (sum(found_names_limma_idx) > 0) {
+      extra_names <- c(extra_names, names(limma[["all_tables"]])[found_names_limma_idx])
+    }
+    extra_names <- unique(extra_names)
+  }
   ## Just make sure we have something to work with.
   if (sum(found_keepers, length(extra_names)) == 0) {
     message("The keepers has no elements in the coefficients.")
@@ -1476,7 +1500,8 @@ extract_keepers <- function(extracted, keepers, table_names,
   }
   ## I do not think this unique() should be needed.
   ## but it appears that sometimes the above if() statements are causing duplicates.
-  table_names <- unique(c(table_names, extra_names))
+  both_names <- c(table_names, extra_names)
+  table_names <- unique(both_names)
   datum <- list(
     "basic" = basic,
     "deseq" = deseq,

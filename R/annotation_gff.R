@@ -102,52 +102,71 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
   }
 
   ret <- NULL
-  attempts <- c("rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo = TRUE)",
-                "rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo = FALSE)",
-                "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo = TRUE)",
-                "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo = FALSE)",
-                "rtracklayer::import.gff(gff, format='gtf')",
-                "rtracklayer::import.gff(gff)")
-  if (!is.null(try)) {
-    attempts <- c(glue("{try}(gff)"), attempts)
-  }
 
-  annot <- NULL
-  for (att in seq_along(attempts)) {
-    annotations <- NULL
-    message("Trying attempt: ", attempts[[att]])
-    attempt <- attempts[[att]]
-    eval_string <- glue("annotations <- try({attempt}, silent = TRUE)")
-    eval(parse(text = eval_string))
-    if (class(annotations) == "try-error") {
-      rm(annotations)
-    } else if (is.null(GenomicRanges::as.data.frame(annotations)[[id_col]]) &
-               is.null(GenomicRanges::as.data.frame(annotations)[[second_id_col]])) {
-      rm(annotations)
+  attempts <- list(
+    "rtracklayer::import.gff3" = list(
+      "con" = gff,
+      "sequenceRegionsAsSeqinfo" = TRUE),
+    "rtracklayer::import.gff3" = list(
+      "con" = gff,
+      "sequenceRegionsAsSeqinfo" = FALSE),
+    "rtracklayer::import.gff2" = list(
+      "con" = gff,
+      "sequenceRegionsAsSeqinfo" = TRUE),
+    "rtracklayer::import.gff2" = list(
+      "con" = gff,
+      "sequenceRegionsAsSeqinfo" = FALSE),
+    "rtracklayer::import.gff" = list(
+      "con" = gff,
+      "format" = "gtf"),
+    "rtracklayer::import.gff" = list(
+      "con" = gff))
+
+  result <- NULL
+  for (a in seq_along(attempts)) {
+    attempt <- names(attempts)[a]
+    split_name <- strsplit(attempt, "::")[[1]]
+    fun_call <- get(split_name[[2]], asNamespace(split_name[[1]]))
+    args <- attempts[[a]]
+    result <- try(do.call(what = fun_call, args = args, quote = TRUE), silent = TRUE)
+    if ("try-error" %in% class(result)) {
+      result <- NULL
+      next
     } else {
-      annot <- annotations
-      rm(annotations)
-      message("Had a successful gff import with ", attempt)
       break
     }
   }
+  if (is.null(result)) {
+    mesg("No gff import methods were able to read this file.")
+    return(NULL)
+  }
+  annotations <- as.data.frame(result)[[id_col]]
+  if (is.null(annotations)) {
+    annotations <- as.data.frame(result)[[second_id_col]]
+    if (is.null(annotations)) {
+      warning("Attempting to create a dataframe with ", id_col, " and ",
+              second_id_col, " both failed.")
+      return(NULL)
+    } else {
+      annot <- annotations
+    }
+  } else {
+    annot <- annotations
+  }
+
   ret <- NULL
-  if (class(annot)[[1]] == "GRanges" && ret_type == "data.frame") {
-    ret <- GenomicRanges::as.data.frame(annot)
-    rm(annot)
+  if ("GRanges" %in% class(result) && ret_type == "data.frame") {
+    ret <- GenomicRanges::as.data.frame(result)
     if (!is.null(type)) {
       index <- ret[, "type"] == type
       ret <- ret[index, ]
     }
     message("Returning a df with ", ncol(ret), " columns and ",
             nrow(ret), " rows.")
-  } else if (class(annot)[[1]] == "GRanges" && ret_type == "GRanges") {
-    ret <- annot
-    rm(annot)
+  } else {
     message("Returning a GRanges with ", ncol(ret), " columns and ",
             nrow(ret), " rows.")
-  } else {
-    stop("Unable to load gff file.")
+    return(result)
   }
 
   ## Sometimes we get some pretty weird data structures inside the gff
@@ -202,7 +221,7 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
 #'  head(ta_count)
 #' @export
 pattern_count_genome <- function(fasta, gff = NULL, pattern = "TA",
-                                 type = "gene", key = NULL) {
+                                 type = "gene", id_col = "ID", key = NULL) {
   rawseq <- Rsamtools::FaFile(fasta)
   if (is.null(key)) {
     key <- c("ID", "locus_tag")
@@ -210,12 +229,15 @@ pattern_count_genome <- function(fasta, gff = NULL, pattern = "TA",
   if (is.null(gff)) {
     entry_sequences <- Biostrings::getSeq(rawseq)
   } else {
-    ## entries <- rtracklayer::import.gff3(gff, asRangedData = FALSE)
+    ## Note, I use import.gff here instead of import.gff3 or one of
+    ## the other more sensible functions because import.gff sets the
+    ## seqnames to match the chromosome; I have not figured out how to
+    ## do that properly using import.gff3 without some annoying shenanigans.
     entries <- rtracklayer::import.gff(gff)
+    meta <- mcols(entries)
+    wanted <- meta[["type"]] == type
     ## keep only the ones of the type of interest (gene).
-    type_entries <- entries[entries$type == type, ]
-    ## Set some hopefully sensible names.
-    names(type_entries) <- rownames(type_entries)
+    type_entries <- entries[wanted, ]
     ## Get the sequence from the genome for them.
     entry_sequences <- Biostrings::getSeq(rawseq, type_entries)
     tmp_entries <- as.data.frame(type_entries)

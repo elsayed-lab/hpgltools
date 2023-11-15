@@ -9,6 +9,7 @@ pattern_count_genome(
   gff = NULL,
   pattern = "TA",
   type = "gene",
+  id_col = "ID",
   key = NULL
 )
 }

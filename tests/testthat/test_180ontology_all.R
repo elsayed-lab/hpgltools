@@ -24,8 +24,8 @@ table <- combined[["data"]][["somesig"]]
 if (! "EuPathDB" %in% installed.packages()) {
   devtools::install_github("abelew/EuPathDB", force = TRUE)
 }
-fungidb_metadata <- sm(EuPathDB::download_eupath_metadata(webservice = "fungidb",
-                                                          eu_version = "46"))
+fungidb_metadata <- EuPathDB::download_eupath_metadata(webservice = "fungidb", overwrite = FALSE,
+                                                       eu_version = "46")
 pombe_entry <- EuPathDB::get_eupath_entry(species = "pombe", metadata = fungidb_metadata)
 pkgnames <- EuPathDB::get_eupath_pkgnames(entry = pombe_entry)
 if (! pkgnames[["orgdb"]] %in% installed.packages()) {
@@ -220,7 +220,6 @@ if (file.exists("test_gostats_write.xlsx")) {
 gprof_test <- simple_gprofiler(sig_genes = ups, species = "spombe")
 gprof_table <- gprof_test[["GO"]]
 actual_dim <- nrow(gprof_table)
-## expected_dim <- c(67, 14)
 expected_dim <- 30
 test_that("Does gprofiler provide some expected tables?", {
   expect_gt(actual_dim, expected_dim)

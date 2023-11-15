@@ -12,7 +12,6 @@ create_expt(
   sample_colors = NULL,
   title = NULL,
   notes = NULL,
-  countdir = NULL,
   include_type = "all",
   include_gff = NULL,
   file_column = "file",
@@ -46,8 +45,6 @@ generate its own colors using colorBrewer.}
 
 \item{notes}{Additional notes?}
 
-\item{countdir}{Directory containing count tables.}
-
 \item{include_type}{I have usually assumed that all gff annotations should be
 used, but that is not always true, this allows one to limit to a specific
 annotation type.}
@@ -75,6 +72,8 @@ filesystem?}
 \item{tx_gene_map}{Dataframe of transcripts to genes, primarily for tools like salmon.}
 
 \item{...}{More parameters are fun!}
+
+\item{countdir}{Directory containing count tables.}
 }
 \value{
 experiment an expressionset
