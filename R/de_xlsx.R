@@ -219,7 +219,7 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
       current_column <- xls_result[["end_col"]] + 2
       if (isTRUE(add_plots)) {
         ## Text on row 1, plots from 2-17 (15 rows)
-        message("Adding venn plots for ", tnames[x], ".")
+        mesg("Adding venn plots for ", tnames[x], ".")
         venn_info <- write_venns_de_xlsx(
           written_table, tab, wb, sheetname, current_row, current_column, excel_basename,
           plot_dim, image_files, lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff,
@@ -284,7 +284,7 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
     varname <- gsub(x = basename(rda), pattern = "\\.rda$", replacement = "")
     tmp <- ret
     if (!isTRUE(rda_input)) {
-      message("Removing the input and plots from the rda result.")
+      mesg("Removing the input and plots from the rda result.")
       tmp[["plots"]] <- NULL
       tmp[["input"]] <- NULL
     }
@@ -292,7 +292,7 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
     removed <- rm(list = "tmp")
     ## When saving a rda of the combined tables, it is less likely that one wants a copy of the
     ## entire differential expression analysis produced by all_pairwise().
-    message("Saving de result as ", varname, " to ", rda, ".")
+    mesg("Saving de result as ", varname, " to ", rda, ".")
     saved <- save(list = varname, file = rda, compress = "xz")
     removed <- rm(varname)
   }
@@ -1357,7 +1357,7 @@ map_keepers <- function(keepers, table_names, data) {
     individual_tables <- list()
     for (type in names(data)) {
       if (!is.null(data[[type]])) {
-        message("Checking ", type, " for name ", name, ":", keeper_table_map[[name]][["string"]])
+        mesg("Checking ", type, " for name ", name, ":", keeper_table_map[[name]][["string"]])
         this_table_names <- names(data[[type]][["all_tables"]])
         position <- which(this_table_names %in% keeper_table_map[[name]][["string"]])
         test_name <- names(data[[type]][["all_tables"]])[position]
@@ -1516,7 +1516,7 @@ extract_keepers <- function(extracted, keepers, table_names,
   for (en in seq_len(mapped)) {
     entry <- keeper_table_map[[en]]
     entry_name <- names(keeper_table_map)[en]
-    message("Starting on ", en, ": ", entry_name, ".")
+    mesg("Starting on ", en, ": ", entry_name, ".")
     found_table <- entry[["string"]]
     wanted_numerator <- entry[["wanted_numerator"]]
     wanted_denominator <- entry[["wanted_denominator"]]

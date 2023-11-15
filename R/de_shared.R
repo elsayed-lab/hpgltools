@@ -1423,7 +1423,7 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
       method_comp_name <- glue("{c_name}_vs_{d_name}")
       for (l in seq_len(len)) {
         contr <- names(retlst[[c_name]])[l]
-        message(glue("Comparing {contr} of {c_name} vs. {d_name}."))
+        mesg(glue("Comparing {contr} of {c_name} vs. {d_name}."))
         if (contr %in% extra_eval_names) {
           next
         }
@@ -2061,7 +2061,7 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
                           column = "logFC", fold = "plusminus", p_column = "adj.P.Val",
                           comparison = "orequal") {
   if (is.null(z) && is.null(n) && is.null(lfc) && is.null(p)) {
-    message("No n, z, p, nor lfc provided, setting p to 0.05 and lfc to 1.0.")
+    mesg("No n, z, p, nor lfc provided, setting p to 0.05 and lfc to 1.0.")
     p <- 0.05
     lfc <- 1.0
   }
