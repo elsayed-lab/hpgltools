@@ -242,6 +242,16 @@ setMethod(
     return(expt)
   })
 
+#' Count nmers given a filename instead of genome object.
+#' @param genome filename of the genome in question
+#' @export
+setMethod(
+  "count_nmer", signature = signature(genome = "character"),
+  definition = function(genome, pattern = "ATG", mismatch = 0) {
+    new_genome <- Rsamtools::FaFile(genome)
+    count_nmer(new_genome, pattern = pattern, mismatch = mismatch)
+  })
+
 #' A getter to pull the expression data from an expt.
 #'
 #' @param expt An expt.
@@ -318,12 +328,8 @@ setMethod(
 setMethod(
   "extract_keepers", signature = signature(extracted = "list", keepers = "character"),
   definition = function(extracted, keepers, table_names,
-                        all_coefficients,
-                        limma, edger, ebseq, deseq, basic, noiseq,
-                        adjp, annot_df,
-                        include_deseq, include_edger,
-                        include_ebseq, include_limma,
-                        include_basic, include_noiseq,
+                        all_coefficients, apr,
+                        adjp, annot_df, includes,
                         excludes, padj_type,
                         fancy = FALSE, loess = FALSE,
                         lfc_cutoff = 1.0, p_cutoff = 0.05,
@@ -350,11 +356,8 @@ setMethod(
     }
     extract_keepers(extracted, new_keepers, table_names,
                     all_coefficients,
-                    limma, edger, ebseq, deseq, basic, noiseq,
-                    adjp, annot_df,
-                    include_deseq, include_edger,
-                    include_ebseq, include_limma,
-                    include_basic, include_noiseq,
+                    limma, edger, ebseq, deseq, basic, noiseq, dream,
+                    adjp, annot_df, includes,
                     excludes, padj_type,
                     fancy = FALSE, loess = FALSE,
                     lfc_cutoff = 1.0, p_cutoff = 0.05,
@@ -1016,6 +1019,41 @@ setMethod(
                         nonzero = NULL, coverage = NULL) {
     subset_se(expt, subset = subset, ids = ids,
               nonzero = nonzero, coverage = coverage)
+  })
+
+#' Write an xlsx file given the result of an existing xlsx write.
+#' @export
+setMethod(
+  "write_xlsx", signature = signature(excel = "written_xlsx"),
+  definition = function(data = NULL, wb = NULL, sheet = NULL, excel,
+                        rownames = TRUE, start_row = 1, start_col = 1,
+                        title = NULL, number_format = "0.000", data_table = TRUE,
+                        freeze_first_row = TRUE, freeze_first_column = TRUE,
+                        column_width = "heuristic", ...) {
+    current_wb <- excel[["workbook"]]
+    current_sheet <- excel[["sheet"]]
+    current_row <- excel[["end_row"]]
+    current_col <- excel[["end_col"]]
+    current_excel <- excel[["file"]]
+    if (is.null(sheet)) {
+      sheet <- current_sheet
+      ## You cannot have > 1 frozen first sheet, so if you are reusing the sheet,
+      ## make sure freeze is off
+      freeze_first_row <- FALSE
+      freeze_first_column <- FALSE
+      column_width <- NULL
+      if (is.null(start_row)) {
+        start_row <- current_row + 1
+      }
+      if (is.null(start_col)) {
+        start_col <- 1
+      }
+    }
+    write_xlsx(data = data, wb = current_wb, sheet = sheet, excel = current_excel,
+               rownames = rownames, start_row = start_row, start_col = start_col,
+               title = title, number_format = number_format, data_table = data_table,
+               freeze_first_row = freeze_first_row, freeze_first_column = freeze_first_column,
+               column_width = column_width, ...)
   })
 
 #setMethod(

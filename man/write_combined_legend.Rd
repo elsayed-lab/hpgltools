@@ -9,18 +9,14 @@ write_combined_legend(
   excel_basename,
   plot_dim,
   apr,
-  limma,
-  include_limma,
-  deseq,
-  include_deseq,
-  edger,
-  include_edger,
-  ebseq,
-  include_ebseq,
   basic,
-  include_basic,
+  deseq,
+  dream,
+  ebseq,
+  edger,
+  limma,
   noiseq,
-  include_noiseq,
+  includes,
   padj_type,
   fancy = FALSE
 )
@@ -34,29 +30,29 @@ write_combined_legend(
 
 \item{apr}{The all_pairwise() result.}
 
-\item{limma}{The limma result, which is redundant.}
-
-\item{include_limma}{Include the limma result?}
+\item{basic}{Basic data}
 
 \item{deseq}{The deseq result, which is redundant.}
 
-\item{include_deseq}{Include the deseq result?}
+\item{ebseq}{The ebseq result, which is redundant.}
 
 \item{edger}{The edger result, which is redundant.}
 
-\item{include_edger}{Include the edger result?}
-
-\item{ebseq}{The ebseq result, which is redundant.}
-
-\item{include_ebseq}{Include the ebseq result?}
-
-\item{basic}{Basic data}
-
-\item{include_basic}{Include the basic result?}
+\item{limma}{The limma result, which is redundant.}
 
 \item{padj_type}{P-adjustment employed.}
 
 \item{fancy}{Write fancy plots with the xlsx file?}
+
+\item{include_limma}{Include the limma result?}
+
+\item{include_deseq}{Include the deseq result?}
+
+\item{include_edger}{Include the edger result?}
+
+\item{include_ebseq}{Include the ebseq result?}
+
+\item{include_basic}{Include the basic result?}
 }
 \description{
 Write the legend of an excel file for combine_de_tables()

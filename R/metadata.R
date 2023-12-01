@@ -61,7 +61,8 @@ check_metadata_year <- function(metadata = NULL, column = NULL) {
 #'   saniclean <- extract_metadata(some_goofy_df)
 #' }
 #' @export
-extract_metadata <- function(metadata, id_column = "sampleid", fill = NULL, ...) {
+extract_metadata <- function(metadata, id_column = "sampleid", fill = NULL,
+                             sanitize = TRUE, ...) {
   ## FIXME: Now that this has been yanked into its own function,
   ## Make sure it sets good, standard rownames.
   file <- NULL
@@ -90,13 +91,15 @@ extract_metadata <- function(metadata, id_column = "sampleid", fill = NULL, ...)
     ## sample_definitions <- read_metadata(meta_file)
   }
 
-  colnames(sample_definitions) <- gsub(pattern = "[[:punct:]]",
-                                       replacement = "",
-                                       x = colnames(sample_definitions))
-  id_column <- tolower(id_column)
-  id_column <- gsub(pattern = "[[:punct:]]",
-                    replacement = "",
-                    x = id_column)
+  if (isTRUE(sanitize)) {
+    colnames(sample_definitions) <- gsub(pattern = "[[:punct:]]",
+                                         replacement = "",
+                                         x = colnames(sample_definitions))
+    id_column <- tolower(id_column)
+    id_column <- gsub(pattern = "[[:punct:]]",
+                      replacement = "",
+                      x = id_column)
+  }
   sample_definitions <- as.data.frame(sample_definitions)
   ## Get appropriate row and column names.
   current_rownames <- rownames(sample_definitions)
@@ -145,9 +148,11 @@ extract_metadata <- function(metadata, id_column = "sampleid", fill = NULL, ...)
   ## The various proteomics data I am looking at annoyingly starts with a number
   ## So make.names() prefixes it with X which is ok as far as it goes, but
   ## since it is a 's'amplename, I prefer an 's'.
-  rownames(sample_definitions) <- gsub(pattern = "^X([[:digit:]])",
-                                       replacement = "s\\1",
-                                       x = rownames(sample_definitions))
+  if (isTRUE(sanitize)) {
+    rownames(sample_definitions) <- gsub(pattern = "^X([[:digit:]])",
+                                         replacement = "s\\1",
+                                         x = rownames(sample_definitions))
+  }
 
   sample_columns_to_remove <- NULL
   for (col in seq_along(colnames(sample_definitions))) {
@@ -267,13 +272,15 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
   ## tnseq/rnaseq/assembly/phage/phylogenetics/etc.
   ## For the moment it assumes phage assembly.
   if (is.null(specification)) {
-    specification <- make_assembly_spec()
+    specification <- make_rnaseq_spec()
   } else if (class(specification)[1] == "list") {
     message("Using provided specification")
   } else if (specification == "rnaseq") {
     specification <- make_rnaseq_spec()
   } else if (specification == "dnaseq") {
     specification <- make_dnaseq_spec()
+  } else if (specification == "phage") {
+    specification <- make_assembly_spec()
   }
   if (is.null(new_metadata)) {
     new_metadata <- gsub(x = starting_metadata, pattern = "\\.xlsx$",
@@ -1430,6 +1437,62 @@ dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv"
   return(output_entries)
 }
 
+#' Given a table of meta data, read it in for use by create_expt().
+#'
+#' Reads an experimental design in a few different formats in preparation for
+#' creating an expt.
+#'
+#' @param file Csv/xls file to read.
+#' @param ... Arguments for arglist, used by sep, header and similar
+#'  read_csv/read.table parameters.
+#' @param sep Used by read.csv, the separator
+#' @param header Used by read.csv, is there a header?
+#' @param sheet Used for excel/etc, which sheet to read?
+#' @return Df of metadata.
+#' @seealso [openxlsx] [readODS]
+#' @export
+read_metadata <- function(file, sep = ",", header = TRUE, sheet = 1, comment = "#", ...) {
+  arglist <- list(...)
+  extension <- tools::file_ext(file)
+  if (extension == "csv") {
+    definitions <- read.csv(file = file, comment.char = comment,
+                            sep = sep, header = header)
+  } else if (extension == "tsv") {
+    definitions <- try(readr::read_tsv(file, ...))
+  } else if (extension == "xlsx") {
+    ## xls = loadWorkbook(file, create = FALSE)
+    ## tmp_definitions = readWorksheet(xls, 1)
+    definitions <- try(openxlsx::read.xlsx(xlsxFile = file, sheet = sheet))
+    if (class(definitions)[1] == "try-error") {
+      stop("Unable to read the metadata file: ", file)
+    }
+  } else if (extension == "xls") {
+    ## This is not correct, but it is a start
+    definitions <- readxl::read_excel(path = file, sheet = sheet)
+  } else if (extension == "ods") {
+    definitions <- readODS::read_ods(path = file, sheet = sheet)
+  } else {
+    definitions <- read.table(file = file, sep = sep,
+                              header = header)
+  }
+
+  if (!is.null(comment)) {
+    first_column <- as.data.frame(definitions)[[1]]
+    commented <- grepl(x = definitions[[1]], pattern = "^#")
+    ## keep the un-commented lines.
+    definitions <- definitions[! commented, ]
+  }
+
+  colnames(definitions) <- tolower(gsub(pattern = "[[:punct:]]",
+                                        replacement = "",
+                                        x = colnames(definitions)))
+  ## I recently received a sample sheet with a blank sample ID column name...
+  empty_idx <- colnames(definitions) == ""
+  colnames(definitions)[empty_idx] <- "empty"
+  colnames(definitions) <- make.names(colnames(definitions), unique = TRUE)
+  return(definitions)
+}
+
 #' Adding an alias to sanitize_metadata until I decide how I want to name this.
 #'
 #' @param ... Arguments for sanitize_metadata().
@@ -1813,6 +1876,31 @@ make_rnaseq_spec <- function() {
   )
 
   return(specification)
+}
+
+make_rnaseq_multibioproject <- function() {
+  spec <- list(
+    ## First task performed is pretty much always trimming
+    ## "input_r1" = list(
+    ##    "file" = "{basedir}/{meta[['sampleid']]}/scripts/*trim_*.sh"),
+    ## "input_r2" = list(
+    ##    "file" = "{basedir}/{meta[['sampleid']]}/scripts/*trim_*.sh"),
+    "trimomatic_input" = list(
+      "file" = "{basedir}/*/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.stderr"),
+    "trimomatic_output" = list(
+      "file" = "{basedir}/*/{meta[['sampleid']]}/outputs/*trimomatic/*-trimomatic.stderr"),
+    "trimomatic_ratio" = list(
+      "column" = "trimomatic_percent"),
+    "salmon_stranded" = list(
+      "file" = "{basedir}/*/{meta[['sampleid']]}/outputs/*salmon_{species}/salmon_*.stderr"),
+    "salmon_count_table" = list(
+      "file" = "{basedir}/*/{meta[['sampleid']]}/outputs/*salmon_{species}/quant.sf"),
+    "salmon_mapped" = list(
+      "file" = "{basedir}/*/{meta[['sampleid']]}/outputs/*salmon_{species}/salmon_*.stderr"),
+    "salmon_percent" = list(
+      "file" = "{basedir}/*/{meta[['sampleid']]}/outputs/*salmon_{species}/salmon_*.stderr")
+  )
+  return(spec)
 }
 
 #' Generate a DNASeq specification for use by gather_preprocessing_metadata()

@@ -36,8 +36,8 @@
 extract_de_plots <- function(pairwise, combined = NULL, type = NULL,
                              invert = FALSE, invert_colors = c(),
                              numerator = NULL, denominator = NULL, alpha = 0.4, z = 1.5, n = NULL,
-                             logfc = 1.0, pval = 0.05, found_table = NULL, p_type = "adj",
-                             color_high = NULL, color_low = NULL, loess = FALSE,
+                             logfc = 1.0, pval = 0.05, adjp = TRUE, found_table = NULL,
+                             p_type = "adj", color_high = NULL, color_low = NULL, loess = FALSE,
                              z_lines = FALSE, label = 10, label_column = "hgncsymbol") {
 
   if (is.null(type)) {
@@ -58,7 +58,7 @@ extract_de_plots <- function(pairwise, combined = NULL, type = NULL,
     numerator <- num_den_names[["numerator"]]
     denominator <- num_den_names[["denominator"]]
   }
-  source_info <- get_plot_columns(combined, type, p_type = p_type)
+  source_info <- get_plot_columns(combined, type, p_type = p_type, adjp = adjp)
   input <- source_info[["the_table"]]
   expr_col <- source_info[["expr_col"]]
   fc_col <- source_info[["fc_col"]]
@@ -335,7 +335,7 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
 #' @param data Data structure in which to hunt columns/data.
 #' @param type Type of method used to make the data.
 #' @param p_type Use adjusted p-values?
-get_plot_columns <- function(data, type, p_type = "adj") {
+get_plot_columns <- function(data, type, p_type = "adj", adjp = TRUE) {
   ret <- list(
     "p_col" = "P.Val",
     "fc_col" = "logFC",
@@ -408,8 +408,10 @@ get_plot_columns <- function(data, type, p_type = "adj") {
       expr_col <- "ebseq_mean"
     }
     fc_col <- glue("{type}_logfc")
-    if (p_type == "adj") {
+    if (p_type == "adj" || isTRUE(adjp)) {
       p_col <- glue("{type}_adjp")
+    } else if (p_type == "ihw" || p_type == "all") {
+      p_col <- glue("{type}_adjp_ihw")
     } else {
       p_col <- glue("{type}_p")
     }
@@ -486,6 +488,9 @@ get_plot_columns <- function(data, type, p_type = "adj") {
   } else {
     stop("Something went wrong, we should have only _pairwise and combined here.")
   }
+  mesg("  Using logFC column: ", fc_col, ".")
+  mesg("  Using adjusted p-value column: ", p_col, ".")
+  mesg("  Using expression column: ", expr_col, ".")
 
   possible_tables <- names(all_tables)
   the_table <- NULL
@@ -2017,8 +2022,8 @@ overlap_geneids <- function(overlapping_groups, group) {
 #' @param according_to Choose the lfc column to use.
 #' @param lfc Choose the logFC
 #' @param adjp and the p-value.
-upsetr_all <- function(combined, according_to = "deseq",
-                       lfc = 1.0, adjp = 1.0) {
+upsetr_combined_de <- function(combined, according_to = "deseq",
+                               lfc = 1.0, adjp = 0.05) {
   ud_list <- list()
   for (t in names(combined[["data"]])) {
     t_data <- combined[["data"]][[t]]

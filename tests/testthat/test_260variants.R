@@ -60,7 +60,7 @@ snp_sets <- get_snp_sets(snp_expt, factor = "condition")
 ## I checked the snp sets and they look correct, just in different order.
 ## So, lets use the pData levels to make sure it is determinate.
 name_entries <- levels(pData(snp_expt)[["condition"]])
-expected <- as.character(glue("{name_entries[3]}, {name_entries[4]}")
+expected <- as.character(glue("{name_entries[3]}, {name_entries[4]}"))
 expected <- snp_sets[["set_names"]][["0011"]]
 test_that("Do we get sensible set names from get_snp_sets?", {
   expect_equal(actual, expected)

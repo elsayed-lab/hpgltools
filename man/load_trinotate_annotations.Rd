@@ -4,7 +4,10 @@
 \alias{load_trinotate_annotations}
 \title{Read a csv file from trinotate and make an annotation data frame.}
 \usage{
-load_trinotate_annotations(trinotate = "reference/trinotate.csv")
+load_trinotate_annotations(
+  trinotate = "reference/trinotate.csv",
+  collapse = FALSE
+)
 }
 \arguments{
 \item{trinotate}{CSV of trinotate annotation data.}

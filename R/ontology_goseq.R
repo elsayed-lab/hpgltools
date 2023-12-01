@@ -97,14 +97,14 @@ extract_interesting_goseq <- function(godata, expand_categories = TRUE, pvalue =
                                          "over_represented_pvalue", "qvalue", "term")]
   }
   retlist <- list(
-      "godata" = godata,
-      "interesting" = godata_interesting,
-      "mf_subset" = mf_subset,
-      "bp_subset" = bp_subset,
-      "cc_subset" = cc_subset,
-      "MF" = mf_interesting,
-      "BP" = bp_interesting,
-      "CC" = cc_interesting)
+    "godata" = godata,
+    "interesting" = godata_interesting,
+    "mf_subset" = mf_subset,
+    "bp_subset" = bp_subset,
+    "cc_subset" = cc_subset,
+    "MF" = mf_interesting,
+    "BP" = bp_interesting,
+    "CC" = cc_interesting)
   return(retlist)
 }
 
@@ -293,11 +293,11 @@ goseq_table <- function(df, file = NULL) {
 #' }
 #' @export
 simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRUE,
-                         adjust = 0.1, pvalue = 0.1, plot_title = NULL,
+                         adjust = 0.1, threshold = 0.1, plot_title = NULL,
                          length_keytype = "transcripts", go_keytype = "entrezid",
                          goseq_method = "Wallenius", padjust_method = "BH",
                          expand_categories = TRUE, excel = NULL, enrich = TRUE,
-                         minimum_interesting = 1,
+                         minimum_interesting = 2, min_xref = 40,
                          ...) {
   arglist <- list(...)
 
@@ -349,7 +349,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
   if (class(length_db)[[1]] == "character")  {
     ## Then this should be either a gff file or species name.
     if (grepl(pattern = "\\.gff", x = length_db, perl = TRUE) ||
-        grepl(pattern = "\\.gtf", x = length_db, perl = TRUE)) {
+          grepl(pattern = "\\.gtf", x = length_db, perl = TRUE)) {
       ## gff file
       txdb <- GenomicFeatures::makeTxDbFromGFF(length_db)
       metadf <- extract_lengths(db = txdb, gene_list = gene_list)
@@ -362,7 +362,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
   } else if (class(length_db)[[1]] == "OrgDb") {
     stop("OrgDb objects contain links to other databases, but no gene lengths.")
   } else if (class(length_db)[[1]] == "OrganismDb" ||
-             class(length_db)[[1]] == "AnnotationDbi") {
+               class(length_db)[[1]] == "AnnotationDbi") {
     ##metadf <- extract_lengths(db = length_db, gene_list = gene_list)
     metadf <- sm(extract_lengths(db = length_db, gene_list = gene_list, ...))
   } else if (class(length_db)[[1]] == "TxDb") {
@@ -387,7 +387,7 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
   if (class(go_db)[[1]] == "character") {
     ## A text table or species name
     if (grepl(pattern = "\\.csv", x = go_db, perl = TRUE) ||
-        grepl(pattern = "\\.tab", x = go_db, perl = TRUE)) {
+          grepl(pattern = "\\.tab", x = go_db, perl = TRUE)) {
       ## table
       godf <- read.table(go_db, ...)
       colnames(godf) <- c("ID", "GO")
@@ -423,6 +423,10 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
   godf[["ID"]] <- make.names(godf[["ID"]])
   metadf[["ID"]] <- make.names(metadf[["ID"]])
   de_genelist[["ID"]] <- make.names(de_genelist[["ID"]])
+  ## Adding num_genes as an element of the return list to
+  ## make returns across methods more consistent.
+  num_genes <- length(de_genelist[["ID"]])
+
   ## Ok, now I have a df of GOids, all gene lengths, and DE gene list. That is
   ## everything I am supposed to need for goseq.
 
@@ -431,6 +435,14 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
   meta_xref <- de_genelist[["ID"]] %in% metadf[["ID"]]
   message("Found ", sum(id_xref), " go_db genes and ", sum(meta_xref),
           " length_db genes out of ", nrow(de_genelist), ".")
+  if (sum(id_xref) < min_xref) {
+    mesg("There are too few IDs shared for a meaningful analysis.")
+    return(NULL)
+  }
+  if (sum(meta_xref) < min_xref) {
+    mesg("There are too few IDs shared for a meaningful analysis.")
+    return(NULL)
+  }
   ## So lets merge the de genes and gene lengths to ensure that they are
   ## consistent. Then make the vectors expected by goseq.
   merged_ids_lengths <- metadf
@@ -440,16 +452,16 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
   merged_ids_lengths <- merge(merged_ids_lengths,
                               de_genelist, by.x = "ID", by.y = "ID", all.x = TRUE)
   merged_ids_lengths[["length"]] <- suppressWarnings(
-      as.numeric(merged_ids_lengths[["length"]]))
+    as.numeric(merged_ids_lengths[["length"]]))
   merged_ids_lengths[is.na(merged_ids_lengths)] <- 0
   ## Not casing the next lines as character/numeric causes weird errors like 'names' attribute
   ## must be the same length as the vector
   de_vector <- as.vector(as.numeric(merged_ids_lengths[["DE"]]))
   names(de_vector) <- make.names(as.character(
-      merged_ids_lengths[["ID"]]), unique = TRUE)
+    merged_ids_lengths[["ID"]]), unique = TRUE)
   length_vector <- as.vector(as.numeric(merged_ids_lengths[["length"]]))
   names(length_vector) <- make.names(as.character(
-      merged_ids_lengths[["ID"]]), unique = TRUE)
+    merged_ids_lengths[["ID"]]), unique = TRUE)
 
   pwf_plot <- NULL
   tmp_file <- tmpmd5file(pattern = "goseq", fileext = ".png")
@@ -466,6 +478,8 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
 
   godata <- sm(goseq::goseq(pwf, gene2cat = godf, use_genes_without_cat = TRUE,
                             method = goseq_method))
+  godata[["score"]] <- godata[["numDEInCat"]] / godata[["numInCat"]]
+
   ## I want to limit the y-axis, but I think this is not the best way.
   goseq_p <- try(plot_histogram(godata[["over_represented_pvalue"]], bins = 50))
   goseq_p_nearzero <- table(goseq_p[["data"]])[[1]]
@@ -474,11 +488,10 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
     ggplot2::scale_y_continuous(limits = c(0, goseq_y_limit))
   godata[["qvalue"]] <- stats::p.adjust(godata[["over_represented_pvalue"]],
                                         method = padjust_method)
-
   ## Subset the result for 'interesting' categories, which is defined
   ## simply as the set of categories with full annotations.
   interesting <- extract_interesting_goseq(
-    godata, expand_categories = expand_categories, pvalue = pvalue, adjust = adjust,
+    godata, expand_categories = expand_categories, pvalue = threshold, adjust = adjust,
     minimum_interesting = minimum_interesting, padjust_method = padjust_method)
 
   mesg("simple_goseq(): Making pvalue plots for the ontologies.")
@@ -486,36 +499,38 @@ simple_goseq <- function(sig_genes, go_db = NULL, length_db = NULL, doplot = TRU
                                   x_column = "num_cat",
                                   ...)
   pval_plots <- list(
-      "bpp_plot_over" = pvalue_plots[["bpp_plot_over"]],
-      "mfp_plot_over" = pvalue_plots[["mfp_plot_over"]],
-      "ccp_plot_over" = pvalue_plots[["ccp_plot_over"]])
+    "bpp_plot_over" = pvalue_plots[["bpp_plot_over"]],
+    "mfp_plot_over" = pvalue_plots[["mfp_plot_over"]],
+    "ccp_plot_over" = pvalue_plots[["ccp_plot_over"]])
 
   retlist <- list(
-      "input" = sig_genes,
-      "pwf" = pwf,
-      "pwf_plot" = pwf_plot,
-      "all_data" = interesting[["godata"]],
-      "go_db" = godf,
-      "godata" = godata,
-      "pvalue_histogram" = goseq_p,
-      "godata_interesting" = interesting[["interesting"]],
-      "mf_interesting" = interesting[["MF"]],
-      "bp_interesting" = interesting[["BP"]],
-      "cc_interesting" = interesting[["CC"]],
-      "goadjust_method" = goseq_method,
-      "adjust_method" = padjust_method,
-      "mf_subset" = interesting[["mf_subset"]],
-      "bp_subset" = interesting[["bp_subset"]],
-      "cc_subset" = interesting[["cc_subset"]],
-      "pvalue_plots" = pval_plots)
+    "input" = sig_genes,
+    "num_genes" = num_genes,
+    "threshold" = threshold,
+    "pwf" = pwf,
+    "pwf_plot" = pwf_plot,
+    "all_data" = interesting[["godata"]],
+    "go_db" = godf,
+    "godata" = godata,
+    "pvalue_histogram" = goseq_p,
+    "godata_interesting" = interesting[["interesting"]],
+    "mf_interesting" = interesting[["MF"]],
+    "bp_interesting" = interesting[["BP"]],
+    "cc_interesting" = interesting[["CC"]],
+    "goadjust_method" = goseq_method,
+    "adjust_method" = padjust_method,
+    "mf_subset" = interesting[["mf_subset"]],
+    "bp_subset" = interesting[["bp_subset"]],
+    "cc_subset" = interesting[["cc_subset"]],
+    "pvalue_plots" = pval_plots)
   class(retlist) <- c("goseq_result", "list")
   if (isTRUE(enrich)) {
     retlist[["mf_enrich"]] <- goseq2enrich(
-      retlist, ontology = "MF", cutoff = pvalue, padjust_method = padjust_method)
+      retlist, ontology = "MF", cutoff = threshold, padjust_method = padjust_method)
     retlist[["bp_enrich"]] <- goseq2enrich(
-      retlist, ontology = "BP", cutoff = pvalue, padjust_method = padjust_method)
+      retlist, ontology = "BP", cutoff = threshold, padjust_method = padjust_method)
     retlist[["cc_enrich"]] <- goseq2enrich(
-      retlist, ontology = "CC", cutoff = pvalue, padjust_method = padjust_method)
+      retlist, ontology = "CC", cutoff = threshold, padjust_method = padjust_method)
   }
   if (!is.null(excel)) {
     excel_result <- write_goseq_data(retlist, excel = excel, ...)

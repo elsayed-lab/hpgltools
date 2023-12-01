@@ -36,5 +36,6 @@ from right to left.}
 List containing a couple of plots, one interactive, one gg.
 }
 \description{
-This provides two implementations of a sankey plot, one interactive and one using ggplot2.
+This provides two implementations of a sankey plot, one interactive
+and one using ggplot2.
 }

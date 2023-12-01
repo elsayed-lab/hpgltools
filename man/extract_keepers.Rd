@@ -9,20 +9,10 @@ extract_keepers(
   keepers,
   table_names,
   all_coefficients,
-  limma,
-  edger,
-  ebseq,
-  deseq,
-  basic,
-  noiseq,
+  apr,
   adjp,
   annot_df,
-  include_deseq,
-  include_edger,
-  include_ebseq,
-  include_limma,
-  include_basic,
-  include_noiseq,
+  includes,
   excludes,
   padj_type,
   fancy = FALSE,
@@ -50,29 +40,9 @@ extract_keepers(
 \item{all_coefficients}{The set of all experimental conditions in the
 experimental metadata.}
 
-\item{limma}{The limma data from all_pairwise().}
-
-\item{edger}{The edger data from all_pairwise().}
-
-\item{ebseq}{The ebseq data from all_pairwise().}
-
-\item{deseq}{The deseq data from all_pairwise().}
-
-\item{basic}{The basic data from all_pairwise().}
-
 \item{adjp}{Pull out the adjusted p-values from the data?}
 
 \item{annot_df}{What annotations should be added to the table?}
-
-\item{include_deseq}{Whether or not to include the deseq data.}
-
-\item{include_edger}{Whether or not to include the edger data.}
-
-\item{include_ebseq}{Whether or not to include the ebseq data.}
-
-\item{include_limma}{Whether or not to include the limma data.}
-
-\item{include_basic}{Whether or not to include the basic data.}
 
 \item{excludes}{Set of genes to exclude.}
 
@@ -106,6 +76,26 @@ coefficient plot.}
 \item{label}{When not NULL, label this many genes.}
 
 \item{label_column}{Try using this column for labeling genes.}
+
+\item{limma}{The limma data from all_pairwise().}
+
+\item{edger}{The edger data from all_pairwise().}
+
+\item{ebseq}{The ebseq data from all_pairwise().}
+
+\item{deseq}{The deseq data from all_pairwise().}
+
+\item{basic}{The basic data from all_pairwise().}
+
+\item{include_deseq}{Whether or not to include the deseq data.}
+
+\item{include_edger}{Whether or not to include the edger data.}
+
+\item{include_ebseq}{Whether or not to include the ebseq data.}
+
+\item{include_limma}{Whether or not to include the limma data.}
+
+\item{include_basic}{Whether or not to include the basic data.}
 }
 \description{
 This is the most interesting of the extract_keeper functions.  It must check

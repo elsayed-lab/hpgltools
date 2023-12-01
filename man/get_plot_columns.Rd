@@ -6,7 +6,7 @@
 are wanted to plot a MA/Volcano from any one of a diverse set of possible
 input types.}
 \usage{
-get_plot_columns(data, type, p_type = "adj")
+get_plot_columns(data, type, p_type = "adj", adjp = TRUE)
 }
 \arguments{
 \item{data}{Data structure in which to hunt columns/data.}

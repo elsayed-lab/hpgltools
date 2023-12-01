@@ -192,7 +192,9 @@ test_that("choose_dataset provides some expected output?", {
 ## we did test_condbatch, test_cond, test_sva
 keepers <- list("nosig" = c("wt0", "mut0"),
                 "somesig" = c("wt30", "wt0"))
-test_condbatch_combined <- combine_de_tables(test_sva, keepers = keepers, excel = "testme.xlsx")
+test_condbatch_combined <- combine_de_tables(test_sva,
+                                             keepers = keepers,
+                                             excel = "testme.xlsx")
 ## For the life of me I cannot find where this warning is coming from.
 ## brought out the source of these warnings when I run 'make test'
 ## 24

@@ -1,6 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
+library(hpgldata)
 context("250proteomics.R")
 
 ## Available functions:  add_conditional_nas(), extract_mayu_pps_fdr(),
@@ -62,6 +63,7 @@ untarred <- utils::untar(tarfile = system.file("share/mtb_prot/sb_prot.tar.xz",
 ## plotting, metadata is a copy of the metadata, and sample_data is the fun.
 pyprophet_fun <- extract_pyprophet_data(metadata = meta,
                                         pyprophet_column = "diascored")
+
 test_that("Did extract_pyprophet_data have failures?", {
   expect_equal(NULL, pyprophet_fun[["failed"]])
 })

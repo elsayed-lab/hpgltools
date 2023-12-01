@@ -1,5 +1,219 @@
 ## Some functions to help with classification
 
+#' Rerun a model generator and classifier on a training/testing set multiple times.
+#'
+#' @param full_df The matrix of preProcessed() data.
+#' @param interesting_meta dataframe of metadata of potential interest.
+#' @param outcome_column metadata column of interest.
+#' @param p The proportion of training/testing
+#' @param list How to return the partitions.
+#' @param formula_string Optional formula string, otherwise genrated on thee fly.
+#' @param run_times How many times to repeat this process
+#' @param method Modelling method to employ with caret.
+#' @param sampler Sampler to employ, bootstrap or cv right now.
+#' @param sample_number How many times to use the sampler
+#' @param tuner Tuning arguments for the method above.
+#' @param ... Others, currently unused I think
+classify_n_times <- function(full_df, interesting_meta, outcome_column = "finaloutcome",
+                             p = 0.4, list = FALSE, formula_string = NULL,
+                             run_times = 10, method = "xgbTree",
+                             sampler = "cv", sample_number = 10,
+                             tuner = NULL, ...) {
+  ## Note, the function declaration assumes outcome_factor is a single element character,
+  ## but in my actual document it is literally a factor of 1 element
+  ## per sample, e.g. 109 cures and 57 fails.  This should be
+  ## addressed by create_partitions!()
+
+  parameter_lst <- list(
+    "proportion_trained" = p,
+    "method_used" = method,
+    "model_iterations" = run_times,
+    "outcome_column" = outcome_column,
+    "sampler_used" = sampler,
+    "sampler_iterations" = sample_number)
+
+  if (! outcome_column %in% colnames(interesting_meta)) {
+    stop("The outcome column: ", outcome_column, " is not in the metadata.")
+  }
+  outcome_factor <- as.factor(interesting_meta[[outcome_column]])
+  partitions <- create_partitions(full_df, interesting_meta, outcome_factor = outcome_factor,
+                                  p = p, list = list, times = run_times)
+
+  if (is.null(formula_string)) {
+    formula_string <- "outcome ~ ."
+  }
+
+  train_method <- NULL
+  if (sampler == "cv") {
+    sampling_method <- trainControl(method = "cv", number = sample_number)
+    parameter_lst[["return_resample"]] <- "unused"
+  } else if (sampler == "bootstrap") {
+    sampling_method <- trainControl(method = "boot", number = sample_number,
+                                    returnResamp = "all")
+    parameter_lst[["return_resample"]] <- "all"
+  } else {
+    sampling_method <- sampler
+  }
+
+  trainer <- NULL
+  train_args <- list()
+  if (method == "xgbTree") {
+    if (is.null(tuner)) {
+      tuner <- data.frame(
+        "nrounds" = 200,
+        "eta" = c(0.05, 0.1, 0.3),
+        "max_depth" = 4,
+        "gamma" = 0,
+        "colsample_bytree" = 1,
+        "subsample" = 0.5,
+        "min_child_weight" = 1)
+    }
+  } else if (method == "ranger") {
+    if (is.null(tuner)) {
+      tuner <- data.frame(
+          mtry = 200,
+          min.node.size = 1,
+          splitrule = "gini")
+      }
+    train_args <- list(
+      "importance" = "permutation")
+    parameter_lst[["importance"]] <- "permutation"
+  } else if (method == "glmnet") {
+    if (is.null(tuner)) {
+      tuner <- data.frame(
+        alpha = 0.5,
+        lambda = seq(0.1, 0.7, 0.05))
+      train_args <- list(
+        "family" = "binomial",
+        "importance" = "permutation",
+        "verbose" = TRUE)
+      parameter_lst <- append(parameter_lst, train_args)
+    }
+  } else if (method == "knn") {
+    if (is.null(tuner)) {
+      tuner <- data.frame("k" = 1:10)
+    }
+  } else {
+    stop("I do not yet know this method.")
+  }
+
+  for (key in names(tuner)) {
+    new_key <- paste0("tuner_", key)
+    if (length(tuner[[key]]) > 1) {
+      parameter_lst[[new_key]] <- toString(tuner[[key]])
+    } else {
+      parameter_lst[[new_key]] <- tuner[[key]]
+    }
+  }
+
+  ## I learned something important when setting this up,
+  ## the trainer I am using has parallelism built in, so if I try and use doParallel,
+  ## badness is likely to ensue.
+
+  ## 20231129: FIXME
+  ## !!!! Another _VERY_IMPORTANT_ note: do _NOT_ set verbose=TRUE!!!!!
+  ## For reasons passing all understanding, it causes the trainer to fail.
+
+  all_results <- list()
+  test_eval_df <- data.frame()
+  train_eval_df <- data.frame()
+  for (d in seq_len(sample_number)) {
+    message("Working on iteration: ", d, ".")
+    ## This might require .packages = c("hpgltools" ...)
+    train_all <- partitions[["trainers"]][[d]]
+    train_df <- partitions[["trainers_stripped"]][[d]]
+    train_idx <- partitions[["train_idx"]][[d]]
+    train_outcomes <- partitions[["trainer_outcomes"]][[d]]
+    test_df <- partitions[["testers"]][[d]]
+    test_idx <- partitions[["test_idx"]][[d]]
+    test_outcomes <- partitions[["tester_outcomes"]][[d]]
+
+    all_train_args <- list(
+      "form" = as.formula("outcome ~ ."),
+      "data" = train_all,
+      "method" = method,
+      "trControl" = sampling_method,
+      "tuneGrid" = tuner)
+    for (a in seq_along(train_args)) {
+      name <- names(train_args)[a]
+      value <- train_args[[a]]
+      all_train_args[[name]] <- value
+    }
+
+    trainer <- BiocGenerics::do.call(what = caret::train, args = all_train_args)
+    trained <- predict(trainer, train_df)
+    message("Evaluating predictions.")
+    trained_eval <- self_evaluate_model(trained, partitions,
+                                        which = d, type = "train")
+    tested <- predict(trainer, test_df)
+    tested_eval <- self_evaluate_model(tested, partitions,
+                                       which = d, type = "test")
+    this_result <- list(
+      "trainer" = trainer,
+      "trained" = trained,
+      "trained_eval" = trained_eval,
+      "tested" = tested,
+      "tested_eval" = tested_eval)
+    all_results[[d]] <- this_result
+  }
+
+  train_eval_df <- data.frame()
+  test_eval_df <- data.frame()
+  for (i in seq_along(all_results)) {
+    train_eval <- all_results[[i]][["trained_eval"]]
+    train_confused <- train_eval[["confusion_mtrx"]]
+    ## Lets assume cure/fail for these categories.
+    ## When the reference is cure and prediction is cure.
+    true_positive <- train_confused[["table"]][1, 1]
+    ## reference is fail and prediction is fail.
+    true_negative <- train_confused[["table"]][2, 2]
+    ## reference is fail and prediction is cure.
+    false_positive <- train_confused[["table"]][1, 2]
+    ## reference is cure and prediction is fail.
+    false_negative <- train_confused[["table"]][2, 1]
+    train_roc <- train_eval[["roc"]]
+    truefalse <- c(true_positive, true_negative, false_positive, false_negative)
+    names(truefalse) <- c("true_positive", "true_negative", "false_positive", "false_negative")
+    train_numbers <- c(truefalse, train_confused[["overall"]], train_confused[["byClass"]])
+    train_numbers <- c(train_numbers, train_eval[["auc"]])
+    last <- length(train_numbers)
+    names(train_numbers)[last] <- "auc"
+    train_eval_df <- rbind(train_eval_df, train_numbers)
+    colnames(train_eval_df) <- names(train_numbers)
+
+    test_eval <- all_results[[i]][["tested_eval"]]
+    test_confused <- test_eval[["confusion_mtrx"]]
+    ## Lets assume cure/fail for these categories.
+    ## When the reference is cure and prediction is cure.
+    true_positive <- test_confused[["table"]][1, 1]
+    ## reference is fail and prediction is fail.
+    true_negative <- test_confused[["table"]][2, 2]
+    ## reference is fail and prediction is cure.
+    false_positive <- test_confused[["table"]][1, 2]
+    ## reference is cure and prediction is fail.
+    false_negative <- test_confused[["table"]][2, 1]
+    test_roc <- test_eval[["roc"]]
+    truefalse <- c(true_positive, true_negative, false_positive, false_negative)
+    names(truefalse) <- c("true_positive", "true_negative", "false_positive", "false_negative")
+    test_numbers <- c(truefalse, test_confused[["overall"]], test_confused[["byClass"]])
+    test_numbers <- c(test_numbers, test_eval[["auc"]])
+    last <- length(test_numbers)
+    names(test_numbers)[last] <- "auc"
+    test_eval_df <- rbind(test_eval_df, test_numbers)
+    colnames(test_eval_df) <- names(test_numbers)
+  }
+
+  parameter_df <- t(as.data.frame(parameter_lst))
+  colnames(parameter_df) <- c("Parameters Used")
+  retlist <- list(
+    "parameters" = parameter_df,
+    "train_eval_summary" = train_eval_df,
+    "test_eval_summary" = test_eval_df,
+    "all_results" = all_results,
+    "tuner" = tuner)
+  return(retlist)
+}
+
 #' Use createDataPartition to create test/train sets and massage them a little.
 #'
 #' This will also do some massaging of the data to make it easier to work with for
@@ -141,18 +355,18 @@ generate_nn_groups <- function(mtrx, resolution = 1, k = 10, type = "snn",
 #' @param which Choose a paritiont to evaluate
 #' @param type Use the training or testing data?
 #' @export
-self_evaluate_model <- function(predictions, datasets, which = 1, type = "train") {
+self_evaluate_model <- function(predictions, datasets, which_column = 1, type = "train") {
   stripped <- data.frame()
   idx <- numeric()
   outcomes <- factor()
   if (type == "train") {
-    stripped <- datasets[["trainers_stripped"]][[which]]
-    idx <- datasets[["train_idx"]][[which]]
-    outcomes <- datasets[["trainer_outcomes"]][[which]]
+    stripped <- datasets[["trainers_stripped"]][[which_column]]
+    idx <- datasets[["train_idx"]][[which_column]]
+    outcomes <- datasets[["trainer_outcomes"]][[which_column]]
   } else {
-    stripped <- datasets[["testers_stripped"]][[which]]
-    idx <- datasets[["test_idx"]][[which]]
-    outcomes <- datasets[["tester_outcomes"]][[which]]
+    stripped <- datasets[["testers_stripped"]][[which_column]]
+    idx <- datasets[["test_idx"]][[which_column]]
+    outcomes <- datasets[["tester_outcomes"]][[which_column]]
   }
 
   ## This assumes the input is a matrix of class probabilities.  First convert that to

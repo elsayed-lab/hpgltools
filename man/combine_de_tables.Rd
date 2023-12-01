@@ -22,7 +22,7 @@ combine_de_tables(
   loess = FALSE,
   plot_dim = 6,
   compare_plots = TRUE,
-  padj_type = "ihw",
+  padj_type = "fdr",
   fancy = FALSE,
   lfc_cutoff = 1,
   p_cutoff = 0.05,

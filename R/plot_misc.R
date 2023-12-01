@@ -110,7 +110,8 @@ pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
 
 #' Plot metadata factors as a sankey diagram.
 #'
-#' This provides two implementations of a sankey plot, one interactive and one using ggplot2.
+#' This provides two implementations of a sankey plot, one interactive
+#' and one using ggplot2.
 #'
 #' @param design Metadata from which to extract the categories/numbers.
 #' @param factors Factors/columns in the metadata to count and plot.
@@ -129,7 +130,6 @@ plot_meta_sankey <- function(design, factors = c("condition", "batch"), fill = "
                              font_size = 18, node_width = 30,
                              color_choices = NULL,
                              drill_down = TRUE) {
-  warning("FIXME: I separated the interactive and ggplot functions, but haven't figured out what need to be kept.")
   found <- factors %in% colnames(design)
   if (sum(found) < length(factors)) {
     missing <- factors[!found]

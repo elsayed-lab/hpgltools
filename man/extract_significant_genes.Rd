@@ -29,6 +29,7 @@ extract_significant_genes(
   phenotype_name = "phenotype",
   set_name = "set",
   current_id = "ENSEMBL",
+  comparison = "orequal",
   required_id = "ENTREZID",
   min_gmt_genes = 10,
   ...

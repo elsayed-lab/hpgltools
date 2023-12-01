@@ -76,9 +76,10 @@ init_xlsx <- function(excel = "excel/something.xlsx") {
   }
   wb <- openxlsx::createWorkbook(creator = "hpgltools")
   retlist <- list(
-      "dirname" = excel_dir,
-      "basename" = excel_basename,
-      "wb" = wb)
+    "dirname" = excel_dir,
+    "basename" = excel_basename,
+    "wb" = wb)
+  class(retlist) <- "initialized_xlsx"
   return(retlist)
 }
 
@@ -222,7 +223,8 @@ sanitize_number_encoding <- function(numbers, df = NULL) {
 write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL,
                        rownames = TRUE, start_row = 1, start_col = 1,
                        title = NULL, number_format = "0.000", data_table = TRUE,
-                       freeze_first_row = TRUE, freeze_first_column = TRUE, ...) {
+                       freeze_first_row = TRUE, freeze_first_column = TRUE,
+                       column_width = "heuristic", ...) {
   arglist <- list(...)
   if (is.null(data)) {
     return(NULL)
@@ -243,9 +245,9 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL,
         freeze_first_row = freeze_first_row)
       print(names(written[["workbook"]]))
     }
-
     return(written)
   }
+
   if ("matrix" %in% class(data) || "character" %in% class(data)) {
     data <- as.data.frame(data, stringsAsFactors = FALSE)
   }
@@ -282,9 +284,9 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL,
     ## glue'd() strings are not just class character, but their own thing,
     ## which means that just dumping them in this situation leads to unexpected results.
     xl_result <- openxlsx::writeData(
-                               wb = wb, sheet = sheet,
-                               x = as.character(title),
-                               startCol = new_col, startRow = new_row)
+      wb = wb, sheet = sheet,
+      x = as.character(title),
+      startCol = new_col, startRow = new_row)
     new_row <- new_row + 1
   }
 
@@ -323,18 +325,17 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL,
                               pattern = "\\.", replacement = "_")
   written <- NULL
   if (isTRUE(data_table)) {
-  written <- try(openxlsx::writeDataTable(
-    wb = wb, sheet = sheet, x = final_data,
-    startCol = new_col, startRow = new_row, tableStyle = table_style,
-    rowNames = rownames, colNames = TRUE))
+    written <- try(openxlsx::writeDataTable(
+      wb = wb, sheet = sheet, x = final_data,
+      startCol = new_col, startRow = new_row, tableStyle = table_style,
+      rowNames = rownames, colNames = TRUE))
   } else {
-  written <- try(openxlsx::writeData(
-    wb = wb, sheet = sheet, x = final_data,
-    startCol = new_col, startRow = new_row,
-    rowNames = rownames, colNames = TRUE))
+    written <- try(openxlsx::writeData(
+      wb = wb, sheet = sheet, x = final_data,
+      startCol = new_col, startRow = new_row,
+      rowNames = rownames, colNames = TRUE))
   }
   new_row <- new_row + nrow(final_data) + 2
-
   ## Set the column lengths, hard set the first to 20,
   ## then try to set it to auto if the length is not too long.
   for (data_col in seq_len(ncol(final_data))) {
@@ -354,18 +355,25 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL,
     ## Keep in mind that if we are going to set the column widths
     ## and we set a start_col, then the actual column we will be changing is start_col + data_col.
     current_col <- start_col + data_col - 1  ## start_col is 1 indexed.
-    if (data_col == 1) {
-      openxlsx::setColWidths(wb, sheet, current_col, 20)
-    } else if (test_max > 30) {
-      openxlsx::setColWidths(wb, sheet, current_col, 30)
+    if (is.null(column_width)) {
+      ## I am not sure if I want to do anything here yet.
+      ## mesg("Column widths already set, if you set them now there will be problems.")
+      funkytown <- NULL
+    } else if (column_width == "heuristic") {
+      if (data_col == 1) {
+        openxlsx::setColWidths(wb, sheet, current_col, 20)
+      } else if (test_max > 30) {
+        openxlsx::setColWidths(wb, sheet, current_col, 30)
+      } else {
+        openxlsx::setColWidths(wb, sheet, current_col, "auto")
+      }
     } else {
+      mesg("Setting every column to 'auto'.")
       openxlsx::setColWidths(wb, sheet, current_col, "auto")
     }
   }
   end_col <- new_col + ncol(final_data) + 1
-
   new_options <- options(old_options)
-
   frozen <- NULL
   if (isTRUE(freeze_first_row) && isTRUE(freeze_first_column)) {
     frozen <- openxlsx::freezePane(wb, sheet, firstCol = TRUE, firstRow = TRUE)
@@ -376,18 +384,21 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL,
   }
 
   ret <- list(
-      "workbook" = wb,
-      "sheet" = sheet,
-      "frozen" = frozen,
-      "end_row" = new_row,
-      "end_col" = end_col)
+    "workbook" = wb,
+    "sheet" = sheet,
+    "frozen" = frozen,
+    "end_row" = new_row,
+    "end_col" = end_col,
+    "file" = excel)
   if (!is.null(excel)) {
     mesg("Saving to: ", excel)
     save_result <- openxlsx::saveWorkbook(wb, excel, overwrite = TRUE)
     ret[["save_result"]] <- save_result
   }
+  class(ret) <- "written_xlsx"
   return(ret)
 }
+setGeneric("write_xlsx")
 
 #' An attempt to improve the behaivor of openxlsx's plot inserter.
 #'
@@ -422,9 +433,9 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL,
 #' }
 #' @export
 xlsx_insert_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6, res = 90,
-                          plotname = "plot", savedir = "saved_plots", fancy = FALSE,
-                          fancy_type = "pdf", start_row = 1, start_col = 1,
-                          file_type = "png", units = "in", ...) {
+                            plotname = "plot", savedir = "saved_plots", fancy = FALSE,
+                            fancy_type = "pdf", start_row = 1, start_col = 1,
+                            file_type = "png", units = "in", ...) {
   arglist <- list(...)
   if (is.null(a_plot)) {
     return(NULL)
@@ -516,10 +527,10 @@ xlsx_insert_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6,
     message("The png file name did not exist: ", png_name)
   }
   ret <- list(
-      "filename" = png_name,
-      "png_fh" = png_ret,
-      "png_print" = print_ret,
-      "openxlsx" = insert_ret)
+    "filename" = png_name,
+    "png_fh" = png_ret,
+    "png_print" = print_ret,
+    "openxlsx" = insert_ret)
   if (isTRUE(fancy)) {
     ret[["fancy_print"]] <- fancy_ret
   }

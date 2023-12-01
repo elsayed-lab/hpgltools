@@ -23,6 +23,7 @@ combine_extracted_plots(
   p_type = "all",
   plot_colors = NULL,
   fancy = FALSE,
+  adjp = TRUE,
   do_inverse = FALSE,
   invert_colors = FALSE,
   z = 1.5,

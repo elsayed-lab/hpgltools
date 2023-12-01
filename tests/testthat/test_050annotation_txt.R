@@ -17,9 +17,13 @@ test_that("Do we get expected trinotate data?", {
 })
 
 ## FIXME: The creation of this go table is not quite right I think.
-testing <- load_trinotate_go(trinotate = tmp)
+## I added some options to make this flexible over different versions of trinotate
+testing <- load_trinotate_go(trinotate = tmp, blast2go_column = "gene_ontology_blast",
+                             pfam_column = "gene_ontology_pfam")
+## In addition, it now collapses isoforms of one putative gene and so
+## drops the number of rows significantly.
 ## expecteed <- c(136152, 5)
-expected <- c(112023, 5)
+expected <- c(13871, 5)
 actual <- dim(testing[["go_data"]])
 test_that("Do we get expected trinotate GO data?", {
   expect_equal(expected[1], actual[1])

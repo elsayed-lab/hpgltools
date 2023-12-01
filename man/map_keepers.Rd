@@ -4,7 +4,7 @@
 \alias{map_keepers}
 \title{Find the correct tables given a set of definitions of desired tables, numerators/denominators.}
 \usage{
-map_keepers(keepers, table_names, data)
+map_keepers(keepers, table_names, datum)
 }
 \arguments{
 \item{keepers}{List/scalar representation of desired tables.}

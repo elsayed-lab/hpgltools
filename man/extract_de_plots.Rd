@@ -17,6 +17,7 @@ extract_de_plots(
   n = NULL,
   logfc = 1,
   pval = 0.05,
+  adjp = TRUE,
   found_table = NULL,
   p_type = "adj",
   color_high = NULL,

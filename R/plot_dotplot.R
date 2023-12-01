@@ -355,7 +355,7 @@ plot_sm <- function(data, design = NULL, colors = NULL, method = "pearson", plot
     sm_plot <- ggplot(sm_df,
                       aes(x = .data[["num"]], y = .data[["sm"]],
                           shape = .data[["batch"]], fill = .data[["condition"]])) +
-      ggplot2::geom_hline(colour = "red", yintercept = ylimit, size = 1) +
+      ggplot2::geom_hline(colour = "red", yintercept = ylimit, linewidth = 1) +
       ggplot2::geom_point(size = dot_size,
                           aes(shape = .data[["batch"]],
                               colour = .data[["condition"]],
@@ -390,7 +390,7 @@ plot_sm <- function(data, design = NULL, colors = NULL, method = "pearson", plot
       sm_df,
       aes(x = .data[["sample"]], y = .data[["sm"]],
           shape = .data[["batch"]], fill = .data[["condition"]])) +
-      ggplot2::geom_hline(color = "red", yintercept = ylimit, size = 1) +
+      ggplot2::geom_hline(color = "red", yintercept = ylimit, linewidth = 1) +
       ggplot2::geom_dotplot(binwidth = my_binwidth,
                             binaxis = "y",
                             stackdir = "center",

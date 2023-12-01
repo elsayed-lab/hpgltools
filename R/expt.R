@@ -296,10 +296,10 @@ concatenate_runs <- function(expt, column = "replicate") {
 #' @export
 create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
                         sanitize_rownames = TRUE, sample_colors = NULL, title = NULL,
-                        notes = NULL, include_type = "all",
+                        notes = NULL, include_type = "all", countdir = NULL,
                         include_gff = NULL, file_column = "file", id_column = NULL,
                         savefile = NULL, low_files = FALSE, handle_na = "drop",
-                        researcher = "elsayed", study_name = NULL,
+                        researcher = "elsayed", study_name = NULL, file_type = NULL,
                         annotation_name = "org.Hs.eg.db", tx_gene_map = NULL, ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
 
@@ -409,7 +409,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
     filenames <- as.character(sample_definitions[[file_column]])
     sample_ids <- rownames(sample_definitions)
     count_data <- read_counts_expt(sample_ids, filenames, countdir = countdir,
-                                   tx_gene_map = tx_gene_map,
+                                   tx_gene_map = tx_gene_map, file_type = file_type,
                                    ...)
     if (count_data[["source"]] == "tximport") {
       tximport_data <- list("raw" = count_data[["tximport"]],
@@ -1396,7 +1396,8 @@ make_pombe_expt <- function(annotation = TRUE) {
 #' @export
 read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = FALSE,
                              all.x = TRUE, all.y = FALSE, merge_type = "merge",
-                             suffix = NULL, countdir = NULL, tx_gene_map = NULL, ...) {
+                             suffix = NULL, countdir = NULL, tx_gene_map = NULL,
+                             file_type = NULL, ...) {
   ## load first sample
   arglist <- list(...)
   retlist <- list()
@@ -1443,7 +1444,20 @@ It is likely to require the transcript ID followed by a '.' and the ensembl colu
 If this is not correctly performed, very few genes will be observed")
     txout <- FALSE
   }
-  if (grepl(pattern = "\\.tsv|\\.h5", x = files[1])) {
+
+  if (is.null(file_type)) {
+    if (grepl(pattern = "\\.tsv|\\.h5", x = files[1])) {
+      file_type <- "kallisto"
+    } else if (grepl(pattern = "\\.genes\\.results", x = files[1])) {
+      file_type <- "rsem"
+    } else if (grepl(pattern = "\\.sf", x = files[1])) {
+      file_type <- "salmon"
+    } else {
+      file_type <- "table"
+    }
+  }
+
+  if (file_type == "kallisto") {
     mesg("Reading kallisto data with tximport.")
     ## This hits if we are using the kallisto outputs.
     names(files) <- ids
@@ -1470,7 +1484,7 @@ If this is not correctly performed, very few genes will be observed")
     retlist[["tximport"]] <- import
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
-  } else if (grepl(pattern = "\\.genes\\.results", x = files[1])) {
+  } else if (file_type == "rsem") {
     mesg("Reading rsem data with tximport.")
     names(files) <- ids
     import <- NULL
@@ -1490,7 +1504,7 @@ If this is not correctly performed, very few genes will be observed")
     retlist[["tximport"]] <- import
     retlist[["tximport_scaled"]] <- import_scaled
     retlist[["source"]] <- "tximport"
-  } else if (grepl(pattern = "\\.sf", x = files[1])) {
+  } else if (file_type == "salmon") {
     mesg("Reading salmon data with tximport.")
     ## This hits if we are using the salmon outputs.
     names(files) <- ids
@@ -1596,61 +1610,6 @@ If this is not correctly performed, very few genes will be observed")
   }
   mesg("Finished reading count data.")
   return(retlist)
-}
-
-#' Given a table of meta data, read it in for use by create_expt().
-#'
-#' Reads an experimental design in a few different formats in preparation for
-#' creating an expt.
-#'
-#' @param file Csv/xls file to read.
-#' @param ... Arguments for arglist, used by sep, header and similar
-#'  read_csv/read.table parameters.
-#' @param sep Used by read.csv, the separator
-#' @param header Used by read.csv, is there a header?
-#' @param sheet Used for excel/etc, which sheet to read?
-#' @return Df of metadata.
-#' @seealso [openxlsx] [readODS]
-#' @export
-read_metadata <- function(file, sep = ",", header = TRUE, sheet = 1, comment = "#", ...) {
-  arglist <- list(...)
-  extension <- tools::file_ext(file)
-  if (extension == "csv") {
-    definitions <- read.csv(file = file, comment.char = comment,
-                            sep = sep, header = header)
-  } else if (extension == "tsv") {
-    definitions <- try(readr::read_tsv(file, ...))
-  } else if (extension == "xlsx") {
-    ## xls = loadWorkbook(file, create = FALSE)
-    ## tmp_definitions = readWorksheet(xls, 1)
-    definitions <- try(openxlsx::read.xlsx(xlsxFile = file, sheet = sheet))
-    if (class(definitions)[1] == "try-error") {
-      stop("Unable to read the metadata file: ", file)
-    }
-  } else if (extension == "xls") {
-    ## This is not correct, but it is a start
-    definitions <- readxl::read_excel(path = file, sheet = sheet)
-  } else if (extension == "ods") {
-    definitions <- readODS::read_ods(path = file, sheet = sheet)
-  } else {
-    definitions <- read.table(file = file, sep = sep,
-                              header = header)
-  }
-
-  if (!is.null(comment)) {
-    commented <- grepl(x = definitions[[1]], pattern = "^#")
-    ## Drop the commented lines.
-    definitions <- definitions[, !commented]
-  }
-
-  colnames(definitions) <- tolower(gsub(pattern = "[[:punct:]]",
-                                        replacement = "",
-                                        x = colnames(definitions)))
-  ## I recently received a sample sheet with a blank sample ID column name...
-  empty_idx <- colnames(definitions) == ""
-  colnames(definitions)[empty_idx] <- "empty"
-  colnames(definitions) <- make.names(colnames(definitions), unique = TRUE)
-  return(definitions)
 }
 
 #' Remove/keep specifically named genes from an expt.

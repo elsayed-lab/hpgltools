@@ -560,6 +560,31 @@ please_install <- function(lib, update = FALSE) {
   return(count)
 }
 
+#' Append rows containing summary() information.
+#'
+#' @param df Starter df
+#' @return the original df with a couple of new rows at the bottom.
+rbind_summary_rows <- function(df) {
+  new_rows <- c("minimum", "first_quart", "median", "mean",
+                "third_quart", "max", "standard_deviation", "cv")
+  new_stuff <- data.frame(row.names = colnames(df))
+  for (col in colnames(df)) {
+    if (class(df[[col]])[1] == "numeric") {
+      column_summary <- as.numeric(summary(df[[col]]))
+      column_sd <- sd(df[[col]])
+      cv <- column_sd / column_summary[4]
+      column_summary <- c(column_summary, column_sd, cv)
+    } else {
+      column_summary <- c(NA, NA, NA, NA, NA, NA, NA, NA)
+    }
+    new_stuff <- rbind(new_stuff, col = column_summary, make.row.names = TRUE)
+  }
+  rownames(new_stuff) <- colnames(df)
+  colnames(new_stuff) <- new_rows
+  new_df <- rbind(df, t(new_stuff))
+  return(new_df)
+}
+
 #' Send the R plotter to the computer of your choice!
 #'
 #' Resets the display and xauthority variables to the new computer I am using so

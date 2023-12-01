@@ -137,7 +137,7 @@ print.combined_de <- function(x) {
                                          "edger_sigup", "edger_sigdown",
                                          "limma_sigup", "limma_sigdown")]
   print(summary_table)
-  print(upsetr_all(x))
+  print(upsetr_combined_de(x))
   return(invisible(x))
 }
 
@@ -245,7 +245,31 @@ Its current state is: {what_happened(x)}.")
 #'  significant subsets, enrichResult coercions, etc.
 #' @export
 print.goseq_result <- function(x) {
-  message("A set of ontologies produced by goseq.")
+  hit_string <- glue("A set of ontologies produced by gprofiler using {x[['num_genes']]}
+with significance cutoff {x[['threshold']]}.
+There are {nrow(x[['mf_interesting']])} MF hits, {nrow(x[['bp_interesting']])}, \\
+BP hits, and {nrow(x[['cc_interesting']])} CC hits.")
+  message(hit_string)
+  most <- NULL
+  most_num <- 0
+  tries <- c("mf", "bp", "cc")
+  for (t in tries) {
+    key <- paste0(t, "p_plot_over")
+    if (is.null(x[["pvalue_plots"]][[key]])) {
+      next
+    }
+    this_num <- nrow(x[["pvalue_plots"]][[key]][["data"]])
+    if (this_num > most_num) {
+      most_num <- this_num
+      most <- key
+    }
+  }
+  if (is.null(most)) {
+    message("No categories were deemed worth plotting.")
+  } else {
+    message("Category ", most, " is the most populated with ", most_num, " hits.")
+    plot(x[["pvalue_plots"]][[most]])
+  }
   return(invisible(x))
 }
 
@@ -367,6 +391,16 @@ print.libsize_plot <- function(x) {
 ranging from ", prettyNum(min_value, big.mark = ","),
 " to ", prettyNum(max_value, big.mark = ","), ".")
   plot(x[["plot"]])
+  return(invisible(x))
+}
+
+#' Print a set of mapped keepers from combine_de_tables()
+#'
+#' @param x List full of kept information.
+#' @export
+print.mapped_keepers <- function(x) {
+  message("The set of mappings between the wanted data and available data in a pairwise comparison.")
+  print(names(x))
   return(invisible(x))
 }
 

@@ -10,9 +10,6 @@
 #' @return Set of counts by sequence.
 #' @export
 count_nmer <- function(genome, pattern = "ATG", mismatch = 0) {
-  if ("character" %in% class(genome) == "character") {
-    genome <- Rsamtools::FaFile(genome)
-  }
   seq_obj <- Biostrings::getSeq(genome)
   dict <- Biostrings::PDict(pattern, max.mismatch = mismatch)
   result <- as.data.frame(Biostrings::vcountPDict(dict, seq_obj))
@@ -21,6 +18,7 @@ count_nmer <- function(genome, pattern = "ATG", mismatch = 0) {
   result <- t(result)
   return(result)
 }
+setGeneric("count_nmer")
 
 #' Given an eupathdb species lacking UTR boundaries, extract an arbitrary region
 #' before/after each gene.
