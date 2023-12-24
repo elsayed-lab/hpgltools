@@ -4,12 +4,14 @@
 \alias{print.deseq_lrt}
 \title{Print the result of running deseq_lrt().}
 \usage{
-\method{print}{deseq_lrt}(x)
+\method{print}{deseq_lrt}(x, ...)
 }
 \arguments{
 \item{x}{List containing the DESeq2 result, the associated table,
 clusters from degPatterns, list of associated genes, and dataframes
 of the most significant genes.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print the result of running deseq_lrt().

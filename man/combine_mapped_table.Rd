@@ -22,6 +22,8 @@ combine_mapped_table(
 orientation information about the table from all_pairwise(), along
 with the actual data.}
 
+\item{includes}{List of methods to include.}
+
 \item{adjp}{Used adjusted pvalues when defining 'significant.?}
 
 \item{padj_type}{Perform this type of pvalue adjustment.}
@@ -39,17 +41,6 @@ significance cutoff.}
 unwieldy numbers.}
 
 \item{sheet_count}{Start with these sheet number and increment for excel.}
-
-\item{include_basic}{Include basic in the final output?  I want to
-get rid of all these include_ arguments.}
-
-\item{include_deseq}{Include deseq?}
-
-\item{include_edger}{Include edger?}
-
-\item{include_ebseq}{Include ebseq?}
-
-\item{include_limma}{Include limma?}
 }
 \description{
 This is part of an ongoing attempt to simplify and clean up the

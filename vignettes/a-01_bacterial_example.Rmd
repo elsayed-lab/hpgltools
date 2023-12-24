@@ -95,7 +95,7 @@ cdm_se <- create_se(metadata = cdm$cdm_metadata,
                     gene_info = cdm$gene_info,
                     count_dataframe = cdm$cdm_counts)
 
-knitr::kable(head(pData(cdm_se)))
+knitr::kable(head(pData(expt)))
 ```
 
 # Introduction
@@ -134,7 +134,7 @@ With the above in mind, once we have the various metadata and count data loaded 
 common next step is examine the data before molesting it:
 
 ```{r graph_original, fig.show = "hide"}
-raw_metrics <- graph_metrics(cdm_se, qq = TRUE, cis = NULL)
+raw_metrics <- graph_metrics(expt, qq = TRUE, cis = NULL)
 ```
 
 The function graph_metrics() performs all of the likely plots one might want.  Some of which are not

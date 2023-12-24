@@ -264,7 +264,7 @@ goseq_table <- function(df, file = NULL) {
 #' @param length_db Database of gene lengths (gff/TxDb)
 #' @param doplot Include pwf plots?
 #' @param adjust Minimum adjusted pvalue for 'significant.'
-#' @param pvalue Minimum pvalue for 'significant.'
+#' @param threshold Look at sets with this signficance or better.
 #' @param plot_title Set a title for the pvalue plots.
 #' @param length_keytype Keytype to provide to extract lengths
 #' @param go_keytype Keytype to provide to extract go IDs
@@ -273,6 +273,8 @@ goseq_table <- function(df, file = NULL) {
 #' @param expand_categories Expand the GO categories to make the results more readable?
 #' @param excel Print the results to an excel file?
 #' @param enrich Convert the goseq result to the clusterProfiler format?
+#' @param minimum_interesting Exclude categories with less than this number of genes.
+#' @param min_xref Stop everything if we get less than this intersection of genes/GO/lengths.
 #' @param ... Extra parameters which I do not recall
 #' @return Big list including:
 #'  the pwd:pwf function,

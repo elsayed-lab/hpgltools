@@ -16,16 +16,21 @@
 #' @param model_intercept Perform a cell-means or intercept model? A little more
 #'  difficult for me to understand.  I have tested and get the same answer
 #'  either way.
+#' @param alt_model Specify another model.
 #' @param extra_contrasts Some extra contrasts to add to the list.
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 #'  de_vs_cb = (E-D)-(C-B),"
-#' @param alt_model Separate model matrix instead of the normal condition/batch.
 #' @param annot_df Data frame for annotations.
 #' @param libsize I've recently figured out that libsize is far more important
 #'  than I previously realized.  Play with it here.
+#' @param limma_method Choose one of limma's lm methods.
+#' @param limma_robust Make the significance estimation robust?
+#' @param voom_norm Use this method to normalize the voom inputs.
+#' @param limma_trend Add trend lines to limma's voom plot?
 #' @param force Force data which may not be appropriate for limma into it?
+#' @param keepers Perform an explicit set of contrasts instead of all.
 #' @param ... Use the elipsis parameter to feed options to write_limma().
 #' @return List including the following information:
 #'  macb = the mashing together of condition/batch so you can look at it
@@ -124,6 +129,7 @@ dream_pairwise <- function(input = NULL, conditions = NULL,
   ##                      alt_model = alt_model)
   chosen_model <- model[["chosen_model"]]
   model_string <- model[["chosen_string"]]
+  my_formula <- as.formula(model_string)
 
   voom_plot <- NULL
   message("Attempting voomWithDreamWeights.")
@@ -183,7 +189,7 @@ dream_pairwise <- function(input = NULL, conditions = NULL,
     "batches_table" = batch_table,
     "conditions" = conditions,
     "conditions_table" = condition_table,
-    "contrast_string" = contrast_string,
+    "contrast_string" = contrast_vector,
     "contrasts_performed" = contrasts_performed,
     "dispersion_plot" = voom_plot,
     "fit" = fitted_data,

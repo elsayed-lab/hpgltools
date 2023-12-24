@@ -40,19 +40,13 @@ write_combined_legend(
 
 \item{limma}{The limma result, which is redundant.}
 
+\item{noiseq}{Noiseq results.}
+
+\item{includes}{List of booleans defining which methods to examine.}
+
 \item{padj_type}{P-adjustment employed.}
 
 \item{fancy}{Write fancy plots with the xlsx file?}
-
-\item{include_limma}{Include the limma result?}
-
-\item{include_deseq}{Include the deseq result?}
-
-\item{include_edger}{Include the edger result?}
-
-\item{include_ebseq}{Include the ebseq result?}
-
-\item{include_basic}{Include the basic result?}
 }
 \description{
 Write the legend of an excel file for combine_de_tables()

@@ -9,6 +9,10 @@
 \arguments{
 \item{x}{One of my various expressionset analogs, expt,
 expressionSet, or summarizedExperiment.}
+
+\item{withDimnames}{Again, haven't looked it up yet.}
+
+\item{...}{Extra args.}
 }
 \description{
 A getter to pull the sample data from an expt.

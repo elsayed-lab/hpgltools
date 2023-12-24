@@ -208,6 +208,12 @@ sanitize_number_encoding <- function(numbers, df = NULL) {
 #' @param start_row First row of the sheet to write. Useful if writing multiple tables.
 #' @param start_col First column to write.
 #' @param title Title for this xlsx table.
+#' @param number_format Revisit this, but it hard-sets the number of decimal
+#'  points in numeric columns.
+#' @param data_table Write this as an excel data table instead of just a collection of cells.
+#' @param freeze_first_row Add a hint to make the first row always on screen?
+#' @param freeze_first_column Add a hint to make the first column always on screen?
+#' @param column_width Either a specific value, NULL, or 'heuristic' which guesses.
 #' @param ... Set of extra arguments given to openxlsx.
 #' @return List containing the sheet and workbook written as well as the
 #'  bottom-right coordinates of the last row/column written to the worksheet.

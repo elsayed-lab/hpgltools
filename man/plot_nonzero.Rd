@@ -32,6 +32,8 @@ graphed point.}
 
 \item{expt_names}{Column or character list of preferred sample names.}
 
+\item{max_overlaps}{Permit this many labels to overlap before dropping some.}
+
 \item{label_chars}{How many characters for sample names before abbreviation.}
 
 \item{plot_legend}{Print a legend for this plot?}

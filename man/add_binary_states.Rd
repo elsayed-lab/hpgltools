@@ -11,6 +11,9 @@ add_binary_states(scd, column = NULL)
 
 \item{column}{Get identities from this metadata column.}
 }
+\value{
+The scd with some new identities set with predicates.
+}
 \description{
 I am adding these only so that it is easier to visualize the cells
 compared when performing FindAllMarkers(); e.g. it compares each

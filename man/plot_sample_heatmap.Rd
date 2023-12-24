@@ -27,6 +27,8 @@ plot_sample_heatmap(
 
 \item{design}{Design matrix describing the experiment (gotten for free if an expt).}
 
+\item{heatmap_colors}{Specify a colormap.}
+
 \item{expt_names}{Alternate samples names.}
 
 \item{dendrogram}{Where to put dendrograms?}

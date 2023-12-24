@@ -616,6 +616,7 @@ rex <- function(display = ":0") {
 #'
 #' @param file Rmd file to render.
 #' @param format Chosen file format.
+#' @param overwrite Overwrite an existing file?
 #' @return Final filename including the prefix rundate.
 #' @seealso [rmarkdown]
 #' @export

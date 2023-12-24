@@ -626,6 +626,7 @@ snp_subset_genes <- function(expt, snp_expt, start_col = "start", end_col = "end
 #' @param start_col Which column provides the start of each gene?
 #' @param end_col and the end column of each gene?
 #' @param snp_name_col Name of the column in the metadata with the sequence names.
+#' @param observed_in Minimum proportion of samples required before this is deemed real.
 #' @param expt_name_col Name of the metadata column with the chromosome names.
 #' @param ignore_strand Ignore strand information when returning?
 #' @return List with some information by gene.

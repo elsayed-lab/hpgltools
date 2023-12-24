@@ -4,10 +4,12 @@
 \alias{print.partitioned_data}
 \title{Print something useful about the result of create_partitions()}
 \usage{
-\method{print}{partitioned_data}(x)
+\method{print}{partitioned_data}(x, ...)
 }
 \arguments{
 \item{x}{List containing the n sets of partitioned data test/train.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print something useful about the result of create_partitions()

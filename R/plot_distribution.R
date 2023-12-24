@@ -678,6 +678,7 @@ plot_topn <- function(data, plot_title = NULL, num = 100, expt_names = NULL,
 #' simpler and less appropriate CV(sd/mean) and QCD(q3-q1/q3+q1).
 #'
 #' @param data Expressionset/epxt to poke at.
+#' @param design Specify metadata if necessary.
 #' @param x_axis Factor in the experimental design we may use to group the data
 #'  and calculate the dispersion metrics.
 #' @param colors Set of colors to use when making the violins

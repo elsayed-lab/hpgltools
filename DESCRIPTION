@@ -18,13 +18,13 @@ Description: This is a set of functions I have been using in my various analyses
              flexibly handled by the packages this is based upon.
 License: GPL-2 | file LICENSE
 Suggests:
-  affy, AnnotationDbi, AnnotationForge, AnnotationHub,
-  BiocGenerics, BiocManager, biomaRt, Biostrings, bluster, BSgenome,
+  affy, AnnotationDbi, AnnotationForge, AnnotationHub, ape,
+  BiocGenerics, BiocManager, biomaRt, Biostrings, bluster, BRAIN, BSgenome,
   caret, Category, cleaver, clusterProfiler, corpcor, corrplot, curl,
   DALEX, DBI, DEGreport, desc, DESeq2, devEMF, devtools, directlabels, doParallel,
-  dorothea, doSNOW, DSS,
+  digest, dorothea, doSNOW, DSS,
   EBSeq, EDASeq, edgeR, enrichplot, EuPathDB,
-  fastcluster, fastICA, ffpe, fission,
+  fastcluster, fastICA, ffpe, fission, flashClust,
   genbankr, genefilter, GenomicRanges, GenomeInfoDb, genoPlotR, ggdendro,
   ggrepel, ggsankey, ggstatsplot, ggthemes, goseq, GO.db, GOstats,
   graph, GSVA, GSVAdata, gtools, gplots, gProfileR, gprofiler2,
@@ -33,13 +33,15 @@ Suggests:
   jsonlite,
   KEGGREST, KEGGgraph, kmer,
   lattice, limma, locfit, lubridate,
-  MatrixGenerics, matrixStats, miscTools, motifRG, mygene, mzR,
-  NOISeq,
+  MatrixGenerics, matrixStats, miscTools, motifRG, MSnbase, mygene, mzR,
+  networkD3, NOISeq,
   openxlsx, OrganismDbi,
-  pander, parallel, pasilla, pathfindR, pathview, pcaMethods, Peptides, plyr, preprocessCore, PROPER,
+  pander, parallel, pasilla, pathfindR, pathview, pcaMethods, Peptides, plyr, preprocessCore,
+  pROC, PROPER, purrr,
   qvalue,
-  R.utils, RColorBrewer, RCurl, readr, reactome.db, readODS, reshape2, rGADEM, Rgraphviz,
-  rhdf5, Rhdf5lib, rjson, rmarkdown, robust, robustbase, Rsamtools, RSQLite, Rtsne,
+  R.utils, RColorBrewer, RCurl, readr, reactome.db, readODS, readxl,
+  reshape2, rGADEM, Rgraphviz, rhdf5, Rhdf5lib, rjson, rmarkdown, robust,
+  robustbase, Rsamtools, RSQLite, Rtsne,
   rtracklayer, ruv, RUVSeq, rvest,
   scales, SeqTools, Seurat, seqLogo, skimr, SmartSVA, spgs, statmod, stringi,
   stringr, survJamda, SWATH2stats,
@@ -49,17 +51,19 @@ Suggests:
   xCell, xml2,
   Vennerable, venneuler
 Imports:
-  data.table, dplyr,
+  data.table, DOSE, dplyr,
   forcats, foreach,
   GenomicFeatures, ggplot2, glue, GSEABase,
+  IRanges,
   knitr,
   magrittr, methods,
   plotly,
   rlang,
   shiny, sva,
+  tidyselect,
   variancePartition
 Depends:
-  Biobase, SummarizedExperiment, S4Vectors, glue
+  Biobase, SummarizedExperiment, S4Vectors, glue, Matrix
 VignetteBuilder: knitr
 ByteCompile: true
 biocViews: DifferentialExpression

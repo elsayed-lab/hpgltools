@@ -4,12 +4,14 @@
 \alias{print.all_pairwise}
 \title{Print function for a pairwise differential expression result.}
 \usage{
-\method{print}{all_pairwise}(x)
+\method{print}{all_pairwise}(x, ...)
 }
 \arguments{
 \item{x}{List containing basic, deseq, edger, ebseq, limma, and
 noiseq pairwise comparisons as well as some information about the
 contrasts and models used.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print function for a pairwise differential expression result.

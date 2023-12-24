@@ -32,6 +32,56 @@ normalize_se(
   ...
 )
 }
+\arguments{
+\item{transform}{Transformation desired, usually log2.}
+
+\item{norm}{How to normalize the data? (raw, quant, sf, upperquartile, tmm, rle)}
+
+\item{convert}{Conversion to perform? (raw, cpm, rpkm, cp_seq_m)}
+
+\item{batch}{Batch effect removal tool to use? (limma sva fsva ruv etc)}
+
+\item{filter}{Filter out low/undesired features? (cbcb, pofa, kofa, others?)}
+
+\item{annotations}{Used for rpkm -- probably not needed as this is in fData now.}
+
+\item{fasta}{Fasta file for cp_seq_m counting of oligos.}
+
+\item{entry_type}{For getting genelengths by feature type (rpkm or cp_seq_m).}
+
+\item{use_original}{Use the backup data in the expt class?}
+
+\item{batch1}{Experimental factor to extract first.}
+
+\item{batch2}{Second factor to remove (only with limma's removebatcheffect()).}
+
+\item{batch_step}{From step 1-5, when should batch correction be applied?}
+
+\item{low_to_zero}{When log transforming, change low numbers (< 0) to 0 to avoid NaN?}
+
+\item{thresh}{Used by cbcb_lowfilter().}
+
+\item{min_samples}{Also used by cbcb_lowfilter().}
+
+\item{p}{Used by genefilter's pofa().}
+
+\item{A}{Also used by genefilter's pofa().}
+
+\item{k}{Used by genefilter's kofa().}
+
+\item{cv_min}{Used by genefilter's cv().}
+
+\item{cv_max}{Also used by genefilter's cv().}
+
+\item{na_to_zero}{Sometimes rpkm gives some NA values for very low numbers.}
+
+\item{adjust_method}{Given a set of sv estimates, change the counts with this method.}
+
+\item{verbose}{Print what is happening while the normalization is performed?
+I am not sure why, but I think they should be 0.}
+
+\item{...}{more options}
+}
 \description{
 Normalize a SummarizedExperiment and think about how I want to reimplement some of this.
 }

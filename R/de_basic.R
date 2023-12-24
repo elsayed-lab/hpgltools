@@ -28,6 +28,7 @@
 #' @param alt_model Not currently used, but passed from all_pairwise()
 #' @param model_batch Not currently used, but passed from all_pairwise()
 #' @param force Force as input non-normalized data?
+#' @param keepers Set of specific contrasts to perform instead of all.
 #' @param fx What function to use for mean/median?
 #' @param ... Extra options passed to arglist.
 #' @return Df of pseudo-logFC, p-values, numerators, and denominators.

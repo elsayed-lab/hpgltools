@@ -553,6 +553,8 @@ plot_3d_pca <- function(pc_result, components = c(1, 2, 3),
 #'   rows in the metadata.
 #' @param expt_names Column or character list of preferred sample names.
 #' @param label_chars Maximum number of characters before abbreviating sample names.
+#' @param cond_column Column containing the color information.
+#' @param batch_column Column containing the shape information.
 #' @param ...  Arguments passed through to the pca implementations and plotter.
 #' @return a list containing the following (this is currently wrong)
 #' \enumerate{

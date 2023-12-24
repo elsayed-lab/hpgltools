@@ -4,10 +4,12 @@
 \alias{print.written_expt}
 \title{Print the result from write_expt.}
 \usage{
-\method{print}{written_expt}(x)
+\method{print}{written_expt}(x, ...)
 }
 \arguments{
 \item{x}{List containing all the many plots, the dataframes, etc.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print the result from write_expt.

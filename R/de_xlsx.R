@@ -4,6 +4,23 @@
 ## 'significant'.  I therefore try in this file to find an appropriate place to
 ## dump each metric into an excel workbook.
 
+#' Convert a vector of yes/no by DE method to a list.
+#'
+#' This compiles the set of possible methods to include in an
+#' all_pairwise() from a series of booleans into a simpler list and
+#' checks that the elements have some data that may be used.
+#'
+#' @param apr The result from all_pairwise()
+#' @param basic The user wants the basic analysis, let us see if we
+#'  can provide it here.
+#' @param deseq The user wants DESeq2.
+#' @param ebseq The user wants EBSeq.
+#' @param edger The user wants EdgeR.
+#' @param dream The user wants the variancePartition method.
+#' @param limma The user wants limma.
+#' @param noiseq The user wants NoiSeq.
+#' @return List containing TRUE/FALSE for each method desired,
+#'  depending on if we actually have the relevant data.
 check_includes <- function(apr, basic = TRUE, deseq = TRUE, ebseq = TRUE,
                            edger = TRUE, dream = TRUE, limma = TRUE,
                            noiseq = TRUE) {
@@ -42,6 +59,8 @@ check_includes <- function(apr, basic = TRUE, deseq = TRUE, ebseq = TRUE,
 #' @param include_edger Include edger analyses in the table?
 #' @param include_ebseq Include ebseq analyses in the table?
 #' @param include_basic Include my stupid basic logFC tables?
+#' @param include_noiseq Include results from NoiSeq?
+#' @param include_dream Include results from the variancePartition 'dream' method?
 #' @param rownames Add rownames to the xlsx printed table?
 #' @param add_plots Add plots to the end of the sheets with expression values?
 #' @param loess Add time intensive loess estimation to plots?
@@ -54,12 +73,15 @@ check_includes <- function(apr, basic = TRUE, deseq = TRUE, ebseq = TRUE,
 #' @param de_types Used for plotting pvalue/logFC cutoffs.
 #' @param excel_title Title for the excel sheet(s).  If it has the
 #'  string 'YYY', that will be replaced by the contrast name.
+#' @param increment_start When incrementing the table number for each contrast,
+#'  look for this string and increment when it is found.  It should therefore
+#'  be found in the excel_title.
+#' @param start_worksheet_num Start writing data at this worksheet number.
+#'  (in case you want to put other stuff in)
 #' @param rda Write a rda file of the results.
 #' @param rda_input Include the input all_pairwise() result in the rda?
-#' @param start_worksheet This will now increment worksheet titles
-#'  from this point forward.
 #' @param label Label this number of top-n genes on the plots?
-#' @param label_column Use this column for gene labelling.
+#' @param label_column Use this gene annotation column to pick up gene labels.
 #' @param format_sig Use this many significant digits for printing
 #'  wacky numbers.
 #' @param excel Filename for the excel workbook, or null if not
@@ -174,9 +196,9 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
   extracted <- extract_keepers(
     extracted, keepers, table_names, all_coefficients, apr,
     adjp = adjp, annot_df = annot_df, includes = includes,
-    excludes = excludes, padj_type = padj_type, loess = loess,
-    lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff, sheet_prefix = sheet_prefix,
-    sheet_number = sheet_number, format_sig = format_sig,
+    excludes = excludes, padj_type = padj_type, fancy = fancy, loess = loess,
+    lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff,
+    format_sig = format_sig,
     plot_colors = plot_colors, z = z, alpha = alpha, z_lines = z_lines,
     label = label, label_column = label_column)
   numerators <- extracted[["numerators"]]
@@ -331,6 +353,7 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
 #' @param plot_edger Add edger data?
 #' @param plot_limma Add limma data?
 #' @param plot_ebseq Add ebseq data?
+#' @param plot_noiseq Add noiseq plots?
 #' @param loess Add a loess estimation?
 #' @param logfc For Volcano/MA plot lines.
 #' @param pval For Volcano/MA plot lines.
@@ -339,6 +362,7 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
 #'  significance.
 #' @param plot_colors Use these colors for numerators/denominators.
 #' @param fancy Include fancy pdf/svg versions of plots for publication?
+#' @param adjp Use adjusted p-values?
 #' @param do_inverse Flip the numerator/denominator?
 #' @param invert_colors Conversely, keep the values the same, but flip
 #'  the colors.  I think these invert parameters are not needed anymore.
@@ -506,12 +530,7 @@ check_single_de_table <- function(pairwise, table_name, wanted_numerator,
 #' @param entry Single entry from map_keepers() which provides
 #'  orientation information about the table from all_pairwise(), along
 #'  with the actual data.
-#' @param include_basic Include basic in the final output?  I want to
-#'  get rid of all these include_ arguments.
-#' @param include_deseq Include deseq?
-#' @param include_edger Include edger?
-#' @param include_ebseq Include ebseq?
-#' @param include_limma Include limma?
+#' @param includes List of methods to include.
 #' @param adjp Used adjusted pvalues when defining 'significant.?
 #' @param padj_type Perform this type of pvalue adjustment.
 #' @param annot_df Include these annotations in the result tables.
@@ -1303,7 +1322,7 @@ Defaulting to fdr.")
 #'
 #' @param keepers List/scalar representation of desired tables.
 #' @param table_names The actual list of results produced by the various methods employed.
-#' @param data The full dataset.
+#' @param datum The full dataset.
 map_keepers <- function(keepers, table_names, datum) {
   keeper_table_map <- list()
   ## I changed table_names to be keyed off method because we cannot assume
@@ -1410,26 +1429,16 @@ map_keepers <- function(keepers, table_names, datum) {
 #' @param table_names The set of tables produced by all_pairwise().
 #' @param all_coefficients The set of all experimental conditions in the
 #'  experimental metadata.
-#' @param limma The limma data from all_pairwise().
-#' @param edger The edger data from all_pairwise().
-#' @param ebseq The ebseq data from all_pairwise().
-#' @param deseq The deseq data from all_pairwise().
-#' @param basic The basic data from all_pairwise().
+#' @param apr The result from all_pairwise(), containing the limma/edger/deseq/etc data.
 #' @param adjp Pull out the adjusted p-values from the data?
 #' @param annot_df What annotations should be added to the table?
-#' @param include_deseq Whether or not to include the deseq data.
-#' @param include_edger Whether or not to include the edger data.
-#' @param include_ebseq Whether or not to include the ebseq data.
-#' @param include_limma Whether or not to include the limma data.
-#' @param include_basic Whether or not to include the basic data.
+#' @param includes List of predicates by method.
 #' @param excludes Set of genes to exclude.
 #' @param padj_type Choose a specific p adjustment.
 #' @param fancy Include larger pdf/svg plots with the xlsx output?
 #' @param loess Add a loess to plots?
 #' @param lfc_cutoff Passed for volcano/MA plots and defining 'significant'
 #' @param p_cutoff Passed for volcano/MA plots and defining 'significant'
-#' @param sheet_prefix Prefix for this worksheet id.
-#' @param sheet_number Which sheet is this?
 #' @param format_sig Number of significant digits for stuff like
 #'  pvalues.
 #' @param plot_colors Define what colors should be used for
@@ -1440,13 +1449,13 @@ map_keepers <- function(keepers, table_names, datum) {
 #' @param z_lines Include lines denoting significant z-scores?
 #' @param label When not NULL, label this many genes.
 #' @param label_column Try using this column for labeling genes.
+#' @return The extracted, but with more stuff at the end!
 extract_keepers <- function(extracted, keepers, table_names,
                             all_coefficients, apr,
                             adjp, annot_df, includes,
                             excludes, padj_type,
                             fancy = FALSE, loess = FALSE,
                             lfc_cutoff = 1.0, p_cutoff = 0.05,
-                            sheet_prefix = NULL, sheet_number = NULL,
                             format_sig = 4, plot_colors = plot_colors,
                             z = 1.5, alpha = 0.4, z_lines = FALSE,
                             label = 10, label_column = "hgncsymbol") {
@@ -1622,7 +1631,7 @@ extract_keepers <- function(extracted, keepers, table_names,
     }
 
     ## Changing this to a try() for when we have weirdo extra_contrasts.
-    extracted[["plots"]][[entry_name]] <- combine_extracted_plots(
+    extracted[["plots"]][[entry_name]] <- suppressWarnings(combine_extracted_plots(
       entry_name, combined, wanted_denominator, wanted_numerator, plot_inputs,
       plot_basic = plot_basic, plot_deseq = plot_deseq,
       plot_edger = plot_edger, plot_limma = plot_limma,
@@ -1632,7 +1641,7 @@ extract_keepers <- function(extracted, keepers, table_names,
       plot_colors = plot_colors, fancy = fancy,
       do_inverse = FALSE, invert_colors = invert_colors,
       z = z, alpha = alpha, z_lines = z_lines,
-      label = label, label_column = label_column)
+      label = label, label_column = label_column))
     extracted[["summaries"]] <- rbind(extracted[["summaries"]],
                                       as.data.frame(combined[["summary"]]))
   } ## Ending the for loop of elements in the keepers list.
@@ -1803,6 +1812,7 @@ extract_siggenes <- function(...) {
 #' @param phenotype_name When writing gmt files, set the phenotype flag here.
 #' @param set_name When writing gmt files, assign the set here.
 #' @param current_id Choose the current ID type for an output gmt file.
+#' @param comparison The cutoff may be '>|<' or '<=|>='.
 #' @param required_id Choose the desired ID type for an output gmt file.
 #' @param min_gmt_genes Define the minimum number of genes in a gene set for writing a gmt file.
 #' @param ... Arguments passed into arglist.
@@ -2492,16 +2502,13 @@ print_ups_downs <- function(upsdowns, wb, excel_basename, according = "limma",
 #' @param excel_basename Where to write it
 #' @param plot_dim Default plot size.
 #' @param apr The all_pairwise() result.
-#' @param limma The limma result, which is redundant.
-#' @param include_limma Include the limma result?
-#' @param deseq The deseq result, which is redundant.
-#' @param include_deseq Include the deseq result?
-#' @param edger The edger result, which is redundant.
-#' @param include_edger Include the edger result?
-#' @param ebseq The ebseq result, which is redundant.
-#' @param include_ebseq Include the ebseq result?
 #' @param basic Basic data
-#' @param include_basic Include the basic result?
+#' @param deseq The deseq result, which is redundant.
+#' @param ebseq The ebseq result, which is redundant.
+#' @param edger The edger result, which is redundant.
+#' @param limma The limma result, which is redundant.
+#' @param noiseq Noiseq results.
+#' @param includes List of booleans defining which methods to examine.
 #' @param padj_type P-adjustment employed.
 #' @param fancy Write fancy plots with the xlsx file?
 write_combined_legend <- function(wb, excel_basename, plot_dim, apr,

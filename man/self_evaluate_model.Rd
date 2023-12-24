@@ -5,7 +5,7 @@
 \title{Create a confusion matrix and ROC of a model against its training data. (and test data
 if the annotations are known)}
 \usage{
-self_evaluate_model(predictions, datasets, which = 1, type = "train")
+self_evaluate_model(predictions, datasets, which_partition = 1, type = "train")
 }
 \arguments{
 \item{predictions}{Model created by train()}
@@ -13,7 +13,7 @@ self_evaluate_model(predictions, datasets, which = 1, type = "train")
 \item{datasets}{Set of training/testing partitions along with
 associated metadata annotations.}
 
-\item{which}{Choose a paritiont to evaluate}
+\item{which_partition}{Choose a paritiont to evaluate}
 
 \item{type}{Use the training or testing data?}
 }

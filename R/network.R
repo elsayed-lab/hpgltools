@@ -203,12 +203,17 @@ prune_network <- function(network, min_weight = 0.4, min_connectivity = 1) {
 #' https://bioinformaticsworkbook.org/tutorials/wgcna.html#gsc.tab=0
 #' so that I have someplace to remember the general path wgcna takes and
 #' as a starting point to explore further.
+#'
+#' @param expt Input expressionset.
 wgcna_network <- function(expt) {
   chosen_power <- 8
   ## WGCNA calls cor() without specifying its own namespace, so overwrite cor for the moment.
   cor <- WGCNA::cor
+  start_exprs <- t(exprs(expt))
+  l2input <- t(exprs(normalize_expt(expt, transform = "log2")))
+
   initial_modules <- WGCNA::blockwiseModules(
-    t(exprs(expt)), maxBlockSize = 11000, TOMType = "signed",
+    start_exprs, maxBlockSize = 11000, TOMType = "signed",
     power = chosen_power, mergeCutHeight = 0.25, numericLabels = FALSE,
     verbose = 3)
   cor <- stats::cor
@@ -258,7 +263,8 @@ wgcna_network <- function(expt) {
   colnames(dist_tom) <- not_grey_genes
   rownames(dist_tom) <- colnames(dist_tom)
 
-  similarity_cluster <- flashClust::flashClust(as.dist(dist_tom), method = "average")
+  similarity_cluster <- flashClust::flashClust(
+    stats::as.dist(dist_tom), method = "average")
 
   WGCNA::plotDendroAndColors(
     similarity_cluster,

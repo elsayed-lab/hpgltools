@@ -1,5 +1,7 @@
 ## de_plots.r: A series of plots which are in theory DE method agnostic.
 
+
+## FIXME: This has both p_type and adjp parameters, which is redundantredundant.
 #' Make a MA plot of some limma output with pretty colors and shapes.
 #'
 #' Yay pretty colors and shapes!
@@ -16,8 +18,10 @@
 #' @param denominator Use this factor as the denominator.
 #' @param alpha Use this transparency.
 #' @param z z-score cutoff for coefficient significance.
+#' @param n Choose the top/bottom-n by logFC.
 #' @param logfc What logFC to use for the MA plot horizontal lines.
 #' @param pval Cutoff to define 'significant' by p-value.
+#' @param adjp Use adjusted p-value?
 #' @param found_table Result from edger to use, left alone it chooses the first.
 #' @param p_type Adjusted or raw pvalues?
 #' @param color_high Color to use for the 'high' genes.
@@ -335,6 +339,7 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
 #' @param data Data structure in which to hunt columns/data.
 #' @param type Type of method used to make the data.
 #' @param p_type Use adjusted p-values?
+#' @param adjp I think this is reundant.
 get_plot_columns <- function(data, type, p_type = "adj", adjp = TRUE) {
   ret <- list(
     "p_col" = "P.Val",
@@ -790,6 +795,7 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
 #' @param shapes Provide different shapes for up/down/etc?
 #' @param invert Invert the ma plot?
 #' @param label Label the top/bottom n logFC values?
+#' @param label_column gene annotation column from which to extract labels.
 #' @param ... More options for you
 #' @return ggplot2 MA scatter plot.  This is defined as the rowmeans of the
 #'  normalized counts by type across all sample types on the x axis, and the
@@ -1177,9 +1183,22 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
   return(retlist)
 }
 
+#' Make a sankey plot showing how the number of genes deemed significant is constrained.
+#'
+#' Ideally, this should show how adding various Fc/p-value constraints
+#' on the definition of 'significant' decreases the number of genes
+#' one is likely to look at.
+#'
+#' @param de_table The result from combine_de_tables()
+#' @param lfc FC constraint.
+#' @param p P-value constraint.
+#' @param lfc_column Dataframe column from which to acquire the FC
+#'  values.
+#' @param p_column Dataframe column from which to acquire the
+#'  p-values.
+#' @return A fun sankey plot!
 plot_sankey_de <- function(de_table, lfc = 1.0, p = 0.05,
                            lfc_column = "deseq_logfc", p_column = "deseq_adjp") {
-  de_table <- t_cf_clinical_table_sva$data$outcome
   de_table[["start"]] <- "all"
   de_table[["lfc"]] <- "up"
   down_idx <- de_table[[lfc_column]] < 0
@@ -1432,6 +1451,7 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
 #' @param invert Flip the plot?
 #' @param label Label some points?
 #' @param label_column Using this column in the data.
+#' @param label_size Use this font size for the labels on the plot.
 #' @export
 plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
                                       fc_col = "logFC", fc_name = "log2 fold change",
@@ -1950,7 +1970,7 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
 #' and lightly modified to match my style and so I could more
 #' easily understand what it is doing.
 #'
-#' @param lst upset data structure.
+#' @param input upset data structure.
 #' @param sort Sort the result?
 #' @export
 overlap_groups <- function(input, sort = TRUE) {

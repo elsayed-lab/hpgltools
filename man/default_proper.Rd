@@ -43,6 +43,8 @@ old, my version of this only accepts deseq or edger.}
 
 \item{target}{Cutoff.}
 
+\item{add_coverage}{Add a line showing the actual coverage observed?}
+
 \item{filter}{Apply a filter?}
 
 \item{delta}{Not epsilon! (E.g. I forget what this does).}

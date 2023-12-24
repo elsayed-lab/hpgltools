@@ -35,6 +35,7 @@
 #' @param categories How many categories should be plotted in bar/dot plots?
 #' @param excel Print the results to an excel file?
 #' @param do_david Attempt to use the DAVID database for a search?
+#' @param do_kegg Perform kegg search?
 #' @param david_id Which column to use for cross-referencing to DAVID?
 #' @param david_user Default registered username to use.
 #' @return a list
@@ -235,9 +236,9 @@ simple_clusterprofiler <- function(sig_genes, de_table = NULL, orgdb = "org.Dm.e
     ## 2020 04: Adding a pvalue cutoff argument causes an error, I do not know why.
     ## Arguments used by gseGO of interest: exponent, minGSSize/maxGSSize, eps, by(fgsea)
     ## Also, apparently the nperm argument is deprecated.
-    gse <- clusterProfiler::gseGO(geneList = genelist, OrgDb = org,
+    gse <- suppressWarnings(clusterProfiler::gseGO(geneList = genelist, OrgDb = org,
                                   keyType = orgdb_to, ont = "ALL",
-                                  minGSSize = min_groupsize)
+                                  minGSSize = min_groupsize))
     gse_go <- as.data.frame(gse)
     mesg("Found ", nrow(gse_go), " enriched hits.")
   } else {

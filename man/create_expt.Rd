@@ -22,6 +22,7 @@ create_expt(
   handle_na = "drop",
   researcher = "elsayed",
   study_name = NULL,
+  file_type = NULL,
   annotation_name = "org.Hs.eg.db",
   tx_gene_map = NULL,
   ...
@@ -69,6 +70,10 @@ filesystem?}
 \item{researcher}{Used to make the creation of gene sets easier, set the researcher tag.}
 
 \item{study_name}{Ibid, but set the study tag.}
+
+\item{file_type}{Explicitly state the type of files containing the
+count data.  I have code which autodetects the method used to
+import count data, this short-circuits it.}
 
 \item{annotation_name}{Ibid, but set the orgdb (or other annotation) instance.}
 

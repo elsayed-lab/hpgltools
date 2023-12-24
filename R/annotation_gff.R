@@ -210,6 +210,7 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
 #' @param pattern What to search for? This was used for tnseq and TA is the
 #'  mariner insertion point.
 #' @param type Column to use in the gff file.
+#' @param id_col Column containing the gene IDs.
 #' @param key What type of entry of the gff file to key from?
 #' @return Data frame of gene names and number of times the pattern appears/gene.
 #' @seealso [Biostrings] [Rsamtools::FaFile()] [Biostrings::PDict()]

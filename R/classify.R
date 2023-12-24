@@ -14,16 +14,15 @@
 #' @param sample_number How many times to use the sampler
 #' @param tuner Tuning arguments for the method above.
 #' @param ... Others, currently unused I think
+#' @export
 classify_n_times <- function(full_df, interesting_meta, outcome_column = "finaloutcome",
                              p = 0.4, list = FALSE, formula_string = NULL,
                              run_times = 10, method = "xgbTree",
                              sampler = "cv", sample_number = 10,
-                             tuner = NULL, ...) {
+                             tuner = NULL, state = NULL, ...) {
   ## Note, the function declaration assumes outcome_factor is a single element character,
-  ## but in my actual document it is literally a factor of 1 element
-  ## per sample, e.g. 109 cures and 57 fails.  This should be
-  ## addressed by create_partitions!()
-
+  ## but in my actual document it is a factor of 1 element per sample,
+  ## e.g. 109 cures and 57 fails.  This should be addressed by create_partitions!()
   parameter_lst <- list(
     "proportion_trained" = p,
     "method_used" = method,
@@ -31,6 +30,9 @@ classify_n_times <- function(full_df, interesting_meta, outcome_column = "finalo
     "outcome_column" = outcome_column,
     "sampler_used" = sampler,
     "sampler_iterations" = sample_number)
+  if (!is.null(state)) {
+    parameter_lst <- append(state, parameter_lst)
+  }
 
   if (! outcome_column %in% colnames(interesting_meta)) {
     stop("The outcome column: ", outcome_column, " is not in the metadata.")
@@ -45,10 +47,10 @@ classify_n_times <- function(full_df, interesting_meta, outcome_column = "finalo
 
   train_method <- NULL
   if (sampler == "cv") {
-    sampling_method <- trainControl(method = "cv", number = sample_number)
+    sampling_method <- caret::trainControl(method = "cv", number = sample_number)
     parameter_lst[["return_resample"]] <- "unused"
   } else if (sampler == "bootstrap") {
-    sampling_method <- trainControl(method = "boot", number = sample_number,
+    sampling_method <- caret::trainControl(method = "boot", number = sample_number,
                                     returnResamp = "all")
     parameter_lst[["return_resample"]] <- "all"
   } else {
@@ -141,13 +143,13 @@ classify_n_times <- function(full_df, interesting_meta, outcome_column = "finalo
     }
 
     trainer <- BiocGenerics::do.call(what = caret::train, args = all_train_args)
-    trained <- predict(trainer, train_df)
+    trained <- stats::predict(trainer, train_df)
     message("Evaluating predictions.")
     trained_eval <- self_evaluate_model(trained, partitions,
-                                        which = d, type = "train")
-    tested <- predict(trainer, test_df)
+                                        which_partition = d, type = "train")
+    tested <- stats::predict(trainer, test_df)
     tested_eval <- self_evaluate_model(tested, partitions,
-                                       which = d, type = "test")
+                                       which_partition = d, type = "test")
     this_result <- list(
       "trainer" = trainer,
       "trained" = trained,
@@ -211,6 +213,7 @@ classify_n_times <- function(full_df, interesting_meta, outcome_column = "finalo
     "test_eval_summary" = test_eval_df,
     "all_results" = all_results,
     "tuner" = tuner)
+  class(retlist) <- "classified_n_times"
   return(retlist)
 }
 
@@ -313,6 +316,9 @@ create_partitions <- function(full_df, interesting_meta, outcome_factor = "condi
 #' @param full Get the full set of metrics from bluster.
 #' @param merge_to Use the neighborhood collapse function to set a
 #'  hard ceiling on the number of clusters in the final result.
+#' @param ... Extra args for bluster.
+#' @return List containing the resulting groups and some information about them.
+#' @export
 generate_nn_groups <- function(mtrx, resolution = 1, k = 10, type = "snn",
                                 full = TRUE, merge_to = NULL, ...) {
   params <- bluster::SNNGraphParam(k = k, ...)
@@ -352,21 +358,21 @@ generate_nn_groups <- function(mtrx, resolution = 1, k = 10, type = "snn",
 #' @param predictions Model created by train()
 #' @param datasets Set of training/testing partitions along with
 #'  associated metadata annotations.
-#' @param which Choose a paritiont to evaluate
+#' @param which_partition Choose a paritiont to evaluate
 #' @param type Use the training or testing data?
 #' @export
-self_evaluate_model <- function(predictions, datasets, which_column = 1, type = "train") {
+self_evaluate_model <- function(predictions, datasets, which_partition = 1, type = "train") {
   stripped <- data.frame()
   idx <- numeric()
   outcomes <- factor()
   if (type == "train") {
-    stripped <- datasets[["trainers_stripped"]][[which_column]]
-    idx <- datasets[["train_idx"]][[which_column]]
-    outcomes <- datasets[["trainer_outcomes"]][[which_column]]
+    stripped <- datasets[["trainers_stripped"]][[which_partition]]
+    idx <- datasets[["train_idx"]][[which_partition]]
+    outcomes <- datasets[["trainer_outcomes"]][[which_partition]]
   } else {
-    stripped <- datasets[["testers_stripped"]][[which_column]]
-    idx <- datasets[["test_idx"]][[which_column]]
-    outcomes <- datasets[["tester_outcomes"]][[which_column]]
+    stripped <- datasets[["testers_stripped"]][[which_partition]]
+    idx <- datasets[["test_idx"]][[which_partition]]
+    outcomes <- datasets[["tester_outcomes"]][[which_partition]]
   }
 
   ## This assumes the input is a matrix of class probabilities.  First convert that to
@@ -382,8 +388,13 @@ self_evaluate_model <- function(predictions, datasets, which_column = 1, type = 
     predict_type <- "data.frame"
     predict_df <- as.data.frame(predictions)
     rownames(predict_df) <- names(outcomes)
+    #predict_df <- predict_df %>%
+    #  dplyr::mutate('class' = names(.)[apply(., 1, which.max)])
+    ## I still do not fully understand the various implications of
+    ## using . vs .data vs .env and when they are relevant for
+    ## dplyr/magrittr.  As a result, this might be horribly wrong.
     predict_df <- predict_df %>%
-      dplyr::mutate('class' = names(.)[apply(., 1, which.max)])
+      dplyr::mutate("class" = names(.data)[apply(.data, 1, which.max)])
     predict_class <- as.factor(predict_df[["class"]])
     names(predict_class) <- rownames(predict_df)
     predict_numeric <- predict_df[[1]]
@@ -408,9 +419,63 @@ self_evaluate_model <- function(predictions, datasets, which_column = 1, type = 
     "self_summary" = self_summary,
     "wrong_samples" = wrong_samples,
     "confusion_mtrx" = confused,
+    "reference" = predict_class,
     "roc" = roc,
     "roc_plot" = roc_record,
     "auc" = auc)
   class(retlist) <- "classifier_evaluation"
   return(retlist)
+}
+
+#' Write out the results of classify_n_times().
+#'
+#' @param result Ibid.
+#' @param excel Output excel file
+#' @param name Name of the sheet to write.
+#' @export
+write_classifier_summary <- function(result, excel = "ML_summary.xlsx", name = NULL) {
+  ## FIXME: Make a generic and use a method here.
+  if (is.null(name)) {
+    name <- result[["parameters"]]["method_used", 1]
+  }
+  if (class(excel)[1] == "character" && !file.exists(excel)) {
+    ## Then write a legend sheet
+    legend <- data.frame(rbind(
+      c("top_table", "Some information about the model generation."),
+      c("bottom_table",
+        "1 row for each iteration of the model followed by some meta summary statistics."),
+      c("true_positive", "The raw number of true positives observed."),
+      c("true_negative", "The raw number of true negatives observed."),
+      c("false_positive", "The raw number of false positives observed."),
+      c("false_negative", "The raw number of false negatives observed; the sum of these are the number of samples in the data."),
+      c("accuracy", "Proportion of correct calls vs. all samples."),
+      c("kappa", "Cohen's kappa: (accuracy - p(correct values vs. chance)) / (1 - p(correct values vs. chance))"),
+      c("accuracy_lower", "Error rate if the model always chose the second class."),
+      c("accuracy_upper", "Error rate if the model always chose the first class."),
+      c("accuracy_null", "Error rate if the model always chose the majority class."),
+      c("accuracy_pvalue", "Result of a binomial t-test to see if the accuracy is better than chance, taking into account imbalances in the samples/class."),
+      c("mcnemar_pvalue", "McNemar's chi-squared test for row/column symmetry for 2 factors."),
+      c("sensitivity", "(/ true_positive (+ true_positive false_positive))"),
+      c("specificity", "(/ true_negative (+ true_negative false_negative))"),
+      c("pos_pred_value", "(/ (* sensitivity prevelence) (+ (* sensitivity prevelance) (* (- specificity 1) (- prevalence 1))))"),
+      c("neg_pred_value", "(/ (* specificity (- prevalence 1))  (+ (* (- specificity 1) * (- prevalence 1))  (* specificity (- prevalence 1))))"),
+      c("precision", "(/ true_positive (+ true_positive true_negative))"),
+      c("recall", "(/ true_positive (+ true_positive false_negative))"),
+      c("f1", "2 * (/ 1 (+ (/ 1 precision) (/ 1 recall)))"),
+      c("prevalence", "(/ (+ true_positive false_negative) (sum all))"),
+      c("detection_rate", "(/ true_positive (sum all))"),
+      c("detection_prevalence", "(/ (+ true_positive true_negative) (sum all))"),
+      c("balanced_accuracy", "(/ (+ sensitivity specificity) 2)"),
+      c("auc", "Area under the ROC curve.")))
+    excel <- write_xlsx(data = legend, start_col = 1,
+                          start_row = 1, sheet = "legend",
+                          excel = excel)
+  }
+  summary_df <- rbind_summary_rows(result[["test_eval_summary"]])
+  written <- write_xlsx(data = result[["parameters"]], sheet = name,
+                        excel = excel, title = "parameters used")
+  written <- write_xlsx(data = summary_df, start_col = 1,
+                        start_row = written[["end_row"]] + 1,
+                        excel = written)
+  return(written)
 }

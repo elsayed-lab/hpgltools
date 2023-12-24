@@ -11,6 +11,8 @@ load_trinotate_annotations(
 }
 \arguments{
 \item{trinotate}{CSV of trinotate annotation data.}
+
+\item{collapse}{Collapse isoforms to genes?}
 }
 \value{
 Dataframe of fun data.

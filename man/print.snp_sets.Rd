@@ -4,12 +4,14 @@
 \alias{print.snp_sets}
 \title{Print the result of get_snp_sets().}
 \usage{
-\method{print}{snp_sets}(x)
+\method{print}{snp_sets}(x, ...)
 }
 \arguments{
 \item{x}{List containing the cross references of variants by
 factor, the set of observed variants, the possible combinations of
 the factor, etc.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print the result of get_snp_sets().

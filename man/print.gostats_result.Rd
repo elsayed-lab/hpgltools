@@ -4,11 +4,13 @@
 \alias{print.gostats_result}
 \title{Print a gostats over representation search.}
 \usage{
-\method{print}{gostats_result}(x)
+\method{print}{gostats_result}(x, ...)
 }
 \arguments{
 \item{x}{List containing the various gostats results, plots,
 significant subsets, enrichResult coercions, etc.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print a gostats over representation search.

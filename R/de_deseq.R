@@ -172,8 +172,10 @@ deseq_pairwise <- function(...) {
 #' @param extra_contrasts Provide extra contrasts here.
 #' @param annot_df Include some annotation information in the results?
 #' @param force Force deseq to accept data which likely violates its assumptions.
+#' @param keepers List of explicit contrasts to perform instead of all.
 #' @param deseq_method The DESeq2 manual shows a few ways to invoke it, I make
 #'  2 of them available here.
+#' @param fittype Method to fir the data.
 #' @param ... Triple dots!  Options are passed to arglist.
 #' @return List including the following information:
 #'  run = the return from calling DESeq()

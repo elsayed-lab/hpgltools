@@ -17,6 +17,8 @@ plot_variance_coefficients(
 \arguments{
 \item{data}{Expressionset/epxt to poke at.}
 
+\item{design}{Specify metadata if necessary.}
+
 \item{x_axis}{Factor in the experimental design we may use to group the data
 and calculate the dispersion metrics.}
 

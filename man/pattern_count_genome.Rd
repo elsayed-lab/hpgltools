@@ -24,6 +24,8 @@ mariner insertion point.}
 
 \item{type}{Column to use in the gff file.}
 
+\item{id_col}{Column containing the gene IDs.}
+
 \item{key}{What type of entry of the gff file to key from?}
 }
 \value{

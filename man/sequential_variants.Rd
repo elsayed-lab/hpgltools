@@ -11,7 +11,7 @@ sequential_variants(
   maximum_separation = 3,
   one_away_file = "one_away.csv",
   two_away_file = "two_away.csv",
-  doubles_files = "doubles.csv",
+  doubles_file = "doubles.csv",
   singles_file = "singles.csv"
 )
 }
@@ -25,6 +25,14 @@ with respect to known conditions.}
 
 \item{maximum_separation}{How far apart from each other are these
 >={minimum} variants allowed to be?}
+
+\item{one_away_file}{Location to write variants that are no more than 1 base apart.}
+
+\item{two_away_file}{Location for those which are no more than 2 apart.}
+
+\item{doubles_file}{Write out variants which are 2 in a row.}
+
+\item{singles_file}{Write out the individual variants here.}
 }
 \description{
 One potential way to screen strains is to use PCR primers which

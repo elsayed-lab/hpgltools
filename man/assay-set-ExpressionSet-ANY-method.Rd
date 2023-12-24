@@ -9,6 +9,14 @@
 \arguments{
 \item{x}{One of my various expressionset analogs, expt,
 expressionSet, or summarizedExperiment.}
+
+\item{i}{Subset to replace.}
+
+\item{withDimnames}{I do not know, I need to look this up.}
+
+\item{...}{Extra args.}
+
+\item{value}{New values for the expressionset.}
 }
 \description{
 A setter to put the assay data into an ExpressionSet.

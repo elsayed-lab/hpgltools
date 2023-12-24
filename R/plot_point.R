@@ -406,6 +406,7 @@ recolor_points <- function(plot, df, ids, color = "red", ...) {
 #'  overlapping anything else will just stick them on a 45' offset next to the
 #'  graphed point.
 #' @param expt_names Column or character list of preferred sample names.
+#' @param max_overlaps Permit this many labels to overlap before dropping some.
 #' @param label_chars How many characters for sample names before abbreviation.
 #' @param plot_legend Print a legend for this plot?
 #' @param plot_title Add a title?
@@ -423,21 +424,6 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = "repe
                          expt_names = NULL, max_overlaps = 5, label_chars = 10, plot_legend = FALSE,
                          plot_title = NULL, cutoff = 0.65, ...) {
   arglist <- list(...)
-  names <- NULL
-  data_class <- class(data)[1]
-  if (data_class == "expt" || data_class == "SummarizedExperiment") {
-    design <- pData(data)
-    colors <- data[["colors"]]
-    names <- data[["samplenames"]]
-    data <- exprs(data)
-  } else if (data_class == "ExpressionSet") {
-    data <- exprs(data)
-  } else if (data_class == "matrix" || data_class == "data.frame") {
-    ## some functions prefer matrix, so I am keeping this explicit for the moment
-    data <- as.data.frame(data)
-  } else {
-    stop("This function understands types: expt, ExpressionSet, data.frame, and matrix.")
-  }
 
   condition <- design[["condition"]]
   batch <- design[["batch"]]
@@ -568,6 +554,7 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = "repe
   class(retlist) <- "nonzero_plot"
   return(retlist)
 }
+setGeneric("plot_nonzero")
 
 #' Plot all pairwise MA plots in an experiment.
 #'

@@ -116,9 +116,10 @@ pp <- function(file, image = NULL, width = 9, height = 9, res = 180, ...) {
 #' @param design Metadata from which to extract the categories/numbers.
 #' @param factors Factors/columns in the metadata to count and plot.
 #' @param fill Use either the current or next node for coloring the transitions.
+#' @param font_size Chosen font size, perhaps no longer needed?
+#' @param node_width Make nodes more or less rectangular with this.
 #' @param color_choices Either a named vector of states and colors, or NULL
 #'  (in which case it will use viridis.)
-#' @param html Write the interactive plot to this file.
 #' @param drill_down When true, this will end in the product of the
 #'  factor levels number of final states. (e.g. if there are 2 sexes,
 #'  3 visits, and 4 genotypes, there will be 2, 6, 24 states going

@@ -21,7 +21,11 @@ set_expt_conditions(
 
 \item{ids}{Specific sample IDs to change.}
 
+\item{prefix}{Add a prefix to the samples?}
+
 \item{null_cell}{How to fill elements of the design which are null?}
+
+\item{colors}{While we are here, set the colors.}
 
 \item{...}{Extra arguments are given to arglist.}
 }

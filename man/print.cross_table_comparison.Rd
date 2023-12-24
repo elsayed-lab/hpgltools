@@ -6,11 +6,13 @@
 Note I think I want to have that function return slightly different types
 depending on how the function call was set up.}
 \usage{
-\method{print}{cross_table_comparison}(x)
+\method{print}{cross_table_comparison}(x, ...)
 }
 \arguments{
 \item{x}{List provided by plot_linear_scatter() containing
 correlations, plots, linear model.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print a representation of compare_de_tables().

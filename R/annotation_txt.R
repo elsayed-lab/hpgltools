@@ -11,6 +11,7 @@
 #' them into a format usable in an expressionset.
 #'
 #' @param trinotate CSV of trinotate annotation data.
+#' @param collapse Collapse isoforms to genes?
 #' @return Dataframe of fun data.
 #' @seealso [tidyr] [readr]
 #' @examples
@@ -166,6 +167,12 @@ load_trinotate_annotations <- function(trinotate = "reference/trinotate.csv", co
 #' from it.  Keep in mind that this data is primarily from Blast2GO.
 #'
 #' @param trinotate CSV of trinotate annotation data.
+#' @param blast2go_column Column name containing BLAST2GO data.
+#' @param pfam_column Column containing data from pfam searches.
+#' @param length_column Column containing the gene lengths.
+#' @param fill Cheat and fill in an arbitrary value for gene lengths if all else fails.
+#' @param collapse Collapse isforms to genes?
+#' @param id_column Column containing the gene IDs.
 #' @return List of the extracted GO data, a table of it, length data, and the
 #'  resulting length table.
 #' @seealso [load_trinotate_annotations()]

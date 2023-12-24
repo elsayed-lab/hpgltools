@@ -42,13 +42,13 @@
 #' @param do_edger Perform EdgeR?
 #' @param do_limma Perform limma?
 #' @param do_noiseq Perform noiseq?
-#' @param do_noiseq Perform dream?
+#' @param do_dream Perform dream?
+#' @param keepers Limit the pairwise search to a set of specific contrasts.
 #' @param convert Modify the data with a 'conversion' method for PCA?
 #' @param norm Modify the data with a 'normalization' method for PCA?
 #' @param verbose Print extra information while running?
 #' @param surrogates Either a number of surrogates or method to estimate it.
-#' @param ...  Picks up extra arguments into arglist, currently only passed to
-#'  write_limma().
+#' @param ...  Picks up extra arguments into arglist.
 #' @return A list of limma, deseq, edger results.
 #' @seealso [limma_pairwise()] [edger_pairwise()] [deseq_pairwise()] [ebseq_pairwise()]
 #'  [basic_pairwise()]
@@ -311,6 +311,14 @@ all_pairwise <- function(input = NULL, conditions = NULL,
 #' little logic in make_contrasts to skip contrasts not in the list of
 #' interest.
 #'
+#' @param ... Args usually passed to all_pairwise()
+#' @param do_limma (Don't) do limma.
+#' @param do_edger Do edger.
+#' @param do_basic (Don't) do basic.
+#' @param do_deseq Do deseq.
+#' @param do_ebseq (Don't) do ebseq.
+#' @param do_noiseq (Don't) do noiseq.
+#' @param do_dream (Don't) do dream.
 #' @export
 binary_paiwise <- function(...) {
   all_pairwise(..., do_limma = FALSE, do_edger = TRUE, do_basic = FALSE,
@@ -328,6 +336,7 @@ binary_paiwise <- function(...) {
 #' @param py second set
 #' @param lx first set of logFCs column
 #' @param ly second set
+#' @param cor_method Method to pass to cor().
 #' @param topn Number of genes to consider (or percentage of the
 #'  whole).
 #' @export
@@ -2040,15 +2049,15 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
 #' @param z Number of z-scores >/< the median to take.
 #' @param lfc Fold-change cutoff.
 #' @param p P-value cutoff.
+#' @param min_mean_exprs Exclude genes with less than this mean expression.
+#' @param exprs_column Use this column for filtering by expression.
+#' @param column Table's column used to distinguish top vs. bottom.
 #' @param fold Identifier reminding how to get the bottom portion of a
 #'  fold-change (plusminus says to get the negative of the
 #'  positive, otherwise 1/positive is taken).  This effectively
 #'  tells me if this is a log fold change or not.
-#' @param min_mean_exprs Subset the genes deemed significant with an
-#'  minimum expression cutoff.
-#' @param exprs_column Use this column for filtering by expression.
-#' @param column Table's column used to distinguish top vs. bottom.
 #' @param p_column Table's column containing (adjusted or not)p-values.
+#' @param comparison When set to orequal, use >=/<= instead of jsut >/<.
 #' @return Subset of the up/down genes given the provided criteria.
 #' @seealso [extract_significant_genes()] [get_abundant_genes()]
 #' @examples
@@ -2203,6 +2212,7 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
 #'  below, but there is a reason for it.
 #' @param do_pairwise Include all pairwise strings? This shouldn't
 #'  need to be set to FALSE, but just in case.
+#' @param keepers Only extract this subset of all possible pairwise contrasts.
 #' @param extra_contrasts Optional string of extra contrasts to include.
 #' @param ... Extra arguments passed here are caught by arglist.
 #' @return List including the following information:

@@ -3,6 +3,11 @@
 ## because I was having annoying problems creating expressionSets.  Thus, >90%
 ## of the logic here is intended to simplify and standardize that process.
 
+#' Keep a copy of the original state of an expressionset in case of shenanigans.
+#'
+#' @param expt The expt before messing with it.
+#' @return The expt with a new slot 'original_expressionset', but only
+#'  if it did not already exist.
 backup_expression_data <- function(expt) {
   if (is.null(expt[["original_expressionset"]])) {
     expt[["original_expressionset"]] <- expt[["expressionset"]]
@@ -250,6 +255,9 @@ concatenate_runs <- function(expt, column = "replicate") {
 #' @param handle_na How does one wish to deal with NA values in the data?
 #' @param researcher Used to make the creation of gene sets easier, set the researcher tag.
 #' @param study_name Ibid, but set the study tag.
+#' @param file_type Explicitly state the type of files containing the
+#'  count data.  I have code which autodetects the method used to
+#'  import count data, this short-circuits it.
 #' @param annotation_name Ibid, but set the orgdb (or other annotation) instance.
 #' @param tx_gene_map Dataframe of transcripts to genes, primarily for tools like salmon.
 #' @param ... More parameters are fun!
@@ -817,6 +825,8 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
 }
 
 #' A temporary alias to subset_genes
+#'
+#' @param ... Parameters passed to subset_genes().
 #' @export
 exclude_genes_expt <- function(...) {
   message("Note, I renamed this to subset_genes().")
@@ -942,6 +952,7 @@ subset_genes <- function(expt, column = "txtype", method = "remove", ids = NULL,
                                "pct_kept", "pct_removed")
   mesg("Percent of the counts kept after filtering: ",
        toString(sprintf(fmt = "%.3f", pct_kept)))
+  ## FIXME: This should be handled by dispatch
   if (class(expt)[1] == "expt") {
     expt[["expressionset"]] <- kept
     expt[["summary_table"]] <- summary_table
@@ -950,7 +961,7 @@ subset_genes <- function(expt, column = "txtype", method = "remove", ids = NULL,
     }
   } else {
     expt <- kept
-    metadata(expt)[["summary_table"]] <- summary_table
+    S4Vectors::metadata(expt)[["summary_table"]] <- summary_table
   }
 
   warning_idx <- summary_table["pct_kept", ] < warning_cutoff
@@ -1181,6 +1192,9 @@ get_backup_expression_data <- function(expt) {
 }
 
 #' Runs median_by_factor with fun set to 'mean'.
+#'
+#' @param data Input expt
+#' @param fact Metadata factor over which to perform mean().
 #' @export
 mean_by_factor <- function(data, fact = "condition") {
   median_by_factor(data, fact = fact, fun = "mean")
@@ -1385,7 +1399,9 @@ make_pombe_expt <- function(annotation = TRUE) {
 #' @param merge_type Choose one, merge or join.
 #' @param suffix Optional suffix to add to the filenames when reading them.
 #' @param countdir Optional count directory to read from.
-#' @param tx_gene_map Dataframe which provides a mapping between transcript IDs and gene IDs.
+#' @param tx_gene_map Dataframe which provides a mapping between
+#'  transcript IDs and gene IDs.
+#' @param file_type Short circuit the file format autodetection.
 #' @param ... More options for happy time!
 #' @return Data frame of count tables.
 #' @seealso [data.table] [create_expt()] [tximport]
@@ -1948,7 +1964,9 @@ set_expt_colors <- function(expt, colors = TRUE,
 #' @param expt Expt to modify
 #' @param fact Conditions to replace
 #' @param ids Specific sample IDs to change.
+#' @param prefix Add a prefix to the samples?
 #' @param null_cell How to fill elements of the design which are null?
+#' @param colors While we are here, set the colors.
 #' @param ... Extra arguments are given to arglist.
 #' @return expt Send back the expt with some new metadata
 #' @seealso [set_expt_batches()] [create_expt()]
@@ -2550,6 +2568,9 @@ sum_eupath_exon_counts <- function(counts) {
 #' effectively identical.
 #'
 #' @param expt Expressionset to which to add this information.
+#' @param convert Use this conversion,
+#' @param transform and transformation,
+#' @param norm and normalization.
 #' @return Slightly modified gene annotations including the mean/variance.
 #' @export
 variance_expt <- function(expt, convert = "cpm", transform = "raw", norm = "raw") {

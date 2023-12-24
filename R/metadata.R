@@ -53,6 +53,7 @@ check_metadata_year <- function(metadata = NULL, column = NULL) {
 #' @param metadata file or df of metadata
 #' @param id_column Column in the metadat containing the sample names.
 #' @param fill Fill missing data with this.
+#' @param sanitize Perform my various sanitizers on the data?
 #' @param ... Arguments to pass to the child functions (read_csv etc).
 #' @return Metadata dataframe hopefully cleaned up to not be obnoxious.
 #' @examples
@@ -760,6 +761,10 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
                                        input_file_spec, verbose = verbose, basedir = basedir,
                                        ...)
     },
+    "kraken_matrix" = {
+      entries <- dispatch_filename_search(meta, input_file_spec, verbose = verbose,
+                                          basedir = basedir)
+    },
     "kraken_standard_classified" = {
       search <- "^\\s+\\d+ sequences classified.*$"
       replace <- "^\\s+(\\d+) sequences classified.*$"
@@ -1024,11 +1029,14 @@ dispatch_metadata_extract <- function(meta, entry_type, input_file_spec,
 #' number and puts it into each cell of a sample sheet.
 #'
 #' @param meta Input metadata
-#' @param search Probably not needed
+#' @param search Pattern to count
 #' @param input_file_spec Input file specification to hunt down the
 #'  file of interest.
 #' @param verbose Print diagnostic information while running?
+#' @param species Specify a species to search for.
 #' @param basedir Root directory containing the files/logs of metadata.
+#' @param type Add columns for only the genome mapping and/or rRNA by default.
+#' @param inverse Count the lines that do _not_ match the pattern.
 dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbose,
                                  species = "*", basedir = "preprocessing",
                                  type = "genome", inverse = FALSE) {
@@ -1244,6 +1252,7 @@ dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
 #' @param replace probably the same regex with parentheses in place
 #'  for gsub().
 #' @param input_file_spec filename extractor expression.
+#' @param species Specify a species or glob it.
 #' @param basedir Root directory containing the files/logs of metadata.
 #' @param extraction the replacement portion of gsub(). I am thinking
 #'  to make it possible to have this function return more interesting
@@ -1360,6 +1369,8 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
 #'  file of interest.
 #' @param file_type csv or tsv?
 #' @param chosen_func If set, use this function to summarize the result.
+#' @param species Specify a species, or glob it.
+#' @param type Specify a type of search, usually genome and/or rRNA.
 #' @param basedir Root directory containing the files/logs of metadata.
 #' @param which Take the first entry, or some subset.
 #' @param verbose Print diagnostic information while running?
@@ -1448,6 +1459,7 @@ dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv"
 #' @param sep Used by read.csv, the separator
 #' @param header Used by read.csv, is there a header?
 #' @param sheet Used for excel/etc, which sheet to read?
+#' @param comment Skip rows starting with this (in the first cell of the row if not a text file).
 #' @return Df of metadata.
 #' @seealso [openxlsx] [readODS]
 #' @export
@@ -1493,9 +1505,19 @@ read_metadata <- function(file, sep = ",", header = TRUE, sheet = 1, comment = "
   return(definitions)
 }
 
-#' Adding an alias to sanitize_metadata until I decide how I want to name this.
+#' Given an expressionset, sanitize the gene information data.
 #'
-#' @param ... Arguments for sanitize_metadata().
+#' @param expt Input expressionset.
+#' @param columns Set of columns to sanitize, otherwise all of them.
+#' @param na_value Fill in NA with this.
+#' @param lower sanitize capitalization.
+#' @param punct Remove punctuation?
+#' @param factorize Convert columns to factors?  When set to 'heuristic'
+#'  this tries out as.factor and sees if the number of levels is silly.
+#' @param max_levels The definition of 'silly' above.
+#' @param spaces Allow spaces in the data?
+#' @param numbers Sanitize number formats (e.g. 1.000.000,0 vs. 1,000,000.0)
+#' @param numeric Set columns to numeric when possible?
 #' @export
 sanitize_expt_fData <- function(expt,
                                 columns = NULL, na_value = "notapplicable",
@@ -1542,7 +1564,7 @@ sanitize_expt_pData <- function(expt,
 #' @param meta Input metadata
 #' @param columns Set of columns to check, if left NULL, all columns
 #'  will be molested.
-#' @param na_string Fill NA values with a string.
+#' @param na_value Fill NA values with a string.
 #' @param lower Set everything to lowercase?
 #' @param punct Remove punctuation?
 #' @param factorize Set some columns to factors?  If set to a vector
@@ -1553,6 +1575,7 @@ sanitize_expt_pData <- function(expt,
 #'  the heuristic, when NULL it is the number of samples / 6
 #' @param spaces Remove any spaces in this column?
 #' @param numbers Sanitize numbers by adding a prefix character to them?
+#' @param numeric Recast the values as numeric when possible?
 #' @export
 sanitize_metadata <- function(meta, columns = NULL, na_value = "notapplicable",
                               lower = TRUE, punct = TRUE, factorize = "heuristic",
@@ -1839,6 +1862,8 @@ make_rnaseq_spec <- function() {
       "file" = "{basedir}/{meta[['sampleid']]}/outputs/*fastqc/*_fastqc/fastqc_data.txt"),
     "fastqc_most_overrepresented" = list(
       "file" = "{basedir}/{meta[['sampleid']]}/outputs/*fastqc/*_fastqc/fastqc_data.txt"),
+    "kraken_matrix" = list(
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*kraken_*/kraken_report_matrix.tsv"),
     "hisat_rrna_single_concordant" = list(
       "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*rRNA*.stderr"),
     "hisat_rrna_multi_concordant" = list(

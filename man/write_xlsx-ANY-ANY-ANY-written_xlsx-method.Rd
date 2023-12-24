@@ -17,6 +17,7 @@
   data_table = TRUE,
   freeze_first_row = TRUE,
   freeze_first_column = TRUE,
+  column_width = "heuristic",
   ...
 )
 }

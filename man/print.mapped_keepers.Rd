@@ -4,10 +4,12 @@
 \alias{print.mapped_keepers}
 \title{Print a set of mapped keepers from combine_de_tables()}
 \usage{
-\method{print}{mapped_keepers}(x)
+\method{print}{mapped_keepers}(x, ...)
 }
 \arguments{
 \item{x}{List full of kept information.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print a set of mapped keepers from combine_de_tables()

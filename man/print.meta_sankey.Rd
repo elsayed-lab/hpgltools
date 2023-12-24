@@ -4,11 +4,13 @@
 \alias{print.meta_sankey}
 \title{Print a metadata sankey plot.}
 \usage{
-\method{print}{meta_sankey}(x)
+\method{print}{meta_sankey}(x, ...)
 }
 \arguments{
 \item{x}{List containing the table of connected nodes and a ggplot2
 sankey.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print a metadata sankey plot.

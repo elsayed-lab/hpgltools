@@ -8,6 +8,7 @@
 #'
 #' @param scd Seurat single cell dataset.
 #' @param column Get identities from this metadata column.
+#' @return The scd with some new identities set with predicates.
 add_binary_states <- function(scd, column = NULL) {
   identity_levels <- levels(as.factor(Seurat::Idents(object = scd)))
   if (!is.null(column)) {
@@ -38,7 +39,12 @@ add_binary_states <- function(scd, column = NULL) {
 #' The original implementation of this idea resides at:
 #' https://ucdavis-bioinformatics-training.github.io/2020-Advanced_Single_Cell_RNA_Seq/data_analysis/VDJ_Analysis_fixed
 #'
-#' @param obj Seurat object to which we will add some information.
+#' The seurat documentation always uses 'obj' for their
+#' datastructures; I chose to use 'scd' to signify that I am
+#' explicitly adding a couple pieces of information to them.  They
+#' remain the datastructures returned by seurat.
+#'
+#' @param scd Seurat object to which we will add some information.
 #' @param start_path root of the 10x data in which the vdj information should reside.
 #' @param type The type of VDJ we expect, heavy(B) or light(T).
 #' @return The Seurat object with some new information.
@@ -734,7 +740,7 @@ skim_seurat_metadata <- function(sample_meta, obj_meta, meta_query = "nCount_RNA
   } else {
     sample_meta[[column_name]] <- obj_meta %>%
       group_by(!!rlang::sym(group_column)) %>%
-      skim(meta_query) %>%
+      skimr::skim(meta_query) %>%
       dplyr::select(tidyselect::all_of(summary_query)) %>%
       unlist()
   }

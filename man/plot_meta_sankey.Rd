@@ -21,6 +21,10 @@ plot_meta_sankey(
 
 \item{fill}{Use either the current or next node for coloring the transitions.}
 
+\item{font_size}{Chosen font size, perhaps no longer needed?}
+
+\item{node_width}{Make nodes more or less rectangular with this.}
+
 \item{color_choices}{Either a named vector of states and colors, or NULL
 (in which case it will use viridis.)}
 
@@ -29,8 +33,6 @@ plot_meta_sankey(
  3 visits, and 4 genotypes, there will be 2, 6, 24 states going
 from right to left).  If FALSE, there will be 2,3,4 states going
 from right to left.}
-
-\item{html}{Write the interactive plot to this file.}
 }
 \value{
 List containing a couple of plots, one interactive, one gg.

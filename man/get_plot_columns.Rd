@@ -14,6 +14,8 @@ get_plot_columns(data, type, p_type = "adj", adjp = TRUE)
 \item{type}{Type of method used to make the data.}
 
 \item{p_type}{Use adjusted p-values?}
+
+\item{adjp}{I think this is reundant.}
 }
 \description{
 I split this function away from the main body of extract_de_plots()

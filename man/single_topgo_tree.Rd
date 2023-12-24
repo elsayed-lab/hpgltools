@@ -6,7 +6,7 @@
 \usage{
 single_topgo_tree(
   tg,
-  score_column = "mf_fisher",
+  score_column = "fisher_mf",
   node_data = "fmf_godata",
   score_limit = 0.1,
   sigforall = TRUE

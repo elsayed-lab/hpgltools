@@ -103,6 +103,7 @@ circos_arc <- function(cfg, df, first_col = "seqnames", second_col = "seqnames.2
 #' @param annot_chr_column Column containing the chromosome names.
 #' @param annot_gene_column Column containing the gene IDs.
 #' @param df_chr_column Column in the cfg df containing the chromosome names.
+#' @param df_gene_column Column containing the gene names.
 circos_check_chromosomes <- function(cfg, df, annot_chr_column = "chr",
                                      annot_gene_column = "rownames", df_chr_column = "names",
                                      df_gene_column = NULL) {
@@ -220,7 +221,7 @@ circos_heatmap <- function(cfg, input, tablename = NULL, colname = "logFC",
 
   heat_cfg_file <- cfg@cfg_file
   heat_cfg_file <- gsub(pattern = ".conf$", replacement = "", x = heat_cfg_file)
-  heat_cfg_file <- paste0(heat_cfg_file, colname, "_heatmap.conf")
+  heat_cfg_file <- paste0(heat_cfg_file, "_", basename, colname, "_heatmap.conf")
   heat_data_file <- file.path(cfg@data_dir, basename(heat_cfg_file))
   heat_data_file <- gsub(pattern = ".conf$", replacement = ".txt", x = heat_data_file)
   message("Writing data file: ", heat_data_file, " with the ", basename, colname, " column.")
@@ -340,7 +341,8 @@ circos_heatmap <- function(cfg, input, tablename = NULL, colname = "logFC",
 #' @param spacing Distance between outer, inner, and inner to whatever follows.
 #' @return Radius after adding the histogram and the spacing.
 #' @export
-circos_hist <- function(cfg, input, tablename = NULL, annot_source = "cfg", colname = "logFC", basename = "",
+circos_hist <- function(cfg, input, tablename = NULL, annot_source = "cfg",
+                        colname = "logFC", basename = "",
                         color = "blue", fill_color = "blue", fill_under = "yes",
                         extend_bin = "no", thickness = "0", orientation = "out",
                         outer = 0.9, width = 0.08, spacing = 0.0) {
@@ -546,6 +548,7 @@ circos_ideogram <- function(name = "default", conf_dir = "circos/conf", band_url
 #' @param color Color segments of the chromosomal arc?
 #' @param fasta Fasta file to use to create the karyotype.
 #' @param lengths If no sequence file is provided, use a named numeric vector to provide them.
+#' @param chromosomes Force the chromosome names if the annotations are malformed for some reason.
 #' @return The output filename.
 #' @export
 circos_karyotype <- function(cfg, segments = 6, color = "white", fasta = NULL,

@@ -9,8 +9,9 @@
 #'
 #' @param x Abundant gene list comprising an element 'high' and 'low'
 #'  for the most and least abundant genes observed.
+#' @param ... Other args to match the generic.
 #' @export
-print.abundant_genes <- function(x) {
+print.abundant_genes <- function(x, ...) {
   message("A set of genes deemed abundant.")
   return(invisible(x))
 }
@@ -19,8 +20,9 @@ print.abundant_genes <- function(x) {
 #'
 #' @param x List composed of simple_gprofiler() results for every
 #'  up/down set provided by extract_significant_genes().
+#' @param ... Other args to match the generic.
 #' @export
-print.all_gprofiler <- function(x) {
+print.all_gprofiler <- function(x, ...) {
   summary_df <- data.frame()
   for (gp in x) {
     summary_df <- rbind(summary_df, gp[["num_hits"]])
@@ -37,8 +39,9 @@ print.all_gprofiler <- function(x) {
 #' @param x List containing basic, deseq, edger, ebseq, limma, and
 #'  noiseq pairwise comparisons as well as some information about the
 #'  contrasts and models used.
+#' @param ... Other args to match the generic.
 #' @export
-print.all_pairwise <- function(x) {
+print.all_pairwise <- function(x, ...) {
   included <- c()
   for (b in c("basic", "deseq", "ebseq", "edger", "limma", "noiseq")) {
     if (!is.null(x[[b]])) {
@@ -61,8 +64,9 @@ print.all_pairwise <- function(x) {
 #' Print function for a set of annotations downloaded from biomart.
 #'
 #' @param x List containing the relevant information gathered from ensembl's biomart.
+#' @param ... Other args to match the generic.
 #' @export
-print.annotations_biomart <- function(x) {
+print.annotations_biomart <- function(x, ...) {
   num_genes <- nrow(x[["annotation"]])
   num_annot <- ncol(x[["annotation"]])
   summary_string <- glue("{num_annot} annotation types for {prettyNum(num_genes, big.mark = ',')} \\
@@ -75,8 +79,9 @@ genes/transcripts downloaded from {x[['host']]}.")
 #'
 #' @param x List containing the AUCC, correlation, and a plot
 #'  describing the AUCC.
+#' @param ... Other args to match the generic.
 #' @export
-print.aucc_info <- function(x) {
+print.aucc_info <- function(x, ...) {
   summary_string <- glue("These two tables have an aucc value of: \\
 {x[['aucc']]} and correlation: ")
   message(summary_string)
@@ -89,8 +94,9 @@ print.aucc_info <- function(x) {
 #'
 #' @param x List from load_biomart_go() containing the table of data,
 #'  mart used, host used, name of the mart, and attributes.
+#' @param ... Other args to match the generic.
 #' @export
-print.biomart_go <- function(x) {
+print.biomart_go <- function(x, ...) {
   summary_string <- glue("The GO annotations from biomart host {x[['host']]} \\
 for species {x[['species']]} provided {prettyNum(nrow(x[['go']]), big.mark = ',')} rows.")
   message(summary_string)
@@ -101,8 +107,9 @@ for species {x[['species']]} provided {prettyNum(nrow(x[['go']]), big.mark = ','
 #'
 #' @param x List showing AUC/ROC curves of the test performed, summary
 #'  thereof, the confusion matrix, and vector of incorrectly called samples.
+#' @param ... Other args to match the generic.
 #' @export
-print.classifier_evaluation <- function(x) {
+print.classifier_evaluation <- function(x, ...) {
   message("The summary of the (in)correct calls is: ")
   print(x[["self_summary"]])
   message("The missed samples are: ")
@@ -119,8 +126,9 @@ print.classifier_evaluation <- function(x) {
 #' @param x Monstrous list of the various results, including but not
 #'  limited to plots, go-gene mappings, enrichmed, kegg, david, GO
 #'  analyses.
+#' @param ... Other args to match the generic.
 #' @export
-print.clusterprofiler_result <- function(x) {
+print.clusterprofiler_result <- function(x, ...) {
   message("A set of ontologies produced by clusterprofiler.")
   return(invisible(x))
 }
@@ -130,8 +138,9 @@ print.clusterprofiler_result <- function(x) {
 #' @param x List containing the dataframes for each contrast, the
 #'  various plots, the set of wanted contrasts, models used, and
 #'  summaries of the data.
+#' @param ... Other args to match the generic.
 #' @export
-print.combined_de <- function(x) {
+print.combined_de <- function(x, ...) {
   message("A set of combined differential expression results.")
   summary_table <- x[["de_summary"]][, c("table", "deseq_sigup", "deseq_sigdown",
                                          "edger_sigup", "edger_sigdown",
@@ -144,18 +153,20 @@ print.combined_de <- function(x) {
 #' Print a single combined DE result.
 #'
 #' @param x Data table of combined differential expression results.
+#' @param ... Other args to match the generic.
 #' @export
-print.combined_table <- function(x) {
+print.combined_table <- function(x, ...) {
   message("A combined differential expression table.")
-  message("Comprising ", nrow(x[["comb"]]), " genes and including ", includes, ".")
+  message("Comprising ", nrow(x[["comb"]]), " genes and including ", x[["includes"]], ".")
   return(invisible(x))
 }
 
 #' Print the result of plot_corheat().
 #'
 #' @param x List containing the correlations observed and a recorded heatmap.3().
+#' @param ... Other args to match the generic.
 #' @export
-print.correlation_heatmap <- function(x) {
+print.correlation_heatmap <- function(x, ...) {
   min_cor <- min(x[["data"]])
   non_one_idx <- x[["data"]] == 1
   non_one <- as.data.frame(x[["data"]])
@@ -171,8 +182,9 @@ print.correlation_heatmap <- function(x) {
 #' Print the result of plot_disheat().
 #'
 #' @param x List containing the distances observed and a recorded heatmap.3().
+#' @param ... Other args to match the generic.
 #' @export
-print.distance_heatmap <- function(x) {
+print.distance_heatmap <- function(x, ...) {
   max_distance <- max(x[["data"]])
   non_zero_idx <- x[["data"]] == 0
   non_zero <- as.data.frame(x[["data"]])
@@ -185,15 +197,15 @@ print.distance_heatmap <- function(x) {
   return(invisible(x))
 }
 
-
 #' Print a representation of compare_de_tables().
 #' Note I think I want to have that function return slightly different types
 #' depending on how the function call was set up.
 #'
 #' @param x List provided by plot_linear_scatter() containing
 #'  correlations, plots, linear model.
+#' @param ... Other args to match the generic.
 #' @export
-print.cross_table_comparison <- function(x) {
+print.cross_table_comparison <- function(x, ...) {
   summary_string <- glue("Comparison of the {x[['fcx_column']]} vs {x[['fcy_column']]}
 of two DE tables.")
   message(summary_string)
@@ -206,8 +218,9 @@ of two DE tables.")
 #' @param x List containing the DESeq2 result, the associated table,
 #'  clusters from degPatterns, list of associated genes, and dataframes
 #'  of the most significant genes.
+#' @param ... Other args to match the generic.
 #' @export
-print.deseq_lrt <- function(x) {
+print.deseq_lrt <- function(x, ...) {
   summary_string <- glue("The result from deseq_lrt().")
 }
 
@@ -215,8 +228,9 @@ print.deseq_lrt <- function(x) {
 #'
 #' @param x List containing the plot, summary of the
 #'  conditions/batches/samples, and the melted table of reads/gene.
+#' @param ... Other args to match the generic.
 #' @export
-print.density_plot <- function(x) {
+print.density_plot <- function(x, ...) {
   summary_string <- glue("Density plot describing {nrow(x[['sample_summary']])} samples.")
   message(summary_string)
   plot(x[["plot"]])
@@ -228,8 +242,9 @@ print.density_plot <- function(x) {
 #' I am trying to understand how R collates functions.
 #' @param x List from create_expt containing the expressionSet,
 #'  annotation data, batches, conditions, colors, libsizes, etc.
+#' @param ... Other args to match the generic.
 #' @export
-print.expt <- function(x) {
+print.expt <- function(x, ...) {
   summary_string <- glue("An expressionSet containing experiment with {nrow(exprs(x))}
 genes and {ncol(exprs(x))} samples. There are {ncol(pData(x))} metadata columns and
 {ncol(fData(x))} annotation columns; the primary condition is comprised of:
@@ -243,8 +258,9 @@ Its current state is: {what_happened(x)}.")
 #'
 #' @param x List containing the various goseq results, plots,
 #'  significant subsets, enrichResult coercions, etc.
+#' @param ... Other args to match the generic.
 #' @export
-print.goseq_result <- function(x) {
+print.goseq_result <- function(x, ...) {
   hit_string <- glue("A set of ontologies produced by gprofiler using {x[['num_genes']]}
 with significance cutoff {x[['threshold']]}.
 There are {nrow(x[['mf_interesting']])} MF hits, {nrow(x[['bp_interesting']])}, \\
@@ -277,8 +293,9 @@ BP hits, and {nrow(x[['cc_interesting']])} CC hits.")
 #'
 #' @param x List containing the various gostats results, plots,
 #'  significant subsets, enrichResult coercions, etc.
+#' @param ... Other args to match the generic.
 #' @export
-print.gostats_result <- function(x) {
+print.gostats_result <- function(x, ...) {
   bp_entries <- nrow(x[["tables"]][["bp_over_enriched"]])
   mf_entries <- nrow(x[["tables"]][["mf_over_enriched"]])
   cc_entries <- nrow(x[["tables"]][["cc_over_enriched"]])
@@ -295,8 +312,9 @@ print.gostats_result <- function(x) {
 #'  of significant categories for GO, reactome, KEGG, miRNA,
 #'  transcription factors, CORUM, wiki pathways, etc; along with the
 #'  coerced enrichResult versions.
+#' @param ... Other args to match the generic.
 #' @export
-print.gprofiler_result <- function(x) {
+print.gprofiler_result <- function(x, ...) {
   hit_string <- glue("A set of ontologies produced by gprofiler using {x[['num_genes']]}
 genes against the {x[['species']]} annotations and significance cutoff {x[['threshold']]}.
 There are {nrow(x[['GO']])} GO hits, {nrow(x[['KEGG']])}, \\
@@ -331,8 +349,9 @@ KEGG hits, {nrow(x[['REAC']])} reactome hits, \\
 #' Print a message about the results from graph_metrics().
 #'
 #' @param x List containing a large number of plots and some tables.
+#' @param ... Other args to match the generic.
 #' @export
-print.graphed_metrics <- function(x) {
+print.graphed_metrics <- function(x, ...) {
   summary_string <- glue("A large number of plots produced by graph_metrics(), \
 here are the elements:")
   message(summary_string)
@@ -344,8 +363,9 @@ here are the elements:")
 #'
 #' @param x List containing signature annotations, the result from
 #'  GSVA, a modified expressionset, the signatures used, and method.
+#' @param ... Other args to match the generic.
 #' @export
-print.gsva_result <- function(x) {
+print.gsva_result <- function(x, ...) {
   summary_string <- glue("GSVA result using method: {x[['method']]} against the \\
 {x[['signature_category']]} dataset.
 Scores range from: {prettyNum(min(exprs(x[['expt']])))} \\
@@ -358,8 +378,9 @@ to: {prettyNum(max(exprs(x[['expt']])))}.")
 #'
 #' @param x List of scored GSVA results, including some plots,
 #'  likelihood tables, subsets of significant categories, etc.
+#' @param ... Other args to match the generic.
 #' @export
-print.gsva_sig <- function(x) {
+print.gsva_sig <- function(x, ...) {
   summary_string <- glue("The set of GSVA categories deemed significantly higher than the
 distribution of all scores.  It comprises {nrow(x[['subset_table']])} gene sets.")
   message(summary_string)
@@ -370,8 +391,9 @@ distribution of all scores.  It comprises {nrow(x[['subset_table']])} gene sets.
 #' Print a legend of an expressionset.
 #'
 #' @param x List containing the condition factor, colors used, and plot.
+#' @param ... Other args to match the generic.
 #' @export
-print.legend_plot <- function(x) {
+print.legend_plot <- function(x, ...) {
   summary_string <- glue("The colors used in the expressionset are: \\
 {toString(x[['color_fact']])}.")
   message(summary_string)
@@ -383,8 +405,9 @@ print.legend_plot <- function(x) {
 #'
 #' @param x List containing a summary of the library sizes, the plot,
 #'  and table.
+#' @param ... Other args to match the generic.
 #' @export
-print.libsize_plot <- function(x) {
+print.libsize_plot <- function(x, ...) {
   min_value <- min(x[["table"]][["sum"]])
   max_value <- max(x[["table"]][["sum"]])
   message("Library sizes of ", nrow(x[["table"]]), " samples, \
@@ -397,8 +420,9 @@ ranging from ", prettyNum(min_value, big.mark = ","),
 #' Print a set of mapped keepers from combine_de_tables()
 #'
 #' @param x List full of kept information.
+#' @param ... Other args to match the generic.
 #' @export
-print.mapped_keepers <- function(x) {
+print.mapped_keepers <- function(x, ...) {
   message("The set of mappings between the wanted data and available data in a pairwise comparison.")
   print(names(x))
   return(invisible(x))
@@ -408,8 +432,9 @@ print.mapped_keepers <- function(x) {
 #'
 #' @param x List containing the table of connected nodes and a ggplot2
 #'  sankey.
+#' @param ... Other args to match the generic.
 #' @export
-print.meta_sankey <- function(x) {
+print.meta_sankey <- function(x, ...) {
   summary_string <- glue("A sankey plot describing the metadata of {nrow(x[['design']])} samples,
 including {length(x[['observed_nodes']])} out of {length(x[['permutations']])} nodes \\
 and traversing metadata factors:
@@ -422,8 +447,9 @@ and traversing metadata factors:
 #' Print a nonzero plot.
 #'
 #' @param x List containing the plot and table describing the data.
+#' @param ... Other args to match the generic.
 #' @export
-print.nonzero_plot <- function(x) {
+print.nonzero_plot <- function(x, ...) {
   summary_string <- glue("A non-zero genes plot of {nrow(x[['table']])} samples.
 These samples have an average {prettyNum(mean(x[['table']][['cpm']]))} CPM coverage and \\
 {as.integer(mean(x[['table']][['nonzero_genes']]))} genes observed, ranging from \\
@@ -437,8 +463,9 @@ These samples have an average {prettyNum(mean(x[['table']][['cpm']]))} CPM cover
 #' Print something useful about the result of create_partitions()
 #'
 #' @param x List containing the n sets of partitioned data test/train.
+#' @param ... Other args to match the generic.
 #' @export
-print.partitioned_data <- function(x) {
+print.partitioned_data <- function(x, ...) {
   train_sets <- list()
   count <- 0
   for (tr in x[["trainers"]]) {
@@ -458,8 +485,9 @@ print.partitioned_data <- function(x) {
 #'
 #' @param x Dataframe containing how many instances of the pattern
 #'  were observed in every gene.
+#' @param ... Other args to match the generic.
 #' @export
-print.pattern_counted <- function(x) {
+print.pattern_counted <- function(x, ...) {
   summary_string <-
     glue("The pattern was observed {sum(x[['number']])} times ober {nrow(x)} genes.")
   message(summary_string)
@@ -470,8 +498,9 @@ print.pattern_counted <- function(x) {
 #'
 #' @param x List comprised of the residuals, variance summary, tables,
 #'  the PCA-esque plot, experimental design, etc.
+#' @param ... Other args to match the generic.
 #' @export
-print.pca_result <- function(x) {
+print.pca_result <- function(x, ...) {
   cond_column <- x[["cond_column"]]
   batch_column <- x[["batch_column"]]
 
@@ -489,8 +518,9 @@ Shapes are defined by ", batch_levels, ".")
 #'
 #' @param x List containing the information before/after filtering,
 #'  the plots, and summary information.
+#' @param ... Other args to match the generic.
 #' @export
-print.prepost_filter <- function(x) {
+print.prepost_filter <- function(x, ...) {
   na_idx <- is.na(x[["table"]][["sub_low"]])
   x[["table"]][na_idx, "sub_low"] <- 0
   changed_idx <- x[["table"]][["sub_low"]] > 0
@@ -508,8 +538,9 @@ The number of genes with low coverage changes by {min_range}-{max_range} genes."
 #'
 #' @param x List composed of the xlsx output file, new columns added
 #'  to it, and copies of the metadata before/after modification.
+#' @param ... Other args to match the generic.
 #' @export
-print.preprocessing_metadata <- function(x) {
+print.preprocessing_metadata <- function(x, ...) {
   cond_column <- x[["cond_column"]]
   batch_column <- x[["batch_column"]]
 
@@ -528,8 +559,9 @@ Shapes are defined by ", batch_levels, ".")
 #' @param x List including the various plots from PROPER, the
 #'  associated tables, simulation options, and example text for a
 #'  paper/grant.
+#' @param ... Other args to match the generic.
 #' @export
-print.proper_estimate <- function(x) {
+print.proper_estimate <- function(x, ...) {
   message(x[[1]][["interpolated_text"]])
   plot(x[[1]][["power_plot"]])
   return(invisible(x))
@@ -538,8 +570,9 @@ print.proper_estimate <- function(x) {
 #' Print the result of a reordered variance partition analysis.
 #'
 #' @param x List of a resorted variance partition analysis and its plot.
+#' @param ... Other args to match the generic.
 #' @export
-print.reordered_varpart <- function(x) {
+print.reordered_varpart <- function(x, ...) {
   plot(x[["plot"]])
   return(invisible(x))
 }
@@ -548,8 +581,9 @@ print.reordered_varpart <- function(x) {
 #'
 #' @param x List containing the parameters used, gene subset tables,
 #'  plots, xlsx output file, etc.
+#' @param ... Other args to match the generic.
 #' @export
-print.sig_genes <- function(x) {
+print.sig_genes <- function(x, ...) {
   message("A set of genes deemed significant according to ", toString(x[["according"]]), ".")
   params <- ""
   if (!is.null(x[["lfc"]])) {
@@ -577,8 +611,9 @@ print.sig_genes <- function(x) {
 #'
 #' @param x List containing some venn diagrams, summaries of
 #'  intersections, subsets of the intersections, etc.
+#' @param ... Other args to match the generic.
 #' @export
-print.sig_intersect <- function(x) {
+print.sig_intersect <- function(x, ...) {
   message("A set of genes deemed significant by multiple methods.")
   return(invisible(x))
 }
@@ -587,8 +622,9 @@ print.sig_intersect <- function(x) {
 #'
 #' @param x List containing a datatable of intersections, summaries by
 #'  chromosome and gene.
+#' @param ... Other args to match the generic.
 #' @export
-print.snp_intersections <- function(x) {
+print.snp_intersections <- function(x, ...) {
   summary_string <- glue("The combinations of variants, \\
 chromosomes, and genes which are unique to every factor
 and combination of factors in the data.")
@@ -602,8 +638,9 @@ and combination of factors in the data.")
 #' @param x List containing the cross references of variants by
 #'  factor, the set of observed variants, the possible combinations of
 #'  the factor, etc.
+#' @param ... Other args to match the generic.
 #' @export
-print.snp_sets <- function(x) {
+print.snp_sets <- function(x, ...) {
   summary_string <- glue("A set of variants observed when cross referencing all variants against
 the samples associated with each metadata factor: {x[['factor']]}.  {ncol(x[['values']])}
 categories and {nrow(x[['values']])} variants were observed with {length(x[['intersections']])}
@@ -617,8 +654,9 @@ density of variants ranging from {min(x[['density']])} to {max(x[['density']])}.
 #'
 #' @param x List containing granges of variants, variants observed by
 #'  chromosome, gene, and summaries of the result.
+#' @param ... Other args to match the generic.
 #' @export
-print.snps_genes <- function(x) {
+print.snps_genes <- function(x, ...) {
   gt_zero <- sum(x[["count_by_gene"]] > 0)
   most_num <- max(x[["count_by_gene"]])
   most_idx <- x[["count_by_gene"]] == most_num
@@ -634,8 +672,9 @@ print.snps_genes <- function(x) {
 #'
 #' @param x List containing the pairwise distances/correlations, median/mean values,
 #'  quartiles, and the standard median plot.
+#' @param ... Other args to match the generic.
 #' @export
-print.standardmedian_plot <- function(x) {
+print.standardmedian_plot <- function(x, ...) {
   min_comp <- min(x[["measurement"]])
   max_comp <- max(x[["measurement"]])
   first_quart <- x[["quantile"]][1]
@@ -651,8 +690,9 @@ from {min_comp} to {max_comp} with quartiles at {first_quart} and {third_quart}.
 #'
 #' @param x List of the various over/under representation analyses
 #'  provided by topGO, the associated plots, and coerced enrichResults.
+#' @param ... Other args to match the generic.
 #' @export
-print.topgo_result <- function(x) {
+print.topgo_result <- function(x, ...) {
   bp_entries <- nrow(x[["tables"]][["bp_over_enriched"]])
   mf_entries <- nrow(x[["tables"]][["mf_over_enriched"]])
   cc_entries <- nrow(x[["tables"]][["cc_over_enriched"]])
@@ -666,8 +706,9 @@ print.topgo_result <- function(x) {
 #' Print a result from plot_topn().
 #'
 #' @param x List with the topn plot and summary table.
+#' @param ... Other args to match the generic.
 #' @export
-print.topn_plot <- function(x) {
+print.topn_plot <- function(x, ...) {
   summary_string <- glue("Plot describing the top-n genes from every sample of a dataset.")
   message(summary_string)
   plot(x[["plot"]])
@@ -677,8 +718,9 @@ print.topn_plot <- function(x) {
 #' Print a result from plot_variance_coefficients().
 #'
 #' @param x List containing the coefficient of variance plot and summary.
+#' @param ... Other args to match the generic.
 #' @export
-print.varcoef_plot <- function(x) {
+print.varcoef_plot <- function(x, ...) {
   summary_string <- glue("Plot describing the observed variance coefficients on a per-gene basis.")
   message(summary_string)
   plot(x[["plot"]])
@@ -690,8 +732,9 @@ print.varcoef_plot <- function(x) {
 #' @param x List of results from variancePartition including the model
 #'  information, percent/partition plots, dataframes of the
 #'  fitted/sorted data by variance, etc.
+#' @param ... Other args to match the generic.
 #' @export
-print.varpart <- function(x) {
+print.varpart <- function(x, ...) {
   summary_string <- glue("The result of using variancePartition with the model:
 {x[['model_string']]}")
   message(summary_string)
@@ -702,10 +745,23 @@ print.varpart <- function(x) {
 #' Print the result from write_expt.
 #'
 #' @param x List containing all the many plots, the dataframes, etc.
+#' @param ... Other args to match the generic.
 #' @export
-print.written_expt <- function(x) {
+print.written_expt <- function(x, ...) {
   result_string <- glue("The result from write_expt() sent to:
 {x[['excel']]}")
+  message(result_string)
+  return(invisible(x))
+}
+
+#' Print the result from write_xlsx.
+#'
+#' @param x List containing some information about the xlsx file.
+#' @export
+print.written_xlsx <- function(x) {
+  result_string <- glue("write_xlsx() wrote {x[['file']]}.
+ The cursor is on sheet {x[['sheet']]}, row: {x[['end_row']]} column: {x[['end_col']]}.")
+  message(result_string)
   return(invisible(x))
 }
 

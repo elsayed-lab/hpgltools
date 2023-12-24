@@ -40,6 +40,8 @@ factor, this would be the place to do it.  It is currently ignored.}
 
 \item{alt_model}{Ibid.}
 
+\item{keepers}{Specify a set of contrasts to perform here.}
+
 \item{conditions}{Factor of conditions in the data, used to define the
 contrasts.}
 

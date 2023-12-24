@@ -6,6 +6,11 @@
 \usage{
 mean_by_factor(data, fact = "condition")
 }
+\arguments{
+\item{data}{Input expt}
+
+\item{fact}{Metadata factor over which to perform mean().}
+}
 \description{
 Runs median_by_factor with fun set to 'mean'.
 }

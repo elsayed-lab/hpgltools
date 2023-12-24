@@ -257,16 +257,19 @@ hpgl_voom <- function(dataframe, model = NULL, libsize = NULL,
 #' @param model_intercept Perform a cell-means or intercept model? A little more
 #'  difficult for me to understand.  I have tested and get the same answer
 #'  either way.
+#' @param alt_model Separate model matrix instead of the normal condition/batch.
 #' @param extra_contrasts Some extra contrasts to add to the list.
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 #'  de_vs_cb = (E-D)-(C-B),"
-#' @param alt_model Separate model matrix instead of the normal condition/batch.
 #' @param annot_df Data frame for annotations.
 #' @param libsize I've recently figured out that libsize is far more important
 #'  than I previously realized.  Play with it here.
+#' @param which_voom Try out different invocations of voom.
+#' @param limma_method And different invocations of limma itself.
 #' @param force Force data which may not be appropriate for limma into it?
+#' @param keepers Choose a set of contrasts instead of all.
 #' @param ... Use the elipsis parameter to feed options to write_limma().
 #' @return List including the following information:
 #'  macb = the mashing together of condition/batch so you can look at it

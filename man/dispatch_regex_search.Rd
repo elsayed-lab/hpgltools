@@ -28,6 +28,8 @@ for gsub().}
 
 \item{input_file_spec}{filename extractor expression.}
 
+\item{species}{Specify a species or glob it.}
+
 \item{basedir}{Root directory containing the files/logs of metadata.}
 
 \item{extraction}{the replacement portion of gsub(). I am thinking

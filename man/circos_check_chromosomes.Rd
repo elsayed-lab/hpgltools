@@ -23,6 +23,8 @@ circos_check_chromosomes(
 \item{annot_gene_column}{Column containing the gene IDs.}
 
 \item{df_chr_column}{Column in the cfg df containing the chromosome names.}
+
+\item{df_gene_column}{Column containing the gene names.}
 }
 \description{
 This is mostly intended to stop things early if I accidently use

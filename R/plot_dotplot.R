@@ -242,6 +242,7 @@ plot_pcfactor <- function(pc_df, expt, exp_factor = "condition", component = "PC
 #' no longer actually a dotplot, but a point plot, but who is counting?
 #'
 #' @param data Expt, expressionset, or data frame.
+#' @param design Specify metadata if desired.
 #' @param colors Color scheme if data is not an expt.
 #' @param method Correlation or distance method to use.
 #' @param plot_legend Include a legend on the side?

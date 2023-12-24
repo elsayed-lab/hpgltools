@@ -42,8 +42,12 @@ deseq2_pairwise(
 
 \item{force}{Force deseq to accept data which likely violates its assumptions.}
 
+\item{keepers}{List of explicit contrasts to perform instead of all.}
+
 \item{deseq_method}{The DESeq2 manual shows a few ways to invoke it, I make
 2 of them available here.}
+
+\item{fittype}{Method to fir the data.}
 
 \item{...}{Triple dots!  Options are passed to arglist.}
 }

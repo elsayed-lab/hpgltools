@@ -4,12 +4,14 @@
 \alias{print.varpart}
 \title{Print variance partition results.}
 \usage{
-\method{print}{varpart}(x)
+\method{print}{varpart}(x, ...)
 }
 \arguments{
 \item{x}{List of results from variancePartition including the model
 information, percent/partition plots, dataframes of the
 fitted/sorted data by variance, etc.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print variance partition results.

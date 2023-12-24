@@ -19,6 +19,8 @@ extract_metadata(
 
 \item{fill}{Fill missing data with this.}
 
+\item{sanitize}{Perform my various sanitizers on the data?}
+
 \item{...}{Arguments to pass to the child functions (read_csv etc).}
 }
 \value{

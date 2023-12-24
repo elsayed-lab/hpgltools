@@ -43,7 +43,7 @@ model parameters which describe surrogate variables in the data.}
 difficult for me to understand.  I have tested and get the same answer
 either way.}
 
-\item{alt_model}{Separate model matrix instead of the normal condition/batch.}
+\item{alt_model}{Specify another model.}
 
 \item{extra_contrasts}{Some extra contrasts to add to the list.
 This can be pretty neat, lets say one has conditions A,B,C,D,E
@@ -56,7 +56,17 @@ de_vs_cb = (E-D)-(C-B),"}
 \item{libsize}{I've recently figured out that libsize is far more important
 than I previously realized.  Play with it here.}
 
+\item{limma_method}{Choose one of limma's lm methods.}
+
+\item{limma_robust}{Make the significance estimation robust?}
+
+\item{voom_norm}{Use this method to normalize the voom inputs.}
+
+\item{limma_trend}{Add trend lines to limma's voom plot?}
+
 \item{force}{Force data which may not be appropriate for limma into it?}
+
+\item{keepers}{Perform an explicit set of contrasts instead of all.}
 
 \item{...}{Use the elipsis parameter to feed options to write_limma().}
 }

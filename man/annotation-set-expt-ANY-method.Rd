@@ -2,14 +2,16 @@
 % Please edit documentation in R/zzz_methods.R
 \name{annotation<-,expt,ANY-method}
 \alias{annotation<-,expt,ANY-method}
-\title{A setter for the annotation databased used to create an expt/se.}
+\title{A setter for the annotation database used to create an expt/se.}
 \usage{
 \S4method{annotation}{expt,ANY}(object) <- value
 }
 \arguments{
 \item{object}{One of my various expressionset analogs, expt,
 expressionSet, or summarizedExperiment.}
+
+\item{value}{New annotation slot for the expt/se.}
 }
 \description{
-A setter for the annotation databased used to create an expt/se.
+A setter for the annotation database used to create an expt/se.
 }

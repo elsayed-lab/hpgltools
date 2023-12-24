@@ -47,6 +47,8 @@ de_vs_cb = (E-D)-(C-B),"}
 
 \item{force}{Force edgeR to accept inputs which it should not have to deal with.}
 
+\item{keepers}{Ask for a specific set of contrasts instead of all.}
+
 \item{edger_method}{I found a couple/few ways of doing edger in the manual,
 choose with this.}
 

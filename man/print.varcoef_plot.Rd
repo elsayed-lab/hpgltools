@@ -4,10 +4,12 @@
 \alias{print.varcoef_plot}
 \title{Print a result from plot_variance_coefficients().}
 \usage{
-\method{print}{varcoef_plot}(x)
+\method{print}{varcoef_plot}(x, ...)
 }
 \arguments{
 \item{x}{List containing the coefficient of variance plot and summary.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print a result from plot_variance_coefficients().

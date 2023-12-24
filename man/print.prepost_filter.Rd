@@ -4,11 +4,13 @@
 \alias{print.prepost_filter}
 \title{Print a representation of the pre vs. post filtered data.}
 \usage{
-\method{print}{prepost_filter}(x)
+\method{print}{prepost_filter}(x, ...)
 }
 \arguments{
 \item{x}{List containing the information before/after filtering,
 the plots, and summary information.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print a representation of the pre vs. post filtered data.

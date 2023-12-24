@@ -84,6 +84,8 @@ genes via logfc/p-value.}
 
 \item{current_id}{Choose the current ID type for an output gmt file.}
 
+\item{comparison}{The cutoff may be '>|<' or '<=|>='.}
+
 \item{required_id}{Choose the desired ID type for an output gmt file.}
 
 \item{min_gmt_genes}{Define the minimum number of genes in a gene set for writing a gmt file.}

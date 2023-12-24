@@ -8,6 +8,12 @@ variance_expt(expt, convert = "cpm", transform = "raw", norm = "raw")
 }
 \arguments{
 \item{expt}{Expressionset to which to add this information.}
+
+\item{convert}{Use this conversion,}
+
+\item{transform}{and transformation,}
+
+\item{norm}{and normalization.}
 }
 \value{
 Slightly modified gene annotations including the mean/variance.

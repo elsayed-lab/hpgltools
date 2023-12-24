@@ -435,6 +435,111 @@ sequence_attributes <- function(fasta, gff = NULL, type = "gene", key = NULL) {
   return(attribs)
 }
 
+make_bsgenome_from_fasta <- function(fasta, pkgname, title, organism, common_name, provider, build_dir = "build", genome_prefix = NULL, author = "Ashton Trey Belew <abelew@gmail.com>", URL = "https://github.com/abelew/hpgltools", installp = TRUE) {
+  if (!file.exists(build_dir)) {
+    created <- dir.create(build_dir, recursive = TRUE)
+  }
+  input <- Biostrings::readDNAStringSet(fasta)
+  output_list <- list()
+  sequence_names <- "c("
+  message(" Writing chromosome files, this is slow for fragmented scaffolds.")
+  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
+  #if (isTRUE(show_progress)) {
+  #  bar <- utils::txtProgressBar(style = 3)
+  #}
+  genome_prefix <- NULL
+  for (index in seq_len(length(input))) {
+   # if (isTRUE(show_progress)) {
+   #   pct_done <- index / length(input)
+   #   setTxtProgressBar(bar, pct_done)
+   # }
+    chr <- names(input)[index]
+    chr_name <- strsplit(chr, split = " ")[[1]][1]
+    if (is.null(genome_prefix)) {
+      genome_prefix <- gsub(x = chr_name, pattern = "(.*)\\.(.*)", replacement = "\\1")
+    }
+    ## chr_file <- file.path(bsgenome_dir, paste0(chr_name, ".fa"))
+    chr_file <- file.path(build_dir, glue::glue("{chr_name}.fa"))
+    output <- Biostrings::writeXStringSet(input[index], chr_file, append = FALSE,
+                                          compress = FALSE, format = "fasta")
+    output_list[[chr_name]] <- chr_file
+    sequence_names <- paste0(sequence_names, '"', chr_name, '", ')
+  }
+  #if (isTRUE(show_progress)) {
+  #  close(bar)
+  #}
+  message("Finished writing ", length(input), " contigs.")
+  sequence_names <- gsub(pattern = ", $", replacement = ")", x = sequence_names)
+
+  ## Now start creating the DESCRIPTION file
+  desc_file <- file.path(build_dir, "DESCRIPTION")
+  descript <- desc::description$new("!new")
+  descript$set(Package = pkgname)
+  title <- glue::glue("{taxa[['genus']]} {taxa[['species']]} strain {taxa[['strain']]} \\
+                version {db_version}")
+  descript$set(Title = title)
+  descript$set(Author = author)
+  version_string <- format(Sys.time(), "%Y.%m")
+  descript$set(Version = version_string)
+  descript$set(Maintainer = author)
+  descript$set(Description = glue::glue("A BSgenome for {title}."))
+  descript$set(License = "Artistic-2.0")
+  descript$set(URL = "https://eupathdb.org")
+  descript$set(seqs_srcdir = build_dir)
+  descript$set(seqnames = sequence_names)
+  descript$set(organism = organism)
+  descript$set(common_name = common_name)
+  descript$set(provider = provider)
+  descript$set(release_date = format(Sys.time(), "%Y%m%d"))
+  descript$set(BSgenomeObjname = common_name)
+  ## descript$set(provider_version = glue::glue("{fasta_hostname} {db_version}"))
+  ## descript$set(release_name = as.character(db_version))
+  ## descript$set(release_name = glue::glue("{fasta_hostname} {db_version}"))
+  ## descript$set(genome = genome_prefix)
+  descript$set(genome = "hg38")  ## There is some weird BS with this field, so I am faking it.
+  descript$set(organism_biocview = common_name)
+  descript$del("LazyData")
+  descript$del("Authors@R")
+  descript$del("URL")
+  descript$del("BugReports")
+  descript$del("Encoding")
+  description_file <- file.path(build_dir, "DESCRIPTION")
+  descript$write(description_file)
+
+  ## Generate the package, this puts it into the cwd.
+  message(" Calling forgeBSgenomeDataPkg().")
+  ## Otherwise I get error in cannot find uniqueLetters (this seems to be a new development)
+  ## Invoking library(Biostrings") annoys R CMD check, but I am not sure there is a good
+  ## way around that due to limitations of Biostrings, lets see.
+  uniqueLetters <- Biostrings::uniqueLetters
+  tt <- try(do.call("library", as.list("Biostrings")), silent = TRUE)
+  pkg_builder <- BSgenome::forgeBSgenomeDataPkg(description_file)
+  if ("try-error" %in% class(pkg_builder)) {
+    message("forgeBSgenomeDataPkg failed with error: ")
+    message("A likely reason is too many open files, which may be changed in /etc/sysctl.conf")
+    print(pkg_builder)
+    pkg_builder <- NULL
+    return(NULL)
+  }
+
+  built <- NULL
+  workedp <- ! "try-error" %in% class(pkg_builder)
+  if (isTRUE(workedp)) {
+    built <- try(devtools::build(pkgname, quiet = TRUE))
+    workedp <- ! "try-error" %in% class(built)
+  }
+  if (isTRUE(installp) && isTRUE(workedp)) {
+    installed <- try(devtools::install_local(built))
+  }
+  retlist <- list(
+    "name" = pkgname,
+    "archive" = built,
+    "installed" = installed,
+    "contigs" = length(input))
+  class(retlist) <- "built_bsgenome"
+  return(retlist)
+}
+
 #' Extract CDS sequences from a genome and set of annotations.
 #'
 #' Given a BSGenome and some annotations, write out the CDS entries.

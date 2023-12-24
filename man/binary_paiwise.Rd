@@ -6,6 +6,23 @@
 \usage{
 binary_paiwise(...)
 }
+\arguments{
+\item{...}{Args usually passed to all_pairwise()}
+
+\item{do_limma}{(Don't) do limma.}
+
+\item{do_edger}{Do edger.}
+
+\item{do_basic}{(Don't) do basic.}
+
+\item{do_deseq}{Do deseq.}
+
+\item{do_ebseq}{(Don't) do ebseq.}
+
+\item{do_noiseq}{(Don't) do noiseq.}
+
+\item{do_dream}{(Don't) do dream.}
+}
 \description{
 The thing I want to do which I presume will be of use to Zhezhen is
 to have a variant of this which takes the list of interesting

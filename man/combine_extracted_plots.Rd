@@ -54,6 +54,8 @@ combine_extracted_plots(
 
 \item{plot_ebseq}{Add ebseq data?}
 
+\item{plot_noiseq}{Add noiseq plots?}
+
 \item{loess}{Add a loess estimation?}
 
 \item{logfc}{For Volcano/MA plot lines.}
@@ -68,6 +70,8 @@ significance.}
 \item{plot_colors}{Use these colors for numerators/denominators.}
 
 \item{fancy}{Include fancy pdf/svg versions of plots for publication?}
+
+\item{adjp}{Use adjusted p-values?}
 
 \item{do_inverse}{Flip the numerator/denominator?}
 

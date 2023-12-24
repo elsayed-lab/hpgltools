@@ -4,13 +4,15 @@
 \alias{print.gprofiler_result}
 \title{Print a gprofiler over representation search.}
 \usage{
-\method{print}{gprofiler_result}(x)
+\method{print}{gprofiler_result}(x, ...)
 }
 \arguments{
 \item{x}{List from gProfiler2 containing its various plots, tables
 of significant categories for GO, reactome, KEGG, miRNA,
 transcription factors, CORUM, wiki pathways, etc; along with the
 coerced enrichResult versions.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print a gprofiler over representation search.

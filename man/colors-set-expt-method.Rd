@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{expt}{An expt.}
+
+\item{lst}{List of new colors.}
 }
 \description{
 A setter to put the colors into an expt.

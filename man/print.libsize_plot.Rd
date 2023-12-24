@@ -4,11 +4,13 @@
 \alias{print.libsize_plot}
 \title{Print the library sizes from an experiment.}
 \usage{
-\method{print}{libsize_plot}(x)
+\method{print}{libsize_plot}(x, ...)
 }
 \arguments{
 \item{x}{List containing a summary of the library sizes, the plot,
 and table.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print the library sizes from an experiment.

@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{expt}{A SummarizedExperiment.}
+
+\item{lst}{List of new colors.}
 }
 \description{
 A setter to put the colors into a SummarizedExperiment.

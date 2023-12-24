@@ -4,10 +4,12 @@
 \alias{print.topn_plot}
 \title{Print a result from plot_topn().}
 \usage{
-\method{print}{topn_plot}(x)
+\method{print}{topn_plot}(x, ...)
 }
 \arguments{
 \item{x}{List with the topn plot and summary table.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print a result from plot_topn().

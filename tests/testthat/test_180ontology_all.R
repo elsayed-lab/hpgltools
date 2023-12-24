@@ -1,7 +1,7 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
-context("180gene_ontology_enrichment.R")
+context("180gene_ontology")
 ## 2021-02, Removing tests for explicit ontology categories, because they keep changing.
 ## 2017-12, exported functions in ontology_cluster_profiler: simple_clusterprofiler
 

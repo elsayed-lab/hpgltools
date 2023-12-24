@@ -18,14 +18,20 @@ dispatch_count_lines(
 \arguments{
 \item{meta}{Input metadata}
 
-\item{search}{Probably not needed}
+\item{search}{Pattern to count}
 
 \item{input_file_spec}{Input file specification to hunt down the
 file of interest.}
 
 \item{verbose}{Print diagnostic information while running?}
 
+\item{species}{Specify a species to search for.}
+
 \item{basedir}{Root directory containing the files/logs of metadata.}
+
+\item{type}{Add columns for only the genome mapping and/or rRNA by default.}
+
+\item{inverse}{Count the lines that do _not_ match the pattern.}
 }
 \description{
 Sometimes the number of lines of a file is a good proxy for some

@@ -4,11 +4,13 @@
 \alias{print.all_gprofiler}
 \title{Print the result of all_gprofiler()}
 \usage{
-\method{print}{all_gprofiler}(x)
+\method{print}{all_gprofiler}(x, ...)
 }
 \arguments{
 \item{x}{List composed of simple_gprofiler() results for every
 up/down set provided by extract_significant_genes().}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print the result of all_gprofiler()

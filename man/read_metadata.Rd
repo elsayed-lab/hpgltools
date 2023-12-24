@@ -15,6 +15,8 @@ read_metadata(file, sep = ",", header = TRUE, sheet = 1, comment = "#", ...)
 
 \item{sheet}{Used for excel/etc, which sheet to read?}
 
+\item{comment}{Skip rows starting with this (in the first cell of the row if not a text file).}
+
 \item{...}{Arguments for arglist, used by sep, header and similar
 read_csv/read.table parameters.}
 }

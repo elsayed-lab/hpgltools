@@ -4,12 +4,14 @@
 \alias{print.combined_de}
 \title{Print a combined differential expression analysis.}
 \usage{
-\method{print}{combined_de}(x)
+\method{print}{combined_de}(x, ...)
 }
 \arguments{
 \item{x}{List containing the dataframes for each contrast, the
 various plots, the set of wanted contrasts, models used, and
 summaries of the data.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print a combined differential expression analysis.

@@ -4,11 +4,13 @@
 \alias{print.expt}
 \title{Modified print function for an expt.}
 \usage{
-\method{print}{expt}(x)
+\method{print}{expt}(x, ...)
 }
 \arguments{
 \item{x}{List from create_expt containing the expressionSet,
 annotation data, batches, conditions, colors, libsizes, etc.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 I am trying to understand how R collates functions.

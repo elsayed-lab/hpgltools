@@ -4,11 +4,13 @@
 \alias{print.sig_intersect}
 \title{Print the intersection of significant genes from multiple analyses.}
 \usage{
-\method{print}{sig_intersect}(x)
+\method{print}{sig_intersect}(x, ...)
 }
 \arguments{
 \item{x}{List containing some venn diagrams, summaries of
 intersections, subsets of the intersections, etc.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print the intersection of significant genes from multiple analyses.

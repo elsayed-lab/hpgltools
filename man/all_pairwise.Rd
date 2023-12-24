@@ -83,7 +83,11 @@ so it can choose).}
 
 \item{do_limma}{Perform limma?}
 
-\item{do_noiseq}{Perform dream?}
+\item{do_noiseq}{Perform noiseq?}
+
+\item{do_dream}{Perform dream?}
+
+\item{keepers}{Limit the pairwise search to a set of specific contrasts.}
 
 \item{convert}{Modify the data with a 'conversion' method for PCA?}
 
@@ -93,8 +97,7 @@ so it can choose).}
 
 \item{surrogates}{Either a number of surrogates or method to estimate it.}
 
-\item{...}{Picks up extra arguments into arglist, currently only passed to
-write_limma().}
+\item{...}{Picks up extra arguments into arglist.}
 }
 \value{
 A list of limma, deseq, edger results.

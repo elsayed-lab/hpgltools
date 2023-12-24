@@ -28,6 +28,7 @@
 #' @param model_intercept Not currently used, but passed from all_pairwise()
 #' @param alt_model Not currently used, but passed from all_pairwise()
 #' @param model_batch Not currently used, but passed from all_pairwise()
+#' @param keepers Perform a specific set of contrasts instead of all?
 #' @param force Force ebseq to accept bad data (notably NA containing stuff from proteomics.
 #' @param ... Extra arguments currently unused.
 #' @return List containing tables from ebseq, the conditions tested, and the
@@ -113,6 +114,7 @@ ebseq_pairwise <- function(input = NULL, patterns = NULL, conditions = NULL,
 #' @param model_cond Provided by all_pairwise(), ibid.
 #' @param model_intercept Ibid.
 #' @param alt_model Ibid.
+#' @param keepers Specify a set of contrasts to perform here.
 #' @param conditions Factor of conditions in the data, used to define the
 #'  contrasts.
 #' @param norm EBseq normalization method to apply to the data.
@@ -242,6 +244,8 @@ ebseq_few <- function(data, conditions,
   interesting_patterns <- as.data.frame(patterns[-1, ])
 
   table_lst <- list()
+  ## FIXME: Change this to use a portion of make_pairwise_contrasts()
+  ## so that numerators and denominators do not get flipped.
   for (i in seq_len(ncol(fold_changes[["FCMat"]]))) {
     column <- colnames(fold_changes[["FCMat"]])[i]
     contrast <- gsub(pattern = "Over", replacement = "_vs_", x = column)

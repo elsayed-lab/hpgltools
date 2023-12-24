@@ -35,6 +35,8 @@ simple_goseq(
 
 \item{adjust}{Minimum adjusted pvalue for 'significant.'}
 
+\item{threshold}{Look at sets with this signficance or better.}
+
 \item{plot_title}{Set a title for the pvalue plots.}
 
 \item{length_keytype}{Keytype to provide to extract lengths}
@@ -51,9 +53,11 @@ simple_goseq(
 
 \item{enrich}{Convert the goseq result to the clusterProfiler format?}
 
-\item{...}{Extra parameters which I do not recall}
+\item{minimum_interesting}{Exclude categories with less than this number of genes.}
 
-\item{pvalue}{Minimum pvalue for 'significant.'}
+\item{min_xref}{Stop everything if we get less than this intersection of genes/GO/lengths.}
+
+\item{...}{Extra parameters which I do not recall}
 }
 \value{
 Big list including:

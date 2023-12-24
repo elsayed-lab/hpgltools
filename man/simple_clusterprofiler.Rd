@@ -72,6 +72,8 @@ should be tried the second time around?}
 
 \item{do_david}{Attempt to use the DAVID database for a search?}
 
+\item{do_kegg}{Perform kegg search?}
+
 \item{david_id}{Which column to use for cross-referencing to DAVID?}
 
 \item{david_user}{Default registered username to use.}

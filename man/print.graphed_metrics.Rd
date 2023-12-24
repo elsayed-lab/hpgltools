@@ -4,10 +4,12 @@
 \alias{print.graphed_metrics}
 \title{Print a message about the results from graph_metrics().}
 \usage{
-\method{print}{graphed_metrics}(x)
+\method{print}{graphed_metrics}(x, ...)
 }
 \arguments{
 \item{x}{List containing a large number of plots and some tables.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print a message about the results from graph_metrics().

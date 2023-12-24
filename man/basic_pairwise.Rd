@@ -38,6 +38,8 @@ basic_pairwise(
 
 \item{force}{Force as input non-normalized data?}
 
+\item{keepers}{Set of specific contrasts to perform instead of all.}
+
 \item{fx}{What function to use for mean/median?}
 
 \item{...}{Extra options passed to arglist.}

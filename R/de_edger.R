@@ -35,6 +35,7 @@
 #'  de_vs_cb = (E-D)-(C-B),"
 #' @param annot_df Annotation information to the data tables?
 #' @param force Force edgeR to accept inputs which it should not have to deal with.
+#' @param keepers Ask for a specific set of contrasts instead of all.
 #' @param edger_method  I found a couple/few ways of doing edger in the manual,
 #'  choose with this.
 #' @param ... The elipsis parameter is fed to write_edger() at the end.

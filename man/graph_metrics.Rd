@@ -29,6 +29,8 @@ graph_metrics(
 
 \item{ma}{Include pairwise ma plots?}
 
+\item{cv}{Include coefficient of variance plots? (they are slow)}
+
 \item{gene_heat}{Include a heatmap of the gene expression data?}
 
 \item{...}{Extra parameters optionally fed to the various plots}

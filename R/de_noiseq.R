@@ -15,6 +15,15 @@
 #' @param model_batch Add batch to the model, noiseq has its own combat-like method,
 #'  so maybe not necessary?
 #' @param annot_df Extra annotations.
+#' @param k Taken from the noiseq docs.
+#' @param norm Normalization method (noiseq oddly defaults to rpkm).
+#' @param factor Metadata factor over which to iterate.
+#' @param lc taken from the noiseq docs.
+#' @param r taken from the noiseq docs.
+#' @param adj taken from the noiseq docs.
+#' @param a0per taken from the noiseq docs.
+#' @param filter Filter the data?
+#' @param keepers Perform the comparison only over these specific contrasts instead of all.
 #' @param ... Extra arguments.
 #' @return List similar to deseq_pairwise/edger_pairwise/etc.
 #' @seealso DOI:10.1093/nar/gkv711

@@ -66,6 +66,10 @@ plotting?}
 
 \item{include_basic}{Include my stupid basic logFC tables?}
 
+\item{include_noiseq}{Include results from NoiSeq?}
+
+\item{include_dream}{Include results from the variancePartition 'dream' method?}
+
 \item{rownames}{Add rownames to the xlsx printed table?}
 
 \item{add_plots}{Add plots to the end of the sheets with expression values?}
@@ -89,13 +93,20 @@ plotting?}
 \item{excel_title}{Title for the excel sheet(s).  If it has the
 string 'YYY', that will be replaced by the contrast name.}
 
+\item{increment_start}{When incrementing the table number for each contrast,
+look for this string and increment when it is found.  It should therefore
+be found in the excel_title.}
+
+\item{start_worksheet_num}{Start writing data at this worksheet number.
+(in case you want to put other stuff in)}
+
 \item{rda}{Write a rda file of the results.}
 
 \item{rda_input}{Include the input all_pairwise() result in the rda?}
 
 \item{label}{Label this number of top-n genes on the plots?}
 
-\item{label_column}{Use this column for gene labelling.}
+\item{label_column}{Use this gene annotation column to pick up gene labels.}
 
 \item{format_sig}{Use this many significant digits for printing
 wacky numbers.}
@@ -113,9 +124,6 @@ plotting.}
 plots.}
 
 \item{z_lines}{Add z-score lines to coefficient plots?}
-
-\item{start_worksheet}{This will now increment worksheet titles
-from this point forward.}
 }
 \value{
 Table combining limma/edger/deseq outputs.

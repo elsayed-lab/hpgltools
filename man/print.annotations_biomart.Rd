@@ -4,10 +4,12 @@
 \alias{print.annotations_biomart}
 \title{Print function for a set of annotations downloaded from biomart.}
 \usage{
-\method{print}{annotations_biomart}(x)
+\method{print}{annotations_biomart}(x, ...)
 }
 \arguments{
 \item{x}{List containing the relevant information gathered from ensembl's biomart.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print function for a set of annotations downloaded from biomart.

@@ -618,7 +618,7 @@ subset_se <- function(se, subset = NULL, ids = NULL,
     }
   }
   ## pData(subset_expressionset) <- subset_design
-  return(new_se)
+  return(subset_se)
 }
 
 ## EOF

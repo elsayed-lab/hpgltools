@@ -11,7 +11,7 @@ map_keepers(keepers, table_names, datum)
 
 \item{table_names}{The actual list of results produced by the various methods employed.}
 
-\item{data}{The full dataset.}
+\item{datum}{The full dataset.}
 }
 \description{
 This is responsible for hunting down tables which correspond to the various ways one may

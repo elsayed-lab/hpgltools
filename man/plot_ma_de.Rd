@@ -46,6 +46,8 @@ plot_ma_de(
 
 \item{label}{Label the top/bottom n logFC values?}
 
+\item{label_column}{gene annotation column from which to extract labels.}
+
 \item{...}{More options for you}
 }
 \value{

@@ -8,8 +8,6 @@ getColors(expt)
 }
 \arguments{
 \item{object}{The object from which to gather colors.}
-
-\item{...}{Additional arguments passed to function constructors.}
 }
 \value{
 colors!

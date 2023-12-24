@@ -4,11 +4,13 @@
 \alias{print.density_plot}
 \title{Print the result from plot_density().}
 \usage{
-\method{print}{density_plot}(x)
+\method{print}{density_plot}(x, ...)
 }
 \arguments{
 \item{x}{List containing the plot, summary of the
 conditions/batches/samples, and the melted table of reads/gene.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print the result from plot_density().
