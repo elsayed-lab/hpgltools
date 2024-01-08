@@ -7,8 +7,8 @@ library(pasilla)
 ## data(pasillaGenes)
 ## Try loading some annotation information for this species.
 
-## This now generates an error on travis, but not on my computer.
 gene_info <- sm(load_biomart_annotations(species = "dmelanogaster",
+                                         year = "2020", month = "jan",
                                          overwrite = TRUE))[["annotation"]]
 info_idx <- gene_info[["gene_biotype"]] == "protein_coding"
 gene_info <- gene_info[info_idx, ]

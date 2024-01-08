@@ -27,7 +27,6 @@ check_metadata_year <- function(metadata = NULL, column = NULL) {
     message("No metadata provided, assuming now is sufficient.")
   } else if (is.null(column)) {
     message("No file column was requested, assuming the metadata creation time is sufficient.")
-
     retlist[["year"]] <- format(info[["ctime"]], "%Y")
     retlist[["month"]] <- format(info[["ctime"]], "%m")
   } else {
@@ -275,7 +274,9 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
   if (is.null(specification)) {
     specification <- make_rnaseq_spec()
   } else if (class(specification)[1] == "list") {
-    message("Using provided specification")
+    if (isTRUE(verbose)) {
+      message("Using provided specification")
+    }
   } else if (specification == "rnaseq") {
     specification <- make_rnaseq_spec()
   } else if (specification == "dnaseq") {
@@ -323,7 +324,9 @@ gather_preprocessing_metadata <- function(starting_metadata, specification = NUL
     uninformative_entries <- na_entries + empty_entries + zero_entries
     all_empty <- uninformative_entries == length(new_entries)
     if (is.null(new_entries) || isTRUE(all_empty)) {
-      message("Not including new entries for: ", new_column, ", it is empty.")
+      if (isTRUE(verbose)) {
+        message("Not including new entries for: ", new_column, ", it is empty.")
+      }
     } else if ("data.frame" %in% class(new_entries)) {
       for (sp in colnames(new_entries)) {
         new_column_name <- glue("{entry_type}_{sp}")
@@ -1053,7 +1056,9 @@ dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbos
   }
 
   filenames_with_wildcards <- glue(input_file_spec)
-  message("Example filename: ", filenames_with_wildcards[1], ".")
+  if (isTRUE(verbose)) {
+    message("Example count filename: ", filenames_with_wildcards[1], ".")
+  }
   output_entries <- rep(0, length(filenames_with_wildcards))
   for (row in seq_len(nrow(meta))) {
     found <- 0
@@ -1099,7 +1104,9 @@ dispatch_count_lines <- function(meta, search, input_file_spec, verbose = verbos
 dispatch_fasta_lengths <- function(meta, input_file_spec, verbose = verbose,
                                    basedir = "preprocessing") {
   filenames_with_wildcards <- glue(input_file_spec)
-  message("Example filename: ", filenames_with_wildcards[1], ".")
+  if (isTRUE(verbose)) {
+    message("Example length filename: ", filenames_with_wildcards[1], ".")
+  }
   output_entries <- rep(0, length(filenames_with_wildcards))
   for (row in seq_len(nrow(meta))) {
     found <- 0
@@ -1147,7 +1154,9 @@ dispatch_filename_search <- function(meta, input_file_spec, verbose = verbose,
   }
 
   filenames_with_wildcards <- glue(input_file_spec)
-  message("Example filename: ", filenames_with_wildcards[1], ".")
+  if (isTRUE(verbose)) {
+    message("Example filename: ", filenames_with_wildcards[1], ".")
+  }
   output_entries <- rep(0, length(filenames_with_wildcards))
   for (row in seq_len(nrow(meta))) {
     found <- 0
@@ -1180,7 +1189,9 @@ dispatch_filename_search <- function(meta, input_file_spec, verbose = verbose,
 dispatch_gc <- function(meta, input_file_spec, verbose = FALSE,
                         basedir = "preprocessing") {
   filenames_with_wildcards <- glue(input_file_spec)
-  message("Example filename: ", filenames_with_wildcards[1], ".")
+  if (isTRUE(verbose)) {
+    message("Example gc filename: ", filenames_with_wildcards[1], ".")
+  }
   output_entries <- rep(0, length(filenames_with_wildcards))
   for (row in seq_len(nrow(meta))) {
     found <- 0
@@ -1223,11 +1234,15 @@ dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
 
   entries <- NULL
   if (is.null(meta[[numerator_column]]) | is.null(meta[[denominator_column]])) {
-    message("Missing data to calculate the ratio between: ", numerator_column,
-            " and ", denominator_column, ".")
+    if (isTRUE(verbose)) {
+      message("Missing data to calculate the ratio between: ", numerator_column,
+              " and ", denominator_column, ".")
+    }
   } else {
-    message("The numerator column is: ", numerator_column, ".")
-    message("The denominator column is: ", denominator_column, ".")
+    if (isTRUE(verbose)) {
+      message("The numerator column is: ", numerator_column, ".")
+      message("The denominator column is: ", denominator_column, ".")
+    }
     if (is.null(numerator_add)) {
       entries <- as.numeric(meta[[numerator_column]]) / as.numeric(meta[[denominator_column]])
     } else {
@@ -1265,7 +1280,7 @@ dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
 dispatch_regex_search <- function(meta, search, replace, input_file_spec,
                                   species = "*", basedir = "preprocessing",
                                   extraction = "\\1", which = "first",
-                                  as = NULL, verbose = FALSE,
+                                  as = NULL, verbose = FALSE, type = "genome",
                                   ...) {
   arglist <- list(...)
   ## if (length(arglist) > 0) {
@@ -1278,14 +1293,15 @@ dispatch_regex_search <- function(meta, search, replace, input_file_spec,
       species_name <- species[s]
       output_entries[[species_name]] <- dispatch_regex_search(
         meta, search, replace, input_file_spec, verbose = verbose,
-        species = species_name, basedir = basedir,
+        species = species_name, basedir = basedir, type = type,
         extraction = extraction, which = which, as = as, ...)
     }
     return(output_entries)
   }
-
   filenames_with_wildcards <- glue(input_file_spec, ...)
-  message("Example filename: ", filenames_with_wildcards[1], ".")
+  if (isTRUE(verbose)) {
+    message("Example regex filename: ", filenames_with_wildcards[1], ".")
+  }
   output_entries <- rep(0, length(filenames_with_wildcards))
   for (row in seq_len(nrow(meta))) {
     found <- 0
@@ -1394,7 +1410,7 @@ dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv"
   }
 
   filenames_with_wildcards <- glue(input_file_spec, ...)
-  mesg("Example filename: ", filenames_with_wildcards[1], ".")
+  mesg("Example csv filename: ", filenames_with_wildcards[1], ".")
 
   output_entries <- rep(0, length(filenames_with_wildcards))
   for (row in seq_len(nrow(meta))) {
@@ -1417,7 +1433,9 @@ dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv"
     } else if (file_type == "tsv") {
       input_df <- sm(readr::read_tsv(input_file))
     } else {
-      message("Assuming csv input.")
+      if (isTRUE(verbose)) {
+        message("Assuming csv input.")
+      }
       input_df <- sm(readr::read_csv(input_file))
     }
 
@@ -1871,15 +1889,15 @@ make_rnaseq_spec <- function() {
     "hisat_rrna_percent" = list(
       "column" = "hisat_rrna_percent"),
     "hisat_genome_single_concordant" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*{type}*.stderr"),
     "hisat_genome_multi_concordant" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*{type}*.stderr"),
     "hisat_genome_single_all" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*{type}*.stderr"),
     "hisat_genome_multi_all" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*{type}*.stderr"),
     "hisat_unmapped" = list(
-      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*genome*.stderr"),
+      "file" = "{basedir}/{meta[['sampleid']]}/outputs/*hisat2_{species}/hisat2_*{type}*.stderr"),
     "hisat_genome_percent" = list(
       "column" = "hisat_genome_percent"),
     "hisat_count_table" = list(

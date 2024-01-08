@@ -795,6 +795,25 @@ tmpmd5file <- function(pattern = "", suffix = "", digits = 6,
   return(file_path)
 }
 
+#' A cheater redefinition of tempfile.
+#'
+#' I found this at:
+#' https://stackoverflow.com/questions/5262332/parallel-processing-and-temporary-files
+#' and was intrigued.  I did not think to overwrite the tempfile definition.
+#' Something in me says this is a terrible idea.
+#' The same page suggests creating all the tempfile names _before_
+#' beginning the parallel operations.  I think this might be the way
+#' to go; however I do not know how that will affect the tempfile
+#' names produced by knitr when it is making its images.
+#'
+#' @param pattern starting string of each tempfile.
+#' @param tmpdir Location to put the file.
+#' @param fileext suffix.
+#' @export
+tempfile <- function(pattern = "file", tmpdir = tempdir(), fileext = "") {
+  .Internal(tempfile(paste0("pid", Sys.getpid(), pattern), tmpdir, fileext))
+}
+
 #' Remove the AsIs attribute from some data structure.
 #'
 #' Notably, when using some gene ontology libraries, the returned data

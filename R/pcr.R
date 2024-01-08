@@ -44,9 +44,11 @@ cheap_tm <- function(sequence) {
 #'  PCR amplicon length.
 #' @param genome (BS)Genome to search.
 #' @param target_temp PCR temperature to attempt to match.
-choose_sequence_regions <- function(lvec, max_primer_length = 45,
+choose_sequence_regions <- function(long_variant_vector, max_primer_length = 45,
                                     topn = NULL, bin_width = 600,
-                                    genome = NULL, target_temp = 58) {
+                                    genome = NULL, target_temp = 58,
+                                    min_gc_prop = 0.25,
+                                    max_nmer_run = 5) {
   recount_positions <- function(position_string, bin_width = 600) {
     positions <- strsplit(position_string, ",")[[1]]
     positions <- gsub(x = positions, pattern = " ", replacement = "")
@@ -62,12 +64,17 @@ choose_sequence_regions <- function(lvec, max_primer_length = 45,
     return(new)
   }
 
+  run_pattern <- paste0("A{", max_nmer_run,
+                        ",}|T{", max_nmer_run,
+                        ",}|G{", max_nmer_run,
+                        ",}|C{", max_nmer_run, ",}")
+
   ## Now get the nucleotides of the first 30 nt of each window
   sequence_df <- data.frame()
   if (is.null(topn)) {
-    sequence_df <- as.data.frame(lvec)
+    sequence_df <- as.data.frame(long_variant_vector)
   } else {
-    sequence_df <- as.data.frame(head(lvec, n = topn))
+    sequence_df <- as.data.frame(head(long_variant_vector, n = topn))
   }
   colnames(sequence_df) <- "variants"
   ## At this point we have one column which contains variant specs which start
@@ -121,6 +128,8 @@ choose_sequence_regions <- function(lvec, max_primer_length = 45,
   sequence_df[["threep_primer"]] <- ""
   sequence_df[["fivep_note"]] <- ""
   sequence_df[["threep_note"]] <- ""
+  sequence_df[["fivep_gc_prop"]] <- 0
+  sequence_df[["threep_gc_prop"]] <- 0
 
   ## For me, this is a little too confusing to do in an apply.
   ## I want to fill in the fivep/threep_superprimer columns with the longer
@@ -134,48 +143,87 @@ choose_sequence_regions <- function(lvec, max_primer_length = 45,
     if (super_start < 1) {
       super_start <- 1
       sequence_df[i, "fivep_note"] <- "ran over chromosome start."
-    }
-    if (super_end > max_end) {
+    } else {
+      fivep_superprimer <- Biostrings::subseq(
+        genome[[chr_name]],
+        start = sequence_df[i, "fivep_superprimer_start"],
+        end = sequence_df[i, "fivep_superprimer_end"])
+      if (grepl(x = fivep_superprimer, pattern = "N")) {
+        sequence_df[i, "fivep_note"] <- "contains N"
+      } else {
+        fivep_superprimer <- as.character(fivep_superprimer)
+        sequence_df[i, "fivep_superprimer"] <- fivep_superprimer
+        fivep_primer <- try(find_subseq_target_temp(fivep_superprimer,
+                                                    target = target_temp,
+                                                    direction = "forward"))
+        if ("try-error" %in% class(fivep_primer)) {
+          sequence_df[i, "fivep_note"] <- "bad sequence for priming"
+        } else {
+          sequence_df[i, "fivep_primer"] <- fivep_primer
+          ## Add the GC content
+          fivep_gc <- Biostrings::letterFrequency(
+            Biostrings::DNAString(fivep_primer), "GC", as.prob = TRUE)
+          sequence_df[i, "fivep_gc_prop"] <- as.numeric(fivep_gc)
+          if (fivep_gc < min_gc_prop) {
+            sequence_df[i, "fivep_note"] <- "bad GC content"
+          }
+          over_run <- grepl(x = fivep_primer, pattern = run_pattern)
+          if (isTRUE(over_run)) {
+            sequence_df[i, "fivep_note"] <- paste0(sequence_df[i, "fivep_note"], " run of too many")
+          }
+        }
+      } ## End checking for pathologically bad primers (Ns, unable to find a decent Tm)
+    } ## End checking if we overran the beginning of the contig.
+
+    ## Note, start and end here are a little confusing because I was thinking
+    ## start and end in terms of 5'/3', not chromosome coordinates.
+    ## The final endpoint is
+    threep_end <- sequence_df[i, "threep_superprimer_start"]
+    threep_start <- sequence_df[i, "threep_superprimer_end"]
+    if (threep_end > max_end) {
       super_end <- max_end
       sequence_df[i, "threep_note"] <- "ran over chromosome end."
-    }
-    fivep_superprimer <- Biostrings::subseq(genome[[chr_name]],
-                                            sequence_df[i, "fivep_superprimer_start"],
-                                            sequence_df[i, "fivep_superprimer_end"])
-    fivep_superprimer <- as.character(fivep_superprimer)
-    sequence_df[i, "fivep_superprimer"] <- fivep_superprimer
-
-    threep_superprimer <- Biostrings::subseq(genome[[chr_name]],
-                                             sequence_df[i, "threep_superprimer_end"],
-                                             sequence_df[i, "threep_superprimer_start"])
-    threep_superprimer <- toupper(as.character(spgs::reverseComplement(threep_superprimer)))
-    sequence_df[i, "threep_superprimer"] <- threep_superprimer
-
-    fivep_primer <- try(find_subseq_target_temp(fivep_superprimer,
-                                                target = target_temp,
-                                                direction = "forward"))
-    if ("try-error" %in% class(fivep_primer)) {
-      fivep_primer <- "bad sequence for priming"
-    }
-    sequence_df[i, "fivep_primer"] <- fivep_primer
-
-    threep_primer <- find_subseq_target_temp(threep_superprimer,
-                                             target = target_temp,
-                                             direction = "reverse")
-    if ("try-error" %in% class(threep_primer)) {
-      threep_primer <- "bad sequence for priming"
-    }
-    sequence_df[i, "threep_primer"] <- threep_primer
+    } else {
+      threep_superprimer <- Biostrings::subseq(
+        genome[[chr_name]],
+        start = threep_start,
+        end = threep_end)
+      if (grepl(x = threep_superprimer, pattern = "N")) {
+        sequence_df[i, "threep_note"] <- "contains N"
+      } else {
+        threep_superprimer <- toupper(as.character(spgs::reverseComplement(threep_superprimer)))
+        sequence_df[i, "threep_superprimer"] <- threep_superprimer
+        threep_primer <- find_subseq_target_temp(threep_superprimer,
+                                                 target = target_temp,
+                                                 direction = "reverse")
+        if ("try-error" %in% class(threep_primer)) {
+          sequence_df[i, "threep_note"] <- "bad sequence for priming"
+        } else {
+          sequence_df[i, "threep_primer"] <- threep_primer
+          ## Add the GC content
+          threep_gc <- Biostrings::letterFrequency(
+            Biostrings::DNAString(threep_primer), "GC", as.prob = TRUE)
+          sequence_df[i, "threep_gc_prop"] <- as.numeric(threep_gc)
+          if (threep_gc < min_gc_prop) {
+            sequence_df[i, "threep_note"] <- "bad GC content"
+          }
+          over_run <- grepl(x = threep_primer, pattern = run_pattern)
+          if (isTRUE(over_run)) {
+            sequence_df[i, "fivep_note"] <- paste0(sequence_df[i, "fivep_note"], " run of too many")
+          }
+        }
+      } ## End checking for pathologically bad primers (Ns, unable to find a decent Tm)
+    } ## End checking if we over-ran the end of the contig.
   } ## End iterating over sequence_df
 
   ## Drop anything which is definitely useless
-  dropme <- grepl(x = sequence_df[["fivep_superprimer"]], pattern = "Ran")
-  sequence_df <- sequence_df[!dropme, ]
-  dropme <- grepl(x = sequence_df[["threep_superprimer"]], pattern = "Ran")
-  sequence_df <- sequence_df[!dropme, ]
+  ## Probably should add some logic here to choose filters.
+  keepers <- sequence_df[["fivep_note"]] == ""
+  filtered_sequence_df <- sequence_df[keepers, ]
+  keepers <- filtered_sequence_df[["threep_note"]] == ""
+  filtered_sequence_df <- filtered_sequence_df[keepers, ]
 
-  ## sequence_df <- sequence_df[, wanted_columns]
-  return(sequence_df)
+  return(filtered_sequence_df)
 }
 
 #' Find a subsequence with a target PCR temperature.
@@ -404,6 +452,7 @@ sequential_variants <- function(snp_sets, conditions = NULL,
 #' @param feature_name GFF tag with the names.
 #' @param truncate Truncate the results to just the columns I think
 #'  are useful.
+#' @param min_gc_prop Minimum GC content for a suitable primer.
 #' @export
 snp_density_primers <- function(snp_count, pdata_column = "condition",
                                 condition = "z2.3", cutoff = 20, bin_width = 600,
@@ -415,7 +464,9 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
                                 feature_end = "end", feature_strand = "strand",
                                 feature_chr = "seqnames", feature_type_column = "type",
                                 feature_id = "ID", feature_name = "description",
-                                truncate = TRUE, xref_genes = TRUE) {
+                                truncate = TRUE, xref_genes = TRUE,
+                                verbose = FALSE, min_contig_length = NULL,
+                                min_gc_prop = 0.25, max_nmer_run = 5) {
 
   ## Start out by loading the bsgenome data
   genome <- NULL
@@ -466,11 +517,19 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
     mesg("Starting chromosome: ", chr, ".")
     chr_idx <- position_table[["chromosome"]] == chr
     chr_data <- position_table[chr_idx, ]
+    chr_len = NULL
     if (is.null(genome)) {
       chromosome_df[chr, "length"] <- max(chr_data[["position"]])
+      chr_len <- max(chr_data[["position"]])
     } else {
       this_length <- length(genome[[chr]])
       chromosome_df[chr, "length"] <- this_length
+      chr_len <- this_length
+    }
+    if (!is.null(min_contig_length)) {
+      if (chr_len < min_contig_length) {
+        next
+      }
     }
     chromosome_df[chr, "variants"] <- nrow(chr_data)
 
@@ -508,10 +567,10 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
       names(variant_vector)[i] <- as.character(density_name)
 
       density_name <- density_name + bin_width
-    }
+    } ## End iterating over every element of the density vector
     density_lst[[chr]] <- density_vector
     variant_lst[[chr]] <- variant_vector
-  }
+  } ## End iterating over every chromosome
   new_options <- options(current_options)
 
   long_density_vector <- vector()
@@ -525,15 +584,18 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
     names(variant_vec) <- vecnames
     long_density_vector <- c(long_density_vector, density_vec)
     long_variant_vector <- c(long_variant_vector, variant_vec)
-  }
+  }  ## End iterating over the density list
   most_idx <- order(long_density_vector, decreasing = TRUE)
   long_density_vector <- long_density_vector[most_idx]
   long_variant_vector <- long_variant_vector[most_idx]
 
   mesg("Extracting primer regions.")
-  sequence_df <- choose_sequence_regions(long_variant_vector, topn = topn,
+  sequence_df <- choose_sequence_regions(long_variant_vector,
                                          max_primer_length = max_primer_length,
-                                         bin_width = bin_width, genome = genome)
+                                         topn = topn, bin_width = bin_width,
+                                         genome = genome, target_temp = target_temp,
+                                         min_gc_prop = min_gc_prop,
+                                         max_nmer_run = max_nmer_run)
   if (isTRUE(xref_genes)) {
     mesg("Searching for overlapping/closest genes.")
     sequence_df <- xref_regions(sequence_df, gff, bin_width = bin_width,
@@ -551,12 +613,12 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
   mesg("Dropped ", sum(dropme), " regions with Ns in the 3' region.")
   sequence_df <- sequence_df[!dropme, ]
 
-  keepers <- c("variants", "threep_variants", "fivep_superprimer", "threep_superprimer",
-               "fivep_primer", "threep_primer", "overlap_gene_id", "overlap_gene_description",
-               "closest_gene_before_id", "closest_gene_before_description")
-  if (isTRUE(truncate)) {
-    sequence_df <- sequence_df[, keepers]
-  }
+  #keepers <- c("variants", "threep_variants", "fivep_superprimer", "threep_superprimer",
+  #             "fivep_primer", "threep_primer", "overlap_gene_id", "overlap_gene_description",
+  #             "closest_gene_before_id", "closest_gene_before_description")
+  #if (isTRUE(truncate)) {
+  #  sequence_df <- sequence_df[, keepers]
+  #}
 
   ## TODO:
   ## 1. Reindex based on primer start
@@ -571,4 +633,27 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
     "favorites" = sequence_df)
   class(retlist) <- "density_primers"
   return(retlist)
+}
+
+#' Write out a set of primers for testing.
+#'
+#' @param density_primers List containing a series of putative sequencing/PCR primers.
+#' @param prefix Sequence name prefix, 'pf' meaning 'primer forward'.
+#' @param column Column from the dataframe of putative primers.
+#' @param fasta Output filename.
+#' @return DNAStringSet of the primers with side effect of written fasta file.
+#' @export
+write_density_primers <- function(density_primers, prefix = "pf",
+                                  column = "fivep_primer",
+                                  fasta = "forward_primers.fasta") {
+  df <- density_primers[["favorites"]]
+  string_set <- df[[column]]
+  num_strings <- numform::f_pad_zero(seq_len(nrow(df)))
+  name_strings <- rownames(df)
+  sequence_names <- glue("{prefix}{num_strings}_{name_strings}")
+  names(string_set) <- sequence_names
+  string_set <- Biostrings::DNAStringSet(x = string_set, use.names = TRUE)
+  written <- Biostrings::writeXStringSet(string_set, fasta, append = FALSE,
+                                         compress = FALSE, format = "fasta")
+  return(string_set)
 }

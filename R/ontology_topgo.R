@@ -96,7 +96,8 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
   tt <- sm(requireNamespace("doParallel"))
   tt <- sm(requireNamespace("iterators"))
   tt <- sm(requireNamespace("foreach"))
-  res <- foreach(c = 1:length(methods),
+  res <- foreach(c = seq_along(methods),
+                 .combine = "c", .multicombine = TRUE,
                  .packages = c("hpgltools", "Hmisc", "topGO")) %dopar% {
                    type <- methods[c]
                    returns[[type]] <- do_topgo(type, go_map = geneID2GO,

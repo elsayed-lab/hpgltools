@@ -219,7 +219,8 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     tt <- sm(requireNamespace("doParallel"))
     tt <- sm(requireNamespace("iterators"))
     tt <- sm(requireNamespace("foreach"))
-    res <- foreach(c = 1:length(names(results)), .packages = c("hpgltools")) %dopar% {
+    res <- foreach(c = seq_along(results), .combine = "c", .multicombine = TRUE,
+                   .packages = c("hpgltools")) %dopar% {
       type <- names(results)[c]
       results[[type]] <- do_pairwise(
         type, input = input, conditions = conditions, batches = batches,

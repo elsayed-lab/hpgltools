@@ -15,6 +15,7 @@ dispatch_regex_search(
   which = "first",
   as = NULL,
   verbose = FALSE,
+  type = "genome",
   ...
 )
 }

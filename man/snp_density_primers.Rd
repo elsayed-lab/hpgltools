@@ -24,7 +24,12 @@ snp_density_primers(
   feature_type_column = "type",
   feature_id = "ID",
   feature_name = "description",
-  truncate = TRUE
+  truncate = TRUE,
+  xref_genes = TRUE,
+  verbose = FALSE,
+  min_contig_length = NULL,
+  min_gc_prop = 0.25,
+  max_nmer_run = 5
 )
 }
 \arguments{
@@ -69,6 +74,8 @@ interest.}
 
 \item{truncate}{Truncate the results to just the columns I think
 are useful.}
+
+\item{min_gc_prop}{Minimum GC content for a suitable primer.}
 }
 \description{
 It is hoped that this will point out regions of a genome which

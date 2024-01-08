@@ -54,6 +54,7 @@ actual <- length(AnnotationDbi::keytypes(testing))
 test_that("Do we get the expected keytypes from an ah orgdb?", {
   expect_equal(expected, actual)
 })
+
 ## map_orgdb_ids()
 testing <- map_orgdb_ids(orgdb = testing, keytype = "entrezid")
 expected <- c("ENSG00000000003", "ENSG00000000005", "ENSG00000000419",

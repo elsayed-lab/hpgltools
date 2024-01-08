@@ -261,7 +261,7 @@ Its current state is: {what_happened(x)}.")
 #' @param ... Other args to match the generic.
 #' @export
 print.goseq_result <- function(x, ...) {
-  hit_string <- glue("A set of ontologies produced by gprofiler using {x[['num_genes']]}
+  hit_string <- glue("Ontologies observed by goseq using {x[['num_genes']]} genes
 with significance cutoff {x[['threshold']]}.
 There are {nrow(x[['mf_interesting']])} MF hits, {nrow(x[['bp_interesting']])}, \\
 BP hits, and {nrow(x[['cc_interesting']])} CC hits.")
