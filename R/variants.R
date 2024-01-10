@@ -224,9 +224,10 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
   i <- 1
   res <- list()
   res <- foreach(i = seq_len(num_levels),
-                 .combine = "c", .multicombine = TRUE,
+                 ## .combine = "c",
+                 ## .multicombine = TRUE,
                  .packages = c("hpgltools", "doParallel"),
-                 .options.snow = pb_opts, .export = c("snp_by_chr")) %dopar% {
+                 .export = c("snp_by_chr")) %dopar% {
 
     chromosome_name <- levels(as.factor(chr))[i]
     returns[[chromosome_name]] <- snp_by_chr(observed, chr_name = chromosome_name)

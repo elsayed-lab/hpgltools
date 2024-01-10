@@ -219,15 +219,14 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     tt <- sm(requireNamespace("doParallel"))
     tt <- sm(requireNamespace("iterators"))
     tt <- sm(requireNamespace("foreach"))
-    res <- foreach(c = seq_along(results), .combine = "c", .multicombine = TRUE,
+    res <- foreach(c = seq_along(results),
                    .packages = c("hpgltools")) %dopar% {
       type <- names(results)[c]
       results[[type]] <- do_pairwise(
         type, input = input, conditions = conditions, batches = batches,
         model_cond = model_cond, model_batch = model_batch, model_intercept = model_intercept,
         extra_contrasts = extra_contrasts, alt_model = alt_model, libsize = libsize,
-        annot_df = annot_df, surrogates = surrogates, keepers = keepers,
-        ...)
+        annot_df = annot_df, surrogates = surrogates, keepers = keepers, ...)
     } ## End foreach() %dopar% { }
     parallel::stopCluster(cl)
     if (isTRUE(verbose)) {

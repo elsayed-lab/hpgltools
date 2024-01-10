@@ -411,9 +411,10 @@ extract_msraw_data <- function(metadata, write_windows = TRUE, id_column = "samp
     }
     res_names <- c()
     res <- foreach(i = seq_len(num_files),
-                   .combine = "c", .multicombine = TRUE,
+                   ## .combine = "c", .multicombine = TRUE,
+                   ## .combine = "c",
                    .packages = c("hpgltools", "doParallel"),
-                   .options.snow = pb_opts, .export = c("extract_scan_data")) %dopar% {
+                   .export = c("extract_scan_data")) %dopar% {
                      file <- meta[i, "file"]
                      id <- meta[i, "id"]
                      file_result <- try(extract_scan_data(file, id = id, write_acquisitions = write_windows,
