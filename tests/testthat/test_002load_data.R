@@ -7,9 +7,9 @@ library(pasilla)
 ## data(pasillaGenes)
 ## Try loading some annotation information for this species.
 
-gene_info <- load_biomart_annotations(species = "dmelanogaster",
+gene_info <- sm(load_biomart_annotations(species = "dmelanogaster",
                                       year = "2020", month = "jan",
-                                      overwrite = TRUE)[["annotation"]]
+                                      overwrite = TRUE))[["annotation"]]
 info_idx <- gene_info[["gene_biotype"]] == "protein_coding"
 gene_info <- gene_info[info_idx, ]
 rownames(gene_info) <- make.names(gene_info[["ensembl_gene_id"]], unique = TRUE)

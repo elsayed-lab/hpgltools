@@ -17,10 +17,11 @@ simple_gsva(
   method = "ssgsea",
   kcdf = NULL,
   ranking = FALSE,
-  msig_xml = NULL,
+  msig_db = NULL,
   wanted_meta = "all",
   mx_diff = TRUE,
-  verbose = FALSE
+  verbose = FALSE,
+  id_type = "entrez"
 )
 }
 \arguments{
@@ -50,7 +51,7 @@ because it was throwing segmentation faults.}
 
 \item{ranking}{another gsva option.}
 
-\item{msig_xml}{XML file contining msigdb annotations.}
+\item{msig_db}{File contining msigdb annotations.}
 
 \item{wanted_meta}{Desired metadata elements from the mxig_xml file.}
 

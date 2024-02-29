@@ -235,6 +235,33 @@ get_git_commit <- function(gitdir = "~/hpgltools") {
   return(result)
 }
 
+get_yyyymm_commit <- function(gitdir = "~/hpgltools", version = NULL,
+                              year = NULL, month = NULL, day = NULL) {
+  if (is.null(version) && is.null(year) && is.null(month) && is.null(day)) {
+    version <- as.Date(lubridate::now())
+    year <- format(version, "%Y")
+    month <- format(version, "%m")
+    day <- format(version, "%d")
+  } else {
+    version <- as.Date(version, format = "%Y%m%d")
+  }
+  closest_commit <- glue("git log --since {version} | grep commit | tail -n 1 | awk '{{print $2}}'")
+  wanted_commit <- system(cmdline, intern = TRUE)
+  message("Looking for the commit closest to ", version, ".")
+  pulled <- pull_git_commit(gitdir, commit = wanted_commit)
+  return(pulled)
+}
+
+pull_git_commit <- function(gitdir = "~/hpgltools", commit = NULL) {
+  if (is.null(commit)) {
+    cmdline <- glue("cd {gitdir} && git log | head -n 3 | grep commit | awk '{{print $2}}'")
+    commit <- system(cmdline, intern = TRUE)
+  }
+  cmdline <- glue("cd {gitdir} && git pull && git reset {commit_result}")
+  result <- system(cmdline, intern = TRUE)
+  return(result)
+}
+
 #' Create a contrast matrix suitable for MSstats and similar tools.
 #'
 #' I rather like makeContrasts() from limma.  I troubled me to have to manually
@@ -735,38 +762,14 @@ sillydist <- function(firstterm, secondterm, firstaxis = 0, secondaxis = 0) {
 #' This is a simpler silence peasant.
 #'
 #' @param ... Some code to shut up.
-#' @param wrap  Wrap the invocation and try again if it failed?
 #' @return Whatever the code would have returned.
 #' @export
-sm <- function(..., wrap = TRUE) {
+sm <- function(...) {
   ret <- NULL
   output <- capture.output(type = "output", {
-    if (isTRUE(wrap)) {
-      ret <- try(suppressWarnings(suppressMessages(...)), silent = TRUE)
-      if (class(ret)[1] == "try-error") {
-        if (grepl(pattern = " there is no package called", x = ret)) {
-          uninstalled <- trimws(gsub(pattern = "^.* there is no package called '(.*)'.*$",
-                                     replacement = "\\1",
-                                     x = ret, perl = TRUE))
-          message("Going to attempt to install: ", uninstalled)
-          tt <- please_install(uninstalled)
-        }
-        ret <- sm(..., wrap = FALSE)
-      }
-    } else {
-      ret <- suppressWarnings(suppressMessages(...))
-    }
+    ret <- suppressWarnings(suppressMessages(...))
   })
   return(ret)
-}
-
-#' Some ggplot2 stats functions have not yet implemented the new dropped_aes
-#' flag, and it is driving me nuts.  Hopefully this will make it less frustrating for me.
-#'
-#' @param ... The set of functions to silence.
-#' @export
-sp <- function(...) {
-  suppressWarnings(print(...))
 }
 
 #' A hopefully more robust version of tempfile().

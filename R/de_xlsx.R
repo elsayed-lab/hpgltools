@@ -1392,7 +1392,7 @@ map_keepers <- function(keepers, table_names, datum) {
         message("The ", method, " slot of datum is missing.")
       } else {
         contrast_string <- keeper_table_map[[method]][[name]][["string"]]
-        message("Checking ", method, " for name ", name, ":", contrast_string)
+        mesg("Checking ", method, " for name ", name, ":", contrast_string)
         available_contrasts <- names(datum[[method]][["all_tables"]])
         position <- which(available_contrasts %in% contrast_string)
         test_name <- names(datum[[method]][["all_tables"]])[position]
@@ -1585,12 +1585,10 @@ extract_keepers <- function(extracted, keepers, table_names,
         warning("There appear to be multiple tables for ", entry_name, " choosing the first.")
       }
     }
-    message("About to start combine_mapped_table()")
     combined <- combine_mapped_table(
       entry, includes, adjp = adjp, padj_type = padj_type,
       annot_df = annot_df, excludes = excludes,
       lfc_cutoff = lfc_cutoff, p_cutoff = p_cutoff, format_sig = format_sig)
-    message("Finished combine_mapped_table()")
 
     ## I am not sure if this should be the set of inverted tables yet.
     invert_colors <- FALSE

@@ -4,7 +4,13 @@
 \alias{all_gprofiler}
 \title{Run simple_gprofiler on every table from extract_significant_genes()}
 \usage{
-all_gprofiler(sig, according_to = "deseq", together = FALSE, ...)
+all_gprofiler(
+  sig,
+  according_to = "deseq",
+  together = FALSE,
+  plot_type = "dotplot",
+  ...
+)
 }
 \arguments{
 \item{sig}{Result from extract_significant_genes}

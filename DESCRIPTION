@@ -68,7 +68,7 @@ VignetteBuilder: knitr
 ByteCompile: true
 biocViews: DifferentialExpression
 Encoding: UTF-8
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 Collate:
   '01_hpgltools.R'
   'alt_splicing.R'

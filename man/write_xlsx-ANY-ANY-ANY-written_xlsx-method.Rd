@@ -8,7 +8,7 @@
   data = NULL,
   wb = NULL,
   sheet = NULL,
-  excel = NULL,
+  excel,
   rownames = TRUE,
   start_row = 1,
   start_col = 1,

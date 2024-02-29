@@ -58,7 +58,7 @@ replot_varpart_percent <- function(varpart_output, n = 30, column = NULL, decrea
 #' @export
 simple_varpart <- function(expt, predictor = NULL, factors = c("condition", "batch"),
                            chosen_factor = "batch", do_fit = FALSE, cor_gene = 1,
-                           cpus = NULL, genes = 40, parallel = TRUE,
+                           cpus = NULL, genes = 40, parallel = TRUE, strict_filter = TRUE,
                            mixed = FALSE, modify_expt = TRUE) {
   cl <- NULL
   para <- NULL
@@ -113,7 +113,15 @@ simple_varpart <- function(expt, predictor = NULL, factors = c("condition", "bat
     mesg("Attempting regular linear model with: ", model_string)
   }
   my_model <- as.formula(model_string)
+  ## I think the simple filter is insufficient and I need there to be
+  ## no genes with 0 counts in any one condition.
   norm <- sm(normalize_expt(expt, filter = "simple"))
+  if (isTRUE(strict_filter)) {
+    test <- sm(median_by_factor(norm, fact = "condition", fun = "mean"))
+    all_condition_gt_zero_idx <- rowSums(test[["medians"]] == 0) == 0
+    kept_gt <- rownames(exprs(norm))[all_condition_gt_zero_idx]
+    norm <- norm[kept_gt, ]
+  }
   data <- exprs(norm)
 
   design_sub <- design[, factors]

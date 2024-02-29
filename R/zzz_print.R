@@ -103,6 +103,29 @@ for species {x[['species']]} provided {prettyNum(nrow(x[['go']]), big.mark = ','
   return(invisible(x))
 }
 
+#' Print the results of snp_cds_primers().
+#'
+#' @param x List currently only containing the dataframe of putative primers.
+#' @param ... Other args to match the generic.
+#' @export
+print.cds_variant_primers <- function(x, ...) {
+  summary_string <- glue("A set of potential primers explicitly overlapping known CDS.")
+  message(summary_string)
+  return(invisible(x))
+}
+
+#' Print the results of classify_snps().
+#'
+#' @param x List containing some fun stats of variants observed.
+#' @param ... Other args to match the generic.
+#' @export
+print.classified_mutations <- function(x, ...) {
+  message("The set of classified mutations observed, including: ")
+  print(x[["mutations_by_sample"]])
+  pheatmap::pheatmap(x[["sample_mutations_norm"]])
+  return(invisible(x))
+}
+
 #' Print the result from self_evaluate_model().
 #'
 #' @param x List showing AUC/ROC curves of the test performed, summary
@@ -234,6 +257,12 @@ print.density_plot <- function(x, ...) {
   summary_string <- glue("Density plot describing {nrow(x[['sample_summary']])} samples.")
   message(summary_string)
   plot(x[["plot"]])
+  return(invisible(x))
+}
+
+print.density_primers <- function(x, ...) {
+  summary_string <- glue("A set of putative PCR primers to distinguish strain variants.")
+  message(summary_string)
   return(invisible(x))
 }
 

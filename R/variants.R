@@ -1,3 +1,178 @@
+#' Given a pile of variants from freebayes and friends, make a table of what changed.
+#'
+#' My post-processor of the results from mpileup/freebayes provides
+#' some hopefully fun output files.  This function seeks to leverage
+#' them into tables which might be fun to look at.
+#'
+#' @param metadata Usually the result of gather_preprocessing_metadata(), but
+#'  whatever it is, it should have a column containing the observed
+#'  coverage and observed variants as a table.
+#' @param coverage_column Metadata column name containing coverage information
+#'  from bedtools in a tabular format.
+#' @param variants_column Metadata column name containing the variants/gene.
+#' @param min_missing Bin size above which to call a region missing
+#'  from one or more samples when looking for large-scale deletions
+#' using coverage information.
+#' @return List containing some fun stuff.
+classify_variants <- function(metadata, coverage_column = "bedtoolscoveragefile",
+                              variants_column = "freebayesvariantsbygene", min_missing = 100) {
+  missing_coverage <- list()
+  mutations <- list()
+  mutation_rows <- c("from_a", "from_g", "from_c", "from_t",
+                     "to_a", "to_g", "to_c", "to_t",
+                     "to_strong", "to_weak",
+                     "to_amino", "to_ketone",
+                     "transition", "transversion",
+                     "sense", "missense", "nonsense", "suppressor")
+  mutations_by_sample <- data.frame(row.names = rows)
+  missing_name <- paste0("regions_missing_", min_missing, "nt")
+  missing_by_sample <- rep(0, nrow(metadata))
+  names(missing_by_sample) <- rownames(metadata)
+  for (s in seq_len(nrow(metadata))) {
+    sample <- rownames(metadata)[s]
+    mutations_by_sample[[sample]] <- 0
+    ## Get the coverage/nt, use it to make a catalog of regions missing from each sample.
+    coverage_file <- metadata[s, coverage_column]
+    missing_df <- readr::read_tsv(coverage_file, col_names = FALSE, show_col_types = FALSE)
+    colnames(missing_df) <- c("contig", "start", "end")
+    missing_df[["delta"]] <- missing_df[["end"]] - missing_df[["start"]]
+    wanted <- missing_df[["delta"]] >= min_missing
+    missing_regions[[sample]] <- missing_df[wanted, ]
+    missing_by_sample[sample] <- nrow(missing_df)
+
+    ## and catalog of mutations in exons, extract the encoded amino acid strings
+    variant_file <- metadata[s, variants_column]
+    mutation_df <- readr::read_tsv(variant_file, show_col_types = FALSE)
+    mutation_df[["aa_from"]] <- gsub(x = mutation_df[["aa_subst"]],
+                                     pattern = "^([[:alpha:]]|\\*){1}\\d+[[:alpha:]]|\\*$",
+                                     replacement = "\\1")
+    mutation_df[["aa_to"]] <- gsub(x = mutation_df[["aa_subst"]],
+                                   pattern = "^.*?([[:alpha:]]|\\*){1}$",
+                                   replacement = "\\1")
+    mutation_df[["nt_from"]] <- gsub(x = mutation_df[["from_to"]],
+                                     pattern = "^([[:alpha:]]|\\*){1}\\d+[[:alpha:]]|\\*$",
+                                     replacement = "\\1")
+    mutation_df[["nt_to"]] <- gsub(x = mutation_df[["from_to"]],
+                                   pattern = "^.*?([[:alpha:]]|\\*){1}$",
+                                   replacement = "\\1")
+
+    mutation_df <- mutation_df %>%
+      mutate(
+        sense = case_when(aa_to == aa_from ~ 1, TRUE ~ 0),
+        missense = case_when(aa_to != aa_from ~ 1 & aa_to != "*" & aa_from != "*", TRUE ~ 0),
+        nonsense = case_when(aa_to == "*" & aa_from != "*" ~ 1, TRUE ~ 0),
+        suppressor = case_when(aa_to != "*" & aa_from == "*" ~ 1, TRUE ~ 0))
+
+    mutation_df <- mutation_df %>%
+      mutate(
+        transition = case_when(
+        (nt_to == "A" & nt_from == "G") | (nt_to == "G" & nt_from == "A") |
+          (nt_to == "C" & nt_from == "T") | (nt_to == "T" & nt_from == "C")  ~ 1,
+        TRUE ~ 0),
+        transversion = case_when(
+        (nt_to == "A" & nt_from == "C") | (nt_to == "C" & nt_from == "A") |
+          (nt_to == "G" & nt_from == "T") | (nt_to == "T" & nt_from == "G") |
+          (nt_to == "C" & nt_from == "G") | (nt_to == "G" & nt_from == "C") ~ 1,
+        TRUE ~ 0),
+        to_weak = case_when(nt_to == "A" | nt_to == "T" ~ 1, TRUE ~ 0),
+        to_strong = case_when(nt_to == "G" | nt_to == "C" ~ 1, TRUE ~ 0),
+        to_ketone = case_when(nt_to == "G" | nt_to == "T" ~ 1, TRUE ~ 0),
+        to_amino = case_when(nt_to == "A" | nt_to == "C" ~ 1, TRUE ~ 0),
+        from_a = case_when(nt_from == "A" ~ 1, TRUE ~ 0),
+        from_g = case_when(nt_from == "G" ~ 1, TRUE ~ 0),
+        from_t = case_when(nt_from == "T" ~ 1, TRUE ~ 0),
+        from_c = case_when(nt_from == "C" ~ 1, TRUE ~ 0),
+        to_a = case_when(nt_to == "A" ~ 1, TRUE ~ 0),
+        to_g = case_when(nt_to == "G" ~ 1, TRUE ~ 0),
+        to_t = case_when(nt_to == "T" ~ 1, TRUE ~ 0),
+        to_c = case_when(nt_to == "C" ~ 1, TRUE ~ 0))
+    mutations[[s]] <- mutation_df
+
+    for (t in seq_along(mutation_rows)) {
+      type <- mutation_rows[t]
+      mutations_by_sample[type, sample] <- sum(mutation_df[[type]])
+    }
+  }
+  names(mutations) <- rownames(meta)
+
+  sample_mutations_norm <- mutations_by_sample
+  for (s in colnames(sample_mutations_norm)) {
+
+    sample_mutations_norm["from_a", s] <- mutations_by_sample["from_a", s] /
+      (mutations_by_sample["from_a", s] + mutations_by_sample["from_c", s] +
+         mutations_by_sample["from_g", s] + mutations_by_sample["from_t", s])
+    sample_mutations_norm["from_t", s] <- mutations_by_sample["from_t", s] /
+      (mutations_by_sample["from_a", s] + mutations_by_sample["from_c", s] +
+         mutations_by_sample["from_g", s] + mutations_by_sample["from_t", s])
+    sample_mutations_norm["from_g", s] <- mutations_by_sample["from_g", s] /
+      (mutations_by_sample["from_a", s] + mutations_by_sample["from_c", s] +
+         mutations_by_sample["from_g", s] + mutations_by_sample["from_t", s])
+    sample_mutations_norm["from_c", s] <- mutations_by_sample["from_c", s] /
+      (mutations_by_sample["from_a", s] + mutations_by_sample["from_c", s] +
+         mutations_by_sample["from_g", s] + mutations_by_sample["from_t", s])
+
+    sample_mutations_norm["to_a", s] <- mutations_by_sample["to_a", s] /
+      (mutations_by_sample["to_a", s] + mutations_by_sample["to_c", s] +
+         mutations_by_sample["to_g", s] + mutations_by_sample["to_t", s])
+
+    sample_mutations_norm["to_c", s] <- mutations_by_sample["to_c", s] /
+      (mutations_by_sample["to_a", s] + mutations_by_sample["to_c", s] +
+         mutations_by_sample["to_g", s] + mutations_by_sample["to_t", s])
+
+    sample_mutations_norm["to_g", s] <- mutations_by_sample["to_g", s] /
+      (mutations_by_sample["to_a", s] + mutations_by_sample["to_c", s] +
+         mutations_by_sample["to_g", s] + mutations_by_sample["to_t", s])
+
+    sample_mutations_norm["to_t", s] <- mutations_by_sample["to_t", s] /
+      (mutations_by_sample["to_a", s] + mutations_by_sample["to_c", s] +
+         mutations_by_sample["to_g", s] + mutations_by_sample["to_t", s])
+
+    sample_mutations_norm["to_strong", s] <- mutations_by_sample["to_strong", s] /
+      (mutations_by_sample["to_strong", s] + mutations_by_sample["to_weak", s])
+
+    sample_mutations_norm["to_weak", s] <- mutations_by_sample["to_weak", s] /
+      (mutations_by_sample["to_strong", s] + mutations_by_sample["to_weak", s])
+
+    sample_mutations_norm["to_amino", s] <- mutations_by_sample["to_amino", s] /
+      (mutations_by_sample["to_amino", s] + mutations_by_sample["to_ketone", s])
+
+    sample_mutations_norm["to_ketone", s] <- mutations_by_sample["to_ketone", s] /
+      (mutations_by_sample["to_amino", s] + mutations_by_sample["to_keto", s])
+
+    sample_mutations_norm["transition", s] <- mutations_by_sample["transition", s] /
+      (mutations_by_sample["transition", s] + mutations_by_sample["transversion", s])
+
+    sample_mutations_norm["transversion", s] <- mutations_by_sample["transversion", s] /
+      (mutations_by_sample["transition", s] + mutations_by_sample["transversion", s])
+
+    sample_mutations_norm["sense", s] <- mutations_by_sample["sense", s] /
+      (mutations_by_sample["sense", s] + mutations_by_sample["missense", s] +
+         mutations_by_sample["nonsense", s] + mutations_by_sample["suppressor", s])
+
+    sample_mutations_norm["missense", s] <- mutations_by_sample["missense", s] /
+      (mutations_by_sample["sense", s] + mutations_by_sample["missense", s] +
+         mutations_by_sample["nonsense", s] + mutations_by_sample["suppressor", s])
+
+    sample_mutations_norm["nonsense", s] <- mutations_by_sample["nonsense", s] /
+      (mutations_by_sample["sense", s] + mutations_by_sample["missense", s] +
+         mutations_by_sample["nonsense", s] + mutations_by_sample["suppressor", s])
+
+    sample_mutations_norm["suppressor", s] <- mutations_by_sample["suppressor", s] /
+      (mutations_by_sample["sense", s] + mutations_by_sample["missense", s] +
+         mutations_by_sample["nonsense", s] + mutations_by_sample["suppressor", s])
+  }
+  sample_mutations_norm <- as.matrix(sample_mutations_norm)
+
+  retlist <- list(
+    "missing_coverage" = missing_coverage,
+    "mutations" = mutations,
+    "missing_by_sample" = missing_by_sample,
+    "mutations_by_sample" = mutations_by_sample,
+    "mutations_by_sample_norm" = sample_mutations_norm)
+  class(retlist) <- "classified_mutations"
+  return(retlist)
+}
+
 #' Gather snp information for an expt
 #'
 #' I made some pretty significant changes to the set of data which I
@@ -250,7 +425,7 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
   mesg("Iterating over ", end, " elements.")
   for (element in seq_len(end)) {
     if (isTRUE(show_progress)) {
-      pct_done <- element / length(res)
+      pct_done <- element / end
       utils::setTxtProgressBar(bar, pct_done)
     }
     datum <- res[[element]]
@@ -305,6 +480,34 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
   class(retlist) <- "snp_sets"
   return(retlist)
 }
+
+#' Take a vector of my peculiarly named variants and turn them into a grange
+#'
+#' @param names A set of things which look like: chr_x_pos_y_ref_a_alt_b
+snpnames2gr <- function(names, gr = NULL) {
+  pos_df <- data.frame(row.names = names)
+  pos_df[["chr"]] <- gsub(pattern = "^chr_(.+)_pos_.+_ref.+_alt.+$",
+                                 replacement = "\\1",
+                                 x = rownames(pos_df))
+  pos_df[["start"]] <- as.numeric(gsub(pattern = "^chr_.+_pos_(.+)_ref.+_alt.+$",
+                                          replacement = "\\1",
+                                       x = rownames(pos_df)))
+  pos_df[["end"]] <- pos_df[["start"]]
+  pos_df[["strand"]] <- "+"
+  pos_df[["reference"]] <- gsub(pattern = "^chr_.+_pos_.+_ref_(.+)_alt.+$",
+                                replacement = "\\1",
+                                x = rownames(pos_df))
+  pos_df[["alternate"]] <- gsub(pattern = "^chr_.+_pos_.+_ref_.+_alt_(.+)$",
+                                replacement = "\\1",
+                                x = rownames(pos_df))
+  if (is.null(gr)) {
+  variants_gr <- makeGRangesFromDataFrame(pos_df, keep.extra.columns = TRUE)
+  } else {
+    variants_gr <- makeGRangesFromDataFrame(pos_df, seqinfo = seqinfo(gr),
+                                            keep.extra.columns = TRUE)
+  }
+  return(variants_gr)
+  }
 
 #' Read the output from bcfutils into a count-table-esque
 #'
@@ -1033,13 +1236,25 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
                          feature_type = "protein_coding_gene", feature_start = "start",
                          feature_end = "end", feature_strand = "strand",
                          feature_chr = "seqnames", feature_type_column = "type",
-                         feature_id = "ID", feature_name = "description") {
-  annotation <- load_gff_annotations(gff)
-  wanted_columns <- c(feature_id, feature_name, feature_chr,
+                         feature_id = "ID", feature_name = "description",
+                         name_type = NULL) {
+  if (class(gff) == "data.frame") {
+    annotation <- gff
+  } else {
+    annotation <- load_gff_annotations(gff, type = feature_type)
+  }
+
+  wanted_columns <- c(feature_id, feature_name, desc_column, feature_chr,
                       feature_start, feature_end, feature_strand)
+  found_columns <- wanted_columns %in% colnames(annotation)
+  message("The annotations have ", sum(found_columns), " of the desired columns.")
+  if (sum(found_columns) < length(wanted_columns)) {
+    stop("Some columns were misnamed, try again.")
+  }
   wanted_rows <- annotation[[feature_type_column]] == feature_type
   annotation <- annotation[wanted_rows, wanted_columns]
-  colnames(annotation) <- c("id", "name", "chr", "start", "end", "strand")
+  colnames(annotation) <- c("id", "name", "description",  "chr",
+                            "start", "end", "strand")
   mesg("Now the annotation has ", nrow(annotation),  " rows.")
 
   sequence_df[["overlap_gene_id"]] <- ""
@@ -1054,16 +1269,17 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
   sequence_df[["closest_gene_after_description"]] <- ""
   sequence_df[["closest_gene_after_start"]] <- ""
   sequence_df[["closest_gene_after_end"]] <- ""
-  for (r in seq_along(nrow(sequence_df))) {
+  for (r in seq_len(nrow(sequence_df))) {
+    message("Starting entry: ", r, ".")
     entry <- sequence_df[r, ]
     amplicon_chr <- entry[["chr"]]
     amplicon_start <- as.numeric(entry[["bin_start"]])
     amplicon_end <- amplicon_start + bin_width
     annot_idx <- annotation[["chr"]] == amplicon_chr
     xref_features <- annotation[annot_idx, ]
-    if (nrow(xref_features) == 0) {
-      next
-    }
+    #if (nrow(xref_features) == 0) {
+    #  next
+    #}
 
     ## Amplicon:           ------->
     ##                  ############# fs < qs && fe > qe
@@ -1086,23 +1302,28 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
     hit_df <- data.frame()
     primer_inside_feature <- xref_features[["start"]] <= amplicon_start &
       xref_features[["end"]] >= amplicon_end
-    if (sum(primer_inside_feature) > 0) {
+    number_inside <- sum(primer_inside_feature)
+    if (number_inside > 0) {
+      message("Found ", number_inside, " features with the amplicon inside them.")
       hits <- hits + sum(primer_inside_feature)
-      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_inside_feature, "id"]
-      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_inside_feature, "name"]
-      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_inside_feature, "start"]
-      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_inside_feature, "end"]
+      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_inside_feature, "id"][1]
+      sequence_df[r, "overlap_gene_name"] <- xref_features[primer_inside_feature, "name"][1]
+      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_inside_feature, "description"][1]
+      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_inside_feature, "start"][1]
+      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_inside_feature, "end"][1]
     }
 
     ##     ### amplicon_start > feature_start &&
     primer_overlap_fivep <- xref_features[["start"]] <= amplicon_start &
       xref_features[["end"]] >= amplicon_start
     if (sum(primer_overlap_fivep) > 0) {
+      message("Found ", sum(primer_overlap_fivep), " overlapping the forward primer.")
       hits <- hits + sum(primer_overlap_fivep)
-      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_overlap_fivep, "id"]
-      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_overlap_fivep, "name"]
-      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_overlap_fivep, "start"]
-      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_overlap_fivep, "end"]
+      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_overlap_fivep, "id"][1]
+      sequence_df[r, "overlap_gene_name"] <- xref_features[primer_overlap_fivep, "name"][1]
+      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_overlap_fivep, "description"][1]
+      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_overlap_fivep, "start"][1]
+      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_overlap_fivep, "end"][1]
     }
 
     ##  Amplicon:           ------->
@@ -1110,11 +1331,13 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
     primer_overlap_threep <- xref_features[["start"]] <= amplicon_end &
       xref_features[["end"]] >= amplicon_end
     if (sum(primer_overlap_threep) > 0) {
+      message("Found ", sum(primer_overlap_threep), " overlapping the reverse primer.")
       hits <- hits + sum(primer_overlap_threep)
-      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_overlap_threep, "id"]
-      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_overlap_threep, "name"]
-      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_overlap_threep, "start"]
-      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_overlap_threep, "end"]
+      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_overlap_threep, "id"][1]
+      sequence_df[r, "overlap_gene_name"] <- xref_features[primer_overlap_threep, "name"][1]
+      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_overlap_threep, "description"][1]
+      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_overlap_threep, "start"][1]
+      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_overlap_threep, "end"][1]
     }
 
     ##  Amplicon:           ------->
@@ -1122,11 +1345,13 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
     primer_overlap_surround <- xref_features[["start"]] >= amplicon_end &
       xref_features[["end"]] <= amplicon_end
     if (sum(primer_overlap_surround) > 0) {
+      message("Found ", sum(primer_overlap_surround), " surrounded by the primers.")
       hits <- hits + sum(primer_overlap_surround)
-      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_overlap_surround, "id"]
-      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_overlap_surround, "name"]
-      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_overlap_surround, "start"]
-      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_overlap_surround, "end"]
+      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_overlap_surround, "id"][1]
+            sequence_df[r, "overlap_gene_name"] <- xref_features[primer_overlap_surround, "name"][1]
+      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_overlap_surround, "description"][1]
+      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_overlap_surround, "start"][1]
+      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_overlap_surround, "end"][1]
     }
 
     ## Now report the closest genes before/after the amplicon
@@ -1135,9 +1360,10 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
     if (sum(fivep_wanted_idx) > 0) {
       fivep_candidates <- xref_features[fivep_wanted_idx, ]
       fivep_min_idx <- fivep_candidates[["fivep_dist"]] == min(fivep_candidates[["fivep_dist"]])
-      fivep_candidate <- fivep_candidates[fivep_min_idx, ]
+      fivep_candidate <- fivep_candidates[fivep_min_idx, ][1, ]
       sequence_df[r, "closest_gene_before_id"] <- fivep_candidate["id"]
-      sequence_df[r, "closest_gene_before_description"] <- fivep_candidate["name"]
+      sequence_df[r, "closest_gene_before_name"] <- fivep_candidate["name"]
+      sequence_df[r, "closest_gene_before_description"] <- fivep_candidate["description"]
       sequence_df[r, "closest_gene_before_start"] <- fivep_candidate["start"]
       sequence_df[r, "closest_gene_before_end"] <- fivep_candidate["end"]
     }
@@ -1145,16 +1371,18 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
     xref_features[["threep_dist"]] <- xref_features[["start"]] - amplicon_end
     threep_wanted_idx <- xref_features[["threep_dist"]] > 0
     if (sum(threep_wanted_idx) > 0) {
-      threep_candidates <- xref_features[threep_wanted_idx, ]
+      threep_candidates <- xref_features[threep_wanted_idx, ][1, ]
       threep_min_idx <- threep_candidates[["threep_dist"]] == min(threep_candidates[["threep_dist"]])
       threep_candidate <- threep_candidates[threep_min_idx, ]
       sequence_df[r, "closest_gene_after_id"] <- threep_candidate["id"]
-      sequence_df[r, "closest_gene_after_description"] <- threep_candidate["name"]
+      sequence_df[r, "closest_gene_after_description"] <- threep_candidate["description"]
+      sequence_df[r, "closest_gene_after_name"] <- threep_candidate["name"]
       sequence_df[r, "closest_gene_after_start"] <- threep_candidate["start"]
       sequence_df[r, "closest_gene_after_end"] <- threep_candidate["end"]
     }
 
   } ## End iterating over every row of the sequence df.
+  sequence_df <- sequence_df %>% arrange(desc(overlap_gene_description))
   return(sequence_df)
 }
 

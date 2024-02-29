@@ -5,7 +5,8 @@
 #' @param together Concatenate the up/down genes into one set?
 #' @param ... Arguments to pass to simple_gprofiler().
 #' @export
-all_gprofiler <- function(sig, according_to = "deseq", together = FALSE, ...) {
+all_gprofiler <- function(sig, according_to = "deseq", together = FALSE,
+                          plot_type = "dotplot", ...) {
   ret <- list()
   input_up <- list()
   input_down <- list()
@@ -25,7 +26,7 @@ all_gprofiler <- function(sig, according_to = "deseq", together = FALSE, ...) {
 
   sig_names <- names(input_up)
   for (i in seq_along(sig_names)) {
-    slept <- Sys.sleep(1)
+    slept <- Sys.sleep(10)
     name <- sig_names[i]
     mesg("Starting ", name, ".")
     retname_up <- paste0(name, "_up")
@@ -57,13 +58,16 @@ all_gprofiler <- function(sig, according_to = "deseq", together = FALSE, ...) {
       }
     }
     if (up_elements > 0) {
-      ret[[retname_up]] <- sm(simple_gprofiler2(up, first_col = fc_col, ...))
+      ret[[retname_up]] <- sm(simple_gprofiler2(up, first_col = fc_col,
+                                                plot_type = plot_type, ...))
       #ret[[retname_up]] <- sm(simple_gprofiler(up, first_col = fc_col))
     } else {
       ret[[retname_up]] <- NULL
     }
     if (down_elements > 0) {
-      ret[[retname_down]] <- sm(simple_gprofiler2(down, first_col = fc_col, ...))
+      slept <- Sys.sleep(10)
+      ret[[retname_down]] <- sm(simple_gprofiler2(down, first_col = fc_col,
+                                                  plot_type = plot_type, ...))
       #ret[[retname_down]] <- sm(simple_gprofiler(down, first_col = fc_col))
     } else {
       ret[[retname_down]] <- NULL
@@ -122,7 +126,8 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
                               significant = TRUE, exclude_iea = FALSE, do_under = FALSE,
                               evcodes = TRUE, threshold = 0.05, adjp = "g_SCS",
                               domain_scope = "annotated", bg = NULL,
-                              pseudo_gsea = TRUE, id_col = "row.names", excel = NULL) {
+                              pseudo_gsea = TRUE, id_col = "row.names", plot_type = "dotplot",
+                              excel = NULL) {
   gene_list <- NULL
   num_genes <- 0
   if ("character" %in% class(sig_genes)) {
@@ -233,7 +238,7 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
   retlst[["gost_plots"]] <- gost_plots
   retlst[["gost_links"]] <- gost_links
   retlst[["significant"]] <- sig_tables
-  retlst[["pvalue_plots"]] <- try(plot_gprofiler2_pval(retlst))
+
   if (!is.null(excel)) {
     mesg("Writing data to: ", excel, ".")
     excel_ret <- sm(try(write_gprofiler_data(retlst, excel = excel)))
@@ -246,6 +251,15 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
     ## Note to self, now that I think about it I think gprofiler2 provides its own p-adjustment.
     retlst[[type_name]] <- gprofiler2enrich(retlst, ontology = type,
                                             cutoff = threshold)
+  }
+
+  if (plot_type == "barplot") {
+    retlst[["pvalue_plots"]] <- try(plot_gprofiler2_pval(retlst))
+  } else if (plot_type == "dotplot") {
+    retlst[["pvalue_plots"]] <- try(plot_gprofiler2_pval(retlst))
+    message("Add a little logic here to use enrichplot::dotplot().")
+  } else {
+    retlst[["pvalue_plots"]] <- list()
   }
 
   retlst[["species"]] <- species

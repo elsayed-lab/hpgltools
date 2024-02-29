@@ -52,8 +52,8 @@ ebseq_pairwise <- function(input = NULL, patterns = NULL, conditions = NULL,
   input <- sanitize_expt(input)
   input_data <- choose_binom_dataset(input, force = force)
   design <- pData(input)
-  conditions <- design[["condition"]]
-  batches <- design[["batches"]]
+  conditions <- pData(input)[["condition"]]
+  batches <- pData(input)[["batches"]]
   data <- as.matrix(input_data[["data"]])
   conditions_table <- table(conditions)
   batches_table <- table(batches)
@@ -307,9 +307,9 @@ ebseq_two <- function(pair_data, conditions,
     pair_data[na_idx] <- mean(pair_data, na.rm = TRUE)
   }
   eb_output <- sm(EBSeq::EBTest(
-                             Data = pair_data, NgVector = NULL, Conditions = conditions,
-                             sizeFactors = normalized, maxround = rounds))
-  posteriors <- EBSeq::GetPP(eb_output)
+    Data = pair_data, NgVector = NULL, Conditions = conditions,
+    sizeFactors = normalized, maxround = rounds))
+  posteriors <- EBSeq::GetPPMat(eb_output)
   fold_changes <- EBSeq::PostFC(eb_output)
   eb_result <- EBSeq::GetDEResults(eb_output, FDR = target_fdr)
   table <- data.frame(row.names = names(fold_changes[["PostFC"]]))

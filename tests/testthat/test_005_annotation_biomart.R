@@ -37,7 +37,8 @@ test_that("Do we receive expected output from load_biomart_go()?", {
 ## load_biomart_orthologs()
 ## I should probably set this to an explicit revision of biomart.
 testing <- load_biomart_orthologs(gene_ids = gene_ids, first_species = "hsapiens",
-                                  second_species = "mmusculus", year = 2020)
+                                  second_species = "mmusculus", year = 2020,
+                                  month = "jan")
 data <- testing[["all_linked_genes"]]
 actual <- nrow(data)
 expected <- 23000

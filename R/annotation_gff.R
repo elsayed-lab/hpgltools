@@ -5,6 +5,35 @@
 ## these functions are likely to be used along with another annotation source in
 ## order to get a more complete view of the genome/transcriptome of interest.
 
+gff2gr <- function(gff, type = NULL, type_column = "type") {
+  chr_entries <- read.delim(file = gff, header = FALSE, sep = "")
+  contigs <- chr_entries[["V1"]] == "##sequence-region"
+  contigs <- chr_entries[contigs, c("V2", "V3", "V4")]
+  colnames(contigs) <- c("ID", "start", "end")
+  contig_info <- data.frame(
+    "chrom" = contigs[["ID"]],
+    "length" = as.numeric(contigs[["end"]]),
+    "is_circular" = NA,
+    stringsAsFactors = FALSE)
+  rownames(contig_info) <- make.names(contig_info[["chrom"]], unique = TRUE)
+
+  ## Dump a granges object and save it as an rda file.
+  granges_result <- rtracklayer::import.gff3(gff)
+  name_order <- names(seqinfo(granges_result))
+  contig_info <- contig_info[name_order, ]
+  length_vector <- contig_info[["length"]]
+  GenomeInfoDb::seqlengths(granges_result) <- length_vector
+  if (!is.null(type)) {
+    start <- length(granges_result)
+    type_idx <- mcols(granges_result)[[type_column]] == type
+    granges_result <- granges_result[type_idx]
+    end <- length(granges_result)
+    message("Subsetting for type ", type, " in column ", type_column,
+            " reduces the grange from: ", start, " to ", end, ".")
+  }
+  return(granges_result)
+}
+
 #' Extract annotation information from a gff file into an irange object.
 #'
 #' Try to make import.gff a little more robust; I acquire (hopefully) valid gff
@@ -194,6 +223,29 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
 
   return(ret)
 }
+
+merge_gff_children <- function(gff, grandparent = "gene", parent = "mRNA",
+                               parent_tag = "Parent", id_tag = "ID",
+                               children = c("CDS", "exon", "three_prime_UTR", "five_prime_UTR")) {
+  grandparents <- load_gff_annotations(gff, type = grandparent, id_col = id_tag)
+  colnames(grandparents) <- paste0("toplevel_", colnames(grandparents))
+  parents <- load_gff_annotations(gff, type = parent, id_col = id_tag)
+  colnames(parents) <- paste0("secondlevel_", colnames(parents))
+  by_gp <- paste0("toplevel_", id_tag)
+  by_parent <- paste0("secondlevel_", parent_tag)
+  all <- merge(grandparents, parents, by.x = by_gp,
+               by.y = by_parent)
+  for (child in children) {
+    mesg("Merging in the data for the ", child, " type.")
+    child_annot <- load_gff_annotations(gff, type = child, id_col = id_tag)
+    colnames(child_annot) <- paste0(child, "_", colnames(child_annot))
+    by_parent <- paste0("secondlevel_", id_tag)
+    by_child <- paste0(child, "_", parent_tag)
+    all <- merge(all, child_annot, by.x = by_parent, by.y = by_child)
+  }
+  return(all)
+}
+
 
 #' Find how many times a given pattern occurs in every gene of a genome.
 #'

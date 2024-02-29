@@ -8,7 +8,7 @@
 #' @export
 `[.expt` <- function(expt, i, j, ...) {
   if (!missing(i)) {
-    message("Subsetting on genes.")
+    message("Subsetting on features.")
     expt <- subset_genes(expt, ids = i, method = "keep", ...)
   }
   if (!missing(j)) {

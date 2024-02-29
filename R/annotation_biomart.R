@@ -75,7 +75,7 @@ find_working_mart <- function(default_hosts = c("useast.ensembl.org", "uswest.en
       }
       month_strings <- as.character(lubridate::month(month_nums, label = TRUE, abbr = TRUE))
     } else if (is.na(suppressWarnings(as.numeric(month))) &
-               month %in% month_strings) {
+                 month %in% month_strings) {
       ## Then it is pretty much guaranteed to be 'jan'
       month_strings <- month
     } else if (!is.na(suppressWarnings(as.numeric(month)))) {
@@ -145,9 +145,9 @@ find_working_mart <- function(default_hosts = c("useast.ensembl.org", "uswest.en
     }
   } ## End iterating over the hosts.
   retlist <- list(
-      "host" = used_host,
-      "used_mart" = used_mart,
-      "mart" = mart)
+    "host" = used_host,
+    "used_mart" = used_mart,
+    "mart" = mart)
   return(retlist)
 }
 
@@ -220,21 +220,19 @@ get_biomart_example_gene <- function(species = "mmusculus", attributes = "featur
 #'  summary(hs_biomart_annot)
 #'  dim(hs_biomart_annot$annotation)
 #' @export
-load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do_save = TRUE,
-                                     host = NULL, trymart = "ENSEMBL_MART_ENSEMBL", archive = TRUE,
-                                     default_hosts = c("useast.ensembl.org", "uswest.ensembl.org",
-                                                       "www.ensembl.org", "asia.ensembl.org"),
-                                     year = NULL, month = NULL, drop_haplotypes = TRUE, trydataset = NULL,
-                                     gene_requests = c("ensembl_gene_id",
-                                                       "version",
-                                                       "ensembl_transcript_id",
-                                                       "transcript_version", "hgnc_symbol",
-                                                       "description", "gene_biotype"),
-                                     length_requests = c("ensembl_transcript_id",
-                                                         "cds_length", "chromosome_name",
-                                                         "strand", "start_position",
-                                                         "end_position"),
-                                     include_lengths = TRUE, do_load = TRUE, savefile = NULL) {
+load_biomart_annotations <- function(
+  species = "hsapiens", overwrite = FALSE, do_save = TRUE, host = NULL,
+  trymart = "ENSEMBL_MART_ENSEMBL", archive = TRUE,
+  default_hosts = c("useast.ensembl.org", "uswest.ensembl.org",
+                    "www.ensembl.org", "asia.ensembl.org"),
+  year = NULL, month = NULL, drop_haplotypes = TRUE, trydataset = NULL,
+  gene_requests = c("ensembl_gene_id", "version", "ensembl_transcript_id",
+                    "transcript_version", "description", "gene_biotype"),
+  length_requests = c("ensembl_transcript_id", "cds_length", "chromosome_name",
+                      "strand", "start_position", "end_position"),
+  gene_tx_map = TRUE, gene_id_column = "ensembl_gene_id", gene_version_column = "version",
+  tx_id_column = "ensembl_transcript_id", tx_version_column = "transcript_version",
+  symbol_columns = NULL, include_lengths = TRUE, do_load = TRUE, savefile = NULL) {
 
   ## An attempt to get around 'unable to get local issuer certificate':
   ## As per: https://github.com/grimbough/biomaRt/issues/39
@@ -246,7 +244,7 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
   }
 
   biomart_annotations <- NULL
-  if (file.exists(savefile) & isTRUE(do_load)) {
+  if (file.exists(savefile) & isFALSE(overwrite)) {
     fresh <- new.env()
     message("The biomart annotations file already exists, loading from it.")
     ## load_string <- paste0("load('", savefile, "', envir = fresh)")
@@ -254,15 +252,25 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
     eval(parse(text = load_string))
     biomart_annotations <- fresh[["biomart_annotations"]]
     retlist <- list(
-        "annotation" = biomart_annotations,
-        "mart" = "savefile",
-        "host" = "savefile",
-        "mart_name" = "savefile",
-        "rows" = "savefile",
-        "dataset" = "savefile",
-        "year" = year,
-        "month" = month,
-        "species" = species)
+      "annotation" = biomart_annotations,
+      "mart" = "savefile",
+      "host" = "savefile",
+      "mart_name" = "savefile",
+      "rows" = "savefile",
+      "dataset" = "savefile",
+      "year" = year,
+      "month" = month,
+      "species" = species)
+
+    if (!is.null(gene_id_column)) {
+      gene_annotations <- biomart_annotations
+      kept <- !duplicated(gene_annotations[[gene_id_column]])
+      gene_annotations <- gene_annotations[kept, ]
+      rownames(gene_annotations) <- gene_annotations[[gene_id_column]]
+      gene_annotations[[gene_id_column]] <- NULL
+      retlist[["gene_annotations"]] <- gene_annotations
+    }
+
     class(retlist) <- "annotations_biomart"
     return(retlist)
   }
@@ -289,7 +297,7 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
 
   ## The following was stolen from Laura's logs for human annotations.
   ## To see possibilities for attributes, use head(listAttributes(ensembl), n = 20L)
-  gene_ids <- biomaRt::getBM(attributes = "ensembl_gene_id", mart = ensembl)
+  gene_ids <- biomaRt::getBM(attributes = gene_id_column, mart = ensembl)
   chosen_annotations <- c()
   available_attribs <- biomaRt::listAttributes(ensembl)[["name"]]
   found_attribs <- gene_requests %in% available_attribs
@@ -301,7 +309,7 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
     gene_requests <- gene_requests[found_attribs]
   }
   gene_annotations <- biomaRt::getBM(attributes = gene_requests,
-                                     filters = "ensembl_gene_id",
+                                     filters = gene_id_column,
                                      values = gene_ids,
                                      mart = ensembl)
   chosen_annotations <- c(gene_requests)
@@ -319,13 +327,11 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
     ## If that also fails, then eff it.
     tmp_annot <- data.table::as.data.table(gene_annotations)
     tmp_length_requests <- length_requests
-    chosen_by <- "ensembl_transcript_id"
-    structure_annotations <- try(biomaRt::getBM(attributes = tmp_length_requests,
-                                                filters = "ensembl_gene_id",
-                                                values = gene_ids,
-                                                mart = ensembl))
+    chosen_by <- tx_id_column
+    structure_annotations <- try(biomaRt::getBM(
+      attributes = tmp_length_requests, filters = gene_id_column,
+      values = gene_ids, mart = ensembl))
     if (class(structure_annotations)[1] == "try-error") {
-      chosen_by <- "ensembl_gene_id"
       tmp_length_requests[1] <- chosen_by
       structure_annotations <- try(biomaRt::getBM(attributes = tmp_length_requests,
                                                   mart = ensembl))
@@ -344,6 +350,39 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
     ## Do not include the lengths
     biomart_annotations <- gene_annotations
   }
+
+  added_symbols <- NULL
+  if (is.null(symbol_columns)) {
+    message("symbol columns is null, pattern matching 'symbol'.")
+    symbol_columns_idx <- grepl(x = available_attribs, pattern = "symbol")
+    symbol_columns <- available_attribs[symbol_columns_idx]
+  }
+  symbol_columns <- c(gene_id_column, symbol_columns)
+  symbol_annotations <- try(biomaRt::getBM(
+    attributes = symbol_columns, filters = gene_id_column,
+    values = gene_ids, mart = ensembl))
+  rownames(symbol_annotations) <- make.names(symbol_annotations[[1]], unique = TRUE)
+  symbol_annotations[[1]] <- NULL
+  if ("try-error" %in% class(symbol_annotations)) {
+    added_symbols <- NULL
+  } else {
+    symbol_rows <- nrow(symbol_annotations)
+    gene_rows <- nrow(gene_annotations)
+    if (symbol_rows > (gene_rows / 10)) {
+      message("Including symbols, there are ", symbol_rows, " vs the ",
+              gene_rows, " gene annotations.")
+      added_symbols <- symbol_annotations
+    } else {
+      message("Not including symbols, there are only: ", symbol_rows, ".")
+    }
+  }
+  if (!is.null(added_symbols)) {
+    biomart_annotations <- merge(biomart_annotations, added_symbols,
+                                 by.x = gene_id_column, by.y = "row.names",
+                                 all.x = TRUE)
+  }
+
+
   ## rownames(biomart_annotations) <- make.names(biomart_annotations[,
   ## "transcriptID"], unique = TRUE) It is not valid to arbitrarily set it to
   ## 'transcriptID' because we cannot guarantee that will be the column name,
@@ -385,16 +424,46 @@ load_biomart_annotations <- function(species = "hsapiens", overwrite = FALSE, do
     save(list = ls(pattern = "biomart_annotations"), file = savefile)
     message("Finished save().")
   }
+
+  gene_annotations <- NULL
+  if (!is.null(gene_id_column)) {
+    gene_annotations <- biomart_annotations
+    if (gene_id_column %in% colnames(gene_annotations)) {
+      kept <- !duplicated(gene_annotations[[gene_id_column]])
+      mesg(" Keeping ", sum(kept), " of ", nrow(gene_annotations),
+           " annotations from column ", gene_id_column, ".")
+      gene_annotations <- gene_annotations[kept, ]
+      rownames(gene_annotations) <- gene_annotations[[gene_id_column]]
+    } else {
+      warning("The column ", gene_id_column, " is not in the annotations.")
+    }
+  }
+
+  if (isTRUE(gene_tx_map)) {
+    gene_tx_map <- biomart_annotations
+    if (gene_id_column %in% colnames(gene_tx_map)) {
+      kept <- !duplicated(gene_annotations[[gene_id_column]])
+      gene_tx_map <- gene_tx_map[kept, ]
+      gene_tx_map[["transcript"]] <- paste0(gene_tx_map[[tx_id_column]],
+                                            ".", gene_tx_map[[gene_version_column]])
+      gene_tx_map <- gene_tx_map[, c("transcript", gene_id_column)]
+    } else {
+      warning("The column ", gene_id_column, " is not in the annotations.")
+    }
+  }
+
   retlist <- list(
-      "annotation" = biomart_annotations,
-      "mart" = ensembl,
-      "host" = host,
-      "mart_name" = used_mart,
-      "columns" = chosen_annotations,
-      "possible_attribs" = available_attribs,
-      "year" = year,
-      "month" = month,
-      "species" = species)
+    "annotation" = biomart_annotations,
+    "gene_annotation" = gene_annotations,
+    "gene_tx_map" = gene_tx_map,
+    "mart" = ensembl,
+    "host" = host,
+    "mart_name" = used_mart,
+    "columns" = chosen_annotations,
+    "possible_attribs" = available_attribs,
+    "year" = year,
+    "month" = month,
+    "species" = species)
   class(retlist) <- "annotations_biomart"
   return(retlist)
 }
@@ -452,12 +521,12 @@ load_biomart_go <- function(species = "hsapiens", overwrite = FALSE, do_save = T
     load(savefile, envir = fresh)
     biomart_go <- fresh[["biomart_annotations"]]
     retlist <- list(
-        "go" = biomart_go,
-        "mart" = "savefile",
-        "host" = "savefile",
-        "mart_name" = "savefile",
-        "rows" = "savefile",
-        "dataset" = "savefile")
+      "go" = biomart_go,
+      "mart" = "savefile",
+      "host" = "savefile",
+      "mart_name" = "savefile",
+      "rows" = "savefile",
+      "dataset" = "savefile")
     class(retlist) <- "biomart_go"
     return(retlist)
   }
@@ -504,12 +573,12 @@ load_biomart_go <- function(species = "hsapiens", overwrite = FALSE, do_save = T
   }
 
   retlist <- list(
-      "go" = biomart_go,
-      "mart" = ensembl,
-      "host" = host,
-      "mart_name" = used_mart,
-      "attributes" = dl_rows,
-      "species" = species)
+    "go" = biomart_go,
+    "mart" = ensembl,
+    "host" = host,
+    "mart_name" = used_mart,
+    "attributes" = dl_rows,
+    "species" = species)
   class(retlist) <- "biomart_go"
   return(retlist)
 }
@@ -611,10 +680,10 @@ load_biomart_orthologs <- function(gene_ids = NULL, first_species = "hsapiens",
   colnames(linked_genes) <- new_colnames
 
   linked_genes <- list(
-      "all_linked_genes" = linked_genes,
-      "subset_linked_genes" = kept_genes,
-      "first_attribs" = possible_first_attributes,
-      "second_attribs" = possible_second_attributes)
+    "all_linked_genes" = linked_genes,
+    "subset_linked_genes" = kept_genes,
+    "first_attribs" = possible_first_attributes,
+    "second_attribs" = possible_second_attributes)
   return(linked_genes)
 }
 

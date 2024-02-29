@@ -13,10 +13,11 @@ write_xlsx(
   start_row = 1,
   start_col = 1,
   title = NULL,
-  number_format = "0.000",
+  float_format = "0.000",
   data_table = TRUE,
   freeze_first_row = TRUE,
   freeze_first_column = TRUE,
+  date_format = "yyyy-mm-dd",
   column_width = "heuristic",
   ...
 )
@@ -38,9 +39,6 @@ write_xlsx(
 
 \item{title}{Title for this xlsx table.}
 
-\item{number_format}{Revisit this, but it hard-sets the number of decimal
-points in numeric columns.}
-
 \item{data_table}{Write this as an excel data table instead of just a collection of cells.}
 
 \item{freeze_first_row}{Add a hint to make the first row always on screen?}
@@ -50,6 +48,9 @@ points in numeric columns.}
 \item{column_width}{Either a specific value, NULL, or 'heuristic' which guesses.}
 
 \item{...}{Set of extra arguments given to openxlsx.}
+
+\item{number_format}{Revisit this, but it hard-sets the number of decimal
+points in numeric columns.}
 }
 \value{
 List containing the sheet and workbook written as well as the

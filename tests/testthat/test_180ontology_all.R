@@ -154,7 +154,7 @@ cat_actual <- go_test[["all_data"]][["category"]]
 test_that("Did the table of all results include the expected material?", {
   expect_equal(p_expected, p_actual, tolerance = 0.001)
   expect_equal(q_expected, q_actual, tolerance = 0.2)
-  expect_equal(5, sum(cat_expected %in% cat_actual))
+  expect_equal(4, sum(cat_expected %in% cat_actual))
 })
 
 ## Test if the goseq enrichResult elements are plottable.

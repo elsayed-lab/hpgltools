@@ -7,7 +7,7 @@
 snp_density_primers(
   snp_count,
   pdata_column = "condition",
-  condition = "z2.3",
+  condition = NULL,
   cutoff = 20,
   bin_width = 600,
   divide = FALSE,

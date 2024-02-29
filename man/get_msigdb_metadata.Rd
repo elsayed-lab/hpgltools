@@ -6,17 +6,16 @@
 fill the fData slot of a gsva returned expressionset.}
 \usage{
 get_msigdb_metadata(
-  gsva_result = NULL,
-  msig_xml = "msigdb_v6.2.xml",
+  msig_db = "msigdb_v6.2.xml",
   wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID")
 )
 }
 \arguments{
+\item{wanted_meta}{Choose metadata columns of interest.}
+
 \item{gsva_result}{Some data from GSVA to modify.}
 
 \item{msig_xml}{msig XML file downloaded from broad.}
-
-\item{wanted_meta}{Choose metadata columns of interest.}
 }
 \value{
 list containing 2 data frames: all metadata from broad, and the set

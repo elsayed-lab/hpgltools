@@ -32,6 +32,8 @@ plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.0
   } else {
     stop("I only understand filenames and data frames, your psi are neither.")
   }
+  rownames(dpsi_data) <- dpsi_data[[1]]
+  dpsi_data[[1]] <- NULL
   colnames(dpsi_data) <- c("dpsi", "pvalue")
 
   tpm_data <- NULL

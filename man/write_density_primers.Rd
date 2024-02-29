@@ -7,7 +7,7 @@
 write_density_primers(
   density_primers,
   prefix = "pf",
-  column = "fivep_primer",
+  column = "fwd_primer",
   fasta = "forward_primers.fasta"
 )
 }

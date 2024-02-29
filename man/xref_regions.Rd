@@ -15,7 +15,8 @@ xref_regions(
   feature_chr = "seqnames",
   feature_type_column = "type",
   feature_id = "ID",
-  feature_name = "description"
+  feature_name = "description",
+  name_type = NULL
 )
 }
 \arguments{

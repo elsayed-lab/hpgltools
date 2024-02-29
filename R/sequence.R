@@ -475,8 +475,6 @@ make_bsgenome_from_fasta <- function(fasta, pkgname, title, organism, common_nam
   desc_file <- file.path(build_dir, "DESCRIPTION")
   descript <- desc::description$new("!new")
   descript$set(Package = pkgname)
-  title <- glue::glue("{taxa[['genus']]} {taxa[['species']]} strain {taxa[['strain']]} \\
-                version {db_version}")
   descript$set(Title = title)
   descript$set(Author = author)
   version_string <- format(Sys.time(), "%Y.%m")
