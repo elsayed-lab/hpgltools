@@ -1429,8 +1429,13 @@ read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = 
   files <- files[!skippers]
   ids <- ids[!skippers]
   skippers <- (ids == "" | ids == "undef" | is.null(ids) | is.na(ids))
-  files <- files[!skippers]
-  ids <- ids [!skippers]
+  if (sum(skippers) > 0) {
+    message("Checking for NULL/undefined/NA filenames resulted in skipping ",
+            sum(skippers), " files.")
+    files <- files[!skippers]
+    ids <- ids [!skippers]
+  }
+
   retlist[["kept_ids"]] <- ids
   retlist[["kept_files"]] <- files
   ## lower_filenames <- files
@@ -1528,7 +1533,7 @@ If this is not correctly performed, very few genes will be observed")
     mesg("Reading salmon data with tximport.")
     ## This hits if we are using the salmon outputs.
     names(files) <- ids
-    missing_idx <-!file.exists(files)
+    missing_idx <- !file.exists(files)
     if (sum(missing_idx) > 0) {
       missing_files <- files[missing_idx]
       warning("Not all the files exist: ", toString(missing_files))
@@ -1541,8 +1546,10 @@ If this is not correctly performed, very few genes will be observed")
         files = files, type = "salmon",
         txOut = txout, countsFromAbundance = "lengthScaledTPM"))
     } else {
-      import <- sm(tximport::tximport(
-        files = files, type = "salmon", tx2gene = tx_gene_map, txOut = txout))
+      ## Add a little test to see how well the tx_gene_map versions
+      ## match those in the results from salmon.
+      import <- tximport::tximport(
+        files = as.character(files), type = "salmon", tx2gene = tx_gene_map, txOut = txout)
       import_scaled <- sm(tximport::tximport(
         files = files, type = "salmon", tx2gene = tx_gene_map,
         txOut = txout, countsFromAbundance = "lengthScaledTPM"))

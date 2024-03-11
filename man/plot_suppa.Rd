@@ -11,7 +11,9 @@ plot_suppa(
   psi = NULL,
   sig_threshold = 0.05,
   label_type = NULL,
-  alpha = 0.7
+  alpha = 0.7,
+  numerator = "infected",
+  denominator = "uninfected"
 )
 }
 \arguments{

@@ -2241,4 +2241,71 @@ make_dnaseq_spec <- function() {
   return(specification)
 }
 
+#' Steal transcript IDs from the first count table.
+#'
+#' @param meta Input metadata containing the salmon count table names.
+#' @param annotations Extant set of gene annotations, likely from biomart.
+#' @param meta_column metadata column with the filenames.
+#' @param annot_gene_column Column of annotations with the gene IDs.
+#' @param annot_tx_column Column of annotations with the transcript IDs.
+#' @param keep_unique Drop the potential duplicate GIDs?
+#' @return List containing modified annotations for the genes, transcripts,
+#'  and the map between them.
+#' @export
+steal_salmon_tx_ids <- function(meta, annotations, meta_column = "salmon_count_table",
+                                annot_gene_column = "ensembl_gene_id",
+                                annot_tx_column = "ensembl_transcript_id",
+                                keep_unique = TRUE) {
+  ## FIXME: Use dispatch for this
+  if ("preprocessing_metadata" %in% class(meta)) {
+    meta <- meta[["new_meta"]]
+  } else if ("character" %in% class(meta)) {
+    meta <- extract_metadata(meta)
+  }
+  salmon_files <- meta[[meta_column]]
+  first_file <- salmon_files[1]
+  stolen_versions <- readr::read_tsv(first_file, skip = 1,
+                                     col_names = c("Name", "Length", "EffectiveLength", "TPM", "NumReads"), col_types = c("cdddd"))
+  stolen_versions[[annot_tx_column]] <- gsub(pattern = "^(.+)\\.\\d+$",
+                                             replacement = "\\1",
+                                             x = stolen_versions[["Name"]])
+  stolen_versions <- as.data.frame(stolen_versions[, c(annot_tx_column, "Name")])
+  colnames(stolen_versions) <- c(annot_tx_column, "salmon_tx_version")
+  rownames(stolen_versions) <- stolen_versions[["salmon_tx_version"]]
+  ## Add the new salmon_tx_version to the annotations.
+  merged_annotations <- merge(annotations, stolen_versions, by = annot_tx_column, all.y = TRUE)
+
+  ## Grab the tx_gene_map and set its column names.
+  tx_gene_map <- merged_annotations[, c("salmon_tx_version", annot_gene_column)]
+  colnames(tx_gene_map) <- c("transcript", "gene")
+  if (isTRUE(keep_unique)) {
+    kept <- !duplicated(tx_gene_map[["transcript"]])
+    tx_gene_map <- tx_gene_map[kept, ]
+  }
+  na_genes <- is.na(tx_gene_map[["gene"]])
+  if (sum(na_genes) > 0) {
+    warning(sum(na_genes), " genes failed to match transcripts in the data, setting them to the txid.")
+    tx_gene_map[na_genes, "gene"] <- tx_gene_map[na_genes, "transcript"]
+  }
+  rownames(tx_gene_map) <- make.names(tx_gene_map[["transcript"]], unique = TRUE)
+
+  ## Set the rownames of the tx_annotations to the salmon ids
+  tx_annotations <- merged_annotations
+  rownames(tx_annotations) <- make.names(tx_annotations[["salmon_tx_version"]], unique = TRUE)
+
+  ## Finally, set the rownames of the gene annotations.
+  gene_annotations <- merged_annotations
+  if (isTRUE(keep_unique)) {
+    kept <- !duplicated(gene_annotations[[annot_gene_column]])
+    gene_annotations <- gene_annotations[kept, ]
+  }
+  rownames(gene_annotations) <- make.names(gene_annotations[[annot_gene_column]], unique = TRUE)
+
+  retlist <- list(
+    "tx_annotations" = tx_annotations,
+    "gene_annotations" = gene_annotations,
+    "tx_gene_map" = tx_gene_map)
+  return(retlist)
+}
+
 ## EOF

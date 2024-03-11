@@ -23,10 +23,17 @@
 #' }
 #' @export
 plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.05,
-                       label_type = NULL, alpha = 0.7) {
+                       label_type = NULL, alpha = 0.7,
+                       numerator = "infected", denominator = "uninfected") {
   dpsi_data <- NULL
-  if (class(psi) == "character") {
-    dpsi_data <- read.table(dpsi, sep = "\t")
+  if (class(dpsi) == "character") {
+    dpsi_data <- data.frame()
+    mesg("Merging dpsi data from", length(dpsi), " files.")
+    for (p in dpsi) {
+      tmp_data <- read.table(p, sep = "\t", skip = 1)
+      dpsi_data <- rbind(dpsi_data, tmp_data)
+    }
+    dpsi_data <- as.data.frame(dpsi_data)
   } else if (class(dpsi) == "data.frame") {
     dpsi_data <- dpsi
   } else {
@@ -36,9 +43,79 @@ plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.0
   dpsi_data[[1]] <- NULL
   colnames(dpsi_data) <- c("dpsi", "pvalue")
 
+  events_data <- NULL
+  if (!is.null(events)) {
+    if (class(events) == "character") {
+      events_data <- data.frame()
+      mesg("Merging events from ", length(events), " event files.")
+      for (e in events) {
+        tmp_data <- read.table(e, sep = "\t", skip = 1)
+        events_data <- rbind(event_data, tmp_data)
+      }
+      events_data <- as.data.frame(event_data)
+    } else if (class(events) == "data.frame") {
+      events_data <- events
+    } else {
+      stop("I only understand filenames and data frames, your events are neither.")
+    }
+  }
+colnames(events_data) <- c("number", "gene", "event", "transcripts_1", "transcripts_2")
+
+  psi_data <- NULL
+  if (!is.null(psi)) {
+    if (class(psi) == "character") {
+      psi_data <- data.frame()
+      mesg("Merging percentage-splice-included data from ", length(psi), " files.")
+      fake_colnames <- c()
+      for (p in psi) {
+        tmp_data <- read.table(p, sep = "\t")
+        if (is.null(fake_colnames[1])) {
+          fake_colnames <- colnames(tmp_data)
+        } else {
+          colnames(tmp_data) <- fake_colnames
+          }
+        psi_data <- rbind(psi_data, tmp_data)
+      }
+      psi_data <- as.data.frame(psi_data)
+    } else if (class(psi) == "data.frame") {
+      psi_data <- psi
+    } else {
+      stop("I only understand filenames and data frames, your events are neither.")
+    }
+  }
+
   tpm_data <- NULL
   if (class(tpm) == "character") {
-    tpm_data <- read.table(tpm, sep = "\t")
+    tpm_data <- data.frame()
+    if (length(tpm) == 1) {
+      tpm_data <- as.data.frame(read.table(tpm, sep = "\t"))
+    } else {
+      start_tpm <- data.frame()
+      ## This provides the tpm values by transcript, I need to merge that
+      ## against the set of events.
+      count <- 0
+      for (t in tpm) {
+        count <- count + 1
+        tmp_data <- read.table(t, sep = "\t")
+        if (count == 1) {
+          start_tpm <- tmp_data
+        } else {
+          start_tpm <- merge(start_tpm, tmp_data, by = "row.names")
+          rownames(start_tpm) <- start_tpm[["Row.names"]]
+          start_tpm[["Row.names"]] <- NULL
+        }
+      }
+      mean_tpm_df <- data.frame(row.names = rownames(start_tpm))
+      mean_tpm_df[["mean_tpm"]] <- log2(rowMeans(start_tpm + 1))
+      events_by_tx <- events_data %>%
+        tidyr::separate_rows(total_transcripts, sep = ",") %>%
+        dplyr::select(total_transcripts, event_id)
+      mean_tpm_df <- merge(mean_tpm_df, events_by_tx, by.x = "row.names", by.y = "total_transcripts")
+      colnames(mean_tpm_df) <- c("transcript", "mean_tpm", "event")
+      tpm_data <- mean_tpm_df[, c("event", "mean_tpm")]
+      keep_events <- !duplicated(tpm_data[["event"]])
+      tpm_data <- tpm_data[keep_events, ]
+    }
   } else if (class(tpm) == "data.frame") {
     tpm_data <- tpm
   } else {
@@ -46,37 +123,26 @@ plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.0
   }
   colnames(tpm_data) <- c("event", "avglogtpm")
 
-  events_data <- NULL
-  if (!is.null(events)) {
-    if (class(events) == "character") {
-      events_data <- read.table(events, sep = "\t", header = TRUE)
-    } else if (class(events) == "data.frame") {
-      events_data <- events
-    } else {
-      stop("I only understand filenames and data frames, your events are neither.")
-    }
-  }
+  numerator_regex <- paste0("^", numerator)
+  numerator_samples <- grepl(pattern = numerator_regex, x = colnames(psi_data))
+  denominator_regex <- paste0("^", denominator)
+  denominator_samples <- grepl(pattern = denominator_regex, x = colnames(psi_data))
+  numerator_names <- paste0("numerator", seq_len(sum(numerator_samples)))
+  colnames(psi_data)[numerator_samples] <- numerator_names
+  denominator_names <- paste0("denominator", seq_len(sum(denominator_samples)))
+  colnames(psi_data)[denominator_samples] <- denominator_names
 
-  psi_data <- NULL
-  if (!is.null(psi)) {
-    if (class(psi) == "character") {
-      psi_data <- read.table(psi, sep = "\t")
-    } else if (class(psi) == "data.frame") {
-      psi_data <- psi
-    } else {
-      stop("I only understand filenames and data frames, your events are neither.")
-    }
-  }
-  colnames(psi_data) <- c(
-    "denominator1", "denominator2", "denominator3",
-    "numerator1", "numerator2", "numerator3", "numerator4", "numerator5", "numerator6")
+
+
 
   plotting_data <- merge(dpsi_data, tpm_data, by.x = "row.names", by.y = "event")
   rownames(plotting_data) <- plotting_data[["Row.names"]]
-  plotting_data <- plotting_data[, -1]
+  plotting_data[["Row.names"]] <- NULL
+
   ## Now we have the basis for everything we are likely to plot.
   ## Add some categorizations of the data.
-  plotting_data[["log10pval"]] <- -1.0 * log10(plotting_data[["pvalue"]])
+  plotting_data[["dpsi"]] <- as.numeric(plotting_data[["dpsi"]])
+  plotting_data[["log10pval"]] <- -1.0 * log10(as.numeric(plotting_data[["pvalue"]]))
   plotting_data[["adjp"]] <- p.adjust(plotting_data[["pvalue"]], method = "fdr")
   plotting_data[["psig"]] <- FALSE
   plotting_data[["adjpsig"]] <- FALSE
@@ -109,7 +175,7 @@ plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.0
                         yes = "Alternate first exon",
                         no = ifelse(plotting_data[["plot_cat"]] == "AL",
                                     yes = "Alternate last exon",
-                                    no = "Unknown")))))))
+                                    no = "Transcripts")))))))
   plotting_data[["category"]] <- plotting_data[["plot_cat"]]
   insig_idx <- plotting_data[["pvalue"]] > 0.05
   plotting_data[insig_idx, "plot_cat"] <- "Insignificant"
@@ -119,7 +185,7 @@ plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.0
 
   level_names <- c("Skipping exon", "Mutually exclusive exons", "Alternate 5 prime",
                    "Alternate 3 prime", "Retained intron", "Alternate first exon",
-                   "Alternate last exon", "Insignificant")
+                   "Alternate last exon", "Insignificant", "Transcripts")
   plotting_data[["category"]] <- factor(plotting_data[["category"]], levels = level_names,
                                         labels = level_names)
   plotting_data[["event"]] <- rownames(plotting_data)
@@ -138,7 +204,7 @@ plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.0
     ggplot2::geom_hline(yintercept = 1.3, size = 1)
 
   ## Now a somewhat more involved ma plot, first dropping the super-low tpm stuff
-  plotting_subset_idx <- plotting_data[["avglogtpm"]] >= -1
+  plotting_subset_idx <- plotting_data[["avglogtpm"]] >= 0
   plotting_subset <- plotting_data[plotting_subset_idx, ]
   label_subset_idx <- plotting_subset[["psig"]] == TRUE
   label_subset <- plotting_subset[label_subset_idx, ]
@@ -180,6 +246,7 @@ plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.0
     ggplot2::theme_bw(base_size = base_size)
 
   ## If available, add the event data to the table
+  colnames(events_data) <- c("number", "gene", "event_id", "alternative_transcripts", "total_transcripts")
   if (!is.null(events_data)) {
     events_data <- events_data[, c("event_id", "alternative_transcripts", "total_transcripts")]
     plotting_data <- merge(plotting_data,
@@ -187,7 +254,7 @@ plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.0
                            by.x = "row.names",
                            by.y = "event_id")
     rownames(plotting_data) <- plotting_data[["Row.names"]]
-    plotting_data <- plotting_data[, -1]
+    plotting_data[["Row.names"]] <- NULL
   }
   ## If available, add all the psi data to the table
   if (!is.null(psi_data)) {
@@ -195,13 +262,18 @@ plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.0
                            psi_data,
                            by = "row.names")
     rownames(plotting_data) <- plotting_data[["Row.names"]]
-    plotting_data <- plotting_data[, -1]
+    plotting_data[["Row.names"]] <- NULL
   }
+
+  sig_idx <- plotting_data[["psig"]] == TRUE
+  sig_data <- plotting_data[sig_idx, ]
+
 
   retlist <- list(
     "volcano" = sig_splicing_volplot,
     "ma" = sig_splicing_maplot,
-    "data" = plotting_data)
+    "data" = plotting_data,
+    "sig" = sig_data)
   return(retlist)
 }
 

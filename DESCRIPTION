@@ -61,7 +61,7 @@ Imports:
   rlang,
   shiny, sva,
   tidyselect,
-  variancePartition
+  varhandle, variancePartition
 Depends:
   Biobase, SummarizedExperiment, S4Vectors, glue, Matrix
 VignetteBuilder: knitr
