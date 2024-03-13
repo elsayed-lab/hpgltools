@@ -2,6 +2,43 @@
 ## methods. The hope is to remove some corner cases from tools like
 ## suppa/miso/etc and somewhat standardize the resulting outputs.
 
+gather_suppa_files <- function(file_prefix = NULL, numerator = "d15", denominator = "d10") {
+  type_suffixes <- c("A3", "A5", "AF", "AL", "RI", "MX", "SE")
+  if (is.null(file_prefix)) {
+    file_prefix <- file.path("outputs", "90suppa_mm38_100_time")
+  }
+  comparison_prefix <- glue("{numerator}_{denominator}");
+  dpsi_prefix <- file.path(file_prefix, "diff")
+  tpm_prefix <- file.path(file_prefix, "tpm")
+  event_prefix <- file.path(file_prefix, "events")
+  psi_prefix <- file.path(file_prefix, "psi")
+
+  type_dpsi_files <- file.path(dpsi_prefix, paste0(comparison_prefix, "_",
+                                                   type_suffixes, ".dpsi"))
+  tpm_files <- file.path(tpm_prefix, paste0(c(numerator, denominator), ".tpm"))
+  type_events_files <- file.path(event_prefix, paste0("local_as_events_",
+                                                     type_suffixes, "_strict.ioe"))
+  type_psi_files <- file.path(dpsi_prefix, paste0(comparison_prefix, "_",
+                                                  type_suffixes, ".psivec"))
+  type_tpm_files <- file.path(tpm_prefix, paste0(c(numerator, denominator), ".tpm"))
+
+  tx_dpsi_file <- file.path(dpsi_prefix, glue("{comparison_prefix}_ioi_empirical.dpsi"))
+  tx_events_file <- file.path(event_prefix, "transcript_events.ioi")
+  tx_psi_file <- file.path(dpsi_prefix, glue("{comparison_prefix}_ioi_classical.psivec"))
+  tx_tpm_file <- file.path(dpsi_prefix, glue("{comparison_prefix}_ioi_empirical_avglogtpm.tab"))
+
+  retlist <- list(
+    "tx_dpsi" = tx_dpsi_file,
+    "tx_events" = tx_events_file,
+    "tx_psi" = tx_psi_file,
+    "tx_tpm" = tx_tpm_file,
+    "type_dpsi" = type_dpsi_files,
+    "type_events" = type_events_files,
+    "type_psi" = type_psi_files,
+    "type_tpm" = type_tpm_files)
+  return(retlist)
+}
+
 #' Given some psi and tpm data, make a pretty plot!
 #'
 #' This should take either a dataframe or filename for the psi data from suppa,
@@ -22,104 +59,100 @@
 #'  suppa_plot <- plot_suppa(dpsi_file, tmp_file)
 #' }
 #' @export
-plot_suppa <- function(dpsi, tpm, events = NULL, psi = NULL, sig_threshold = 0.05,
-                       label_type = NULL, alpha = 0.7,
+plot_suppa <- function(file_list = NULL, type = "type", annot = NULL, annot_column = NULL,
+                       sig_threshold = 0.05, label_type = NULL, alpha = 0.7, file_prefix = NULL,
                        numerator = "infected", denominator = "uninfected") {
-  dpsi_data <- NULL
-  if (class(dpsi) == "character") {
-    dpsi_data <- data.frame()
-    mesg("Merging dpsi data from", length(dpsi), " files.")
-    for (p in dpsi) {
-      tmp_data <- read.table(p, sep = "\t", skip = 1)
-      dpsi_data <- rbind(dpsi_data, tmp_data)
-    }
-    dpsi_data <- as.data.frame(dpsi_data)
-  } else if (class(dpsi) == "data.frame") {
-    dpsi_data <- dpsi
-  } else {
-    stop("I only understand filenames and data frames, your psi are neither.")
+  if (is.null(file_list)) {
+    file_list <- gather_suppa_files(file_prefix = file_prefix, numerator = numerator, denominator = denominator)
   }
+  dpsi <- NULL
+  if (type == "type") {
+    dpsi <- file_list[["type_dpsi"]]
+  } else {
+    dpsi <- file_list[["tx_dpsi"]]
+  }
+  events <- NULL
+  if (type == "type") {
+    events <- file_list[["type_events"]]
+  } else {
+    events <- file_list[["tx_events"]]
+  }
+  psi <- NULL
+  if (type == "type") {
+    psi <- file_list[["type_psi"]]
+  } else {
+    psi <- file_list[["tx_psi"]]
+  }
+  tpm <- NULL
+  if (type == "type") {
+    tpm <- file_list[["type_tpm"]]
+  } else {
+    tpm <- file_list[["tx_tpm"]]
+  }
+
+  dpsi_data <- data.frame()
+  mesg("Merging dpsi data from ", length(dpsi), " files.")
+  for (p in dpsi) {
+    tmp_data <- read.table(p, sep = "\t", skip = 1)
+    dpsi_data <- rbind(dpsi_data, tmp_data)
+  }
+  dpsi_data <- as.data.frame(dpsi_data)
   rownames(dpsi_data) <- dpsi_data[[1]]
   dpsi_data[[1]] <- NULL
   colnames(dpsi_data) <- c("dpsi", "pvalue")
 
-  events_data <- NULL
-  if (!is.null(events)) {
-    if (class(events) == "character") {
-      events_data <- data.frame()
-      mesg("Merging events from ", length(events), " event files.")
-      for (e in events) {
-        tmp_data <- read.table(e, sep = "\t", skip = 1)
-        events_data <- rbind(event_data, tmp_data)
-      }
-      events_data <- as.data.frame(event_data)
-    } else if (class(events) == "data.frame") {
-      events_data <- events
-    } else {
-      stop("I only understand filenames and data frames, your events are neither.")
-    }
+  events_data <- data.frame()
+  mesg("Merging events from ", length(events), " event files.")
+  for (e in events) {
+    tmp_data <- read.table(e, sep = "\t", skip = 1)
+    events_data <- rbind(event_data, tmp_data)
   }
-colnames(events_data) <- c("number", "gene", "event", "transcripts_1", "transcripts_2")
+  events_data <- as.data.frame(event_data)
+  colnames(events_data) <- c("number", "gene", "event", "transcripts_1", "transcripts_2")
 
-  psi_data <- NULL
-  if (!is.null(psi)) {
-    if (class(psi) == "character") {
-      psi_data <- data.frame()
-      mesg("Merging percentage-splice-included data from ", length(psi), " files.")
-      fake_colnames <- c()
-      for (p in psi) {
-        tmp_data <- read.table(p, sep = "\t")
-        if (is.null(fake_colnames[1])) {
-          fake_colnames <- colnames(tmp_data)
-        } else {
-          colnames(tmp_data) <- fake_colnames
-          }
-        psi_data <- rbind(psi_data, tmp_data)
-      }
-      psi_data <- as.data.frame(psi_data)
-    } else if (class(psi) == "data.frame") {
-      psi_data <- psi
+  psi_data <- data.frame()
+  mesg("Merging percentage-splice-included data from ", length(psi), " files.")
+  fake_colnames <- c()
+  for (p in psi) {
+    tmp_data <- read.table(p, sep = "\t")
+    if (is.null(fake_colnames[1])) {
+      fake_colnames <- colnames(tmp_data)
     } else {
-      stop("I only understand filenames and data frames, your events are neither.")
+      colnames(tmp_data) <- fake_colnames
     }
+    psi_data <- rbind(psi_data, tmp_data)
   }
+  psi_data <- as.data.frame(psi_data)
 
-  tpm_data <- NULL
-  if (class(tpm) == "character") {
-    tpm_data <- data.frame()
-    if (length(tpm) == 1) {
-      tpm_data <- as.data.frame(read.table(tpm, sep = "\t"))
-    } else {
-      start_tpm <- data.frame()
-      ## This provides the tpm values by transcript, I need to merge that
-      ## against the set of events.
-      count <- 0
-      for (t in tpm) {
-        count <- count + 1
-        tmp_data <- read.table(t, sep = "\t")
-        if (count == 1) {
-          start_tpm <- tmp_data
-        } else {
-          start_tpm <- merge(start_tpm, tmp_data, by = "row.names")
-          rownames(start_tpm) <- start_tpm[["Row.names"]]
-          start_tpm[["Row.names"]] <- NULL
-        }
-      }
-      mean_tpm_df <- data.frame(row.names = rownames(start_tpm))
-      mean_tpm_df[["mean_tpm"]] <- log2(rowMeans(start_tpm + 1))
-      events_by_tx <- events_data %>%
-        tidyr::separate_rows(total_transcripts, sep = ",") %>%
-        dplyr::select(total_transcripts, event_id)
-      mean_tpm_df <- merge(mean_tpm_df, events_by_tx, by.x = "row.names", by.y = "total_transcripts")
-      colnames(mean_tpm_df) <- c("transcript", "mean_tpm", "event")
-      tpm_data <- mean_tpm_df[, c("event", "mean_tpm")]
-      keep_events <- !duplicated(tpm_data[["event"]])
-      tpm_data <- tpm_data[keep_events, ]
-    }
-  } else if (class(tpm) == "data.frame") {
-    tpm_data <- tpm
+  tpm_data <- data.frame()
+  if (length(tpm) == 1) {
+    tpm_data <- as.data.frame(read.table(tpm, sep = "\t"))
   } else {
-    stop("I only understand filenames and data frames, your tpms are neither.")
+    ## This provides the tpm values by transcript, I need to merge that
+    ## against the set of events.
+    count <- 0
+    start_tpm <- data.frame()
+    for (t in tpm) {
+      count <- count + 1
+      tmp_data <- read.table(t, sep = "\t")
+      if (count == 1) {
+        start_tpm <- tmp_data
+      } else {
+        start_tpm <- merge(start_tpm, tmp_data, by = "row.names")
+        rownames(start_tpm) <- start_tpm[["Row.names"]]
+        start_tpm[["Row.names"]] <- NULL
+      }
+    }
+    mean_tpm_df <- data.frame(row.names = rownames(start_tpm))
+    mean_tpm_df[["mean_tpm"]] <- log2(rowMeans(start_tpm + 1))
+    events_by_tx <- events_data %>%
+      tidyr::separate_rows(transcripts_1, sep = ",") %>%
+      dplyr::select(transcripts_1, event)
+    mean_tpm_df <- merge(mean_tpm_df, events_by_tx, by.x = "row.names", by.y = "transcripts_1")
+    colnames(mean_tpm_df) <- c("transcript", "mean_tpm", "event")
+    tpm_data <- mean_tpm_df[, c("event", "mean_tpm")]
+    keep_events <- !duplicated(tpm_data[["event"]])
+    tpm_data <- tpm_data[keep_events, ]
   }
   colnames(tpm_data) <- c("event", "avglogtpm")
 
@@ -132,10 +165,8 @@ colnames(events_data) <- c("number", "gene", "event", "transcripts_1", "transcri
   denominator_names <- paste0("denominator", seq_len(sum(denominator_samples)))
   colnames(psi_data)[denominator_samples] <- denominator_names
 
-
-
-
   plotting_data <- merge(dpsi_data, tpm_data, by.x = "row.names", by.y = "event")
+  plotting_data[["event"]] <- plotting_data[["Row.names"]]
   rownames(plotting_data) <- plotting_data[["Row.names"]]
   plotting_data[["Row.names"]] <- NULL
 
@@ -149,10 +180,22 @@ colnames(events_data) <- c("number", "gene", "event", "transcripts_1", "transcri
   plotting_data[["gene_name"]] <- gsub(x = rownames(plotting_data),
                                        pattern = "^(.*);.*$",
                                        replacement = "\\1")
-  plotting_data[["category"]] <- gsub(x = rownames(plotting_data),
+  if (!is.null(annot)) {
+    plotting_data <- merge(plotting_data, annot, by.x = "gene_name",
+                           by.y = "row.names", all.x = TRUE)
+    rownames(plotting_data) <- plotting_data[["event"]]
+    plotting_data[["Row.names"]] <- NULL
+  }
+  if (is.null(annot_column)) {
+    plotting_data[["label"]] <- plotting_data[["gene_name"]]
+  } else {
+    plotting_data[["label"]] <- plotting_data[[annot_column]]
+  }
+
+  plotting_data[["category"]] <- gsub(x = plotting_data[["event"]],
                                       pattern = "^(.*);(.{2}):.*$",
                                       replacement = "\\2")
-  plotting_data[["coordinates"]] <- gsub(x = rownames(plotting_data),
+  plotting_data[["coordinates"]] <- gsub(x = plotting_data[["event"]],
                                          pattern = "^(.*);(.{2}):(.*)$",
                                          replacement = "\\3")
   plotting_data[["plot_cat"]] <- plotting_data[["category"]]
@@ -236,11 +279,11 @@ colnames(events_data) <- c("number", "gene", "event", "transcripts_1", "transcri
                                 values = color_values, ## keep my preferred order.
                                 breaks = levels(plotting_data[["category"]]),
                                 guide = ggplot2::guide_legend(override.aes = list(size = 5))) +
-    ggrepel::geom_text_repel(data = label_subset,
+    ggrepel::geom_text_repel(data = label_subset, alpha = 1.0,
                              show.legend = FALSE,
                              arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")),
                              aes(x = .data[["avglogtpm"]], y = .data[["dpsi"]],
-                                 label = .data[["gene_name"]])) +
+                                 label = .data[["label"]])) +
     ggplot2::xlab("Average log(transcripts per million).") +
     ggplot2::ylab("Delta PSI calculated by Suppa.") +
     ggplot2::theme_bw(base_size = base_size)
@@ -273,7 +316,8 @@ colnames(events_data) <- c("number", "gene", "event", "transcripts_1", "transcri
     "volcano" = sig_splicing_volplot,
     "ma" = sig_splicing_maplot,
     "data" = plotting_data,
-    "sig" = sig_data)
+    "sig" = sig_data,
+    "files" = file_list)
   return(retlist)
 }
 
