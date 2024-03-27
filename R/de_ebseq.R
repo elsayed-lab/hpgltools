@@ -299,6 +299,7 @@ ebseq_two <- function(pair_data, conditions,
                       force = FALSE) {
   normalized <- ebseq_size_factors(pair_data, norm = norm)
   mesg("Starting EBTest of ", numerator, " vs. ", denominator, ".")
+  ## I think this should be removed in lieu of the imputation functions
   if (isTRUE(force)) {
     mesg("Forcing out NA values by putting in the mean of all data.")
     ## Put NA values (proteomics) to the mean of the existing values in the hopes
@@ -312,18 +313,18 @@ ebseq_two <- function(pair_data, conditions,
   posteriors <- EBSeq::GetPPMat(eb_output)
   fold_changes <- EBSeq::PostFC(eb_output)
   eb_result <- EBSeq::GetDEResults(eb_output, FDR = target_fdr)
-  table <- data.frame(row.names = names(fold_changes[["PostFC"]]))
+  table <- data.frame(row.names = rownames(posteriors))
   table[["ebseq_FC"]] <- fold_changes[["RealFC"]]
   table[["logFC"]] <- log2(table[["ebseq_FC"]])
-  table[["ebseq_c1mean"]] <- as.numeric(eb_output[["C1Mean"]][[1]])
-  table[["ebseq_c2mean"]] <- as.numeric(eb_output[["C2Mean"]][[1]])
+  table[["ebseq_c1mean"]] <- as.numeric(eb_output[["Mean"]][[1]])
+  table[["ebseq_c2mean"]] <- as.numeric(eb_output[["Mean"]][[2]])
   table[["ebseq_mean"]] <- as.numeric(eb_output[["MeanList"]][[1]])
   table[["ebseq_var"]] <- as.numeric(eb_output[["VarList"]][[1]])
   table[["ebseq_postfc"]] <- fold_changes[["PostFC"]]
   table <- merge(table, as.data.frame(eb_result[["PPMat"]]),
                  by = "row.names", all.x = TRUE)
   rownames(table) <- table[["Row.names"]]
-  table <- table[, -1]
+  table[["Row.names"]] <- NULL
   ## This is incorrect I think, but being used as a placeholder until I figure out how to
   ## properly adjust a set prior probabilities.
   mesg("Copying ppee values as ajusted p-values until I figure out how to deal with them.")

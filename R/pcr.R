@@ -564,7 +564,7 @@ sequential_variants <- function(snp_sets, conditions = NULL,
 #'  vcountDict function does not allow mismatches.
 #' @param occurrence_mismatch I cannot use this, but I want to.
 snp_cds_primers <- function(cds_gr, variant_gr, bsgenome, amplicon_size = 600, min_overlap = 200,
-                            minvar_perbin = 10, super_len = 40, target_temp = 60,
+                            minvar_perbin = 10, super_len = 30, target_temp = 60,
                             min_gc_prop = 0.3, max_nmer_run = 4, count_occurrences = TRUE,
                             occurrence_mismatch = 0) {
 
@@ -681,9 +681,10 @@ snp_cds_primers <- function(cds_gr, variant_gr, bsgenome, amplicon_size = 600, m
     distinct(relative, .keep_all = TRUE) %>%
     mutate(ref_series = paste0(reference, collapse = ","),
            alt_series = paste0(alternate, collapse = ","),
-           pos_series = paste0(relative, collapse = ",")) %>%
+           pos_series = paste0(var_start, collapse = ","),
+           amp_series = paste0(relative, collapse = ",")) %>%
     distinct(bincds, .keep_all = TRUE)
-  final_rows <- nrow(test_merged)
+  final_rows <- nrow(final_merged)
   message("Collapsing variants/bin reduced the rows from: ", ending_rows, " to: ", final_rows, ".")
 
   ## I need to double check these number to ensure that the relative positions are correct

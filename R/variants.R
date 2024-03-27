@@ -203,7 +203,8 @@ classify_variants <- function(metadata, coverage_column = "bedtoolscoveragefile"
 #' }
 #' @export
 count_expt_snps <- function(expt, annot_column = "bcftable", tolower = TRUE,
-                            snp_column = "diff_count") {
+                            snp_column = NULL, numerator_column = "PAO",
+                            denominator_column = "DP") {
   samples <- rownames(pData(expt))
   if (isTRUE(tolower)) {
     samples <- tolower(samples)
@@ -213,7 +214,28 @@ count_expt_snps <- function(expt, annot_column = "bcftable", tolower = TRUE,
     stop("This requires a set of bcf filenames, the column: ", annot_column, " does not have any.")
   }
 
-  snp_dt <- read_snp_columns(samples, file_lst, column = snp_column)
+  snp_dt <- NULL
+  if (is.null(numerator_column) && is.null(denominator_column)) {
+    snp_dt <- read_snp_columns(samples, file_lst, column = snp_column)
+  } else if (is.null(denominator_column)) {
+    snp_dt <- read_snp_columns(samples, file_lst, column = numerator_column)
+  } else {
+    numerator_dt <- read_snp_columns(samples, file_lst, column = numerator_column)
+    denominator_dt <- read_snp_columns(samples, file_lst, column = denominator_column)
+    snp_dt <- numerator_dt
+    for (col in colnames(snp_dt)) {
+      if (col == "rownames") {
+        mesg("Skipping rownames")
+      } else {
+        snp_dt[[col]] <- numerator_dt[[col]] / denominator_dt[[col]]
+      }
+    }
+    nan_idx <- is.na(snp_dt)
+    snp_dt[nan_idx] <- 0
+
+    rm(list = c("numerator_dt", "denominator_dt"))
+  }
+
   test_names <- snp_dt[["rownames"]]
   test <- grep(pattern = "^chr", x = test_names)
   if (length(test) == 0) {
@@ -257,6 +279,7 @@ they probably came from an older version of this method.")
   new_expt <- expt
   new_expt[["expressionset"]] <- expressionset
   new_expt[["original_expressionset"]] <- expressionset
+  new_expt[["feature_type"]] <- "variants"
   ## Make a matrix where the existence of a variant is 1 vs. 0.
   mtrx <- exprs(expressionset)
   idx <- mtrx > 0
@@ -313,9 +336,14 @@ get_individual_snps <- function(retlist) {
 #'  ## This assumes a column in the metadata for the expt named 'condition'.
 #' }
 #' @export
-get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
-                         stringency = NULL, do_save = FALSE,
-                         savefile = "variants.rda", proportion = 0.9) {
+#'
+
+
+get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
+                                    stringency = NULL, do_save = FALSE,
+                                    savefile = "variants.rda",
+                                    minmax_cutoff = 0.05,
+                                    hetero_cutoff = 0.3) {
   if (is.null(pData(snp_expt)[[factor]])) {
     stop("The factor does not exist in the expt.")
   } else {
@@ -329,13 +357,388 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
     return(retlist)
   }
 
-  if (!is.null(proportion)) {
-    message("Using a proportion of observed variants, converting the data to binary observations.")
-    nonzero <- exprs(snp_expt)
-    nonzero[nonzero > 0] <- 1
-    stringency <- "proportion"
-    nonzero <- as.matrix(nonzero)
-    exprs(snp_expt) <- nonzero
+  ## Using a column which is a proportion of alternate/total reads.
+  ## Recasting all values >= proportion_cutoff to 2 and values < cutoff and > 0 to 1
+  ## and leaving 0 alone
+  message("Using a proportion column to recast each position as a categorical, 0 (ref), 1 (heter), 2 (homo)")
+  prop <- exprs(snp_expt)
+  categorical <- prop
+  zero_cutoff <- 0 + minmax_cutoff
+  homo_cutoff <- 1 - minmax_cutoff
+  zero_idx <- prop <= zero_cutoff
+  observed_idx <- prop > zero_cutoff & prop < hetero_cutoff
+  hetero_idx <- prop >= hetero_cutoff & prop < homo_cutoff
+  homo_idx <- prop >= homo_cutoff
+  categorical[zero_idx] <- 0  ## Variant not observed (+/- 5%)
+  categorical[observed_idx] <- 0.5 ## Observed a little
+  categorical[hetero_idx] <- 1 ## Observed ~ half of the time
+  categorical[homo_idx] <- 2 ## Observed observed always (+/- 5%)
+  categorical_expt <- snp_expt
+  exprs(categorical_expt) <- categorical
+
+  ## This function should be renamed to summarize_by_factor.
+  by_factor_data <- median_by_factor(categorical_expt, fact = factor)
+  ## So, the median_by_factor will be a range of values where the sum will be between 2x * number of samples
+  ## and 0
+  values <- by_factor_data[["sums"]]
+  min_values <- by_factor_data[["mins"]]
+  max_values <- by_factor_data[["maxs"]]
+  all_homo <- values
+  all_hetero <- values
+  observed <- values
+  not_observed <- values
+  observed_norm <- values
+  spc <- by_factor_data[["samples_per_condition"]]
+  for (f in 1:length(spc)) {
+    num <- spc[f]
+    fact <- names(spc)[f]
+    observed_norm[[fact]] <- observed[[fact]] / num  ## So, if every sample agrees
+    ## that this is 100% observed, the value will be 2.
+    ## If instead every sample thinks it is hetero, it will be 1
+    ## If some samples see it and some do not, then it will be
+    homo_idx <- observed_norm[[fact]] == 2 & min_values[[fact]] == 2
+    hetero_idx <- observed_norm[[fact]] == 1 & min_values[[fact]] == 1
+    all_homo[homo_idx, fact] <- 1
+    all_homo[!homo_idx, fact] <- 0
+    all_hetero[hetero_idx, fact] <- 1
+    all_hetero[!hetero_idx, fact] <- 0
+    observed_idx <- observed_norm[[fact]] > zero_cutoff
+    observed[observed_idx, fact] <- 1
+    observed[!observed_idx, fact] <- 0
+    not_observed <- !observed
+  }
+
+  ## Exclusive homozygous and heterozygous positions:
+  ## E.g. the positions where:
+  ##  1.  one condition is observed and homozygous
+  ##  2.  all other conditions are not observed at all
+  message("Gathering the set of exclusive homozygous and heterozygous positions.")
+  exclusive_homo <- all_homo
+  exclusive_hetero <- all_hetero
+  for (col in colnames(exclusive_homo)) {
+    ## Thus rowSums(observed) should be 1, and the value at this row should be 1
+    ## and rowSums(exclusive) should be 1.
+    exclusive_homo_idx <- rowSums(observed) == 1 & all_homo[[col]] == 1 &
+      rowSums(all_homo) == 1
+    exclusive_homo[exclusive_homo_idx, col] <- 1
+    exclusive_homo[!exclusive_homo_idx, col] <- 0
+    exclusive_hetero_idx <- rowSums(observed) == 1 & all_hetero[[col]] == 1 &
+      rowSums(all_hetero) == 1
+    exclusive_homo[exclusive_homo_idx, col] <- 1
+    exclusive_homo[!exclusive_homo_idx, col] <- 0
+  }
+
+  tt <- sm(requireNamespace("parallel"))
+  tt <- sm(requireNamespace("doParallel"))
+  tt <- sm(requireNamespace("iterators"))
+  tt <- sm(requireNamespace("foreach"))
+  tt <- sm(try(attachNamespace("foreach"), silent = TRUE))
+  cores <- parallel::detectCores()
+  cl <- parallel::makeCluster(cores)
+  doSNOW::registerDoSNOW(cl)
+
+  ## I am going to split this by chromosome, as a run of 10,000 took 2 seconds,
+  ## 100,000 took a minute, and 400,000 took an hour.
+  ##chr <- gsub(pattern = "^.+_(.+)_.+_.+_.+$", replacement = "\\1", x = rownames(values))
+  observed_chr_names <- gsub(pattern = "^chr_(.+)_pos_.+_ref_.+_alt_.+$",
+                             replacement = "\\1", x = rownames(observed))
+  observed[["chr"]] <- observed_chr_names
+  observed_individual_chromosomes <- levels(as.factor(observed_chr_names))
+  num_levels <- length(observed_individual_chromosomes)
+  message("Counting observed positions across ", num_levels, " chromosomes/contigs.")
+  observed_chr <- list()
+  i <- 1
+  res <- list()
+  res <- foreach(i = seq_len(num_levels),
+                 ## .combine = "c",
+                 ## .multicombine = TRUE,
+                 .packages = c("hpgltools", "doParallel"),
+                 .export = c("snp_by_chr")) %dopar% {
+    chromosome_name <- observed_individual_chromosomes[i]
+    observed_chr[[chromosome_name]] <- snp_by_chr(observed, chr_name = chromosome_name)
+  }
+  ## Unpack the res data structure (which probably can be simplified)
+  observed_by_chr <- list()
+  possibilities <- c()
+  set_names <- list()
+  invert_names <- list()
+  end <- length(res)
+  mesg("Iterating over ", end, " elements.")
+  for (element in seq_len(end)) {
+    datum <- res[[element]]
+    chromosome <- datum[["chromosome"]]
+    observed_by_chr[[chromosome]] <- datum
+    possibilities <- observed_by_chr[[chromosome]][["possibilities"]]
+    set_names <- observed_by_chr[[chromosome]][["set_names"]]
+    invert_names <- observed_by_chr[[chromosome]][["invert_names"]]
+  }
+
+  message("Counting homozygous positions by chromosome/contig.")
+  homo_chr_names <- gsub(pattern = "^chr_(.+)_pos_.+_ref_.+_alt_.+$",
+                         replacement = "\\1", x = rownames(all_homo))
+  all_homo[["chr"]] <- homo_chr_names
+  homo_individual_chromosomes <- levels(as.factor(homo_chr_names))
+  num_levels <- length(homo_individual_chromosomes)
+  homo_chr <- list()
+  i <- 1
+  res <- list()
+  res <- foreach(i = seq_len(num_levels),
+                 ## .combine = "c",
+                 ## .multicombine = TRUE,
+                 .packages = c("hpgltools", "doParallel"),
+                 .export = c("snp_by_chr")) %dopar% {
+    chromosome_name <- homo_individual_chromosomes[i]
+    homo_chr[[chromosome_name]] <- snp_by_chr(all_homo, chr_name = chromosome_name)
+  }
+  ## Unpack the res data structure (which probably can be simplified)
+
+  homo_by_chr <- list()
+  end <- length(res)
+  mesg("Iterating over ", end, " elements.")
+  for (element in seq_len(end)) {
+    datum <- res[[element]]
+    chromosome <- datum[["chromosome"]]
+    homo_by_chr[[chromosome]] <- datum
+  }
+
+  hetero_chr_names <- gsub(pattern = "^chr_(.+)_pos_.+_ref_.+_alt_.+$",
+                           replacement = "\\1", x = rownames(all_hetero))
+  all_hetero[["chr"]] <- hetero_chr_names
+  hetero_individual_chromosomes <- levels(as.factor(hetero_chr_names))
+  num_lvels <- length(hetero_individual_chromosomes)
+  message("Counting heterozygous positions by chromosome/contig.")
+  hetero_chr <- list()
+  i <- 1
+  res <- list()
+  res <- foreach(i = seq_len(num_levels),
+                 ## .combine = "c",
+                 ## .multicombine = TRUE,
+                 .packages = c("hpgltools", "doParallel"),
+                 .export = c("snp_by_chr")) %dopar% {
+    chromosome_name <- hetero_individual_chromosomes[i]
+    hetero_chr[[chromosome_name]] <- snp_by_chr(all_hetero, chr_name = chromosome_name)
+  }
+  ## Unpack the res data structure (which probably can be simplified)
+  hetero_by_chr <- list()
+  end <- length(res)
+  mesg("Iterating over ", end, " elements.")
+  for (element in seq_len(end)) {
+    datum <- res[[element]]
+    chromosome <- datum[["chromosome"]]
+    hetero_by_chr[[chromosome]] <- datum
+  }
+
+  exc_homo_chr_names <- gsub(pattern = "^chr_(.+)_pos_.+_ref_.+_alt_.+$",
+                               replacement = "\\1", x = rownames(exclusive_homo))
+  exclusive_homo[["chr"]] <- exc_homo_chr_names
+  exc_homo_individual_chromosomes <- levels(as.factor(exc_homo_chr_names))
+  num_levels <- length(exc_homo_individual_chromosomes)
+  message("Counting exclusive homozygous positions by chromosome/contig.")
+  exclusive_homo_chr <- list()
+  i <- 1
+  res <- list()
+  res <- foreach(i = seq_len(num_levels),
+                 ## .combine = "c",
+                 ## .multicombine = TRUE,
+                 .packages = c("hpgltools", "doParallel"),
+                 .export = c("snp_by_chr")) %dopar% {
+    chromosome_name <- exc_homo_individual_chromosomes[i]
+    exclusive_homo_chr[[chromosome_name]] <- snp_by_chr(exclusive_homo, chr_name = chromosome_name)
+  }
+  ## Unpack the res data structure (which probably can be simplified)
+  exclusive_homo_by_chr <- list()
+  end <- length(res)
+  mesg("Iterating over ", end, " elements.")
+  for (element in seq_len(end)) {
+    datum <- res[[element]]
+    chromosome <- datum[["chromosome"]]
+    exclusive_homo_by_chr[[chromosome]] <- datum
+  }
+
+  exc_hetero_chr_names <- gsub(pattern = "^chr_(.+)_pos_.+_ref_.+_alt_.+$",
+                               replacement = "\\1", x = rownames(exclusive_hetero))
+  exclusive_hetero[["chr"]] <- exc_hetero_chr_names
+  exc_hetero_individual_chromosomes <- levels(as.factor(exc_hetero_chr_names))
+  num_levels <- length(exc_hetero_individual_chromosomes)
+  message("Counting exclusive heterozygous positions by chromosome/contig.")
+  exclusive_hetero_chr <- list()
+  i <- 1
+  res <- list()
+  res <- foreach(i = seq_len(num_levels),
+                 ## .combine = "c",
+                 ## .multicombine = TRUE,
+                 .packages = c("hpgltools", "doParallel"),
+                 .export = c("snp_by_chr")) %dopar% {
+    chromosome_name <- exc_hetero_individual_chromosomes[i]
+    exclusive_hetero_chr[[chromosome_name]] <- snp_by_chr(exclusive_hetero, chr_name = chromosome_name)
+  }
+  ## Unpack the res data structure (which probably can be simplified)
+  exclusive_hetero_by_chr <- list()
+  end <- length(res)
+  mesg("Iterating over ", end, " elements.")
+  for (element in seq_len(end)) {
+    datum <- res[[element]]
+    chromosome <- datum[["chromosome"]]
+    exclusive_hetero_by_chr[[chromosome]] <- datum
+  }
+  parallel::stopCluster(cl)
+
+  ## Calculate approximate snp densities by chromosome
+  observed_intersections <- list()
+  homo_intersections <- list()
+  hetero_intersections <- list()
+  observed_density_by_chr <- list()
+  exclusive_homo_intersections <- list()
+  exclusive_hetero_intersections <- list()
+  homo_density_by_chr <- list()
+  hetero_density_by_chr <- list()
+  for (chr in names(observed_by_chr)) {
+    observed_snps <- rownames(observed_by_chr[[chr]][["observations"]])
+    homo_snps <- rownames(homo_by_chr[[chr]][["observations"]])
+    hetero_snps <- rownames(homo_by_chr[[chr]][["observations"]])
+    exclusive_homo_snps <- rownames(exclusive_homo_by_chr[[chr]][["observations"]]
+    exclusive_hetero_snps <- rownames(exclusive_hetero_by_chr[[chr]][["observations"]]
+    num_observed <- length(observed_snps)
+    num_homo <- length(homo_snps)
+    num_exclusive_homo <- length(exclusive_homo_snps)
+    num_hetero <- length(hetero_snps)
+    num_exclusive_hetero <- length(exclusive_hetero_snps)
+    last_position <- max(
+        as.numeric(gsub(pattern = "^chr_.+_pos_(.+)_ref_.+_alt_.+$",
+                        replacement = "\\1", x = observed_snps)))
+
+    homo_density <- num_homo / as.numeric(last_position)
+    exclusive_homo_density <- num_exclusive_homo / as.numeric(last_position)
+    hetero_density <- num_hetero / as.numeric(last_position)
+    exclusive_hetero_density <- num_exclusive_hetero / as.numeric(last_position)
+    observed_density <- num_observed / as.numeric(last_position)
+
+    homo_density_by_chr[[chr]] <- homo_density
+    exclusive_homo_density_by_chr[[chr]] <- exclusive_homo_density
+    hetero_density_by_chr[[chr]] <- hetero_density
+    exclusive_hetero_density_by_chr[[chr]] <- exclusive_hetero_density
+    observed_density_by_chr[[chr]] <- observed_density
+
+    for (inter in names(observed_by_chr[[chr]][["intersections"]])) {
+      if (is.null(homo_intersections[[inter]])) {
+        homo_intersections[[inter]] <- homo_by_chr[[chr]][["intersections"]][[inter]]
+      } else {
+        homo_intersections[[inter]] <- c(homo_intersections[[inter]],
+                                         homo_by_chr[[chr]][["intersections"]][[inter]])
+      }
+
+      if (is.null(exclusive_homo_intersections[[inter]])) {
+        exclusive_homo_intersections[[inter]] <- exclusive_homo_by_chr[[chr]][["intersections"]][[inter]]
+      } else {
+        exclusive_homo_intersections[[inter]] <- c(exclusive_homo_intersections[[inter]],
+                                                   exclusive_homo_by_chr[[chr]][["intersections"]][[inter]])
+      }
+
+      if (is.null(hetero_intersections[[inter]])) {
+        hetero_intersections[[inter]] <- hetero_by_chr[[chr]][["intersections"]][[inter]]
+      } else {
+        hetero_intersections[[inter]] <- c(hetero_intersections[[inter]],
+                                           hetero_by_chr[[chr]][["intersections"]][[inter]])
+      }
+
+      if (is.null(exclusive_hetero_intersections[[inter]])) {
+        exclusive_hetero_intersections[[inter]] <- exclusive_hetero_by_chr[[chr]][["intersections"]][[inter]]
+      } else {
+        exclusive_hetero_intersections[[inter]] <- c(exclusive_hetero_intersections[[inter]],
+                                                     exclusive_hetero_by_chr[[chr]][["intersections"]][[inter]])
+      }
+
+      if (is.null(observed_intersections[[inter]])) {
+        observed_intersections[[inter]] <- observed_by_chr[[chr]][["intersections"]][[inter]]
+      } else {
+        observed_intersections[[inter]] <- c(observed_intersections[[inter]],
+                                             observed_by_chr[[chr]][["intersections"]][[inter]])
+      }
+
+    } ## End iterating over the sets
+  }
+  observed_density_by_chr <- unlist(observed_density_by_chr)
+  homo_density_by_chr <- unlist(homo_density_by_chr)
+  exclusive_homo_density_by_chr <- unlist(exclusive_homo_density_by_chr)
+  hetero_density_by_chr <- unlist(hetero_density_by_chr)
+  exclusive_hetero_density_by_chr <- unlist(exclusive_hetero_density_by_chr)
+
+  retlist <- list(
+    "max_notobserved_cutoff" = zero_cutoff,
+    "max_observed_cutoff" = hetero_cutoff,
+    "max_hetero_cutoff" = homo_cutoff,
+    "data_by_factor" = by_factor_data,
+    "values" = values,
+    "homozygous_boolean" = all_homo,
+    "exclusive_homozygous_boolean" = exclusive_homo,
+    "heterozygous_boolean" = all_hetero,
+    "exclusive_heterozygous_boolean" = exclusive_hetero,
+    "observed_boolean" = observed,
+    "not_observed_boolean" = not_observed,
+    "possibilities" = possibilities,
+    "homozygous_intersections" = homo_intersections,
+    "exclusive_homozygous_intersections" = exclusive_homo_intersections,
+    "heterozygous_intersections" = hetero_intersections,
+    "exclusive_heterozygous_intersections" = exclusive_hetero_intersections,
+    "observed_intersections" = observed_intersections,
+    "homozygous" = homo_by_chr,
+    "exclusive_homozygous" = exclusive_homo_by_chr,
+    "heterozygous" = hetero_by_chr,
+    "exclusive_heterozygous" = exclusive_hetero_by_chr,
+    "observed" = observed_by_chr,
+    "set_names" = set_names,
+    "invert_names" = invert_names,
+    "homozygous_density" = homo_density_by_chr,
+    "exclusive_homozygous_density" = exclsive_homo_density_by_chr,
+    "heterozygous_density" = hetero_density_by_chr,
+    "exclusive_heterozygous_density" = exclusive_hetero_density_by_chr,
+    "observed_density" = observed_density_by_chr)
+
+  if (isTRUE(do_save)) {
+    saved <- save(list = "retlist", file = savefile)
+  }
+  class(retlist) <- "categorized_snp_sets"
+  return(retlist)
+}
+
+get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
+                         stringency = NULL, do_save = FALSE,
+                         savefile = "variants.rda",
+                         homo_proportion_cutoff = 0.95, hetero_proportion_cutoff = 0.2) {
+  if (is.null(pData(snp_expt)[[factor]])) {
+    stop("The factor does not exist in the expt.")
+  } else {
+    message("The samples represent the following categories: ")
+    print(table(pData(snp_expt)[[factor]]))
+  }
+  if (isTRUE(do_save) && file.exists(glue("{savefile}_{factor}.rda"))) {
+    retlist <- new.env()
+    loaded <- load(savefile, envir = retlist)
+    retlist <- retlist[["retlist"]]
+    return(retlist)
+  }
+
+  if (isTRUE(proportion)) {
+    ## Using a column which is a proportion of alternate/total reads.
+    ## Recasting all values >= proportion_cutoff to 2 and values < cutoff and > 0 to 1
+    ## and leaving 0 alone
+    message("Using a proportion of observed variants, converting the data to categorical.")
+    prop <- exprs(snp_expt)
+    homo <- prop
+    hetero <- prop
+    zero_idx <- prop == 0
+    hetero_idx <- prop > hetero_proportion_cutoff & prop < homo_proportion_cutoff
+    hetero[hetero_idx] <- 1
+    lt_idx <- hetero_idx < 1
+    hetero[lt_idx] <- 0
+    homo_idx <- prop >= homo_proportion_cutoff
+    homo[homo_idx] <- 1
+    lt_idx <- homo < 1
+    homo[lt_idx] <- 0
+    hetero_snp_expt <- snp_expt
+    exprs(hetero_snp_expt) <- hetero
+    homo_snp_expt <- snp_expt
+    exprs(homo_snp_expt) <- homo
   }
 
   ## This function should be renamed to summarize_by_factor.
@@ -533,10 +936,8 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count", verbose =
     mesg("Reading sample: ", first_sample, ".")
   }
   first_file <- file_lst[1]
-  first_read <- sm(readr::read_tsv(first_file, show_col_types = FALSE))
-  colnames(first_read) <- make.names(
-      gsub(x = colnames(first_read), pattern = "\\.+\\d+$", replacement = ""),
-      unique = TRUE)
+  first_read <- read.table(first_file, sep = "\t", header = 1)
+  ##first_read <- sm(readr::read_tsv(first_file, show_col_types = FALSE))
   if (is.null(first_read[[column]])) {
     stop("The column: ", column, " does not appear to exist in the variant summary file.")
   }
@@ -548,17 +949,9 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count", verbose =
   ## Copy that dt to the final data structure.
   snp_columns <- first_column
 
-  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
-  if (isTRUE(show_progress)) {
-    bar <- utils::txtProgressBar(style = 3)
-  }
   ## Foreach sample, do the same read of the data and merge it onto the end of the
   ## final data table.
   for (sample_num in seq(from = 2, to = length(samples))) {
-    if (isTRUE(show_progress)) {
-      pct_done <- sample_num / length(samples)
-      setTxtProgressBar(bar, pct_done)
-    }
     sample <- samples[sample_num]
     file <- file_lst[sample_num]
     if (is.na(file)) {
@@ -569,10 +962,7 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count", verbose =
       mesg("Unable to find file: ", file, " for ", sample, ", skipping it.")
       next
     }
-    new_table <- sm(try(readr::read_tsv(file, show_col_types = FALSE)))
-    colnames(new_table) <- make.names(
-        gsub(x = colnames(new_table), pattern = "\\.+\\d+$", replacement = ""),
-        unique = TRUE)
+    new_table <- read.table(file, sep = "\t", header = 1)
     if (class(new_table)[1] == "try-error") {
       next
     }
@@ -583,9 +973,6 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count", verbose =
     new_column[["rownames"]] <- new_table[[1]]
     colnames(new_column) <- c(sample, "rownames")
     snp_columns <- merge(snp_columns, new_column, by = "rownames", all = TRUE)
-  }
-  if (isTRUE(show_progress)) {
-    close(bar)
   }
   na_positions <- is.na(snp_columns)
   snp_columns[na_positions] <- 0

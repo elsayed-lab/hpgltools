@@ -308,7 +308,8 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
                         include_gff = NULL, file_column = "file", id_column = NULL,
                         savefile = NULL, low_files = FALSE, handle_na = "drop",
                         researcher = "elsayed", study_name = NULL, file_type = NULL,
-                        annotation_name = "org.Hs.eg.db", tx_gene_map = NULL, ...) {
+                        annotation_name = "org.Hs.eg.db", tx_gene_map = NULL,
+                        feature_type = "gene", ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
 
   if ("gene_tx_map" %in% names(arglist)) {
@@ -770,6 +771,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
     "conditions" = sample_definitions[["condition"]],
     "colors" = chosen_colors,
     "design" = sample_definitions,
+    "feature_type" = feature_type,
     "gff_file" = include_gff,
     "libsize" = colSums(exprs(experiment)),
     "notes" = toString(notes),
@@ -2180,8 +2182,7 @@ set_expt_genenames <- function(expt, ids = NULL, ...) {
 
   ## Make sure the order of the IDs stays consistent.
   current_ids <- rownames(exprs(expr))
-  if (class(ids) == "data.frame") {
-    ## our_column contains the IDs from my species.
+  if (class(ids) == "data.frame") {    ## our_column contains the IDs from my species.
     our_column <- NULL
     ## their_column contains the IDs from the species we want to map against.
     their_column <- NULL
@@ -2328,7 +2329,7 @@ setGeneric("state<-")
 #' }
 #' @export
 subset_expt <- function(expt, subset = NULL, ids = NULL,
-                        nonzero = NULL, coverage = NULL) {
+                        nonzero = NULL, coverage = NULL, print_excluded = TRUE) {
   starting_expressionset <- NULL
   starting_metadata <- NULL
   starting_samples <- sampleNames(expt)
@@ -2352,6 +2353,7 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
     starting_metadata[["sampleid"]] <- rownames(starting_metadata)
   }
 
+  excluded <- c()
   if (!is.null(ids)) {
     if (is.numeric(ids)) {
       ids <- rownames(starting_metadata)[ids]
@@ -2382,6 +2384,11 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
       stop("When the subset was taken, the resulting design has 0 members.")
     }
     subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
+    excluded_idx <- ! rownames(starting_metadata) %in% rownames(subset_design)
+    excluded <- starting_samples[excluded_idx]
+    if (isTRUE(print_excluded)) {
+      message("The samples excluded are: ", toString(excluded), ".")
+    }
   } else if (is.null(nonzero)) {
     ## If coverage is defined, then use it to subset based on the minimal desired coverage
     ## Perhaps in a minute I will make this work for strings like '1z' to get the lowest
@@ -2395,8 +2402,10 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
     subset_idx <- coverages >= as.numeric(coverage) ## In case I quote it on accident.
     subset_design <- starting_metadata[subset_idx, ]
     subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
-    message("The samples removed (and read coverage) when filtering samples with less than ",
-            coverage, " reads are: ")
+    if (isTRUE(print_excluded)) {
+      message("The samples removed (and read coverage) when filtering samples with less than ",
+              coverage, " reads are: ")
+    }
     print(colSums(exprs(expt))[!subset_idx])
   } else if (is.null(coverage)) {
     ## Remove samples with less than this number of non-zero genes.

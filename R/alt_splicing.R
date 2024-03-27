@@ -2,7 +2,7 @@
 ## methods. The hope is to remove some corner cases from tools like
 ## suppa/miso/etc and somewhat standardize the resulting outputs.
 
-gather_suppa_files <- function(file_prefix = NULL, numerator = "d15", denominator = "d10") {
+gather_suppa_files <- function(file_prefix, numerator = "d15", denominator = "d10") {
   type_suffixes <- c("A3", "A5", "AF", "AL", "RI", "MX", "SE")
   if (is.null(file_prefix)) {
     file_prefix <- file.path("outputs", "90suppa_mm38_100_time")
@@ -59,9 +59,16 @@ gather_suppa_files <- function(file_prefix = NULL, numerator = "d15", denominato
 #'  suppa_plot <- plot_suppa(dpsi_file, tmp_file)
 #' }
 #' @export
-plot_suppa <- function(file_list = NULL, type = "type", annot = NULL, annot_column = NULL,
-                       sig_threshold = 0.05, label_type = NULL, alpha = 0.7, file_prefix = NULL,
+plot_suppa <- function(file_prefix, file_list = NULL, type = "type", annot = NULL, annot_column = NULL,
+                       sig_threshold = 0.05, label_type = NULL, alpha = 0.3,
                        numerator = "infected", denominator = "uninfected") {
+  if (!is.null(annot)) {
+    if (! annot_column %in% colnames(annot)) {
+      warning("The column ", annot_column,
+              " is not in the colnames of the annotations, skipping.")
+      annot <- NULL
+    }
+  }
   if (is.null(file_list)) {
     file_list <- gather_suppa_files(file_prefix = file_prefix, numerator = numerator, denominator = denominator)
   }
@@ -105,9 +112,9 @@ plot_suppa <- function(file_list = NULL, type = "type", annot = NULL, annot_colu
   mesg("Merging events from ", length(events), " event files.")
   for (e in events) {
     tmp_data <- read.table(e, sep = "\t", skip = 1)
-    events_data <- rbind(event_data, tmp_data)
+    events_data <- rbind(events_data, tmp_data)
   }
-  events_data <- as.data.frame(event_data)
+  events_data <- as.data.frame(events_data)
   colnames(events_data) <- c("number", "gene", "event", "transcripts_1", "transcripts_2")
 
   psi_data <- data.frame()

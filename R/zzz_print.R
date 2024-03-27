@@ -275,7 +275,7 @@ print.density_primers <- function(x, ...) {
 #' @export
 print.expt <- function(x, ...) {
   summary_string <- glue("An expressionSet containing experiment with {nrow(exprs(x))}
-genes and {ncol(exprs(x))} samples. There are {ncol(pData(x))} metadata columns and
+{x[['feature_type']]} and {ncol(exprs(x))} samples. There are {ncol(pData(x))} metadata columns and
 {ncol(fData(x))} annotation columns; the primary condition is comprised of:
 {toString(levels(as.factor(pData(x)[['condition']])))}.
 Its current state is: {what_happened(x)}.")
