@@ -402,10 +402,9 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
     all_homo[!homo_idx, fact] <- 0
     all_hetero[hetero_idx, fact] <- 1
     all_hetero[!hetero_idx, fact] <- 0
-    observed_idx <- observed_norm[[fact]] > zero_cutoff
-    observed[observed_idx, fact] <- 1
-    observed[!observed_idx, fact] <- 0
-    not_observed <- !observed
+    observed_idx <- observed > 0
+    observed[observed_idx] <- 1
+    observed[!observed_idx] <- 0
   }
 
   ## Exclusive homozygous and heterozygous positions:
@@ -427,6 +426,9 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
     exclusive_homo[exclusive_homo_idx, col] <- 1
     exclusive_homo[!exclusive_homo_idx, col] <- 0
   }
+
+  exc_homo_keepers <- rowSums(exclusive_homo) > 0
+  exclusive_homo <- exclusive_homo[exc_homo_keepers, ]
 
   tt <- sm(requireNamespace("parallel"))
   tt <- sm(requireNamespace("doParallel"))
@@ -596,8 +598,8 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
     observed_snps <- rownames(observed_by_chr[[chr]][["observations"]])
     homo_snps <- rownames(homo_by_chr[[chr]][["observations"]])
     hetero_snps <- rownames(homo_by_chr[[chr]][["observations"]])
-    exclusive_homo_snps <- rownames(exclusive_homo_by_chr[[chr]][["observations"]]
-    exclusive_hetero_snps <- rownames(exclusive_hetero_by_chr[[chr]][["observations"]]
+    exclusive_homo_snps <- rownames(exclusive_homo_by_chr[[chr]][["observations"]])
+    exclusive_hetero_snps <- rownames(exclusive_hetero_by_chr[[chr]][["observations"]])
     num_observed <- length(observed_snps)
     num_homo <- length(homo_snps)
     num_exclusive_homo <- length(exclusive_homo_snps)
