@@ -86,6 +86,8 @@ longer.}
 crossreferencing?  gProfiler uses Ensembl ids.  So if you have a table of
 entrez or whatever, translate it!}
 
+\item{plot_type}{Use this plot type for images.}
+
 \item{excel}{Print the results to an excel file?}
 }
 \value{

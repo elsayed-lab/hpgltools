@@ -11,7 +11,7 @@ snp_cds_primers(
   amplicon_size = 600,
   min_overlap = 200,
   minvar_perbin = 10,
-  super_len = 40,
+  super_len = 30,
   target_temp = 60,
   min_gc_prop = 0.3,
   max_nmer_run = 4,

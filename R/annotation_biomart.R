@@ -206,6 +206,12 @@ get_biomart_example_gene <- function(species = "mmusculus", attributes = "featur
 #' @param trydataset Choose the biomart dataset from which to query.
 #' @param gene_requests Set of columns to query for description-ish annotations.
 #' @param length_requests Set of columns to query for location-ish annotations.
+#' @param gene_tx_map Provide a gene2tx map for things like salmon (perhaps rename this to tx_gene_map?)
+#' @param gene_id_column Column containing the gene ID.
+#' @param gene_version_column Column containing the ensembl gene version.
+#' @param tx_id_column Column containing the transcript ID.
+#' @param tx_version_column Columns containing the ensembl transcript version.
+#' @param symbol_columns Vector of columns containing the gene symbols.
 #' @param include_lengths Also perform a search on structural elements in the genome?
 #' @param do_load Load the data?
 #' @param savefile Use this savefile.

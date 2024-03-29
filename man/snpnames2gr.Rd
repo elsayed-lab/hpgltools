@@ -8,6 +8,8 @@ snpnames2gr(names, gr = NULL)
 }
 \arguments{
 \item{names}{A set of things which look like: chr_x_pos_y_ref_a_alt_b}
+
+\item{gr}{Extant GRanges to modify?}
 }
 \description{
 Take a vector of my peculiarly named variants and turn them into a grange

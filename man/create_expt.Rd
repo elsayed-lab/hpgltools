@@ -25,6 +25,7 @@ create_expt(
   file_type = NULL,
   annotation_name = "org.Hs.eg.db",
   tx_gene_map = NULL,
+  feature_type = "gene",
   ...
 )
 }
@@ -78,6 +79,8 @@ import count data, this short-circuits it.}
 \item{annotation_name}{Ibid, but set the orgdb (or other annotation) instance.}
 
 \item{tx_gene_map}{Dataframe of transcripts to genes, primarily for tools like salmon.}
+
+\item{feature_type}{Make explicit the type of feature used so it may be printed later.}
 
 \item{...}{More parameters are fun!}
 }

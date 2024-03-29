@@ -61,6 +61,12 @@ than I previously realized.  Play with it here.}
 
 \item{limma_method}{And different invocations of limma itself.}
 
+\item{limma_robust}{Pass along the robust args for limma?}
+
+\item{voom_norm}{Use a specific normalization for voom?}
+
+\item{limma_trend}{Include a trendline in the limma plot?}
+
 \item{force}{Force data which may not be appropriate for limma into it?}
 
 \item{keepers}{Choose a set of contrasts instead of all.}

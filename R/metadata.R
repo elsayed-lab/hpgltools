@@ -1439,6 +1439,7 @@ dispatch_metadata_ratio <- function(meta, numerator_column = NULL,
 #' @param which Usually 'first', which means grab the first match and get out.
 #' @param as Coerce the output to a specific data type (numeric/character/etc).
 #' @param verbose For testing regexes.
+#' @param type Make explicit the type of data (genome/rRNA/Tx/etc).
 #' @param ... Used to pass extra variables to glue for finding files.
 dispatch_regex_search <- function(meta, search, replace, input_file_spec,
                                   species = "*", basedir = "preprocessing",
@@ -1724,7 +1725,17 @@ sanitize_expt_fData <- function(expt,
 
 #' Adding an alias to sanitize_metadata until I decide how I want to name this.
 #'
-#' @param ... Arguments for sanitize_metadata().
+#' @param expt Input expressionset.
+#' @param columns Set of columns to sanitize, otherwise all of them.
+#' @param na_value Fill in NA with this.
+#' @param lower sanitize capitalization.
+#' @param punct Remove punctuation?
+#' @param factorize Convert columns to factors?  When set to 'heuristic'
+#'  this tries out as.factor and sees if the number of levels is silly.
+#' @param max_levels The definition of 'silly' above.
+#' @param spaces Allow spaces in the data?
+#' @param numbers Sanitize number formats (e.g. 1.000.000,0 vs. 1,000,000.0)
+#' @param numeric Set columns to numeric when possible?
 #' @export
 sanitize_expt_pData <- function(expt,
                                 columns = NULL, na_value = "notapplicable",

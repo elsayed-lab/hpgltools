@@ -16,7 +16,8 @@ xref_regions(
   feature_type_column = "type",
   feature_id = "ID",
   feature_name = "description",
-  name_type = NULL
+  name_type = NULL,
+  desc_column = "description"
 )
 }
 \arguments{
@@ -41,6 +42,10 @@ xref_regions(
 \item{feature_id}{Column with the IDs (coming from the gff tags).}
 
 \item{feature_name}{Column with the descriptive name.}
+
+\item{name_type}{I dont remember, I think this allows one to limit the search to a feature type.}
+
+\item{desc_column}{Use this column to extract full-text gene descriptions.}
 }
 \description{
 But I was asked to get the closest feature if it is not inside one.

@@ -33,6 +33,8 @@ normalize_se(
 )
 }
 \arguments{
+\item{se}{Summarized Experiment as input.}
+
 \item{transform}{Transformation desired, usually log2.}
 
 \item{norm}{How to normalize the data? (raw, quant, sf, upperquartile, tmm, rle)}

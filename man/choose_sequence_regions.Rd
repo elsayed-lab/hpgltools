@@ -18,6 +18,9 @@ choose_sequence_regions(
 )
 }
 \arguments{
+\item{long_variant_vector}{variant-based set of putative regions with variants
+between conditions of interest.}
+
 \item{max_primer_length}{given this length as a start, whittle down
 to a hopefully usable primer size.}
 
@@ -32,8 +35,9 @@ PCR amplicon length.}
 
 \item{target_temp}{PCR temperature to attempt to match.}
 
-\item{vector}{variant-based set of putative regions with variants
-between conditions of interest.}
+\item{min_gc_prop}{Cutoff for minimum required GC content.}
+
+\item{max_nmer_run}{Maximum run of the same nucleotide allowed.}
 }
 \description{
 This function came out of our TMRC2 work and seeks to provide an

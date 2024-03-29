@@ -260,6 +260,11 @@ print.density_plot <- function(x, ...) {
   return(invisible(x))
 }
 
+#' Print a summary of putative PCR primers based on variant density.
+#'
+#' @param x List from snp_density_primers()
+#' @param ... Other args for the generic.
+#' @export
 print.density_primers <- function(x, ...) {
   summary_string <- glue("A set of putative PCR primers to distinguish strain variants.")
   message(summary_string)
@@ -786,8 +791,9 @@ print.written_expt <- function(x, ...) {
 #' Print the result from write_xlsx.
 #'
 #' @param x List containing some information about the xlsx file.
+#' @param ... Other args for the generic.
 #' @export
-print.written_xlsx <- function(x) {
+print.written_xlsx <- function(x, ...) {
   result_string <- glue("write_xlsx() wrote {x[['file']]}.
  The cursor is on sheet {x[['sheet']]}, row: {x[['end_row']]} column: {x[['end_col']]}.")
   message(result_string)

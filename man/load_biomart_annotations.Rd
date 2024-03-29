@@ -63,6 +63,18 @@ false stops that.}
 
 \item{length_requests}{Set of columns to query for location-ish annotations.}
 
+\item{gene_tx_map}{Provide a gene2tx map for things like salmon (perhaps rename this to tx_gene_map?)}
+
+\item{gene_id_column}{Column containing the gene ID.}
+
+\item{gene_version_column}{Column containing the ensembl gene version.}
+
+\item{tx_id_column}{Column containing the transcript ID.}
+
+\item{tx_version_column}{Columns containing the ensembl transcript version.}
+
+\item{symbol_columns}{Vector of columns containing the gene symbols.}
+
 \item{include_lengths}{Also perform a search on structural elements in the genome?}
 
 \item{do_load}{Load the data?}

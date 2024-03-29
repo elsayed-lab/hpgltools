@@ -268,6 +268,9 @@ hpgl_voom <- function(dataframe, model = NULL, libsize = NULL,
 #'  than I previously realized.  Play with it here.
 #' @param which_voom Try out different invocations of voom.
 #' @param limma_method And different invocations of limma itself.
+#' @param limma_robust Pass along the robust args for limma?
+#' @param voom_norm Use a specific normalization for voom?
+#' @param limma_trend Include a trendline in the limma plot?
 #' @param force Force data which may not be appropriate for limma into it?
 #' @param keepers Choose a set of contrasts instead of all.
 #' @param ... Use the elipsis parameter to feed options to write_limma().

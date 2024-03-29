@@ -327,6 +327,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 
 #' Normalize a SummarizedExperiment and think about how I want to reimplement some of this.
 #'
+#' @param se Summarized Experiment as input.
 #' @inheritParams normalize_expt
 #' @export
 normalize_se <- function(se, ## The expt class passed to the normalizer
@@ -475,7 +476,7 @@ normalize_se <- function(se, ## The expt class passed to the normalizer
 
   if (batch_step == 2) {
     batch_data <- do_batch(count_table, method = batch,
-                           expt_design = metadata,
+                           expt_design = meta,
                            current_state = current_state,
                            ...)
     count_table <- batch_data[["count_table"]]
@@ -504,7 +505,7 @@ normalize_se <- function(se, ## The expt class passed to the normalizer
   ## They have nice ways of handling the log2 which I should consider
   if (batch_step == 3) {
     batch_data <- do_batch(count_table, method = batch,
-                           expt_design = expt_design,
+                           expt_design = meta,
                            current_state = current_state,
                            ...)
     current_libsize <- batch_data[["libsize"]]
@@ -532,7 +533,7 @@ normalize_se <- function(se, ## The expt class passed to the normalizer
   ## Finally, this considers whether to log2 the data or no
   if (batch_step == 4) {
     batch_data <- do_batch(count_table, method = batch,
-                           expt_design = expt_design,
+                           expt_design = meta,
                            current_state = current_state,
                            ...)
     current_libsize <- batch_data[["libsize"]]
@@ -566,7 +567,7 @@ normalize_se <- function(se, ## The expt class passed to the normalizer
 
   if (batch_step == 5) {
     batch_data <- do_batch(count_table, method = batch,
-                           expt_design = expt_design,
+                           expt_design = meta,
                            current_state = current_state,
                            ...)
     current_libsize <- batch_data[["libsize"]]

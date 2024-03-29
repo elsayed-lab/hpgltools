@@ -562,6 +562,7 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
 #' @param wanted_meta Desired metadata elements from the mxig_xml file.
 #' @param mx_diff Passed to gsva(), I do not remember what it does.
 #' @param verbose Print some information while running?
+#' @param id_type Specify the ID type when loading the signature database.
 #' @return List containing three elements: first a modified expressionset using
 #'  the result of gsva in place of the original expression data; second the
 #'  result from gsva, and third a data frame of the annotation data for the

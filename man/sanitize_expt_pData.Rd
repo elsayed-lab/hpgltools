@@ -18,7 +18,26 @@ sanitize_expt_pData(
 )
 }
 \arguments{
-\item{...}{Arguments for sanitize_metadata().}
+\item{expt}{Input expressionset.}
+
+\item{columns}{Set of columns to sanitize, otherwise all of them.}
+
+\item{na_value}{Fill in NA with this.}
+
+\item{lower}{sanitize capitalization.}
+
+\item{punct}{Remove punctuation?}
+
+\item{factorize}{Convert columns to factors?  When set to 'heuristic'
+this tries out as.factor and sees if the number of levels is silly.}
+
+\item{max_levels}{The definition of 'silly' above.}
+
+\item{spaces}{Allow spaces in the data?}
+
+\item{numbers}{Sanitize number formats (e.g. 1.000.000,0 vs. 1,000,000.0)}
+
+\item{numeric}{Set columns to numeric when possible?}
 }
 \description{
 Adding an alias to sanitize_metadata until I decide how I want to name this.

@@ -41,6 +41,9 @@ to the first gene.}
 
 \item{parallel}{Use doParallel?}
 
+\item{strict_filter}{Perform a strict filtering of the results via median_by_factor and dropping
+any genes with a 0.}
+
 \item{mixed}{Used a mixed model?}
 
 \item{modify_expt}{Add annotation columns with the variance/factor?}

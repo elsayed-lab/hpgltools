@@ -29,7 +29,7 @@
 #' @param loess Add a loess estimator to the coefficient plot?
 #' @param z_lines Add the z-score lines?
 #' @param label Label this number of top-diff genes.
-#' @param label_columns Use this column for labelling genes.
+#' @param label_column Use this column for labelling genes.
 #' @return a plot!
 #' @seealso [plot_ma_de()] [plot_volcano_de()]
 #' @examples

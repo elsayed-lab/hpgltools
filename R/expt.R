@@ -46,14 +46,7 @@ combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, a
   exp2 <- expt2[["expressionset"]]
   fData(exp2) <- fData(exp1)
 
-  num_shared <- sum(rownames(exp1) %in% rownames(exp2))
-  total_num <- nrow(exp1)
-  if ((num_shared / total_num) < 0.8) {
-    warning("There are many gene IDs which are not shared among the two datasets, this may fail.")
-    message("There are many gene IDs which are not shared among the two datasets.")
-    message("Here are some from the first: ", toString(head(rownames(exp1))))
-    message("Here are some from the second: ", toString(head(rownames(exp2))))
-  }
+  testthat::expect_equal(rownames(exprs(exp1)), rownames(exprs(exp2)))
 
   if (isTRUE(merge_meta)) {
     design1 <- pData(exp1)
@@ -69,7 +62,7 @@ combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, a
     pData(exp2) <- new_design2
   }
 
-  new <- BiocGenerics::combine(exp1, exp2)
+  new <- a4Base::combineTwoExpressionSet(exp1, exp2)
   expt1[["expressionset"]] <- new
   expt1[["design"]] <- pData(new)
   expt1[["conditions"]] <- pData(expt1)[["condition"]]
@@ -124,7 +117,10 @@ combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, a
     exprs(expt1) <- as.matrix(exprs(expt1))
   }
   na_idx <- is.na(exprs(expt1))
-  exprs(expt1)[na_idx] <- 0
+  if (sum(na_idx) > 0) {
+    warning("There appear to be NA values in the new expressionset.  Beware.")
+    exprs(expt1)[na_idx] <- 0
+  }
 
   if (isFALSE(all_x) || isFALSE(all_y)) {
     found_first <- rownames(exprs(expt1)) %in% rownames(exprs(exp1))
@@ -150,10 +146,10 @@ colors <- function(expt) {
 #' Set the colors to an expt.
 #'
 #' @param expt Expt to which to add colors.
-#' @param lst List of colors.
+#' @param value List of colors.
 #' @export
-`colors<-` <- function(expt, lst) {
-  expt[["colors"]] <- lst
+`colors<-` <- function(expt, value) {
+  expt[["colors"]] <- value
   return(expt)
 }
 
@@ -260,6 +256,7 @@ concatenate_runs <- function(expt, column = "replicate") {
 #'  import count data, this short-circuits it.
 #' @param annotation_name Ibid, but set the orgdb (or other annotation) instance.
 #' @param tx_gene_map Dataframe of transcripts to genes, primarily for tools like salmon.
+#' @param feature_type Make explicit the type of feature used so it may be printed later.
 #' @param ... More parameters are fun!
 #' @return experiment an expressionset
 #' @seealso [Biobase] [cdm_expt_rda] [example_gff] [sb_annot] [sb_data] [extract_metadata()]
@@ -2320,6 +2317,7 @@ setGeneric("state<-")
 #' @param nonzero Look for a minimal number of nonzero genes.
 #' @param ids List of sample IDs to extract.
 #' @param coverage Request a minimum coverage/sample rather than text-based subset.
+#' @param print_excluded Print out the samples which are removed via this filter?
 #' @return metadata Expt class which contains the smaller set of data.
 #' @seealso [Biobase] [pData()] [exprs()] [fData()]
 #' @examples

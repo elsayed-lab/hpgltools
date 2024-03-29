@@ -83,8 +83,7 @@ get_identifier <- function(type) {
 #' Create a metadata dataframe of msigdb data, this hopefully will be usable to
 #' fill the fData slot of a gsva returned expressionset.
 #'
-#' @param gsva_result Some data from GSVA to modify.
-#' @param msig_xml msig XML file downloaded from broad.
+#' @param msig_db Filename containing the MSigDB metadata.
 #' @param wanted_meta Choose metadata columns of interest.
 #' @return list containing 2 data frames: all metadata from broad, and the set
 #'  matching the sig_data GeneSets.
@@ -109,6 +108,10 @@ get_msigdb_metadata <- function(msig_db = "msigdb_v6.2.xml",
   return(sub_data)
 }
 
+#' Parse either xml or sqlite data from MSigDB.  I think I will likely remove the
+#' xml version as I think the msigdb xml files are poorly formatted.
+#'
+#' @param filename Input file
 parse_msigdb <- function(filename) {
   ex <- tools::file_ext(filename)
   if (ex == "xml") {
@@ -153,8 +156,12 @@ parse_msigdb_sqlite <- function(filename) {
 ## Unfortunately, as of ~ 2023 the xml provided by the MsigDB appears
 ## to by syntactically invalid XML.  As a result, the following dies
 ## immediately with "Unescaped '<' is not allowed".
+
+#' Extract fun experimental metadata from a MSigDB xml file.
+#'
+#' @param filename input file.
 parse_msigdb_xml <- function(filename) {
-  msig_result <- xml2::read_xml(x = msig_xml)
+  msig_result <- xml2::read_xml(x = filename)
 
   ##db_data <- rvest::xml_nodes(x = msig_result, xpath = "//MSIGDB")
   db_data <- rvest::html_elements(x = msig_result, xpath = "//MSIGDB")

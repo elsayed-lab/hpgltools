@@ -34,7 +34,7 @@ cheap_tm <- function(sequence) {
 #' between different aspects of the data.  In the actual data, we were
 #' looking for differences between the zymodemes 2.2 and 2.3.
 #'
-#' @param vector variant-based set of putative regions with variants
+#' @param long_variant_vector variant-based set of putative regions with variants
 #'  between conditions of interest.
 #' @param max_primer_length given this length as a start, whittle down
 #'  to a hopefully usable primer size.
@@ -45,6 +45,8 @@ cheap_tm <- function(sequence) {
 #'  PCR amplicon length.
 #' @param genome (BS)Genome to search.
 #' @param target_temp PCR temperature to attempt to match.
+#' @param min_gc_prop Cutoff for minimum required GC content.
+#' @param max_nmer_run Maximum run of the same nucleotide allowed.
 choose_sequence_regions <- function(long_variant_vector, max_primer_length = 45,
                                     topn = NULL, bin_width = 600,
                                     genome = NULL, target_temp = 58,
@@ -361,7 +363,7 @@ primer_qc <- function(entry, genome,
       } else {
         dict <- Biostrings::PDict(primer, max.mismatch = 0)
       }
-      num_hits <- sum(unlist(Biostrings::vcountPDict(dict, seq_obj)))
+      num_hits <- sum(unlist(Biostrings::vcountPDict(dict, seq_object)))
       entry[[occur_name]] <- num_hits
       if (num_hits > 1) {
         entry[[note_name]] <- paste0(entry[[note_name]], " this primer hits multiple places.")
@@ -567,6 +569,12 @@ snp_cds_primers <- function(cds_gr, variant_gr, bsgenome, amplicon_size = 600, m
                             minvar_perbin = 10, super_len = 30, target_temp = 60,
                             min_gc_prop = 0.3, max_nmer_run = 4, count_occurrences = TRUE,
                             occurrence_mismatch = 0) {
+  ## R CMD CHECK NSE shenanigans
+  bincds <- NULL
+  relative <- NULL
+  reference <- NULL
+  alternate <- NULL
+  var_start <- NULL
 
   ## Make a regex to search for excessive runs of a single nt.
   run_pattern <- paste0("A{", max_nmer_run,
@@ -577,7 +585,7 @@ snp_cds_primers <- function(cds_gr, variant_gr, bsgenome, amplicon_size = 600, m
   ## comprised of the superprimer - actual primer length * 2
   tile_width <- amplicon_size + (super_len * 2)
   ## because we will tile it to the amplicon + (super * 2)
-  bin_gr <- GenomicRanges::tileGenome(seqlengths(cds_gr),
+  bin_gr <- GenomicRanges::tileGenome(GenomeInfoDb::seqlengths(cds_gr),
                                       tilewidth = tile_width,
                                       cut.last.tile.in.chrom = TRUE)
   ## Get the overlaps between the bins and CDSes
@@ -770,7 +778,11 @@ snp_cds_primers <- function(cds_gr, variant_gr, bsgenome, amplicon_size = 600, m
 #' @param feature_name GFF tag with the names.
 #' @param truncate Truncate the results to just the columns I think
 #'  are useful.
+#' @param xref_genes Cross reference the result against the nearest gene?
+#' @param verbose Talky talky?
+#' @param min_contig_length Skip any regions on small contigs?
 #' @param min_gc_prop Minimum GC content for a suitable primer.
+#' @param max_nmer_run Filter candidates on maximum nmer runs?
 #' @export
 snp_density_primers <- function(snp_count, pdata_column = "condition",
                                 condition = NULL, cutoff = 20, bin_width = 600,
@@ -965,8 +977,7 @@ snp_density_primers <- function(snp_count, pdata_column = "condition",
                                 feature_type = feature_type, feature_start = feature_start,
                                 feature_end = feature_end, feature_strand = feature_strand,
                                 feature_chr = feature_chr, feature_type_column = feature_type_column,
-                                feature_id = feature_id, feature_name = feature_name,
-                                name_type = name_type, desc_column = desc_column, desc_type = desc_type)
+                                feature_id = feature_id, feature_name = feature_name)
     ## Get rid of any regions with 'N' in them
   }
 

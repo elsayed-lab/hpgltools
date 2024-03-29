@@ -4,10 +4,12 @@
 \alias{print.written_xlsx}
 \title{Print the result from write_xlsx.}
 \usage{
-\method{print}{written_xlsx}(x)
+\method{print}{written_xlsx}(x, ...)
 }
 \arguments{
 \item{x}{List containing some information about the xlsx file.}
+
+\item{...}{Other args for the generic.}
 }
 \description{
 Print the result from write_xlsx.

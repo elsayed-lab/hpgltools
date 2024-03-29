@@ -58,6 +58,8 @@ because it was throwing segmentation faults.}
 \item{mx_diff}{Passed to gsva(), I do not remember what it does.}
 
 \item{verbose}{Print some information while running?}
+
+\item{id_type}{Specify the ID type when loading the signature database.}
 }
 \value{
 List containing three elements: first a modified expressionset using

@@ -235,6 +235,14 @@ get_git_commit <- function(gitdir = "~/hpgltools") {
   return(result)
 }
 
+#' Find the git commit closest to the given yyyymmdd.
+#'
+#' @param gitdir Location of the git repository, I assume hpgltools.
+#' @param version String containing all yyyymmdd.
+#' @param year Chosen year which will be coerced to yyyy.
+#' @param month Chosen month coerced to mm.
+#' @param day Chosen day coerced to dd.
+#' @export
 get_yyyymm_commit <- function(gitdir = "~/hpgltools", version = NULL,
                               year = NULL, month = NULL, day = NULL) {
   if (is.null(version) && is.null(year) && is.null(month) && is.null(day)) {
@@ -246,12 +254,17 @@ get_yyyymm_commit <- function(gitdir = "~/hpgltools", version = NULL,
     version <- as.Date(version, format = "%Y%m%d")
   }
   closest_commit <- glue("git log --since {version} | grep commit | tail -n 1 | awk '{{print $2}}'")
-  wanted_commit <- system(cmdline, intern = TRUE)
+  wanted_commit <- system(closest_commit, intern = TRUE)
   message("Looking for the commit closest to ", version, ".")
   pulled <- pull_git_commit(gitdir, commit = wanted_commit)
   return(pulled)
 }
 
+#' Reset the chosen git repository to a chosen commit.
+#'
+#' @param gitdir Desired repository, defaulting to my hpgltools copy.
+#' @param commit commit ID to which to reset.
+#' @export
 pull_git_commit <- function(gitdir = "~/hpgltools", commit = NULL) {
   if (is.null(commit)) {
     cmdline <- glue("cd {gitdir} && git log | head -n 3 | grep commit | awk '{{print $2}}'")

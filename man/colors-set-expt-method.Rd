@@ -4,12 +4,12 @@
 \alias{colors<-,expt-method}
 \title{A setter to put the colors into an expt.}
 \usage{
-\S4method{colors}{expt}(expt, lst) <- value
+\S4method{colors}{expt}(expt) <- value
 }
 \arguments{
 \item{expt}{An expt.}
 
-\item{lst}{List of new colors.}
+\item{value}{List of new colors.}
 }
 \description{
 A setter to put the colors into an expt.

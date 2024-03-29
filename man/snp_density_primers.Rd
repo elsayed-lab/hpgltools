@@ -75,7 +75,15 @@ interest.}
 \item{truncate}{Truncate the results to just the columns I think
 are useful.}
 
+\item{xref_genes}{Cross reference the result against the nearest gene?}
+
+\item{verbose}{Talky talky?}
+
+\item{min_contig_length}{Skip any regions on small contigs?}
+
 \item{min_gc_prop}{Minimum GC content for a suitable primer.}
+
+\item{max_nmer_run}{Filter candidates on maximum nmer runs?}
 }
 \description{
 It is hoped that this will point out regions of a genome which

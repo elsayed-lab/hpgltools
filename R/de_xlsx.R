@@ -310,7 +310,7 @@ combine_de_tables <- function(apr, extra_annot = NULL, keepers = "all", excludes
     "de_summary" = extracted[["summaries"]])
   class(ret) <- c("combined_de", "list")
 
--  if (!is.null(rda)) {
+  if (!is.null(rda)) {
     varname <- gsub(x = basename(rda), pattern = "\\.rda$", replacement = "")
     tmp <- ret
     if (!isTRUE(rda_input)) {
@@ -2502,6 +2502,7 @@ print_ups_downs <- function(upsdowns, wb, excel_basename, according = "limma",
 #' @param apr The all_pairwise() result.
 #' @param basic Basic data
 #' @param deseq The deseq result, which is redundant.
+#' @param dream The result from varpart::dream
 #' @param ebseq The ebseq result, which is redundant.
 #' @param edger The edger result, which is redundant.
 #' @param limma The limma result, which is redundant.

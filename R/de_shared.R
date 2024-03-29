@@ -312,15 +312,8 @@ all_pairwise <- function(input = NULL, conditions = NULL,
 #' interest.
 #'
 #' @param ... Args usually passed to all_pairwise()
-#' @param do_limma (Don't) do limma.
-#' @param do_edger Do edger.
-#' @param do_basic (Don't) do basic.
-#' @param do_deseq Do deseq.
-#' @param do_ebseq (Don't) do ebseq.
-#' @param do_noiseq (Don't) do noiseq.
-#' @param do_dream (Don't) do dream.
 #' @export
-binary_paiwise <- function(...) {
+binary_pairwise <- function(...) {
   all_pairwise(..., do_limma = FALSE, do_edger = TRUE, do_basic = FALSE,
                do_deseq = TRUE, do_ebseq = FALSE, do_noiseq = FALSE, do_dream = FALSE)
 }

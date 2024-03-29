@@ -11,11 +11,9 @@ get_msigdb_metadata(
 )
 }
 \arguments{
+\item{msig_db}{Filename containing the MSigDB metadata.}
+
 \item{wanted_meta}{Choose metadata columns of interest.}
-
-\item{gsva_result}{Some data from GSVA to modify.}
-
-\item{msig_xml}{msig XML file downloaded from broad.}
 }
 \value{
 list containing 2 data frames: all metadata from broad, and the set

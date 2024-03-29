@@ -23,26 +23,23 @@
 
 #' Simplifying subset on metadata.
 #'
-#' @param object an expt
+#' @param x an expt
 #' @param i Column to extract
 #' @export
 setMethod(
   "[[", signature = c(x = "expt", i = "character"),
   definition = function(x, i, j, ...) {
-    message("Got here?")
     pData(object)[[i]]
   })
 setMethod(
   "[[", signature = c(x = "expt", i = "ANY"),
   definition = function(x, i) {
-    message("Got here?")
     pData(x)[[i]]
   })
 
 setMethod(
   "[[", signature = c("expt", "ANY", "missing"),
   definition = function(x, i, j, ...) {
-    message("Got here?")
     pData(x)[[i]]
   })
 setReplaceMethod(

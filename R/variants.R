@@ -24,7 +24,7 @@ classify_variants <- function(metadata, coverage_column = "bedtoolscoveragefile"
                      "to_amino", "to_ketone",
                      "transition", "transversion",
                      "sense", "missense", "nonsense", "suppressor")
-  mutations_by_sample <- data.frame(row.names = rows)
+  mutations_by_sample <- data.frame(row.names = mutation_rows)
   missing_name <- paste0("regions_missing_", min_missing, "nt")
   missing_by_sample <- rep(0, nrow(metadata))
   names(missing_by_sample) <- rownames(metadata)
@@ -57,35 +57,35 @@ classify_variants <- function(metadata, coverage_column = "bedtoolscoveragefile"
                                    replacement = "\\1")
 
     mutation_df <- mutation_df %>%
-      mutate(
-        sense = case_when(aa_to == aa_from ~ 1, TRUE ~ 0),
-        missense = case_when(aa_to != aa_from ~ 1 & aa_to != "*" & aa_from != "*", TRUE ~ 0),
-        nonsense = case_when(aa_to == "*" & aa_from != "*" ~ 1, TRUE ~ 0),
-        suppressor = case_when(aa_to != "*" & aa_from == "*" ~ 1, TRUE ~ 0))
+      dplyr::mutate(
+        sense = dplyr::case_when(aa_to == aa_from ~ 1, TRUE ~ 0),
+        missense = dplyr::case_when(aa_to != aa_from ~ 1 & aa_to != "*" & aa_from != "*", TRUE ~ 0),
+        nonsense = dplyr::case_when(aa_to == "*" & aa_from != "*" ~ 1, TRUE ~ 0),
+        suppressor = dplyr::case_when(aa_to != "*" & aa_from == "*" ~ 1, TRUE ~ 0))
 
     mutation_df <- mutation_df %>%
-      mutate(
-        transition = case_when(
+      dplyr::mutate(
+        transition = dplyr::case_when(
         (nt_to == "A" & nt_from == "G") | (nt_to == "G" & nt_from == "A") |
           (nt_to == "C" & nt_from == "T") | (nt_to == "T" & nt_from == "C")  ~ 1,
         TRUE ~ 0),
-        transversion = case_when(
+        transversion = dplyr::case_when(
         (nt_to == "A" & nt_from == "C") | (nt_to == "C" & nt_from == "A") |
           (nt_to == "G" & nt_from == "T") | (nt_to == "T" & nt_from == "G") |
           (nt_to == "C" & nt_from == "G") | (nt_to == "G" & nt_from == "C") ~ 1,
         TRUE ~ 0),
-        to_weak = case_when(nt_to == "A" | nt_to == "T" ~ 1, TRUE ~ 0),
-        to_strong = case_when(nt_to == "G" | nt_to == "C" ~ 1, TRUE ~ 0),
-        to_ketone = case_when(nt_to == "G" | nt_to == "T" ~ 1, TRUE ~ 0),
-        to_amino = case_when(nt_to == "A" | nt_to == "C" ~ 1, TRUE ~ 0),
-        from_a = case_when(nt_from == "A" ~ 1, TRUE ~ 0),
-        from_g = case_when(nt_from == "G" ~ 1, TRUE ~ 0),
-        from_t = case_when(nt_from == "T" ~ 1, TRUE ~ 0),
-        from_c = case_when(nt_from == "C" ~ 1, TRUE ~ 0),
-        to_a = case_when(nt_to == "A" ~ 1, TRUE ~ 0),
-        to_g = case_when(nt_to == "G" ~ 1, TRUE ~ 0),
-        to_t = case_when(nt_to == "T" ~ 1, TRUE ~ 0),
-        to_c = case_when(nt_to == "C" ~ 1, TRUE ~ 0))
+        to_weak = dplyr::case_when(nt_to == "A" | nt_to == "T" ~ 1, TRUE ~ 0),
+        to_strong = dplyr::case_when(nt_to == "G" | nt_to == "C" ~ 1, TRUE ~ 0),
+        to_ketone = dplyr::case_when(nt_to == "G" | nt_to == "T" ~ 1, TRUE ~ 0),
+        to_amino = dplyr::case_when(nt_to == "A" | nt_to == "C" ~ 1, TRUE ~ 0),
+        from_a = dplyr::case_when(nt_from == "A" ~ 1, TRUE ~ 0),
+        from_g = dplyr::case_when(nt_from == "G" ~ 1, TRUE ~ 0),
+        from_t = dplyr::case_when(nt_from == "T" ~ 1, TRUE ~ 0),
+        from_c = dplyr::case_when(nt_from == "C" ~ 1, TRUE ~ 0),
+        to_a = dplyr::case_when(nt_to == "A" ~ 1, TRUE ~ 0),
+        to_g = dplyr::case_when(nt_to == "G" ~ 1, TRUE ~ 0),
+        to_t = dplyr::case_when(nt_to == "T" ~ 1, TRUE ~ 0),
+        to_c = dplyr::case_when(nt_to == "C" ~ 1, TRUE ~ 0))
     mutations[[s]] <- mutation_df
 
     for (t in seq_along(mutation_rows)) {
@@ -93,7 +93,7 @@ classify_variants <- function(metadata, coverage_column = "bedtoolscoveragefile"
       mutations_by_sample[type, sample] <- sum(mutation_df[[type]])
     }
   }
-  names(mutations) <- rownames(meta)
+  names(mutations) <- rownames(metadata)
 
   sample_mutations_norm <- mutations_by_sample
   for (s in colnames(sample_mutations_norm)) {
@@ -190,6 +190,8 @@ classify_variants <- function(metadata, coverage_column = "bedtoolscoveragefile"
 #' @param annot_column Column in the metadata for getting the table of bcftools calls.
 #' @param tolower Lowercase stuff like 'HPGL'?
 #' @param snp_column Which column of the parsed bcf table contains our interesting material?
+#' @param numerator_column When provided, use this column as the numerator of a proportion.
+#' @param denominator_column When provided, use this column as the denominator of a proportion.#'
 #' @return A new expt object
 #' @seealso [Biobase] freebayes:DOI:10.48550/arXiv.1207.3907,
 #'  mpileup:DOI:10.1093/gigascience/giab008
@@ -317,7 +319,8 @@ get_individual_snps <- function(retlist) {
 #' @param stringency Allow for some wiggle room in the calls.
 #' @param do_save Save the results to an rda fil.
 #' @param savefile This is redundant with do_save.
-#' @param proportion Used with stringency to finetune the calls.
+#' @param minmax_cutoff Cutoffs used to define homozygous vs. no-observation.
+#' @param hetero_cutoff Cutoff to define heterozygous vs. observed/homozygous
 #' @return A funky list by chromosome containing:  'medians', the median number
 #'   of hits / position by sample type; 'possibilities', the;
 #'  'intersections', the groupings as detected by Vennerable;
@@ -336,9 +339,6 @@ get_individual_snps <- function(retlist) {
 #'  ## This assumes a column in the metadata for the expt named 'condition'.
 #' }
 #' @export
-#'
-
-
 get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
                                     stringency = NULL, do_save = FALSE,
                                     savefile = "variants.rda",
@@ -414,6 +414,7 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
   message("Gathering the set of exclusive homozygous and heterozygous positions.")
   exclusive_homo <- all_homo
   exclusive_hetero <- all_hetero
+  exclusive_not <- not_observed
   for (col in colnames(exclusive_homo)) {
     ## Thus rowSums(observed) should be 1, and the value at this row should be 1
     ## and rowSums(exclusive) should be 1.
@@ -425,10 +426,15 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
       rowSums(all_hetero) == 1
     exclusive_homo[exclusive_homo_idx, col] <- 1
     exclusive_homo[!exclusive_homo_idx, col] <- 0
+    exclusive_not_idx <- rowSums(observed) == ncol(observed) - 1 & observed[[col]] == 0
+    exclusive_not[exclusive_not_idx, col] <- 1
+    exclusive_not[!exclusive_not_idx, col] <- 0
   }
 
   exc_homo_keepers <- rowSums(exclusive_homo) > 0
   exclusive_homo <- exclusive_homo[exc_homo_keepers, ]
+  exclusive_not_keepers <- rowSums(exclusive_not) > 0
+  exclusive_not <- exclusive_not[exclusive_not_keepers, ]
 
   tt <- sm(requireNamespace("parallel"))
   tt <- sm(requireNamespace("doParallel"))
@@ -583,6 +589,34 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
     chromosome <- datum[["chromosome"]]
     exclusive_hetero_by_chr[[chromosome]] <- datum
   }
+
+  exc_not_chr_names <- gsub(pattern = "^chr_(.+)_pos_.+_ref_.+_alt_.+$",
+                            replacement = "\\1", x = rownames(exclusive_not))
+  exclusive_not[["chr"]] <- exc_not_chr_names
+  exc_not_individual_chromosomes <- levels(as.factor(exc_not_chr_names))
+  num_levels <- length(exc_not_individual_chromosomes)
+  message("Counting exclusive notzygous positions by chromosome/contig.")
+  exclusive_not_chr <- list()
+  i <- 1
+  res <- list()
+  res <- foreach(i = seq_len(num_levels),
+                 ## .combine = "c",
+                 ## .multicombine = TRUE,
+                 .packages = c("hpgltools", "doParallel"),
+                 .export = c("snp_by_chr")) %dopar% {
+    chromosome_name <- exc_not_individual_chromosomes[i]
+    exclusive_not_chr[[chromosome_name]] <- snp_by_chr(exclusive_not, chr_name = chromosome_name)
+  }
+  ## Unpack the res data structure (which probably can be simplified)
+  exclusive_not_by_chr <- list()
+  end <- length(res)
+  mesg("Iterating over ", end, " elements.")
+  for (element in seq_len(end)) {
+    datum <- res[[element]]
+    chromosome <- datum[["chromosome"]]
+    exclusive_not_by_chr[[chromosome]] <- datum
+  }
+
   parallel::stopCluster(cl)
 
   ## Calculate approximate snp densities by chromosome
@@ -592,19 +626,25 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
   observed_density_by_chr <- list()
   exclusive_homo_intersections <- list()
   exclusive_hetero_intersections <- list()
+  exclusive_not_intersections <- list()
   homo_density_by_chr <- list()
   hetero_density_by_chr <- list()
+  exclusive_homo_density_by_chr <- list()
+  exclusive_hetero_density_by_chr <- list()
+  exclusive_not_density_by_chr <- list()
   for (chr in names(observed_by_chr)) {
     observed_snps <- rownames(observed_by_chr[[chr]][["observations"]])
     homo_snps <- rownames(homo_by_chr[[chr]][["observations"]])
     hetero_snps <- rownames(homo_by_chr[[chr]][["observations"]])
     exclusive_homo_snps <- rownames(exclusive_homo_by_chr[[chr]][["observations"]])
     exclusive_hetero_snps <- rownames(exclusive_hetero_by_chr[[chr]][["observations"]])
+    exclusive_not_snps <- rownames(exclusive_not_by_chr[[chr]][["observations"]])
     num_observed <- length(observed_snps)
     num_homo <- length(homo_snps)
     num_exclusive_homo <- length(exclusive_homo_snps)
     num_hetero <- length(hetero_snps)
     num_exclusive_hetero <- length(exclusive_hetero_snps)
+    num_exclusive_not <- length(exclusive_not_snps)
     last_position <- max(
         as.numeric(gsub(pattern = "^chr_.+_pos_(.+)_ref_.+_alt_.+$",
                         replacement = "\\1", x = observed_snps)))
@@ -613,12 +653,14 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
     exclusive_homo_density <- num_exclusive_homo / as.numeric(last_position)
     hetero_density <- num_hetero / as.numeric(last_position)
     exclusive_hetero_density <- num_exclusive_hetero / as.numeric(last_position)
+    exclusive_not_density <- num_exclusive_not / as.numeric(last_position)
     observed_density <- num_observed / as.numeric(last_position)
 
     homo_density_by_chr[[chr]] <- homo_density
     exclusive_homo_density_by_chr[[chr]] <- exclusive_homo_density
     hetero_density_by_chr[[chr]] <- hetero_density
     exclusive_hetero_density_by_chr[[chr]] <- exclusive_hetero_density
+    exclusive_not_density_by_chr[[chr]] <- exclusive_not_density
     observed_density_by_chr[[chr]] <- observed_density
 
     for (inter in names(observed_by_chr[[chr]][["intersections"]])) {
@@ -650,6 +692,13 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
                                                      exclusive_hetero_by_chr[[chr]][["intersections"]][[inter]])
       }
 
+      if (is.null(exclusive_not_intersections[[inter]])) {
+        exclusive_not_intersections[[inter]] <- exclusive_not_by_chr[[chr]][["intersections"]][[inter]]
+      } else {
+        exclusive_not_intersections[[inter]] <- c(exclusive_not_intersections[[inter]],
+                                                     exclusive_not_by_chr[[chr]][["intersections"]][[inter]])
+      }
+
       if (is.null(observed_intersections[[inter]])) {
         observed_intersections[[inter]] <- observed_by_chr[[chr]][["intersections"]][[inter]]
       } else {
@@ -664,6 +713,7 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
   exclusive_homo_density_by_chr <- unlist(exclusive_homo_density_by_chr)
   hetero_density_by_chr <- unlist(hetero_density_by_chr)
   exclusive_hetero_density_by_chr <- unlist(exclusive_hetero_density_by_chr)
+  exclusive_not_density_by_chr <- unlist(exclusive_not_density_by_chr)
 
   retlist <- list(
     "max_notobserved_cutoff" = zero_cutoff,
@@ -675,6 +725,7 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
     "exclusive_homozygous_boolean" = exclusive_homo,
     "heterozygous_boolean" = all_hetero,
     "exclusive_heterozygous_boolean" = exclusive_hetero,
+    "exclusive_not_boolean" = exclusive_not,
     "observed_boolean" = observed,
     "not_observed_boolean" = not_observed,
     "possibilities" = possibilities,
@@ -682,18 +733,21 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
     "exclusive_homozygous_intersections" = exclusive_homo_intersections,
     "heterozygous_intersections" = hetero_intersections,
     "exclusive_heterozygous_intersections" = exclusive_hetero_intersections,
+    "exclusive_not_intersections" = exclusive_not_intersections,
     "observed_intersections" = observed_intersections,
     "homozygous" = homo_by_chr,
     "exclusive_homozygous" = exclusive_homo_by_chr,
     "heterozygous" = hetero_by_chr,
     "exclusive_heterozygous" = exclusive_hetero_by_chr,
+    "exclusive_not" = exclusive_not_by_chr,
     "observed" = observed_by_chr,
     "set_names" = set_names,
     "invert_names" = invert_names,
     "homozygous_density" = homo_density_by_chr,
-    "exclusive_homozygous_density" = exclsive_homo_density_by_chr,
+    "exclusive_homozygous_density" = exclusive_homo_density_by_chr,
     "heterozygous_density" = hetero_density_by_chr,
     "exclusive_heterozygous_density" = exclusive_hetero_density_by_chr,
+    "exclusive_not_density" = exclusive_not_density_by_chr,
     "observed_density" = observed_density_by_chr)
 
   if (isTRUE(do_save)) {
@@ -706,7 +760,7 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
 get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
                          stringency = NULL, do_save = FALSE,
                          savefile = "variants.rda",
-                         homo_proportion_cutoff = 0.95, hetero_proportion_cutoff = 0.2) {
+                         proportion = 0.9) {
   if (is.null(pData(snp_expt)[[factor]])) {
     stop("The factor does not exist in the expt.")
   } else {
@@ -720,27 +774,13 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
     return(retlist)
   }
 
-  if (isTRUE(proportion)) {
-    ## Using a column which is a proportion of alternate/total reads.
-    ## Recasting all values >= proportion_cutoff to 2 and values < cutoff and > 0 to 1
-    ## and leaving 0 alone
-    message("Using a proportion of observed variants, converting the data to categorical.")
-    prop <- exprs(snp_expt)
-    homo <- prop
-    hetero <- prop
-    zero_idx <- prop == 0
-    hetero_idx <- prop > hetero_proportion_cutoff & prop < homo_proportion_cutoff
-    hetero[hetero_idx] <- 1
-    lt_idx <- hetero_idx < 1
-    hetero[lt_idx] <- 0
-    homo_idx <- prop >= homo_proportion_cutoff
-    homo[homo_idx] <- 1
-    lt_idx <- homo < 1
-    homo[lt_idx] <- 0
-    hetero_snp_expt <- snp_expt
-    exprs(hetero_snp_expt) <- hetero
-    homo_snp_expt <- snp_expt
-    exprs(homo_snp_expt) <- homo
+  if (!is.null(proportion)) {
+    message("Using a proportion of observed variants, converting the data to binary observations.")
+    nonzero <- exprs(snp_expt)
+    nonzero[nonzero > 0] <- 1
+    stringency <- "proportion"
+    nonzero <- as.matrix(nonzero)
+    exprs(snp_expt) <- nonzero
   }
 
   ## This function should be renamed to summarize_by_factor.
@@ -889,6 +929,7 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
 #' Take a vector of my peculiarly named variants and turn them into a grange
 #'
 #' @param names A set of things which look like: chr_x_pos_y_ref_a_alt_b
+#' @param gr Extant GRanges to modify?
 snpnames2gr <- function(names, gr = NULL) {
   pos_df <- data.frame(row.names = names)
   pos_df[["chr"]] <- gsub(pattern = "^chr_(.+)_pos_.+_ref.+_alt.+$",
@@ -906,10 +947,10 @@ snpnames2gr <- function(names, gr = NULL) {
                                 replacement = "\\1",
                                 x = rownames(pos_df))
   if (is.null(gr)) {
-  variants_gr <- makeGRangesFromDataFrame(pos_df, keep.extra.columns = TRUE)
+    variants_gr <- GenomicRanges::makeGRangesFromDataFrame(pos_df, keep.extra.columns = TRUE)
   } else {
-    variants_gr <- makeGRangesFromDataFrame(pos_df, seqinfo = seqinfo(gr),
-                                            keep.extra.columns = TRUE)
+    variants_gr <- GenomicRanges::makeGRangesFromDataFrame(pos_df, seqinfo = seqinfo(gr),
+                                                           keep.extra.columns = TRUE)
   }
   return(variants_gr)
   }
@@ -1621,12 +1662,14 @@ write_snps <- function(expt, output_file = "funky.aln") {
 #' @param feature_type_column Column containing the feature types.
 #' @param feature_id Column with the IDs (coming from the gff tags).
 #' @param feature_name Column with the descriptive name.
+#' @param name_type I dont remember, I think this allows one to limit the search to a feature type.
+#' @param desc_column Use this column to extract full-text gene descriptions.
 xref_regions <- function(sequence_df, gff, bin_width = 600,
                          feature_type = "protein_coding_gene", feature_start = "start",
                          feature_end = "end", feature_strand = "strand",
                          feature_chr = "seqnames", feature_type_column = "type",
                          feature_id = "ID", feature_name = "description",
-                         name_type = NULL) {
+                         name_type = NULL, desc_column = "description") {
   if (class(gff) == "data.frame") {
     annotation <- gff
   } else {

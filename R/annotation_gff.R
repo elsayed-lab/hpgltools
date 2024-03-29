@@ -5,6 +5,12 @@
 ## these functions are likely to be used along with another annotation source in
 ## order to get a more complete view of the genome/transcriptome of interest.
 
+#' Rewrite a gff file as a granges with full seqinfo if possible.
+#'
+#' @param gff Input gff file.
+#' @param type Feature type to extract.
+#' @param type_column Tag from the gff file to use when extracting the type.
+#' @export
 gff2gr <- function(gff, type = NULL, type_column = "type") {
   chr_entries <- read.delim(file = gff, header = FALSE, sep = "")
   contigs <- chr_entries[["V1"]] == "##sequence-region"
@@ -19,7 +25,7 @@ gff2gr <- function(gff, type = NULL, type_column = "type") {
 
   ## Dump a granges object and save it as an rda file.
   granges_result <- rtracklayer::import.gff3(gff)
-  name_order <- names(seqinfo(granges_result))
+  name_order <- names(Biostrings::seqinfo(granges_result))
   contig_info <- contig_info[name_order, ]
   length_vector <- contig_info[["length"]]
   GenomeInfoDb::seqlengths(granges_result) <- length_vector

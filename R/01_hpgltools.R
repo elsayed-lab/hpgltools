@@ -103,10 +103,9 @@ NULL
 #' To see examples of this in action, check out the vignettes:
 #' \code{browseVignettes(package = 'hpgltools')}
 #'
-#' @docType package
 #' @name hpgltools
 #' @importFrom Biobase exprs pData fData notes sampleNames
-#' @importFrom SummarizedExperiment assay colData rowData
+#' @importFrom SummarizedExperiment assay colData rowData rowData<-
 #' @importFrom data.table data.table
 #' @importFrom dplyr filter group_by n summarise
 #' @importFrom foreach foreach
@@ -124,7 +123,7 @@ NULL
 #' @import grDevices
 #' @import methods
 #' @import utils
-NULL
+"_PACKAGE"
 
 #' The following sets the ggplot2 default text size.
 base_size <- 16

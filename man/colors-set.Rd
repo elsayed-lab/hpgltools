@@ -13,7 +13,7 @@ colors(expt, ...) <- value
 
 \item{...}{Colors!}
 
-\item{lst}{List of colors.}
+\item{value}{List of colors.}
 }
 \value{
 The expt with new colors associated with each sample.

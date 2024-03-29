@@ -44,6 +44,8 @@ outputs if this changes, but for the moment I am sort of assuming
 
 \item{verbose}{For testing regexes.}
 
+\item{type}{Make explicit the type of data (genome/rRNA/Tx/etc).}
+
 \item{...}{Used to pass extra variables to glue for finding files.}
 }
 \description{

@@ -34,6 +34,8 @@ write_combined_legend(
 
 \item{deseq}{The deseq result, which is redundant.}
 
+\item{dream}{The result from varpart::dream}
+
 \item{ebseq}{The ebseq result, which is redundant.}
 
 \item{edger}{The edger result, which is redundant.}

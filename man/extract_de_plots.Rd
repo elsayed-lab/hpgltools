@@ -70,7 +70,7 @@ handle other invocations too.}
 
 \item{label}{Label this number of top-diff genes.}
 
-\item{label_columns}{Use this column for labelling genes.}
+\item{label_column}{Use this column for labelling genes.}
 }
 \value{
 a plot!

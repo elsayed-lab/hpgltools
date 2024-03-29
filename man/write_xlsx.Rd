@@ -39,18 +39,20 @@ write_xlsx(
 
 \item{title}{Title for this xlsx table.}
 
+\item{float_format}{Revisit this, but it hard-sets the number of decimal
+points in floating point columns.}
+
 \item{data_table}{Write this as an excel data table instead of just a collection of cells.}
 
 \item{freeze_first_row}{Add a hint to make the first row always on screen?}
 
 \item{freeze_first_column}{Add a hint to make the first column always on screen?}
 
+\item{date_format}{Coerce date columns to this format.}
+
 \item{column_width}{Either a specific value, NULL, or 'heuristic' which guesses.}
 
 \item{...}{Set of extra arguments given to openxlsx.}
-
-\item{number_format}{Revisit this, but it hard-sets the number of decimal
-points in numeric columns.}
 }
 \value{
 List containing the sheet and workbook written as well as the

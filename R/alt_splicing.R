@@ -45,13 +45,16 @@ gather_suppa_files <- function(file_prefix, numerator = "d15", denominator = "d1
 #' along with the same for the average log tpm data (acquired from suppa
 #' diffSplice with --save_tpm_events)
 #'
-#' @param dpsi Table provided by suppa containing all the metrics.
-#' @param tpm Table provided by suppa containing all the tpm values.
-#' @param events List of event types to include.
-#' @param psi Limit the set of included events by psi value?
+#' @param file_prefix Directory containing the various requisite input files.
+#' @param file_list Vector of filenames.
+#' @param type Either transcript or 'type' referring to the type of DPSI analysis performed.
+#' @param annot Dataframe of annotations.
+#' @param annot_column Column in annot with the IDs to cross reference against.
 #' @param sig_threshold Use this significance threshold.
 #' @param label_type Choose a type of event to label.
 #' @param alpha How see-through should the points be in the plot?
+#' @param numerator Name of the desired comparison's numerator.
+#' @param denominator Name of the desired comparison's denominator.
 #' @return List containing the plot and some of the requisite data.
 #' @seealso [plot_rmats()]
 #' @examples
@@ -62,6 +65,10 @@ gather_suppa_files <- function(file_prefix, numerator = "d15", denominator = "d1
 plot_suppa <- function(file_prefix, file_list = NULL, type = "type", annot = NULL, annot_column = NULL,
                        sig_threshold = 0.05, label_type = NULL, alpha = 0.3,
                        numerator = "infected", denominator = "uninfected") {
+  ## A couple variable declarations to keep R CMD check happy when I use NSE syntax with dplyr
+  transcripts_1 <- NULL
+  event <- NULL
+
   if (!is.null(annot)) {
     if (! annot_column %in% colnames(annot)) {
       warning("The column ", annot_column,

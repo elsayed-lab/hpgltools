@@ -5,31 +5,38 @@
 \title{Given some psi and tpm data, make a pretty plot!}
 \usage{
 plot_suppa(
-  dpsi,
-  tpm,
-  events = NULL,
-  psi = NULL,
+  file_prefix,
+  file_list = NULL,
+  type = "type",
+  annot = NULL,
+  annot_column = NULL,
   sig_threshold = 0.05,
   label_type = NULL,
-  alpha = 0.7,
+  alpha = 0.3,
   numerator = "infected",
   denominator = "uninfected"
 )
 }
 \arguments{
-\item{dpsi}{Table provided by suppa containing all the metrics.}
+\item{file_prefix}{Directory containing the various requisite input files.}
 
-\item{tpm}{Table provided by suppa containing all the tpm values.}
+\item{file_list}{Vector of filenames.}
 
-\item{events}{List of event types to include.}
+\item{type}{Either transcript or 'type' referring to the type of DPSI analysis performed.}
 
-\item{psi}{Limit the set of included events by psi value?}
+\item{annot}{Dataframe of annotations.}
+
+\item{annot_column}{Column in annot with the IDs to cross reference against.}
 
 \item{sig_threshold}{Use this significance threshold.}
 
 \item{label_type}{Choose a type of event to label.}
 
 \item{alpha}{How see-through should the points be in the plot?}
+
+\item{numerator}{Name of the desired comparison's numerator.}
+
+\item{denominator}{Name of the desired comparison's denominator.}
 }
 \value{
 List containing the plot and some of the requisite data.

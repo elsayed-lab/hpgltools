@@ -43,6 +43,9 @@ classify_n_times(
 
 \item{tuner}{Tuning arguments for the method above.}
 
+\item{state}{When provided, passes the state of the data to the return
+so it may be reported later.}
+
 \item{...}{Others, currently unused I think}
 }
 \description{

@@ -19,6 +19,8 @@ all_gprofiler(
 
 \item{together}{Concatenate the up/down genes into one set?}
 
+\item{plot_type}{Choose a plot method as the default.}
+
 \item{...}{Arguments to pass to simple_gprofiler().}
 }
 \description{

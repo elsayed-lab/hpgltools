@@ -30,15 +30,6 @@ setGeneric("colors<-", signature = signature(expt = "expt"),
 setGeneric("get_backup_expression_data", signature = c("expt"),
            function(expt) standardGeneric("get_backup_expression_data"))
 
-#' Generic method to get colors from expression data.
-#'
-#' @param object The object from which to gather colors.
-#' @return colors!
-#' @rdname methods
-#' @export
-setGeneric("getColors", signature = signature(expt = "expt"),
-           function(expt) standardGeneric("getColors"))
-
 #' Generic method to input data to iDA
 #'
 #' @param object The object to run iDA on
@@ -250,24 +241,24 @@ setMethod(
 #' A setter to put the colors into a SummarizedExperiment.
 #'
 #' @param expt A SummarizedExperiment.
-#' @param lst List of new colors.
+#' @param value List of new colors.
 #' @export
 setMethod(
   "colors<-", signature = signature(expt = "SummarizedExperiment"),
-  definition = function(expt, lst) {
-    metadata(expt)[["colors"]] <- lst
+  definition = function(expt, value) {
+    S4Vectors::metadata(expt)[["colors"]] <- value
     return(expt)
   })
 
 #' A setter to put the colors into an expt.
 #'
 #' @param expt An expt.
-#' @param lst List of new colors.
+#' @param value List of new colors.
 #' @export
 setMethod(
   "colors<-", signature = signature(expt = "expt"),
-  definition = function(expt, lst) {
-    expt[["colors"]] <- lst
+  definition = function(expt, value) {
+    expt[["colors"]] <- value
     return(expt)
   })
 
@@ -455,7 +446,7 @@ setMethod(
 setMethod(
   "get_backup_expression_data", signature = signature(expt = "SummarizedExperiment"),
   definition = function(expt) {
-    backup <- metadata(expt)[["original_se"]]
+    backup <- S4Vectors::metadata(expt)[["original_se"]]
     return(backup)
   })
 
@@ -1109,7 +1100,7 @@ setMethod(
 setMethod(
   "state", signature = signature(expt = "SummarizedExperiment"),
   definition = function(expt) {
-    metadata(expt)[["state"]]
+    S4Vectors::metadata(expt)[["state"]]
   })
 
 #' Put the state into a SummarizedExperiment.
@@ -1117,7 +1108,7 @@ setMethod(
 setMethod(
   "state<-", signature = signature(expt = "SummarizedExperiment"),
   definition = function(expt, value) {
-    metadata(expt)[["state"]] <- value
+    S4Vectors::metadata(expt)[["state"]] <- value
     return(expt)
   })
 

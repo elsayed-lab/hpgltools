@@ -3,6 +3,7 @@
 #' @param sig Result from extract_significant_genes
 #' @param according_to Use this result type for the gprofiler searches.
 #' @param together Concatenate the up/down genes into one set?
+#' @param plot_type Choose a plot method as the default.
 #' @param ... Arguments to pass to simple_gprofiler().
 #' @export
 all_gprofiler <- function(sig, according_to = "deseq", together = FALSE,
@@ -111,6 +112,7 @@ all_gprofiler <- function(sig, according_to = "deseq", together = FALSE,
 #' @param id_col Which column in the table should be used for gene ID
 #'  crossreferencing?  gProfiler uses Ensembl ids.  So if you have a table of
 #'  entrez or whatever, translate it!
+#' @param plot_type Use this plot type for images.
 #' @param excel Print the results to an excel file?
 #' @return a list of results for go, kegg, reactome, and a few more.
 #' @seealso [gProfiler]

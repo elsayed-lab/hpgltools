@@ -13,6 +13,8 @@
 #' @param sampler Sampler to employ, bootstrap or cv right now.
 #' @param sample_number How many times to use the sampler
 #' @param tuner Tuning arguments for the method above.
+#' @param state When provided, passes the state of the data to the return
+#'  so it may be reported later.
 #' @param ... Others, currently unused I think
 #' @export
 classify_n_times <- function(full_df, interesting_meta, outcome_column = "finaloutcome",
