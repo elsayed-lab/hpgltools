@@ -1370,9 +1370,10 @@ make_pombe_expt <- function(annotation = TRUE) {
     } else {
       pombe_mart <- pombe_annotations[["mart"]]
       annotations <- pombe_annotations[["annotation"]]
-      rownames(annotations) <- make.names(gsub(pattern = "\\.\\d+$",
-                                               replacement = "",
-                                               x = rownames(annotations)), unique = TRUE)
+      ## I think ensembl changed the IDs to match and the following line is no longer needed.
+      ## rownames(annotations) <- make.names(gsub(pattern = "\\.\\d+$",
+      ##                                         replacement = "",
+      ##                                         x = rownames(annotations)), unique = TRUE)
     }
   }
   pombe_expt <- sm(create_expt(metadata = meta,

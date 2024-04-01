@@ -1,6 +1,8 @@
 start <- as.POSIXlt(Sys.time())
 library(testthat)
 library(hpgltools)
+library(hpgldata)
+
 context("061se.R")
 ## Functions exported in expt.r
 ## make_pombe_expt(), create_expt(), concatenate_runs(), exclude_genes_expt(),

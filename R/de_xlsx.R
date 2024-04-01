@@ -441,21 +441,27 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
       numerator = numerator, denominator = denominator, alpha = alpha, z = z,
       logfc = logfc, pval = pval, adjp = adjp, found_table = found_table,
       p_type = p_type, color_low = color_low, color_high = color_high,
-      z_lines = z_lines, label = label, label_column = label_column))
-    if ("try-error" %in% class(ma_vol_coef[["coef"]])) {
+      z_lines = z_lines, label = label, label_column = label_column), silent = TRUE)
+    if ("try-error" %in% class(ma_vol_coef)) {
       plots[[sc_name]] <- NULL
-    } else {
-      plots[[sc_name]] <- ma_vol_coef[["coef"]]
-    }
-    if ("try-error" %in% class(ma_vol_coef[["volcano"]])) {
       plots[[vol_name]] <- NULL
-    } else {
-      plots[[vol_name]] <- ma_vol_coef[["volcano"]][["plot"]]
-    }
-    if ("try-error" %in% class(ma_vol_coef[["ma"]])) {
       plots[[ma_name]] <- NULL
     } else {
-      plots[[ma_name]] <- ma_vol_coef[["ma"]][["plot"]]
+      if ("try-error" %in% class(ma_vol_coef[["coef"]])) {
+        plots[[sc_name]] <- NULL
+      } else {
+        plots[[sc_name]] <- ma_vol_coef[["coef"]]
+      }
+      if ("try-error" %in% class(ma_vol_coef[["volcano"]])) {
+        plots[[vol_name]] <- NULL
+      } else {
+        plots[[vol_name]] <- ma_vol_coef[["volcano"]][["plot"]]
+      }
+      if ("try-error" %in% class(ma_vol_coef[["ma"]])) {
+        plots[[ma_name]] <- NULL
+      } else {
+        plots[[ma_name]] <- ma_vol_coef[["ma"]][["plot"]]
+      }
     }
 
     if (is.null(p_name)) {
@@ -465,8 +471,13 @@ combine_extracted_plots <- function(name, combined, denominator, numerator, plot
       ## from the data at this point.  In my vignette, I set padj_type to 'BH'
       ## and as a result I have a series of columns: 'limma_adj_bh' etc.
       ## Therefore we need to get that information to this function call.
-      pval_plot <- plot_de_pvals(combined[["data"]], type = type, p_type = p_type)
-      plots[[p_name]] <- pval_plot
+      pval_plot <- try(plot_de_pvals(combined[["data"]], type = type, p_type = p_type),
+                       silent = TRUE)
+      if ("try-error" %in% class(pval_plot)) {
+        plots[[p_name]] <- NULL
+      } else {
+        plots[[p_name]] <- pval_plot
+      }
     }
   }
   return(plots)
@@ -606,53 +617,92 @@ Defaulting to fdr.")
       ## but it does provide me a chance to play with the names in case I am using different
       ## metrics (like mean vs median).
       if (query == "basic") {
-        badf <- entry[[query]][["data"]]
-        ## I recently changed basic to optionally do means or medians.  I need to take that into
-        ## account when working with these tables.  For the moment, I think I will simply rename
-        ## the column to _median to avoid confusion.
-        colnames(badf) <- gsub(pattern = "_mean|_avg|_median", replacement = "", x = colnames(badf))
-        ba_stats <- badf[, c("numerator", "denominator", "numerator_var",
-                             "denominator_var", "logFC", "t", "p", "adjp")]
-        colnames(ba_stats) <- c("basic_num", "basic_den", "basic_numvar", "basic_denvar",
-                                "basic_logfc", "basic_t", "basic_p", "basic_adjp")
+        if (is.null(entry[[query]][["data"]])) {
+          mesg("Method ", query, " does not have this contrast.")
+          badf <- data.frame()
+          ba_stats <- data.frame()
+        } else {
+          badf <- entry[[query]][["data"]]
+          ## I recently changed basic to optionally do means or medians.  I need to take that into
+          ## account when working with these tables.  For the moment, I think I will simply rename
+          ## the column to _median to avoid confusion.
+          colnames(badf) <- gsub(pattern = "_mean|_avg|_median", replacement = "", x = colnames(badf))
+          ba_stats <- badf[, c("numerator", "denominator", "numerator_var",
+            "denominator_var", "logFC", "t", "p", "adjp")]
+          colnames(ba_stats) <- c("basic_num", "basic_den", "basic_numvar", "basic_denvar",
+            "basic_logfc", "basic_t", "basic_p", "basic_adjp")
+        }
       }
       if (query == "deseq") {
-        dedf <- entry[[query]][["data"]]
-        colnames(dedf) <- c("deseq_basemean", "deseq_logfc", "deseq_lfcse",
-                            "deseq_stat", "deseq_p", "deseq_adjp",
-                            "deseq_num", "deseq_den")
-        de_stats <- dedf[, c("deseq_basemean", "deseq_lfcse", "deseq_stat",
-                             "deseq_p", "deseq_num", "deseq_den")]
-        de_lfc_adjp <- dedf[, c("deseq_logfc", "deseq_adjp")]
+        if (is.null(entry[[query]][["data"]])) {
+          mesg("Method ", query, " does not have this contrast.")
+          dedf <- data.frame()
+          de_stats <- data.frame()
+          de_lfc_adjp <- data.frame()
+        } else {
+          dedf <- entry[[query]][["data"]]
+          colnames(dedf) <- c("deseq_basemean", "deseq_logfc", "deseq_lfcse",
+            "deseq_stat", "deseq_p", "deseq_adjp",
+            "deseq_num", "deseq_den")
+          de_stats <- dedf[, c("deseq_basemean", "deseq_lfcse", "deseq_stat",
+            "deseq_p", "deseq_num", "deseq_den")]
+          de_lfc_adjp <- dedf[, c("deseq_logfc", "deseq_adjp")]
+        }
       }
       if (query == "ebseq") {
-        ebdf <- entry[[query]][["data"]]
-        colnames(ebdf) <- c("ebseq_fc", "ebseq_logfc", "ebseq_c1mean",
-                            "ebseq_c2mean", "ebseq_mean", "ebseq_var",
-                            "ebseq_postfc", "ebseq_ppee", "ebseq_p",
-                            "ebseq_adjp")
+        if (is.null(entry[[query]][["data"]])) {
+          mesg("EBSeq does not have this entry.")
+          ebdf <- data.frame()
+          eb_stats <- data.frame()
+        } else {
+          ebdf <- entry[[query]][["data"]]
+          colnames(ebdf) <- c("ebseq_fc", "ebseq_logfc", "ebseq_c1mean",
+            "ebseq_c2mean", "ebseq_mean", "ebseq_var",
+            "ebseq_postfc", "ebseq_ppee", "ebseq_p",
+            "ebseq_adjp")
+        }
       }
       if (query == "edger") {
-        eddf <- entry[[query]][["data"]]
-        colnames(eddf) <- c("edger_logfc", "edger_logcpm", "edger_lr", "edger_p", "edger_adjp")
-        ed_stats <- eddf[, c("edger_logcpm", "edger_lr", "edger_p")]
-        ed_lfc_adjp <- eddf[, c("edger_logfc", "edger_adjp")]
-
+        if (is.null(entry[[query]][["data"]])) {
+          mesg("Edger does not have this entry.")
+          eddf <- data.frame()
+          ed_stats <- data.frame()
+          ed_lfc_adjp <- data.frame()
+        } else {
+          eddf <- entry[[query]][["data"]]
+          colnames(eddf) <- c("edger_logfc", "edger_logcpm", "edger_lr", "edger_p", "edger_adjp")
+          ed_stats <- eddf[, c("edger_logcpm", "edger_lr", "edger_p")]
+          ed_lfc_adjp <- eddf[, c("edger_logfc", "edger_adjp")]
+        }
       }
       if (query == "limma") {
-        lidf <- entry[[query]][["data"]]
-        colnames(lidf) <- c("limma_logfc", "limma_ave", "limma_t", "limma_p",
-                            "limma_adjp", "limma_b")
-        li_stats <- lidf[, c("limma_ave", "limma_t", "limma_b", "limma_p")]
-        li_lfc_adjp <- lidf[, c("limma_logfc", "limma_adjp")]
+        if (is.null(entry[[query]][["data"]])) {
+          mesg("limma does not have this entry.")
+          lidf <- data.frame()
+          li_stats <- data.frame()
+          li_lfc_adjp <- data.frame
+        } else {
+          lidf <- entry[[query]][["data"]]
+          colnames(lidf) <- c("limma_logfc", "limma_ave", "limma_t", "limma_p",
+            "limma_adjp", "limma_b")
+          li_stats <- lidf[, c("limma_ave", "limma_t", "limma_b", "limma_p")]
+          li_lfc_adjp <- lidf[, c("limma_logfc", "limma_adjp")]
+        }
       }
       if (query == "noiseq") {
-        nodf <- entry[[query]][["data"]]
-        colnames(nodf) <- c("noiseq_num", "noiseq_den", "noiseq_theta", "noiseq_prob",
-                            "noiseq_logfc", "noiseq_p", "noiseq_adjp")
-        no_stats <- nodf[, c("noiseq_num", "noiseq_den", "noiseq_theta",
-                             "noiseq_prob", "noiseq_p")]
-        no_lfc_adjp <- nodf[, c("noiseq_logfc", "noiseq_adjp")]
+        if (is.null(entry[[query]][["data"]])) {
+          mesg("noiseq does not have this entry.")
+          nodf <- data.frame()
+          no_stats <- data.frame()
+          no_lfc_adjp <- data.frame()
+        } else {
+          nodf <- entry[[query]][["data"]]
+          colnames(nodf) <- c("noiseq_num", "noiseq_den", "noiseq_theta", "noiseq_prob",
+            "noiseq_logfc", "noiseq_p", "noiseq_adjp")
+          no_stats <- nodf[, c("noiseq_num", "noiseq_den", "noiseq_theta",
+            "noiseq_prob", "noiseq_p")]
+          no_lfc_adjp <- nodf[, c("noiseq_logfc", "noiseq_adjp")]
+        }
       }
     }
 
@@ -1397,7 +1447,7 @@ map_keepers <- function(keepers, table_names, datum) {
         position <- which(available_contrasts %in% contrast_string)
         test_name <- names(datum[[method]][["all_tables"]])[position]
         ## This index is not there, hopefully it is an extra.
-        if (is.na(test_name)) {
+        if (is.na(test_name) || length(test_name) == 0) {
           keeper_table_map[[method]][[name]][["data"]] <- NULL
           keeper_table_map[[method]][[name]][["tablename_orientation"]] <- "none"
         } else if (test_name == keeper_table_map[[method]][[name]][["string"]]) {

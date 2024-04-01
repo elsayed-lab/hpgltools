@@ -16,6 +16,7 @@ test_that("Do we get annotation data from our expt?", {
   expect_equal(actual[1], expected[1])
   expect_equal(actual[2], expected[2])
 })
+
 actual <- testing[chosen_genes, "start_position"]
 expected <- c("1", "7619", "11027", "15855", "21381",
               "23589", "27353", "28738", "33835")
