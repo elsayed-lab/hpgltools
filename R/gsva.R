@@ -647,7 +647,11 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
             " entries.")
     new_rownames <- new_ids[[required_id]]
     old_rownames <- new_ids[[current_id]]
-    sub_expt <- expt[old_rownames, ]
+    ## FIXME: My expt [] implementation has a bug.
+    exprs_subset <- expt[["expressionset"]][old_rownames, ]
+    sub_expt <- expt
+    sub_expt[["expressionset"]] <- exprs_subset
+    ## sub_expt <- subset_expt(expt, ids = old_rownames)
     converted_expt <- set_expt_genenames(sub_expt, new_rownames)
     message("After conversion, the expressionset has ",
             length(rownames(exprs(converted_expt))),

@@ -500,17 +500,23 @@ make_pombe_se <- function(annotation = TRUE) {
   annotations <- NULL
   if (isTRUE(annotation)) {
     ## Neat, it works, and even figures out that the default mart is incorrect by itself.
-    pombe_annotations <- load_biomart_annotations(
-        host = "fungi.ensembl.org", trymart = "fungi_mart",
-        trydataset = "spombe_eg_gene",
-        gene_requests = c("pombase_transcript", "ensembl_gene_id", "ensembl_transcript_id",
-                          "hgnc_symbol", "description", "gene_biotype"),
-        species = "spombe", overwrite = TRUE)
-    pombe_mart <- pombe_annotations[["mart"]]
-    annotations <- pombe_annotations[["annotation"]]
-    rownames(annotations) <- make.names(gsub(pattern = "\\.\\d+$",
-                                             replacement = "",
-                                             x = rownames(annotations)), unique = TRUE)
+    pombe_annotations <- try(load_biomart_annotations(
+      host = "fungi.ensembl.org", trymart = "fungi_mart",
+      trydataset = "spombe_eg_gene",
+      gene_requests = c("pombase_transcript", "ensembl_gene_id", "ensembl_transcript_id",
+        "hgnc_symbol", "description", "gene_biotype"),
+      species = "spombe", overwrite = TRUE))
+    if ("try-error" %in% class(pombe_annotations)) {
+      warning("There was an error downloading the pombe annotations, this will still return.")
+    } else {
+      pombe_mart <- pombe_annotations[["mart"]]
+      annotations <- pombe_annotations[["annotation"]]
+      ## As per create_pombe_expt:
+      ## I think ensembl changed the IDs to match and the following line is no longer needed.
+      ## rownames(annotations) <- make.names(gsub(pattern = "\\.\\d+$",
+      ##                                         replacement = "",
+      ##                                         x = rownames(annotations)), unique = TRUE)
+    }
   }
   pombe_se <- sm(create_se(metadata = meta,
                            count_dataframe = fission_data,

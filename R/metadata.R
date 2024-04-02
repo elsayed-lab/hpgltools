@@ -104,7 +104,7 @@ extract_metadata <- function(metadata, id_column = "sampleid", fill = NULL,
   non_numeric <- sum(is.na(numeric_test))  ## If this is > 0, then these are not just numbers.
   if (is.null(sample_definitions[[id_column]])) {
     message("Did not find the column: ", id_column, ".")
-    if (isTRUE(non_numeric)) {
+    if (non_numeric > 0) {
       message("The rownames do not appear numeric, using them.")
       sample_definitions[[id_column]] <- rownames(sample_definitions)
     } else {

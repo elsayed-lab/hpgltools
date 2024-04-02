@@ -198,7 +198,8 @@ if (file.exists("test_topgo_write.xlsx")) {
 ## I think it would not be difficult for me to add a little logic to make gostats smarter
 ## with respect to how it finds the correct annotations.
 annot <- fData(pombe_expt)
-colnames(annot) <- c("txid", "txid2", "ID", "description", "type", "width",
+## I changed the IDs a little and so needed to change this up a bit.
+colnames(annot) <- c("ID", "txid2", "pombeid", "symbol", "description", "type", "width",
                      "chromosome", "strand", "start", "end")
 gos_test <- simple_gostats(ups, go_db = pombe_go, gff_df = annot, gff_type = "protein_coding")
 cat_actual <- head(gos_test[["tables"]][["mf_over_enriched"]][["GOMFID"]])

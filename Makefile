@@ -85,6 +85,10 @@ test:
 	@echo "Running run_tests.R"
 	@Rscript -e "library(hpgltools); library(testthat); test_local(path = '.', reporter = 'summary', stop_on_failure = FALSE)"
 
+test_local:
+	@echo "Running run_tests.R"
+	@Rscript -e "devtools::load_all('.'); library(testthat); test_local(path = '.', reporter = 'summary', stop_on_failure = FALSE)"
+
 vignette:
 	@mkdir -p doc
 	@echo "Building vignettes with devtools::build_vignettes()"

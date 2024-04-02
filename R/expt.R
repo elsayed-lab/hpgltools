@@ -767,7 +767,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
     "batches" = sample_definitions[["batch"]],
     "conditions" = sample_definitions[["condition"]],
     "colors" = chosen_colors,
-    "design" = sample_definitions,
+    ## "design" = sample_definitions,
     "feature_type" = feature_type,
     "gff_file" = include_gff,
     "libsize" = colSums(exprs(experiment)),
@@ -778,10 +778,10 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
     "tximport" = tximport_data)
   ## the 'state' slot in the expt is used to keep track of how the data is modified over time.
   starting_state <- list(
+    "batch" = "raw",
+    "conversion" = "raw",
     "filter" = "raw",
     "normalization" = "raw",
-    "conversion" = "raw",
-    "batch" = "raw",
     "transform" = "raw")
   expt[["state"]] <- starting_state
   ## Just in case there are condition names which are not used.
@@ -826,6 +826,78 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
           " features and ", ncol(exprs(expt)), " samples.")
   return(expt)
 }
+
+#' Synchronize the extra elements of an expt with a new expressionset.
+#'
+#' @param expt Modified/new expt
+#' @param previous Optional previous state to use as a template.
+#' @param ... Parameters used to fill in other optional slots.
+synchronize_expt <- function(expt, previous = NULL, ...) {
+  arglist <- list(...)
+  expt[["batches"]] <- pData(expt)[["batch"]]
+  expt[["conditions"]] <- pData(expt)[["condition"]]
+  expt[["libsize"]] <- colSums(exprs(expt))
+  if (is.null(previous)) {
+    expt[["colors"]] <- generate_expt_colors(pData(expt), cond_column = "condition")
+    expt[["state"]] <- list(
+      "batch" = "raw",
+      "conversion" = "raw",
+      "filter" = "raw",
+      "normalization" = "raw",
+      "transform" = "raw")
+  } else {
+    expt[["researcher"]] <- previous[["researcher"]]
+    expt[["notes"]] <- previous[["notes"]]
+    expt[["feature_type"]] <- previous[["feature_type"]]
+    expt[["gff_file"]] <- previous[["gff_file"]]
+    expt[["study"]] <- previous[["study"]]
+    expt[["title"]] <- previous[["title"]]
+    expt[["state"]] <- previous[["state"]]
+
+    if (nrow(pData(expt)) == length(previous[["conditions"]])) {
+      expt[["colors"]] <- previous[["colors"]]
+    } else {
+      old_colors <- previous[["colors"]]
+      new_ids <- rownames(pData(expt))
+      new_colors <- old_colors[new_ids]
+      expt[["colors"]] <- new_colors
+
+      df <- expt[["tximport"]][["raw"]][["abundance"]][new_ids, ]
+      expt[["tximport"]][["raw"]][["abundance"]] <- df
+      df <- expt[["tximport"]][["raw"]][["counts"]][new_ids, ]
+      expt[["tximport"]][["raw"]][["counts"]] <- df
+      df <- expt[["tximport"]][["raw"]][["length"]][new_ids, ]
+      expt[["tximport"]][["raw"]][["length"]] <- df
+
+      df <- expt[["tximport"]][["scaled"]][["abundance"]][new_ids, ]
+      expt[["tximport"]][["scaled"]][["abundance"]] <- df
+      df <- expt[["tximport"]][["scaled"]][["counts"]][new_ids, ]
+      expt[["tximport"]][["scaled"]][["counts"]] <- df
+      df <- expt[["tximport"]][["scaled"]][["length"]][new_ids, ]
+      expt[["tximport"]][["scaled"]][["length"]] <- df
+    }
+  }
+
+  if (!is.null(arglist[["researcher"]])) {
+    expt[["researcher"]] <- arglist[["researcher"]]
+  }
+  if (!is.null(arglist[["notes"]])) {
+    expt[["notes"]] <- paste(expt[["notes"]], arglist[["notes"]])
+  }
+  if (!is.null(arglist[["feature_type"]])) {
+    expt[["feature_type"]] <- arglist[["feature_type"]]
+  }
+  if (!is.null(arglist[["gff_file"]])) {
+    expt[["gff_file"]] <- arglist[["gff_file"]]
+  }
+  if (!is.null(arglist[["study"]])) {
+    expt[["study"]] <- arglist[["study"]]
+  }
+
+  return(expt)
+}
+
+
 
 #' A temporary alias to subset_genes
 #'
@@ -1363,7 +1435,7 @@ make_pombe_expt <- function(annotation = TRUE) {
       host = "fungi.ensembl.org", trymart = "fungi_mart",
       trydataset = "spombe_eg_gene",
       gene_requests = c("pombase_transcript", "ensembl_gene_id", "ensembl_transcript_id",
-                        "hgnc_symbol", "description", "gene_biotype"),
+                        "external_gene_name", "description", "gene_biotype"),
       species = "spombe", overwrite = TRUE))
     if ("try-error" %in% class(pombe_annotations)) {
       warning("There was an error downloading the pombe annotations, this will still return.")
@@ -1376,9 +1448,9 @@ make_pombe_expt <- function(annotation = TRUE) {
       ##                                         x = rownames(annotations)), unique = TRUE)
     }
   }
-  pombe_expt <- sm(create_expt(metadata = meta,
-                               count_dataframe = fission_data,
-                               gene_info = annotations))
+  pombe_expt <- create_expt(metadata = meta,
+                            count_dataframe = fission_data,
+                            gene_info = annotations, annotation_name = "org.Sp.eg.db")
   detach("package:fission")
   return(pombe_expt)
 }
@@ -2260,6 +2332,7 @@ set_expt_genenames <- function(expt, ids = NULL, ...) {
 set_expt_samplenames <- function(expt, newnames) {
   if (length(newnames) == 1) {
     ## assume it is a factor in the metadata and act accordingly.
+    mesg("Using the column: ", newnames, " to rename the samples.")
     newer_names <- make.names(pData(expt)[[newnames]], unique=TRUE)
     result <- set_expt_samplenames(expt, newer_names)
     return(result)
@@ -2276,11 +2349,11 @@ set_expt_samplenames <- function(expt, newnames) {
   names(new_expt[["batches"]]) <- newnames
   names(new_expt[["colors"]]) <- newnames
   names(new_expt[["conditions"]]) <- newnames
-  newdesign <- new_expt[["design"]]
-  newdesign[["oldnames"]] <- rownames(newdesign)
-  rownames(newdesign) <- newnames
-  newdesign[["sampleid"]] <- newnames
-  new_expt[["design"]] <- newdesign
+  ##newdesign <- new_expt[["design"]]
+  ##newdesign[["oldnames"]] <- rownames(newdesign)
+  ##rownames(newdesign) <- newnames
+  ##newdesign[["sampleid"]] <- newnames
+  ##new_expt[["design"]] <- newdesign
   new_expressionset <- new_expt[["expressionset"]]
   Biobase::sampleNames(new_expressionset) <- newnames
   pData(new_expressionset)[["sampleid"]] <- newnames

@@ -1,6 +1,6 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
+#library(testthat)
+#library(hpgltools)
 context("060expt.R")
 
 ## make_pombe_expt() invokes create_expt()
@@ -11,7 +11,7 @@ chosen_genes <- c("SPAC212.11", "SPAC212.09c", "SPNCRNA.70",
 
 testing <- fData(pombe_expt)
 actual <- dim(testing)
-expected <- c(7039, 10)
+expected <- c(7039, 11)
 test_that("Do we get annotation data from our expt?", {
   expect_equal(actual[1], expected[1])
   expect_equal(actual[2], expected[2])
@@ -31,7 +31,7 @@ high_expt
 
 testing <- pData(pombe_expt)
 actual <- dim(testing)
-expected <- c(36, 8)
+expected <- c(36, 9)
 test_that("Do we get experimental metadata from our expt?", {
   expect_equal(actual[1], expected[1])
   expect_equal(actual[2], expected[2])
@@ -58,8 +58,8 @@ test_that("Do we get expression from our expt?", {
 
 test_expt <- concatenate_runs(expt = pombe_expt, column = "minute")
 actual <- dim(pData(test_expt))
-expected <- c(6, 8)
-test_that("Do we get a reasonable number of resulting samples if we collapse by time?", {
+expected <- c(6, 9)
+test_that("Do we get a reasonable samples if we collapse by time?", {
   expect_equal(actual[1], expected[1], tolerance = 0.001)
   expect_equal(actual[2], expected[2], tolerance = 0.001)
 })
@@ -97,7 +97,9 @@ test_that("Do we get expected medians?", {
   expect_equal(expected, actual)
 })
 
-new_batches <- c(rep(x = "a", times = 12), rep(x = "b", times = 12), rep(x = "c", times = 12))
+new_batches <- c(rep(x = "a", times = 12),
+                 rep(x = "b", times = 12),
+                 rep(x = "c", times = 12))
 testing <- set_expt_batches(pombe_expt, fact = new_batches)
 actual <- pData(testing)[["batch"]]
 test_that("Did we change the batches?", {
@@ -117,8 +119,8 @@ test_that("Did we get some old/new colors?", {
 })
 
 testing <- set_expt_conditions(pombe_expt, fact = "minute")
-expected <- levels(pombe_expt[["design"]][["minute"]])
-actual <- levels(testing[["design"]][["condition"]])
+expected <- levels(pData(pombe_expt)[["minute"]])
+actual <- levels(pData(testing)[["condition"]])
 test_that("Did we get some new conditions?", {
   expect_equal(actual, expected)
 })

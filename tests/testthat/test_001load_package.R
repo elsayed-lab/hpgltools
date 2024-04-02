@@ -1,6 +1,6 @@
 start_time <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
+##library(testthat)
+##library(hpgltools)
 
 context("001load_package.R: Does hpgltools load properly?")
 

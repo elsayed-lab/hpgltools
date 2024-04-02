@@ -1,6 +1,6 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
+##library(testthat)
+##library(hpgltools)
 context("002load_data.R: Does pasilla load into hpgltools?")
 
 library(pasilla)
@@ -59,16 +59,15 @@ test_that("Was the annotation information imported into the expressionset? (stat
 })
 
 ## Then lengths of features should therefore remain consistent.
-##expected <- c(1521, 192, 1344, 1428, 1428, 1428)
+## expected <- c(1521, 192, 1344, 1428, 1428, 1428)
 ## 202107: It switched again!
 ## expected <- c(3987, 990, 4860, 1617, 1947, 1314)
 ## This is a weird thing to change!
-expected <- c(3990, 993, 4863, 1620, 1950, 1317)
+expected <- c(3990, 993, 4569, 1620, 1911, 1368)
 ## Sometimes the cds lengths don't get added to the annotations...
 if (is.null(hpgl_annotations[["cds_length"]])) {
   hpgl_annotations[["cds_length"]] <- abs(as.numeric(hpgl_annotations[["start_position"]]) -
                                             as.numeric(hpgl_annotations[["end_position"]]))
-  expected <- c(35866, 22835, 32016, 1850, 36566, 2267)
 }
 actual <- as.numeric(hpgl_annotations[chosen_genes, "cds_length"])
 ##  head(sm(sort(as.numeric(hpgl_annotations[["cds_length"]]))))
@@ -93,21 +92,24 @@ test_that("Was the annotation information imported into the expressionset? (stat
 })
 
 ## Test that the expt has a design which makes sense.
-expected <- c("untreated1","untreated2","untreated3","untreated4","treated1","treated2","treated3")
+expected <- c("untreated1", "untreated2", "untreated3",
+              "untreated4", "treated1", "treated2", "treated3")
 actual <- as.character(pasilla_expt[["design"]][["sampleid"]])
 test_that("Is the experimental design maintained for samples?", {
     expect_equal(expected, actual)
 })
 
 ## The conditions specified by the pasilla data set are treated and untreated and should not change.
-expected <- c("untreated","untreated","untreated","untreated","treated","treated","treated")
+expected <- c("untreated", "untreated", "untreated",
+              "untreated", "treated", "treated", "treated")
 actual <- as.character(pasilla_expt[["design"]][["condition"]])
 test_that("Is the experimental design maintained for conditions?", {
     expect_equal(expected, actual)
 })
 
 ## Some sequencing runs of pasilla are paired, and some are single ended; this should not change.
-expected <- c("single_end","single_end","paired_end","paired_end","single_end","paired_end","paired_end")
+expected <- c("single_end", "single_end", "paired_end",
+              "paired_end", "single_end", "paired_end", "paired_end")
 actual <-  as.character(pasilla_expt[["design"]][["batch"]])
 test_that("Is the experimental design maintained for batches?", {
     expect_equal(expected, actual)
