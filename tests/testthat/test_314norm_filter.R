@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("14norm_filter.R: Are normalizations consistent over time (Filtering)?")
 
 ## Note to self: Some recent changed to the creation of my expressionsets lead to changes in the order of the resulting data frames.

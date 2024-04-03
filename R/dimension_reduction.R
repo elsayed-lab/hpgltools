@@ -170,11 +170,12 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
   exprs_data <- NULL
   data_class <- class(expt)[1]
   if (data_class == "expt" || data_class == "Summarized_Experiment") {
-    expt_design <- expt[["design"]]
+    expt_design <- pData(expt)
     colors_chosen <- expt[["colors"]]
     exprs_data <- exprs(expt)
   } else if (data_class == "ExpressionSet") {
     exprs_data <- exprs(expt)
+    expt_design <- pData(expt)
   } else if (data_class == "matrix" || data_class == "data.frame") {
     exprs_data <- as.matrix(expt)
   } else {

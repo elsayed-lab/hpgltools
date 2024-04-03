@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("324de_deseq.R: Does hpgltools work with DESeq2?")
 
 pasilladf_file <- "pasilla_df.rda"

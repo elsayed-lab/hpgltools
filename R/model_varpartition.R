@@ -248,7 +248,7 @@ varpart_summaries <- function(expt, factors = c("condition", "batch"), cpus = 6)
   my_model <- as.formula(model_string)
   norm <- sm(normalize_expt(expt, filter = TRUE))
   data <- exprs(norm)
-  design <- expt[["design"]]
+  design <- pData(expt)
   summaries <- variancePartition::fitVarPartModel(data, my_model, design, fxn = summary)
   return(summaries)
 }

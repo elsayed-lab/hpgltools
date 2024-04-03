@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 library(hpgldata)
 
 context("061se.R")

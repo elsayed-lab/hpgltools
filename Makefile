@@ -51,7 +51,7 @@ covr: install
 
 deps:
 	@echo "Invoking devtools::install_dev_deps()"
-	@Rscript -e "all = as.data.frame(devtools::dev_package_deps('.', dependencies=TRUE)); needed = all[['diff']] < 0; needed = all[needed, 'package']; BiocManager::install(needed)"
+	@Rscript -e "all = as.data.frame(devtools::dev_package_deps('.', dependencies=TRUE)); needed = all[['diff']] < 0; needed = all[needed, 'packagewww']; BiocManager::install(needed)"
 
 document: roxygen vignette reference
 
@@ -87,9 +87,9 @@ test:
 
 test_local:
 	@echo "Running run_tests.R"
-	@Rscript -e "devtools::load_all('.'); library(testthat); test_local(path = '.', reporter = 'summary', stop_on_failure = FALSE)"
+	Rscript -e "devtools::load_all('.'); library(testthat); test_local(path = '.', reporter = 'summary', stop_on_failure = FALSE)"
 
-vignette:
+vigwnette:
 	@mkdir -p doc
 	@echo "Building vignettes with devtools::build_vignettes()"
 	R -e "devtools::build_vignettes(install=FALSE)"

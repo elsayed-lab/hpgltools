@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("327de_basic: Does the basic differential expression analysis work?")
 
 pasilla <- new.env()

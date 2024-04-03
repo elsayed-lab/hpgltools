@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("115dimension_reduction.R")
 
 ## 2017-12, exported functions in model_pca:

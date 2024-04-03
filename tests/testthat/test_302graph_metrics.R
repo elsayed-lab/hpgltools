@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("302graph_metrics.R: Is it possible to graph the various metrics with hpgltools?")
 
 pasilla <- new.env()

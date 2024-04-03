@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("400paeruginosa.R: Test some Pseudomonas data.")
 
 pa_gff <- load_gff_annotations(gff = system.file("share/paeruginosa_pa14.gff", package = "hpgldata"))

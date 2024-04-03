@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 library(pasilla)
 context("419varpart.R: Does variancePartition work as expected?")
 

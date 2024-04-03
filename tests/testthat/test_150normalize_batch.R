@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("150normalize_batch.R")
 
 pombe_expt <- make_pombe_expt(annotation = FALSE)

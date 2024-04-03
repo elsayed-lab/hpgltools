@@ -959,7 +959,6 @@ normalize <- function(expt, todo = list()) {
     arglist <- list()
     arglist[["count_table"]] <- count_table
     arglist[["method"]] <- method
-    arglist[["design"]] <- design
     for (a in args) {
       name <- names(args)[a]
       arglist[[a]] <- args[[a]]

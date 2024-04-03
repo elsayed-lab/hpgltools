@@ -94,7 +94,7 @@ test_that("Was the annotation information imported into the expressionset? (stat
 ## Test that the expt has a design which makes sense.
 expected <- c("untreated1", "untreated2", "untreated3",
               "untreated4", "treated1", "treated2", "treated3")
-actual <- as.character(pasilla_expt[["design"]][["sampleid"]])
+actual <- as.character(pData(pasilla_expt)[["sampleid"]])
 test_that("Is the experimental design maintained for samples?", {
     expect_equal(expected, actual)
 })
@@ -102,7 +102,7 @@ test_that("Is the experimental design maintained for samples?", {
 ## The conditions specified by the pasilla data set are treated and untreated and should not change.
 expected <- c("untreated", "untreated", "untreated",
               "untreated", "treated", "treated", "treated")
-actual <- as.character(pasilla_expt[["design"]][["condition"]])
+actual <- as.character(pData(pasilla_expt)[["condition"]])
 test_that("Is the experimental design maintained for conditions?", {
     expect_equal(expected, actual)
 })
@@ -110,7 +110,7 @@ test_that("Is the experimental design maintained for conditions?", {
 ## Some sequencing runs of pasilla are paired, and some are single ended; this should not change.
 expected <- c("single_end", "single_end", "paired_end",
               "paired_end", "single_end", "paired_end", "paired_end")
-actual <-  as.character(pasilla_expt[["design"]][["batch"]])
+actual <-  as.character(pData(pasilla_expt)[["batch"]])
 test_that("Is the experimental design maintained for batches?", {
     expect_equal(expected, actual)
 })

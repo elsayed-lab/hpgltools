@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("065de_all.R")
 
 ## All of these functions will depend on an expt to play with:

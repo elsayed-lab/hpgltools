@@ -80,7 +80,7 @@ plot_batchsv <- function(expt, svs, sv = 1, batch_column = "batch", factor_type 
 
   factor_df <- data.frame(
     "sample" = samples,
-    "factor" = as.integer(as.factor(expt[["design"]][[batch_column]])),
+    "factor" = as.integer(as.factor(pData(expt)[[batch_column]])),
     "fill" = expt[["colors"]],
     "condition" = expt[["conditions"]],
     "batch" = expt[["batches"]],

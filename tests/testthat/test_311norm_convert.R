@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("311norm_convert.R")
 
 load("pasilla_df.rda")

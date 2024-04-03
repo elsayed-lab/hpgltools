@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-#library(testthat)
-#library(hpgltools)
 context("060expt.R")
 
 ## make_pombe_expt() invokes create_expt()
@@ -161,7 +159,6 @@ tt <- file.remove("testing_write_expt.xlsx")
 test_that("Did write_expt() create pictures?", {
   expect_equal("data.frame", class(testing[["legend"]])[[1]])
   expect_equal("data.frame", class(testing[["annotations"]])[[1]])
-  expect_equal("data.frame", class(testing[["design"]])[[1]])
   expect_equal("gg", class(testing[["raw_libsize"]])[[1]])
   expect_equal("gg", class(testing[["raw_nonzero"]])[[1]])
   expect_equal("gg", class(testing[["raw_density"]])[[1]])

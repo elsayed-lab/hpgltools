@@ -1,6 +1,4 @@
 start_time <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("040annotation_orgdb.R")
 ## 2017-12, exported functions in annotation_orgdb:
 ## load_host_annotations()(likely deprecated)

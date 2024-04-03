@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("135model_varpartition.R")
 ## 2017-12, exported functions in model_varpartition:
 ## replot_varpart_percent(), varpart(), varpart_summaries()

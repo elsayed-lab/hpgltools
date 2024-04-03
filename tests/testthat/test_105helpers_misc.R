@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("105helpers_misc.R")
 
 ## This function actually makes untenable assumptions about where the repository lives.

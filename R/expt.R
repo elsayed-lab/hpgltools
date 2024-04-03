@@ -64,7 +64,6 @@ combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, a
 
   new <- a4Base::combineTwoExpressionSet(exp1, exp2)
   expt1[["expressionset"]] <- new
-  expt1[["design"]] <- pData(new)
   expt1[["conditions"]] <- pData(expt1)[["condition"]]
   names(expt1[["conditions"]]) <- rownames(pData(expt1))
   expt1[["batches"]] <- pData(expt1)[["batch"]]
@@ -198,7 +197,6 @@ concatenate_runs <- function(expt, column = "replicate") {
     samplenames[[rep]] <- paste(conditions[[rep]], batches[[rep]], sep = "-")
     colnames(final_data) <- column_names
   }
-  final_expt[["design"]] <- final_design
   metadata <- new("AnnotatedDataFrame", final_design)
   sampleNames(metadata) <- colnames(final_data)
   feature_data <- new("AnnotatedDataFrame", fData(expt))
@@ -1828,7 +1826,6 @@ set_expt_batches <- function(expt, fact, ids = NULL, ...) {
   }
   expt[["batches"]] <- fact
   pData(expt[["expressionset"]])[["batch"]] <- fact
-  expt[["design"]][["batch"]] <- fact
   message("The number of samples by batch are: ")
   print(table(pData(expt)[["batch"]]))
   return(expt)
@@ -1891,8 +1888,9 @@ set_expt_colors <- function(expt, colors = TRUE,
   }
 
   num_conditions <- length(levels(condition_factor))
-  num_samples <- nrow(expt[["design"]])
-  sample_ids <- expt[["design"]][["sampleid"]]
+  design <- pData(expt)
+  num_samples <- nrow(design)
+  sample_ids <- design[["sampleid"]]
   ## chosen_colors <- expt[["conditions"]]
   chosen_colors <- condition_factor
   chosen_names <- names(chosen_colors)
@@ -2002,9 +2000,9 @@ set_expt_colors <- function(expt, colors = TRUE,
         sample_color <- colors[[snum]]
         chosen_colors[[sampleid]] <- sample_color
         ## Set the condition for the changed samples to something unique.
-        original_condition <- expt[["design"]][sampleid, "condition"]
+        original_condition <- pData(expt)[sampleid, "condition"]
         changed_condition <- glue("{original_condition}{snum}")
-        expt[["design"]][sampleid, "condition"] <- changed_condition
+        ## expt[["design"]][sampleid, "condition"] <- changed_condition
         tmp_pdata <- pData(expt)
         old_levels <- levels(tmp_pdata[["condition"]])
         new_levels <- c(old_levels, changed_condition)
@@ -2085,7 +2083,7 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL,
     names(new_conditions) <- names(new_expt[["conditions"]])
     new_conditions[ids] <- fact
     new_expt[["conditions"]] <- as.factor(new_conditions)
-    new_expt[["design"]][["condition"]] <- new_cond
+    ## new_expt[["design"]][["condition"]] <- new_cond
     fact_vector <- new_conditions
   } else if (length(fact) == 1) {
     fact_name <- fact
@@ -2103,7 +2101,7 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL,
       fact_vector <- new_fact
       new_expt[["conditions"]] <- new_fact
       pData(new_expt[["expressionset"]])[["condition"]] <- new_fact
-      new_expt[["design"]][["condition"]] <- new_fact
+      ## new_expt[["design"]][["condition"]] <- new_fact
     } else {
       stop("The provided factor is not in the design matrix.")
     }
@@ -2112,7 +2110,7 @@ set_expt_conditions <- function(expt, fact = NULL, ids = NULL,
   } else {
     new_expt[["conditions"]] <- fact
     pData(new_expt[["expressionset"]])[["condition"]] <- fact
-    new_expt[["design"]][["condition"]] <- fact
+    ## new_expt[["design"]][["condition"]] <- fact
     fact_vector <- fact
   }
 

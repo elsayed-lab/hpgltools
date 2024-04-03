@@ -538,8 +538,8 @@ print.pca_result <- function(x, ...) {
   cond_column <- x[["cond_column"]]
   batch_column <- x[["batch_column"]]
 
-  color_levels <- toString(levels(as.factor(x[["design"]][[cond_column]])))
-  batch_levels <- toString(levels(as.factor(x[["design"]][[batch_column]])))
+  color_levels <- toString(levels(as.factor(pData(x)[[cond_column]])))
+  batch_levels <- toString(levels(as.factor(pData(x)[[batch_column]])))
   message("The result of performing a ", x[["pc_method"]], " dimension reduction.
 The x-axis is PC", x[["x_pc"]], " and the y-axis is PC", x[["y_pc"]], "
 Colors are defined by ", color_levels, "
@@ -578,8 +578,8 @@ print.preprocessing_metadata <- function(x, ...) {
   cond_column <- x[["cond_column"]]
   batch_column <- x[["batch_column"]]
 
-  color_levels <- toString(levels(as.factor(x[["design"]][[cond_column]])))
-  batch_levels <- toString(levels(as.factor(x[["design"]][[batch_column]])))
+  color_levels <- toString(levels(as.factor(pData(x)[[cond_column]])))
+  batch_levels <- toString(levels(as.factor(pData(x)[[batch_column]])))
   message("The result of performing a ", x[["pc_method"]], " dimension reduction.
 The x-axis is PC", x[["x_pc"]], " and the y-axis is PC", x[["y_pc"]], "
 Colors are defined by ", color_levels, "

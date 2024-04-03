@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("415solanum_betaceum.R: Test some Pseudomonas data.")
 
 sb_annot <- load_trinotate_annotations(

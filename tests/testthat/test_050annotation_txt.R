@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("050annotation_txt.R")
 ## 2017-12, exported functions in annotation_txt:
 ## load_trinotate_annotations() load_trinotate_go()
