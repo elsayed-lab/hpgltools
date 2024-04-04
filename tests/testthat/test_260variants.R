@@ -1,5 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(hpgldata)
 context("260variants.R")
 
 ## The functions in variants.R deal with the outputs from samtools mpileup,
@@ -32,7 +31,8 @@ untarred <- utils::untar(tarfile = system.file("share/clbr/vcfutils_output.tar.x
                                                package = "hpgldata"))
 ## Type in this context may be either percent or counts, this just defines the
 ## column to extract from the bcf file.
-snp_expt <- count_expt_snps(all_expt, annot_column = "bcffile")
+snp_expt <- count_expt_snps(all_expt, annot_column = "bcffile", reader = "readr",
+                            snp_column = "diff_count")
 expected <- 8295
 test_that("Do we have a decent number of variants?", {
   expect_equal(expected, nrow(exprs(snp_expt)))
@@ -89,8 +89,7 @@ actual <- 6
 ## Thus, we expect 11 variant positions found only in the 3 Tryp samples
 ## in gene TcCLB.510483.360
 expected <- snp_genes[["gene_summaries"]][["CLBr.Tryp"]][["TcCLB.510483.360"]]
-test_that("Do we observe the expected variants in a specific gene under a specific condition?",
-{
+test_that("Do we observe the expected variants?", {
   expect_equal(actual, expected)
 })
 

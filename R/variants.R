@@ -206,7 +206,7 @@ classify_variants <- function(metadata, coverage_column = "bedtoolscoveragefile"
 #' @export
 count_expt_snps <- function(expt, annot_column = "bcftable", tolower = TRUE,
                             snp_column = NULL, numerator_column = "PAO",
-                            denominator_column = "DP") {
+                            denominator_column = "DP", reader = "readr", verbose = FALSE) {
   samples <- rownames(pData(expt))
   if (isTRUE(tolower)) {
     samples <- tolower(samples)
@@ -217,13 +217,20 @@ count_expt_snps <- function(expt, annot_column = "bcftable", tolower = TRUE,
   }
 
   snp_dt <- NULL
-  if (is.null(numerator_column) && is.null(denominator_column)) {
-    snp_dt <- read_snp_columns(samples, file_lst, column = snp_column)
+  if (!is.null(snp_column)) {
+    snp_dt <- read_snp_columns(samples, file_lst, column = snp_column,
+                               reader = reader, verbose = verbose)
+  } else if (is.null(numerator_column) && is.null(denominator_column)) {
+    snp_dt <- read_snp_columns(samples, file_lst, column = snp_column,
+                               reader = reader, verbose = verbose)
   } else if (is.null(denominator_column)) {
-    snp_dt <- read_snp_columns(samples, file_lst, column = numerator_column)
+    snp_dt <- read_snp_columns(samples, file_lst, column = numerator_column,
+                               reader = reader, verbose = verbose)
   } else {
-    numerator_dt <- read_snp_columns(samples, file_lst, column = numerator_column)
-    denominator_dt <- read_snp_columns(samples, file_lst, column = denominator_column)
+    numerator_dt <- read_snp_columns(samples, file_lst, column = numerator_column,
+                                     reader = reader, verbose = verbose)
+    denominator_dt <- read_snp_columns(samples, file_lst, column = denominator_column,
+                                       reader = reader, verbose = verbose)
     snp_dt <- numerator_dt
     for (col in colnames(snp_dt)) {
       if (col == "rownames") {
@@ -972,15 +979,21 @@ snpnames2gr <- function(names, gr = NULL) {
 #' @param verbose Print information about the input data.
 #' @seealso [readr]
 #' @return A big honking data table.
-read_snp_columns <- function(samples, file_lst, column = "diff_count", verbose = FALSE) {
+read_snp_columns <- function(samples, file_lst, column = "diff_count",
+                             verbose = FALSE, reader = "readr") {
   ## Read the first file
   first_sample <- samples[1]
   if (isTRUE(verbose)) {
     mesg("Reading sample: ", first_sample, ".")
   }
   first_file <- file_lst[1]
-  first_read <- read.table(first_file, sep = "\t", header = 1)
-  ##first_read <- sm(readr::read_tsv(first_file, show_col_types = FALSE))
+  first_read <- NULL
+  if (reader == "readr") {
+    first_read <- readr::read_tsv(first_file, show_col_types = FALSE)
+  } else {
+    first_read <- read.table(first_file, sep = "\t", header = 1, comment.char = "")
+  }
+
   if (is.null(first_read[[column]])) {
     stop("The column: ", column, " does not appear to exist in the variant summary file.")
   }
@@ -1005,7 +1018,11 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count", verbose =
       mesg("Unable to find file: ", file, " for ", sample, ", skipping it.")
       next
     }
-    new_table <- read.table(file, sep = "\t", header = 1)
+    if (reader == "readr") {
+      new_table <- readr::read_tsv(file, show_col_types = FALSE)
+    } else {
+      new_table <- read.table(file, sep = "\t", header = 1, comment.char = "")
+    }
     if (class(new_table)[1] == "try-error") {
       next
     }

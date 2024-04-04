@@ -43,8 +43,8 @@ test_that("We merged the annotation data?", {
   expect_gt(actual, expected)
 })
 
-a909_counts <- utils::untar(tarfile = system.file("share/gbs_tnseq/gbs_essentiality_counts.tar.xz",
-                                                  package = "hpgldata"))
+a909_counts <- utils::untar(tarfile = system.file(
+  "share/gbs_tnseq/gbs_essentiality_counts.tar.xz", package = "hpgldata"))
 metadata <- system.file("share/gbs_tnseq/sagalactiae_samples.xlsx", package = "hpgldata")
 a909_expt <- create_expt(metadata = metadata, batch = FALSE, gene_info = a909_annot,
                          file_column = "a909_filename")
@@ -55,10 +55,10 @@ test_that("We created an expressionset?", {
 })
 
 ## Grab copies of some of the essentiality results
-a909_wig <- utils::untar(tarfile = system.file("share/gbs_tnseq/gbs_essentiality_wig.tar.xz",
-                                               package = "hpgldata"))
-a909_csv <- utils::untar(tarfile = system.file("share/gbs_tnseq/gbs_essentiality.tar.xz",
-                                               package = "hpgldata"))
+a909_wig <- utils::untar(tarfile = system.file(
+  "share/gbs_tnseq/gbs_essentiality_wig.tar.xz", package = "hpgldata"))
+a909_csv <- utils::untar(tarfile = system.file(
+  "share/gbs_tnseq/gbs_essentiality.tar.xz", package = "hpgldata"))
 
 saturation <- tnseq_saturation(
   "preprocessing/01/outputs/essentiality_sagalactiae_a909/trimmed_ca-v0M1.wig",

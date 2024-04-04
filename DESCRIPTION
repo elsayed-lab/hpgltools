@@ -47,6 +47,7 @@ Suggests:
   stringr, survJamda, SWATH2stats,
   taxize, testthat, tibble, tidyr, tidyselect, topGO, tximport,
   UniProt.ws, UpSetR, uwot, webp,
+  varhandle, variancePartition,
   WGCNA,
   xCell, xml2,
   Vennerable, venneuler
