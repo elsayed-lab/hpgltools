@@ -1019,7 +1019,7 @@ cluster_trees <- function(de_genes, cpdata, goid_map = "id2go.map", go_db = NULL
 #' @param node_data and this column for the cateogyr names.
 #' @param score_limit The scores must be better than this.
 #' @param sigforall Calculate significance for all categories.
-single_topgo_tree <- function(tg, score_column = "mf_fisher", node_data = "fmf_godata",
+single_topgo_tree <- function(tg, score_column = "fisher_mf", node_data = "fmf_godata",
                               score_limit = 0.1, sigforall = TRUE) {
   sig_results <- topGO::score(tg[["results"]][[score_column]]) <= score_limit
   num_included <- length(sig_results)
@@ -1028,7 +1028,7 @@ single_topgo_tree <- function(tg, score_column = "mf_fisher", node_data = "fmf_g
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     nodes <- try(sm(topGO::showSigOfNodes(
-      tg[["results"]][[node_data]],
+      tg[["godata"]][[score_column]],
       topGO::score(tg[["results"]][[score_column]]),
       useInfo = "all",
       sigForAll = sigforall,
@@ -1085,7 +1085,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   mf_fisher_nodes <- mf_fisher_tree <- NULL
   if (isTRUE(do_mf_fisher_tree)) {
-    mf_fisher <- single_topgo_tree(tg, score_column = "mf_fisher",
+    mf_fisher <- single_topgo_tree(tg, score_column = "fisher_mf",
                                    node_data = "fmf_godata", score_limit = score_limit,
                                    sigforall = sigforall)
     mf_fisher_nodes <- mf_fisher[["nodes"]]
@@ -1094,7 +1094,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   bp_fisher_nodes <- bp_fisher_tree <- NULL
   if (isTRUE(do_bp_fisher_tree)) {
-    bp_fisher <- single_topgo_tree(tg, score_column = "bp_fisher",
+    bp_fisher <- single_topgo_tree(tg, score_column = "fisher_bp",
                                    node_data = "fbp_godata", score_limit = score_limit,
                                    sigforall = sigforall)
     bp_fisher_nodes <- bp_fisher[["nodes"]]
@@ -1103,7 +1103,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   cc_fisher_nodes <- cc_fisher_tree <- NULL
   if (isTRUE(do_cc_fisher_tree)) {
-    cc_fisher <- single_topgo_tree(tg, score_column = "cc_fisher",
+    cc_fisher <- single_topgo_tree(tg, score_column = "fisher_cc",
                                    node_data = "fcc_godata", score_limit = score_limit,
                                    sigforall = sigforall)
     cc_fisher_nodes <- cc_fisher[["nodes"]]
@@ -1112,7 +1112,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   mf_ks_nodes <- mf_ks_tree <- NULL
   if (isTRUE(do_mf_ks_tree)) {
-    mf_ks <- single_topgo_tree(tg, score_column = "mf_ks",
+    mf_ks <- single_topgo_tree(tg, score_column = "ks_mf",
                                node_data = "kmf_godata", score_limit = score_limit,
                                sigforall = sigforall)
     mf_ks_nodes <- mf_ks[["nodes"]]
@@ -1121,7 +1121,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   bp_ks_nodes <- bp_ks_tree <- NULL
   if (isTRUE(do_bp_ks_tree)) {
-    bp_ks <- single_topgo_tree(tg, score_column = "bp_ks",
+    bp_ks <- single_topgo_tree(tg, score_column = "ks_bp",
                                node_data = "kbp_godata", score_limit = score_limit,
                                sigforall = sigforall)
     bp_ks_nodes <- bp_ks[["nodes"]]
@@ -1130,7 +1130,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   cc_ks_nodes <- cc_ks_tree <- NULL
   if (isTRUE(do_cc_ks_tree)) {
-    cc_ks <- single_topgo_tree(tg, score_column = "cc_ks",
+    cc_ks <- single_topgo_tree(tg, score_column = "ks_cc",
                                node_data = "kcc_godata", score_limit = score_limit,
                                sigforall = sigforall)
     cc_ks_nodes <- cc_ks[["nodes"]]
@@ -1139,7 +1139,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   mf_el_nodes <- mf_el_tree <- NULL
   if (isTRUE(do_mf_el_tree)) {
-    mf_el <- single_topgo_tree(tg, score_column = "mf_el",
+    mf_el <- single_topgo_tree(tg, score_column = "el_mf",
                                node_data = "fmf_godata", score_limit = score_limit,
                                sigforall = sigforall)
     mf_el_nodes <- mf_el[["nodes"]]
@@ -1148,7 +1148,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   bp_el_nodes <- bp_el_tree <- NULL
   if (isTRUE(do_bp_el_tree)) {
-    bp_el <- single_topgo_tree(tg, score_column = "bp_el",
+    bp_el <- single_topgo_tree(tg, score_column = "el_bp",
                                node_data = "fbp_godata", score_limit = score_limit,
                                sigforall = sigforall)
     bp_el_nodes <- mf_el[["nodes"]]
@@ -1157,7 +1157,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   cc_el_nodes <- cc_el_tree <- NULL
   if (isTRUE(do_cc_el_tree)) {
-    cc_el <- single_topgo_tree(tg, score_column = "cc_el",
+    cc_el <- single_topgo_tree(tg, score_column = "el_cc",
                                node_data = "fcc_godata", score_limit = score_limit,
                                sigforall = sigforall)
     cc_el_nodes <- mf_el[["nodes"]]
@@ -1166,7 +1166,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   mf_weight_nodes <- mf_weight_tree <- NULL
   if (isTRUE(do_mf_weight_tree)) {
-    mf_weight <- single_topgo_tree(tg, score_column = "mf_weight",
+    mf_weight <- single_topgo_tree(tg, score_column = "weight_mf",
                                node_data = "fmf_godata", score_limit = score_limit,
                                sigforall = sigforall)
     mf_weight_nodes <- mf_el[["nodes"]]
@@ -1175,7 +1175,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   bp_weight_nodes <- bp_weight_tree <- NULL
   if (isTRUE(do_bp_weight_tree)) {
-    bp_weight <- single_topgo_tree(tg, score_column = "bp_weight",
+    bp_weight <- single_topgo_tree(tg, score_column = "weight_bp",
                                node_data = "fbp_godata", score_limit = score_limit,
                                sigforall = sigforall)
     bp_weight_nodes <- bp_el[["nodes"]]
@@ -1184,7 +1184,7 @@ topgo_trees <- function(tg, score_limit = 0.01, sigforall = TRUE,
 
   cc_weight_nodes <- cc_weight_tree <- NULL
   if (isTRUE(do_cc_weight_tree)) {
-    cc_weight <- single_topgo_tree(tg, score_column = "cc_weight",
+    cc_weight <- single_topgo_tree(tg, score_column = "weight_cc",
                                node_data = "fcc_godata", score_limit = score_limit,
                                sigforall = sigforall)
     cc_weight_nodes <- cc_el[["nodes"]]

@@ -4,11 +4,13 @@
 \alias{print.biomart_go}
 \title{Print the results of load_biomart_go().}
 \usage{
-\method{print}{biomart_go}(x)
+\method{print}{biomart_go}(x, ...)
 }
 \arguments{
 \item{x}{List from load_biomart_go() containing the table of data,
 mart used, host used, name of the mart, and attributes.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print the results of load_biomart_go().

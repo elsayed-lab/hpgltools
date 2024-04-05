@@ -30,6 +30,10 @@ file of interest.}
 
 \item{chosen_func}{If set, use this function to summarize the result.}
 
+\item{species}{Specify a species, or glob it.}
+
+\item{type}{Specify a type of search, usually genome and/or rRNA.}
+
 \item{basedir}{Root directory containing the files/logs of metadata.}
 
 \item{which}{Take the first entry, or some subset.}

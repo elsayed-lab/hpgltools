@@ -80,7 +80,7 @@ plot_batchsv <- function(expt, svs, sv = 1, batch_column = "batch", factor_type 
 
   factor_df <- data.frame(
     "sample" = samples,
-    "factor" = as.integer(as.factor(expt[["design"]][[batch_column]])),
+    "factor" = as.integer(as.factor(pData(expt)[[batch_column]])),
     "fill" = expt[["colors"]],
     "condition" = expt[["conditions"]],
     "batch" = expt[["batches"]],
@@ -242,6 +242,7 @@ plot_pcfactor <- function(pc_df, expt, exp_factor = "condition", component = "PC
 #' no longer actually a dotplot, but a point plot, but who is counting?
 #'
 #' @param data Expt, expressionset, or data frame.
+#' @param design Specify metadata if desired.
 #' @param colors Color scheme if data is not an expt.
 #' @param method Correlation or distance method to use.
 #' @param plot_legend Include a legend on the side?
@@ -355,7 +356,7 @@ plot_sm <- function(data, design = NULL, colors = NULL, method = "pearson", plot
     sm_plot <- ggplot(sm_df,
                       aes(x = .data[["num"]], y = .data[["sm"]],
                           shape = .data[["batch"]], fill = .data[["condition"]])) +
-      ggplot2::geom_hline(colour = "red", yintercept = ylimit, size = 1) +
+      ggplot2::geom_hline(colour = "red", yintercept = ylimit, linewidth = 1) +
       ggplot2::geom_point(size = dot_size,
                           aes(shape = .data[["batch"]],
                               colour = .data[["condition"]],
@@ -390,7 +391,7 @@ plot_sm <- function(data, design = NULL, colors = NULL, method = "pearson", plot
       sm_df,
       aes(x = .data[["sample"]], y = .data[["sm"]],
           shape = .data[["batch"]], fill = .data[["condition"]])) +
-      ggplot2::geom_hline(color = "red", yintercept = ylimit, size = 1) +
+      ggplot2::geom_hline(color = "red", yintercept = ylimit, linewidth = 1) +
       ggplot2::geom_dotplot(binwidth = my_binwidth,
                             binaxis = "y",
                             stackdir = "center",

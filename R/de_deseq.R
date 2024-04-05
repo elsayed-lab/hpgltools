@@ -172,8 +172,10 @@ deseq_pairwise <- function(...) {
 #' @param extra_contrasts Provide extra contrasts here.
 #' @param annot_df Include some annotation information in the results?
 #' @param force Force deseq to accept data which likely violates its assumptions.
+#' @param keepers List of explicit contrasts to perform instead of all.
 #' @param deseq_method The DESeq2 manual shows a few ways to invoke it, I make
 #'  2 of them available here.
+#' @param fittype Method to fir the data.
 #' @param ... Triple dots!  Options are passed to arglist.
 #' @return List including the following information:
 #'  run = the return from calling DESeq()
@@ -193,7 +195,7 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
                             batches = NULL, model_cond = TRUE,
                             model_batch = TRUE, model_intercept = FALSE,
                             alt_model = NULL, extra_contrasts = NULL,
-                            annot_df = NULL, force = FALSE,
+                            annot_df = NULL, force = FALSE, keepers = NULL,
                             deseq_method = "long", fittype = "parametric", ...) {
   arglist <- list(...)
 
@@ -370,7 +372,7 @@ deseq2_pairwise <- function(input = NULL, conditions = NULL,
   ## to handle DESeq's contrast method.
   apc <- make_pairwise_contrasts(model_data, conditions,
                                  extra_contrasts = extra_contrasts,
-                                 do_identities = FALSE,
+                                 do_identities = FALSE, keepers = keepers,
                                  ...)
   contrast_order <- apc[["names"]]
   contrast_strings <- apc[["all_pairwise"]]

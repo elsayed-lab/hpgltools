@@ -7,7 +7,7 @@
 snp_density_primers(
   snp_count,
   pdata_column = "condition",
-  condition = "z2.3",
+  condition = NULL,
   cutoff = 20,
   bin_width = 600,
   divide = FALSE,
@@ -24,7 +24,12 @@ snp_density_primers(
   feature_type_column = "type",
   feature_id = "ID",
   feature_name = "description",
-  truncate = TRUE
+  truncate = TRUE,
+  xref_genes = TRUE,
+  verbose = FALSE,
+  min_contig_length = NULL,
+  min_gc_prop = 0.25,
+  max_nmer_run = 5
 )
 }
 \arguments{
@@ -69,6 +74,16 @@ interest.}
 
 \item{truncate}{Truncate the results to just the columns I think
 are useful.}
+
+\item{xref_genes}{Cross reference the result against the nearest gene?}
+
+\item{verbose}{Talky talky?}
+
+\item{min_contig_length}{Skip any regions on small contigs?}
+
+\item{min_gc_prop}{Minimum GC content for a suitable primer.}
+
+\item{max_nmer_run}{Filter candidates on maximum nmer runs?}
 }
 \description{
 It is hoped that this will point out regions of a genome which

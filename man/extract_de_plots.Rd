@@ -17,6 +17,7 @@ extract_de_plots(
   n = NULL,
   logfc = 1,
   pval = 0.05,
+  adjp = TRUE,
   found_table = NULL,
   p_type = "adj",
   color_high = NULL,
@@ -47,9 +48,13 @@ handle other invocations too.}
 
 \item{z}{z-score cutoff for coefficient significance.}
 
+\item{n}{Choose the top/bottom-n by logFC.}
+
 \item{logfc}{What logFC to use for the MA plot horizontal lines.}
 
 \item{pval}{Cutoff to define 'significant' by p-value.}
+
+\item{adjp}{Use adjusted p-value?}
 
 \item{found_table}{Result from edger to use, left alone it chooses the first.}
 
@@ -65,7 +70,7 @@ handle other invocations too.}
 
 \item{label}{Label this number of top-diff genes.}
 
-\item{label_columns}{Use this column for labelling genes.}
+\item{label_column}{Use this column for labelling genes.}
 }
 \value{
 a plot!

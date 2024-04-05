@@ -4,11 +4,13 @@
 \alias{print.snp_intersections}
 \title{Print some information about the result of snp_intersections().}
 \usage{
-\method{print}{snp_intersections}(x)
+\method{print}{snp_intersections}(x, ...)
 }
 \arguments{
 \item{x}{List containing a datatable of intersections, summaries by
 chromosome and gene.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print some information about the result of snp_intersections().

@@ -29,8 +29,7 @@ get_sig_genes(
 
 \item{p}{P-value cutoff.}
 
-\item{min_mean_exprs}{Subset the genes deemed significant with an
-minimum expression cutoff.}
+\item{min_mean_exprs}{Exclude genes with less than this mean expression.}
 
 \item{exprs_column}{Use this column for filtering by expression.}
 
@@ -42,6 +41,8 @@ positive, otherwise 1/positive is taken).  This effectively
 tells me if this is a log fold change or not.}
 
 \item{p_column}{Table's column containing (adjusted or not)p-values.}
+
+\item{comparison}{When set to orequal, use >=/<= instead of jsut >/<.}
 }
 \value{
 Subset of the up/down genes given the provided criteria.

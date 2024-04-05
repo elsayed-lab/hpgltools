@@ -28,6 +28,7 @@
 #' @param alt_model Not currently used, but passed from all_pairwise()
 #' @param model_batch Not currently used, but passed from all_pairwise()
 #' @param force Force as input non-normalized data?
+#' @param keepers Set of specific contrasts to perform instead of all.
 #' @param fx What function to use for mean/median?
 #' @param ... Extra options passed to arglist.
 #' @return Df of pseudo-logFC, p-values, numerators, and denominators.
@@ -42,7 +43,7 @@
 basic_pairwise <- function(input = NULL, design = NULL, conditions = NULL,
                            batches = NULL, model_cond = TRUE, model_intercept = FALSE,
                            alt_model = NULL, model_batch = FALSE, force = FALSE,
-                           fx = "mean", ...) {
+                           keepers = NULL, fx = "mean", ...) {
   arglist <- list(...)
   if (!is.null(arglist[["input"]])) {
     input <- arglist[["input"]]
@@ -119,7 +120,7 @@ basic_pairwise <- function(input = NULL, design = NULL, conditions = NULL,
   model_data <- model_choice[["chosen_model"]]
   ## basic_pairwise() does not support extra contrasts, but they may be passed through via ...
   apc <- make_pairwise_contrasts(model_data, conditions, do_identities = FALSE, do_extras = FALSE,
-                                 ...)
+                                 keepers = keepers, ...)
   contrasts_performed <- c()
   show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
   if (isTRUE(show_progress)) {

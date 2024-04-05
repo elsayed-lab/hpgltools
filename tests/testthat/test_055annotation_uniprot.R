@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("055annotation_uniprot.R")
 ## 2017-12, exported functions in annotation_gff:
 ## load_uniprot_annotations() download_uniprot_proteome()

@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("470expt_spyogenes.R: Does a small bacterial RNAseq experiment load?")
 
 mgas_data <- new.env()

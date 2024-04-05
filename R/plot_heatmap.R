@@ -317,6 +317,7 @@ plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_
 #' @param data Expt/expressionset/dataframe set of samples.
 #' @param colors Color scheme of the samples (not needed if input is an expt).
 #' @param design Design matrix describing the experiment (gotten for free if an expt).
+#' @param heatmap_colors Specify a colormap.
 #' @param expt_names Alternate samples names.
 #' @param dendrogram Where to put dendrograms?
 #' @param row_label Passed through to heatmap.2.

@@ -7,9 +7,9 @@
 overlap_groups(input, sort = TRUE)
 }
 \arguments{
-\item{sort}{Sort the result?}
+\item{input}{upset data structure.}
 
-\item{lst}{upset data structure.}
+\item{sort}{Sort the result?}
 }
 \description{
 Taken from: https://github.com/hms-dbmi/UpSetR/issues/85

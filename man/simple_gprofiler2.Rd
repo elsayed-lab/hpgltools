@@ -29,6 +29,7 @@ simple_gprofiler2(
   bg = NULL,
   pseudo_gsea = TRUE,
   id_col = "row.names",
+  plot_type = "dotplot",
   excel = NULL
 )
 }
@@ -84,6 +85,8 @@ longer.}
 \item{id_col}{Which column in the table should be used for gene ID
 crossreferencing?  gProfiler uses Ensembl ids.  So if you have a table of
 entrez or whatever, translate it!}
+
+\item{plot_type}{Use this plot type for images.}
 
 \item{excel}{Print the results to an excel file?}
 }

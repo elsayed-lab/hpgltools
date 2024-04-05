@@ -4,11 +4,13 @@
 \alias{print.pattern_counted}
 \title{Print some information about a pattern counted genome}
 \usage{
-\method{print}{pattern_counted}(x)
+\method{print}{pattern_counted}(x, ...)
 }
 \arguments{
 \item{x}{Dataframe containing how many instances of the pattern
 were observed in every gene.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print some information about a pattern counted genome

@@ -4,12 +4,14 @@
 \alias{print.clusterprofiler_result}
 \title{Print a clusterprofiler over representation search.}
 \usage{
-\method{print}{clusterprofiler_result}(x)
+\method{print}{clusterprofiler_result}(x, ...)
 }
 \arguments{
 \item{x}{Monstrous list of the various results, including but not
 limited to plots, go-gene mappings, enrichmed, kegg, david, GO
 analyses.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print a clusterprofiler over representation search.

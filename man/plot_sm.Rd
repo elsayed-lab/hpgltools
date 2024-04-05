@@ -20,6 +20,8 @@ plot_sm(
 \arguments{
 \item{data}{Expt, expressionset, or data frame.}
 
+\item{design}{Specify metadata if desired.}
+
 \item{colors}{Color scheme if data is not an expt.}
 
 \item{method}{Correlation or distance method to use.}

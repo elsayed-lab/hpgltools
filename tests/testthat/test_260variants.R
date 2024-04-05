@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("260variants.R")
 
 ## The functions in variants.R deal with the outputs from samtools mpileup,
@@ -33,7 +31,8 @@ untarred <- utils::untar(tarfile = system.file("share/clbr/vcfutils_output.tar.x
                                                package = "hpgldata"))
 ## Type in this context may be either percent or counts, this just defines the
 ## column to extract from the bcf file.
-snp_expt <- count_expt_snps(all_expt, annot_column = "bcffile")
+snp_expt <- count_expt_snps(all_expt, annot_column = "bcffile", reader = "readr",
+                            snp_column = "diff_count")
 expected <- 8295
 test_that("Do we have a decent number of variants?", {
   expect_equal(expected, nrow(exprs(snp_expt)))
@@ -53,10 +52,14 @@ test_that("Do we have sensible pData?", {
   expect_equal(snp_conditions, expt_conditions)
 })
 
-## For complext experimental designs, this can take quite a long time.
+## For complex experimental designs, this can take quite a long time.
 snp_sets <- get_snp_sets(snp_expt, factor = "condition")
+## 202311 It looks like vennerable has changed the order it returns
+## I checked the snp sets and they look correct, just in different order.
+## So, lets use the pData levels to make sure it is determinate.
+name_entries <- levels(pData(snp_expt)[["condition"]])
+expected <- as.character(glue("{name_entries[3]}, {name_entries[4]}"))
 actual <- snp_sets[["set_names"]][["0011"]]
-expected <- "CLBr.Tryp, CLBr.Epi"
 test_that("Do we get sensible set names from get_snp_sets?", {
   expect_equal(actual, expected)
 })
@@ -86,8 +89,7 @@ actual <- 6
 ## Thus, we expect 11 variant positions found only in the 3 Tryp samples
 ## in gene TcCLB.510483.360
 expected <- snp_genes[["gene_summaries"]][["CLBr.Tryp"]][["TcCLB.510483.360"]]
-test_that("Do we observe the expected variants in a specific gene under a specific condition?",
-{
+test_that("Do we observe the expected variants?", {
   expect_equal(actual, expected)
 })
 

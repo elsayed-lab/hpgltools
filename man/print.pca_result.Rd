@@ -4,11 +4,13 @@
 \alias{print.pca_result}
 \title{Print the result from one of the various dimension reductions.}
 \usage{
-\method{print}{pca_result}(x)
+\method{print}{pca_result}(x, ...)
 }
 \arguments{
 \item{x}{List comprised of the residuals, variance summary, tables,
 the PCA-esque plot, experimental design, etc.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print the result from one of the various dimension reductions.

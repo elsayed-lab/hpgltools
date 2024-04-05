@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 ## The following library() seems to be required for glmQLFTest() to work.
 tt <- library(edgeR)
 context("326de_edger.R: Does hpgltools work with edgeR?")

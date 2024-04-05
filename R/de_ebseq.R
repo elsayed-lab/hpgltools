@@ -28,6 +28,7 @@
 #' @param model_intercept Not currently used, but passed from all_pairwise()
 #' @param alt_model Not currently used, but passed from all_pairwise()
 #' @param model_batch Not currently used, but passed from all_pairwise()
+#' @param keepers Perform a specific set of contrasts instead of all?
 #' @param force Force ebseq to accept bad data (notably NA containing stuff from proteomics.
 #' @param ... Extra arguments currently unused.
 #' @return List containing tables from ebseq, the conditions tested, and the
@@ -41,7 +42,7 @@
 #' @export
 ebseq_pairwise <- function(input = NULL, patterns = NULL, conditions = NULL,
                            batches = NULL, model_cond = NULL, model_intercept = NULL,
-                           alt_model = NULL, model_batch = NULL,
+                           alt_model = NULL, model_batch = NULL, keepers = NULL,
                            ng_vector = NULL, rounds = 10, target_fdr = 0.05,
                            method = "pairwise_subset", norm = "median",
                            force = FALSE,
@@ -51,13 +52,12 @@ ebseq_pairwise <- function(input = NULL, patterns = NULL, conditions = NULL,
   input <- sanitize_expt(input)
   input_data <- choose_binom_dataset(input, force = force)
   design <- pData(input)
-  conditions <- design[["condition"]]
-  batches <- design[["batches"]]
+  conditions <- pData(input)[["condition"]]
+  batches <- pData(input)[["batches"]]
   data <- as.matrix(input_data[["data"]])
   conditions_table <- table(conditions)
   batches_table <- table(batches)
   condition_levels <- levels(as.factor(conditions))
-
 
   if (method == "pairwise_subset") {
     result <- ebseq_pairwise_subset(input,
@@ -114,6 +114,7 @@ ebseq_pairwise <- function(input = NULL, patterns = NULL, conditions = NULL,
 #' @param model_cond Provided by all_pairwise(), ibid.
 #' @param model_intercept Ibid.
 #' @param alt_model Ibid.
+#' @param keepers Specify a set of contrasts to perform here.
 #' @param conditions Factor of conditions in the data, used to define the
 #'  contrasts.
 #' @param norm EBseq normalization method to apply to the data.
@@ -123,7 +124,7 @@ ebseq_pairwise <- function(input = NULL, patterns = NULL, conditions = NULL,
 #' @seealso [ebseq_pairwise()]
 ebseq_pairwise_subset <- function(input, ng_vector = NULL, rounds = 10, target_fdr = 0.05,
                                   model_batch = FALSE, model_cond = TRUE,
-                                  model_intercept = FALSE, alt_model = NULL,
+                                  model_intercept = FALSE, alt_model = NULL, keepers = NULL,
                                   conditions = NULL, norm = "median", force = FALSE, ...) {
   mesg("Starting EBSeq pairwise subset.")
   ## Now that I understand pData a bit more, I should probably remove the
@@ -141,7 +142,8 @@ ebseq_pairwise_subset <- function(input, ng_vector = NULL, rounds = 10, target_f
       model_batch = FALSE, model_cond = TRUE, model_intercept = FALSE, alt_model = NULL,
       ...)
   model_data <- model_choice[["chosen_model"]]
-  apc <- make_pairwise_contrasts(model_data, conditions, do_identities = FALSE, do_extras = FALSE,
+  apc <- make_pairwise_contrasts(model_data, conditions, do_identities = FALSE,
+                                 do_extras = FALSE, keepers = keepers,
                                  ...)
   contrasts_performed <- c()
   retlst <- list()
@@ -242,6 +244,8 @@ ebseq_few <- function(data, conditions,
   interesting_patterns <- as.data.frame(patterns[-1, ])
 
   table_lst <- list()
+  ## FIXME: Change this to use a portion of make_pairwise_contrasts()
+  ## so that numerators and denominators do not get flipped.
   for (i in seq_len(ncol(fold_changes[["FCMat"]]))) {
     column <- colnames(fold_changes[["FCMat"]])[i]
     contrast <- gsub(pattern = "Over", replacement = "_vs_", x = column)
@@ -295,6 +299,7 @@ ebseq_two <- function(pair_data, conditions,
                       force = FALSE) {
   normalized <- ebseq_size_factors(pair_data, norm = norm)
   mesg("Starting EBTest of ", numerator, " vs. ", denominator, ".")
+  ## I think this should be removed in lieu of the imputation functions
   if (isTRUE(force)) {
     mesg("Forcing out NA values by putting in the mean of all data.")
     ## Put NA values (proteomics) to the mean of the existing values in the hopes
@@ -303,23 +308,23 @@ ebseq_two <- function(pair_data, conditions,
     pair_data[na_idx] <- mean(pair_data, na.rm = TRUE)
   }
   eb_output <- sm(EBSeq::EBTest(
-                             Data = pair_data, NgVector = NULL, Conditions = conditions,
-                             sizeFactors = normalized, maxround = rounds))
-  posteriors <- EBSeq::GetPP(eb_output)
+    Data = pair_data, NgVector = NULL, Conditions = conditions,
+    sizeFactors = normalized, maxround = rounds))
+  posteriors <- EBSeq::GetPPMat(eb_output)
   fold_changes <- EBSeq::PostFC(eb_output)
   eb_result <- EBSeq::GetDEResults(eb_output, FDR = target_fdr)
-  table <- data.frame(row.names = names(fold_changes[["PostFC"]]))
+  table <- data.frame(row.names = rownames(posteriors))
   table[["ebseq_FC"]] <- fold_changes[["RealFC"]]
   table[["logFC"]] <- log2(table[["ebseq_FC"]])
-  table[["ebseq_c1mean"]] <- as.numeric(eb_output[["C1Mean"]][[1]])
-  table[["ebseq_c2mean"]] <- as.numeric(eb_output[["C2Mean"]][[1]])
+  table[["ebseq_c1mean"]] <- as.numeric(eb_output[["Mean"]][[1]])
+  table[["ebseq_c2mean"]] <- as.numeric(eb_output[["Mean"]][[2]])
   table[["ebseq_mean"]] <- as.numeric(eb_output[["MeanList"]][[1]])
   table[["ebseq_var"]] <- as.numeric(eb_output[["VarList"]][[1]])
   table[["ebseq_postfc"]] <- fold_changes[["PostFC"]]
   table <- merge(table, as.data.frame(eb_result[["PPMat"]]),
                  by = "row.names", all.x = TRUE)
   rownames(table) <- table[["Row.names"]]
-  table <- table[, -1]
+  table[["Row.names"]] <- NULL
   ## This is incorrect I think, but being used as a placeholder until I figure out how to
   ## properly adjust a set prior probabilities.
   mesg("Copying ppee values as ajusted p-values until I figure out how to deal with them.")

@@ -4,11 +4,13 @@
 \alias{print.classifier_evaluation}
 \title{Print the result from self_evaluate_model().}
 \usage{
-\method{print}{classifier_evaluation}(x)
+\method{print}{classifier_evaluation}(x, ...)
 }
 \arguments{
 \item{x}{List showing AUC/ROC curves of the test performed, summary
 thereof, the confusion matrix, and vector of incorrectly called samples.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print the result from self_evaluate_model().

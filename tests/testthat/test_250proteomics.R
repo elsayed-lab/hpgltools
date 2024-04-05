@@ -1,6 +1,5 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
+library(hpgldata)
 context("250proteomics.R")
 
 ## Available functions:  add_conditional_nas(), extract_mayu_pps_fdr(),
@@ -62,6 +61,7 @@ untarred <- utils::untar(tarfile = system.file("share/mtb_prot/sb_prot.tar.xz",
 ## plotting, metadata is a copy of the metadata, and sample_data is the fun.
 pyprophet_fun <- extract_pyprophet_data(metadata = meta,
                                         pyprophet_column = "diascored")
+
 test_that("Did extract_pyprophet_data have failures?", {
   expect_equal(NULL, pyprophet_fun[["failed"]])
 })
@@ -107,7 +107,8 @@ test_that("Does plot_pyprophet_counts return some plots?", {
 
 ## widths with respect to counts are a surprisingly reliable way to find
 ## problematic samples.
-pyprophet_lwidths <- plot_pyprophet_xy(pyprophet_fun, x_type = "count", y_type = "leftwidth")
+pyprophet_lwidths <- plot_pyprophet_xy(pyprophet_fun, x_type = "count",
+                                       y_type = "leftwidth")
 test_that("Does plot_pyprophet_xy return a plot?", {
   expect_equal(class(pyprophet_lwidths)[1], "gg")
 })

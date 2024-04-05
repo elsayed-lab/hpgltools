@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("175normalize_transform.R")
 ## 2017-12, exported functions in normalize_transform:
 ## transform_counts(), this function has switches for: rounding, voom, weighted voom, log2, log10

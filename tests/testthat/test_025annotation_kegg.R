@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("025annotation_kegg.R")
 ## 2017-12, exported functions in annotation_kegg:
 ## load_kegg_annotations(), map_kegg_to_ensembl()

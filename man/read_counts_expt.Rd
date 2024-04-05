@@ -15,6 +15,7 @@ read_counts_expt(
   suffix = NULL,
   countdir = NULL,
   tx_gene_map = NULL,
+  file_type = NULL,
   ...
 )
 }
@@ -37,7 +38,10 @@ read_counts_expt(
 
 \item{countdir}{Optional count directory to read from.}
 
-\item{tx_gene_map}{Dataframe which provides a mapping between transcript IDs and gene IDs.}
+\item{tx_gene_map}{Dataframe which provides a mapping between
+transcript IDs and gene IDs.}
+
+\item{file_type}{Short circuit the file format autodetection.}
 
 \item{...}{More options for happy time!}
 }

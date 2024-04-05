@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 cbcb <- sm(library(cbcbSEQ))
 context("320de_limma_batch.R: Does hpgltools work with limma?")
 

@@ -7,16 +7,18 @@ includes putative primers and the spec strings for expected
 variants.}
 \usage{
 choose_sequence_regions(
-  vector,
+  long_variant_vector,
   max_primer_length = 45,
-  topn = 200,
+  topn = NULL,
   bin_width = 600,
   genome = NULL,
-  target_temp = 58
+  target_temp = 58,
+  min_gc_prop = 0.25,
+  max_nmer_run = 5
 )
 }
 \arguments{
-\item{vector}{variant-based set of putative regions with variants
+\item{long_variant_vector}{variant-based set of putative regions with variants
 between conditions of interest.}
 
 \item{max_primer_length}{given this length as a start, whittle down
@@ -32,6 +34,10 @@ PCR amplicon length.}
 \item{genome}{(BS)Genome to search.}
 
 \item{target_temp}{PCR temperature to attempt to match.}
+
+\item{min_gc_prop}{Cutoff for minimum required GC content.}
+
+\item{max_nmer_run}{Maximum run of the same nucleotide allowed.}
 }
 \description{
 This function came out of our TMRC2 work and seeks to provide an

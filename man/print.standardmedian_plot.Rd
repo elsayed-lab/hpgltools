@@ -4,11 +4,13 @@
 \alias{print.standardmedian_plot}
 \title{Print the result of plot_sm()}
 \usage{
-\method{print}{standardmedian_plot}(x)
+\method{print}{standardmedian_plot}(x, ...)
 }
 \arguments{
 \item{x}{List containing the pairwise distances/correlations, median/mean values,
 quartiles, and the standard median plot.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print the result of plot_sm()

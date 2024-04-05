@@ -4,10 +4,12 @@
 \alias{print.correlation_heatmap}
 \title{Print the result of plot_corheat().}
 \usage{
-\method{print}{correlation_heatmap}(x)
+\method{print}{correlation_heatmap}(x, ...)
 }
 \arguments{
 \item{x}{List containing the correlations observed and a recorded heatmap.3().}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print the result of plot_corheat().

@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 library(pasilla)
 context("318norm_surrogates.R: Do surrogate estimators provide expected outputs?")
 

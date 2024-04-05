@@ -14,6 +14,7 @@ ebseq_pairwise(
   model_intercept = NULL,
   alt_model = NULL,
   model_batch = NULL,
+  keepers = NULL,
   ng_vector = NULL,
   rounds = 10,
   target_fdr = 0.05,
@@ -40,6 +41,8 @@ state, etc.}
 \item{alt_model}{Not currently used, but passed from all_pairwise()}
 
 \item{model_batch}{Not currently used, but passed from all_pairwise()}
+
+\item{keepers}{Perform a specific set of contrasts instead of all?}
 
 \item{ng_vector}{I think this is for isoform quantification, but am not yet
 certain.}

@@ -257,16 +257,22 @@ hpgl_voom <- function(dataframe, model = NULL, libsize = NULL,
 #' @param model_intercept Perform a cell-means or intercept model? A little more
 #'  difficult for me to understand.  I have tested and get the same answer
 #'  either way.
+#' @param alt_model Separate model matrix instead of the normal condition/batch.
 #' @param extra_contrasts Some extra contrasts to add to the list.
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 #'  de_vs_cb = (E-D)-(C-B),"
-#' @param alt_model Separate model matrix instead of the normal condition/batch.
 #' @param annot_df Data frame for annotations.
 #' @param libsize I've recently figured out that libsize is far more important
 #'  than I previously realized.  Play with it here.
+#' @param which_voom Try out different invocations of voom.
+#' @param limma_method And different invocations of limma itself.
+#' @param limma_robust Pass along the robust args for limma?
+#' @param voom_norm Use a specific normalization for voom?
+#' @param limma_trend Include a trendline in the limma plot?
 #' @param force Force data which may not be appropriate for limma into it?
+#' @param keepers Choose a set of contrasts instead of all.
 #' @param ... Use the elipsis parameter to feed options to write_limma().
 #' @return List including the following information:
 #'  macb = the mashing together of condition/batch so you can look at it
@@ -298,7 +304,8 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
                            annot_df = NULL, libsize = NULL,
                            which_voom = "limma", limma_method = "ls",
                            limma_robust = FALSE, voom_norm = "quantile",
-                           limma_trend = FALSE, force = FALSE, ...) {
+                           limma_trend = FALSE, force = FALSE,
+                           keepers = NULL, ...) {
   arglist <- list(...)
   ## This is used in the invocation of a voom() implementation for normalization.
   ## This is for the eBayes() call.
@@ -507,7 +514,7 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
   } else {
     message("Limma step 4/6: making and fitting contrasts with no intercept. (~ 0 + factors)")
     contrasts <- make_pairwise_contrasts(model = chosen_model, conditions = conditions,
-                                         extra_contrasts = extra_contrasts)
+                                         extra_contrasts = extra_contrasts, keepers = keepers)
     all_pairwise_contrasts <- contrasts[["all_pairwise_contrasts"]]
     contrast_string <- contrasts[["contrast_string"]]
     all_pairwise <- contrasts[["all_pairwise"]]

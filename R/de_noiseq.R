@@ -15,6 +15,15 @@
 #' @param model_batch Add batch to the model, noiseq has its own combat-like method,
 #'  so maybe not necessary?
 #' @param annot_df Extra annotations.
+#' @param k Taken from the noiseq docs.
+#' @param norm Normalization method (noiseq oddly defaults to rpkm).
+#' @param factor Metadata factor over which to iterate.
+#' @param lc taken from the noiseq docs.
+#' @param r taken from the noiseq docs.
+#' @param adj taken from the noiseq docs.
+#' @param a0per taken from the noiseq docs.
+#' @param filter Filter the data?
+#' @param keepers Perform the comparison only over these specific contrasts instead of all.
 #' @param ... Extra arguments.
 #' @return List similar to deseq_pairwise/edger_pairwise/etc.
 #' @seealso DOI:10.1093/nar/gkv711
@@ -24,7 +33,7 @@ noiseq_pairwise <- function(input = NULL, conditions = NULL,
                             model_batch = TRUE, annot_df = NULL,
                             k = 0.5, norm = "rpkm", factor = "condition",
                             lc = 1, r = 20, adj = 1.5, a0per = 0.9, filter = 1,
-                            ...) {
+                            keepers = NULL, ...) {
   arglist <- list(...)
 
   message("Starting noiseq pairwise comparisons.")
@@ -56,7 +65,7 @@ noiseq_pairwise <- function(input = NULL, conditions = NULL,
   }
   model_data <- model_choice[["chosen_model"]]
   model_string <- model_choice[["chosen_string"]]
-  apc <- make_pairwise_contrasts(model_data, conditions)
+  apc <- make_pairwise_contrasts(model_data, conditions, keepers = keepers)
 
   contrast_list <- list()
   result_list <- list()

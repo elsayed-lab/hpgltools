@@ -119,6 +119,7 @@ ggplt <- function(gg, filename = "ggplot.html",
 #' @param title_suffix Text to add to the titles of the plots.
 #' @param qq Include qq plots?
 #' @param ma Include pairwise ma plots?
+#' @param cv Include coefficient of variance plots? (they are slow)
 #' @param gene_heat Include a heatmap of the gene expression data?
 #' @param ... Extra parameters optionally fed to the various plots
 #' @return a loooong list of plots including the following:

@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("270motif.R")
 
 ## Also going to fail because eupathdb is not working yet.

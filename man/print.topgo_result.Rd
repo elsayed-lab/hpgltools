@@ -4,11 +4,13 @@
 \alias{print.topgo_result}
 \title{Print a topgo over representation search.}
 \usage{
-\method{print}{topgo_result}(x)
+\method{print}{topgo_result}(x, ...)
 }
 \arguments{
 \item{x}{List of the various over/under representation analyses
 provided by topGO, the associated plots, and coerced enrichResults.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print a topgo over representation search.

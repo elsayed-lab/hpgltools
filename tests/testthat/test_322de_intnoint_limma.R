@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("322de_limma_intnoint")
 
 ## I want to understand why I am getting different p-values between

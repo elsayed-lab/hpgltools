@@ -19,6 +19,7 @@ noiseq_pairwise(
   adj = 1.5,
   a0per = 0.9,
   filter = 1,
+  keepers = NULL,
   ...
 )
 }
@@ -35,6 +36,24 @@ noiseq_pairwise(
 so maybe not necessary?}
 
 \item{annot_df}{Extra annotations.}
+
+\item{k}{Taken from the noiseq docs.}
+
+\item{norm}{Normalization method (noiseq oddly defaults to rpkm).}
+
+\item{factor}{Metadata factor over which to iterate.}
+
+\item{lc}{taken from the noiseq docs.}
+
+\item{r}{taken from the noiseq docs.}
+
+\item{adj}{taken from the noiseq docs.}
+
+\item{a0per}{taken from the noiseq docs.}
+
+\item{filter}{Filter the data?}
+
+\item{keepers}{Perform the comparison only over these specific contrasts instead of all.}
 
 \item{...}{Extra arguments.}
 }

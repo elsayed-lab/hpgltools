@@ -4,10 +4,12 @@
 \alias{print.reordered_varpart}
 \title{Print the result of a reordered variance partition analysis.}
 \usage{
-\method{print}{reordered_varpart}(x)
+\method{print}{reordered_varpart}(x, ...)
 }
 \arguments{
 \item{x}{List of a resorted variance partition analysis and its plot.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print the result of a reordered variance partition analysis.

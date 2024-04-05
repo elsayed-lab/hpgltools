@@ -33,7 +33,7 @@ normalize_counts <- function(data, design = NULL, method = "raw", ...) {
   data_class <- class(data)[1]
   norm_performed <- "raw"
   if (data_class == "expt") {
-    design <- data[["design"]]
+    design <- pData(data)
     count_table <- exprs(data)
   } else if (data_class == "ExpressionSet") {
     count_table <- exprs(data)

@@ -20,6 +20,7 @@
 #' @param alpha Accepted fdr rate.
 #' @param stratify There are a few options here, I don't fully understand them.
 #' @param target Cutoff.
+#' @param add_coverage Add a line showing the actual coverage observed?
 #' @param filter Apply a filter?
 #' @param delta Not epsilon! (E.g. I forget what this does).
 #' @return List containing the various results and plots from proper.
@@ -163,6 +164,11 @@ controlled at 0.2, we need to have at least 5 samples in each treatment group.")
 #' @param mean_or_median Use mean or median values?
 #' @param filter Apply a filter?
 #' @param delta Not epsilon! (E.g. I forget what this does).
+#' @param add_coverage When plotting, add a line showing the actual coverage?
+#' @param target_power When creating boilerplate text for a grant, specify power goal.
+#' @param mean_gene_length When making text, specify the mean gene length expected.
+#' @param nt_per_read Specify how many reads are in each read(pair).
+#' @param describe_samples Add a guestimate of the number of samples required for the power goal.
 #' @return List containin the various tables and plots returned by PROPER.
 #' @seealso [PROPER] DOI:10.1093/bioinformatics/btu640
 #' @export

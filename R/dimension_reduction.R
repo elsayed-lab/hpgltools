@@ -170,11 +170,12 @@ pca_information <- function(expt, expt_design = NULL, expt_factors = c("conditio
   exprs_data <- NULL
   data_class <- class(expt)[1]
   if (data_class == "expt" || data_class == "Summarized_Experiment") {
-    expt_design <- expt[["design"]]
+    expt_design <- pData(expt)
     colors_chosen <- expt[["colors"]]
     exprs_data <- exprs(expt)
   } else if (data_class == "ExpressionSet") {
     exprs_data <- exprs(expt)
+    expt_design <- pData(expt)
   } else if (data_class == "matrix" || data_class == "data.frame") {
     exprs_data <- as.matrix(expt)
   } else {
@@ -553,6 +554,8 @@ plot_3d_pca <- function(pc_result, components = c(1, 2, 3),
 #'   rows in the metadata.
 #' @param expt_names Column or character list of preferred sample names.
 #' @param label_chars Maximum number of characters before abbreviating sample names.
+#' @param cond_column Column containing the color information.
+#' @param batch_column Column containing the shape information.
 #' @param ...  Arguments passed through to the pca implementations and plotter.
 #' @return a list containing the following (this is currently wrong)
 #' \enumerate{

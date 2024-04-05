@@ -90,13 +90,14 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
       "CC" = list())
   returns <- list()
   methods <- c("fisher", "KS", "EL", "weight")
-  cl <- parallel::makeCluster(5)
+  cl <- parallel::makeCluster(4)
   doParallel::registerDoParallel(cl)
   tt <- sm(requireNamespace("parallel"))
   tt <- sm(requireNamespace("doParallel"))
   tt <- sm(requireNamespace("iterators"))
   tt <- sm(requireNamespace("foreach"))
-  res <- foreach(c = 1:length(methods),
+  res <- foreach(c = seq_along(methods),
+                 ## .combine = "c", .multicombine = TRUE,
                  .packages = c("hpgltools", "Hmisc", "topGO")) %dopar% {
                    type <- methods[c]
                    returns[[type]] <- do_topgo(type, go_map = geneID2GO,
@@ -226,6 +227,7 @@ simple_topgo <- function(sig_genes, goid_map = "id2go.map", go_db = NULL,
   class(retlist) <- "topgo_result"
   return(retlist)
 }
+setGeneric("simple_topgo")
 
 #' An attempt to make topgo invocations a bit more standard.
 #'
@@ -474,9 +476,8 @@ make_id2gomap <- function(goid_map = "reference/go/id2go.map", go_db = NULL,
     if (is.null(go_db)) {
       stop("There is neither a id2go file nor a data frame of goids.")
     } else {
-      message("Attempting to generate a id2go file in the format expected by topGO.")
-
-      new_go <- reshape2::dcast(go_db, ID~., value.var = "GO",
+      message("Generating a id2go file in the format expected by topGO.")
+      new_go <- reshape2::dcast(go_db, ID ~ ., value.var = "GO",
                                 fun.aggregate = paste, collapse = ",")
 
       write.table(new_go, file = goid_map, sep = "\t",

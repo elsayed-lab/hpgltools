@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("185sequence_queries.R")
 
 a909_fasta <- system.file("share/gbs_tnseq/sagalactiae_a909.fasta", package = "hpgldata")

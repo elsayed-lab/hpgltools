@@ -51,6 +51,8 @@ replot_varpart_percent <- function(varpart_output, n = 30, column = NULL, decrea
 #' @param cpus Number cpus to use
 #' @param genes Number of genes to count.
 #' @param parallel Use doParallel?
+#' @param strict_filter Perform a strict filtering of the results via median_by_factor and dropping
+#'  any genes with a 0.
 #' @param mixed Used a mixed model?
 #' @param modify_expt Add annotation columns with the variance/factor?
 #' @return List of plots and variance data frames
@@ -58,7 +60,7 @@ replot_varpart_percent <- function(varpart_output, n = 30, column = NULL, decrea
 #' @export
 simple_varpart <- function(expt, predictor = NULL, factors = c("condition", "batch"),
                            chosen_factor = "batch", do_fit = FALSE, cor_gene = 1,
-                           cpus = NULL, genes = 40, parallel = TRUE,
+                           cpus = NULL, genes = 40, parallel = TRUE, strict_filter = TRUE,
                            mixed = FALSE, modify_expt = TRUE) {
   cl <- NULL
   para <- NULL
@@ -113,7 +115,15 @@ simple_varpart <- function(expt, predictor = NULL, factors = c("condition", "bat
     mesg("Attempting regular linear model with: ", model_string)
   }
   my_model <- as.formula(model_string)
+  ## I think the simple filter is insufficient and I need there to be
+  ## no genes with 0 counts in any one condition.
   norm <- sm(normalize_expt(expt, filter = "simple"))
+  if (isTRUE(strict_filter)) {
+    test <- sm(median_by_factor(norm, fact = "condition", fun = "mean"))
+    all_condition_gt_zero_idx <- rowSums(test[["medians"]] == 0) == 0
+    kept_gt <- rownames(exprs(norm))[all_condition_gt_zero_idx]
+    norm <- norm[kept_gt, ]
+  }
   data <- exprs(norm)
 
   design_sub <- design[, factors]
@@ -238,7 +248,7 @@ varpart_summaries <- function(expt, factors = c("condition", "batch"), cpus = 6)
   my_model <- as.formula(model_string)
   norm <- sm(normalize_expt(expt, filter = TRUE))
   data <- exprs(norm)
-  design <- expt[["design"]]
+  design <- pData(expt)
   summaries <- variancePartition::fitVarPartModel(data, my_model, design, fxn = summary)
   return(summaries)
 }

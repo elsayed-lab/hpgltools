@@ -4,10 +4,30 @@
 \alias{load_trinotate_go}
 \title{Read a csv file from trinotate and extract ontology data from it.}
 \usage{
-load_trinotate_go(trinotate = "reference/trinotate.csv")
+load_trinotate_go(
+  trinotate = "reference/trinotate.csv",
+  blast2go_column = "gene_ontology_BLASTX",
+  pfam_column = "gene_ontology_Pfam",
+  length_column = "transcript",
+  fill = 1500,
+  collapse = TRUE,
+  id_column = "#gene_id"
+)
 }
 \arguments{
 \item{trinotate}{CSV of trinotate annotation data.}
+
+\item{blast2go_column}{Column name containing BLAST2GO data.}
+
+\item{pfam_column}{Column containing data from pfam searches.}
+
+\item{length_column}{Column containing the gene lengths.}
+
+\item{fill}{Cheat and fill in an arbitrary value for gene lengths if all else fails.}
+
+\item{collapse}{Collapse isforms to genes?}
+
+\item{id_column}{Column containing the gene IDs.}
 }
 \value{
 List of the extracted GO data, a table of it, length data, and the

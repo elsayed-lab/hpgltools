@@ -4,11 +4,13 @@
 \alias{print.sig_genes}
 \title{Print some significantly differentially expressed genes.}
 \usage{
-\method{print}{sig_genes}(x)
+\method{print}{sig_genes}(x, ...)
 }
 \arguments{
 \item{x}{List containing the parameters used, gene subset tables,
 plots, xlsx output file, etc.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print some significantly differentially expressed genes.

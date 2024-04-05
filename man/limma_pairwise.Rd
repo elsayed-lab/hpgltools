@@ -22,6 +22,7 @@ limma_pairwise(
   voom_norm = "quantile",
   limma_trend = FALSE,
   force = FALSE,
+  keepers = NULL,
   ...
 )
 }
@@ -56,7 +57,19 @@ de_vs_cb = (E-D)-(C-B),"}
 \item{libsize}{I've recently figured out that libsize is far more important
 than I previously realized.  Play with it here.}
 
+\item{which_voom}{Try out different invocations of voom.}
+
+\item{limma_method}{And different invocations of limma itself.}
+
+\item{limma_robust}{Pass along the robust args for limma?}
+
+\item{voom_norm}{Use a specific normalization for voom?}
+
+\item{limma_trend}{Include a trendline in the limma plot?}
+
 \item{force}{Force data which may not be appropriate for limma into it?}
+
+\item{keepers}{Choose a set of contrasts instead of all.}
 
 \item{...}{Use the elipsis parameter to feed options to write_limma().}
 }

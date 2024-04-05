@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("321de_limma_combat.R: Does hpgltools work with limma and combat?")
 
 ## create_expt generates a .Rdata file which may be reread, do so.

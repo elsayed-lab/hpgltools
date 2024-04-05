@@ -63,7 +63,7 @@ all_adjusters <- function(input, design = NULL, estimate_type = "sva", batch1 = 
 
   if ("expt" %in% class(input)) {
     ## Gather all the likely pieces we can use
-    my_design <- input[["design"]]
+    my_design <- pData(input)
     my_data <- exprs(input)
     expt_state <- input[["state"]]
   } else {  ## This is not an expt
@@ -902,8 +902,8 @@ compare_surrogate_estimates <- function(expt, extra_factors = NULL,
   if (isTRUE(filter_it) && expt[["state"]][["filter"]] == "raw") {
     mesg("The expt has not been filtered, ",
          "set filter_type/filter_it if you want other options.")
-    expt <- sm(normalize_expt(expt, filter = filter_type,
-                              ...))
+    expt <- normalize_expt(expt, filter = filter_type,
+                           ...)
   }
   pca_plots <- list()
   pca_plots[["null"]] <- plot_pca(expt)[["plot"]]

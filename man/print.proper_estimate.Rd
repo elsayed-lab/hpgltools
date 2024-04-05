@@ -4,12 +4,14 @@
 \alias{print.proper_estimate}
 \title{Print the result from simple_proper().}
 \usage{
-\method{print}{proper_estimate}(x)
+\method{print}{proper_estimate}(x, ...)
 }
 \arguments{
 \item{x}{List including the various plots from PROPER, the
 associated tables, simulation options, and example text for a
 paper/grant.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print the result from simple_proper().

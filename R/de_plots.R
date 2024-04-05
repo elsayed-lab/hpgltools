@@ -1,5 +1,7 @@
 ## de_plots.r: A series of plots which are in theory DE method agnostic.
 
+
+## FIXME: This has both p_type and adjp parameters, which is redundantredundant.
 #' Make a MA plot of some limma output with pretty colors and shapes.
 #'
 #' Yay pretty colors and shapes!
@@ -16,8 +18,10 @@
 #' @param denominator Use this factor as the denominator.
 #' @param alpha Use this transparency.
 #' @param z z-score cutoff for coefficient significance.
+#' @param n Choose the top/bottom-n by logFC.
 #' @param logfc What logFC to use for the MA plot horizontal lines.
 #' @param pval Cutoff to define 'significant' by p-value.
+#' @param adjp Use adjusted p-value?
 #' @param found_table Result from edger to use, left alone it chooses the first.
 #' @param p_type Adjusted or raw pvalues?
 #' @param color_high Color to use for the 'high' genes.
@@ -25,7 +29,7 @@
 #' @param loess Add a loess estimator to the coefficient plot?
 #' @param z_lines Add the z-score lines?
 #' @param label Label this number of top-diff genes.
-#' @param label_columns Use this column for labelling genes.
+#' @param label_column Use this column for labelling genes.
 #' @return a plot!
 #' @seealso [plot_ma_de()] [plot_volcano_de()]
 #' @examples
@@ -36,8 +40,8 @@
 extract_de_plots <- function(pairwise, combined = NULL, type = NULL,
                              invert = FALSE, invert_colors = c(),
                              numerator = NULL, denominator = NULL, alpha = 0.4, z = 1.5, n = NULL,
-                             logfc = 1.0, pval = 0.05, found_table = NULL, p_type = "adj",
-                             color_high = NULL, color_low = NULL, loess = FALSE,
+                             logfc = 1.0, pval = 0.05, adjp = TRUE, found_table = NULL,
+                             p_type = "adj", color_high = NULL, color_low = NULL, loess = FALSE,
                              z_lines = FALSE, label = 10, label_column = "hgncsymbol") {
 
   if (is.null(type)) {
@@ -58,7 +62,7 @@ extract_de_plots <- function(pairwise, combined = NULL, type = NULL,
     numerator <- num_den_names[["numerator"]]
     denominator <- num_den_names[["denominator"]]
   }
-  source_info <- get_plot_columns(combined, type, p_type = p_type)
+  source_info <- get_plot_columns(combined, type, p_type = p_type, adjp = adjp)
   input <- source_info[["the_table"]]
   expr_col <- source_info[["expr_col"]]
   fc_col <- source_info[["fc_col"]]
@@ -335,7 +339,8 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
 #' @param data Data structure in which to hunt columns/data.
 #' @param type Type of method used to make the data.
 #' @param p_type Use adjusted p-values?
-get_plot_columns <- function(data, type, p_type = "adj") {
+#' @param adjp I think this is reundant.
+get_plot_columns <- function(data, type, p_type = "adj", adjp = TRUE) {
   ret <- list(
     "p_col" = "P.Val",
     "fc_col" = "logFC",
@@ -408,8 +413,10 @@ get_plot_columns <- function(data, type, p_type = "adj") {
       expr_col <- "ebseq_mean"
     }
     fc_col <- glue("{type}_logfc")
-    if (p_type == "adj") {
+    if (p_type == "adj" || isTRUE(adjp)) {
       p_col <- glue("{type}_adjp")
+    } else if (p_type == "ihw" || p_type == "all") {
+      p_col <- glue("{type}_adjp_ihw")
     } else {
       p_col <- glue("{type}_p")
     }
@@ -486,6 +493,9 @@ get_plot_columns <- function(data, type, p_type = "adj") {
   } else {
     stop("Something went wrong, we should have only _pairwise and combined here.")
   }
+  mesg("  Using logFC column: ", fc_col, ".")
+  mesg("  Using adjusted p-value column: ", p_col, ".")
+  mesg("  Using expression column: ", expr_col, ".")
 
   possible_tables <- names(all_tables)
   the_table <- NULL
@@ -785,6 +795,7 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
 #' @param shapes Provide different shapes for up/down/etc?
 #' @param invert Invert the ma plot?
 #' @param label Label the top/bottom n logFC values?
+#' @param label_column gene annotation column from which to extract labels.
 #' @param ... More options for you
 #' @return ggplot2 MA scatter plot.  This is defined as the rowmeans of the
 #'  normalized counts by type across all sample types on the x axis, and the
@@ -1147,8 +1158,10 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
   if (!is.null(label)) {
     reordered_idx <- order(df[["logfc"]])
     reordered <- df[reordered_idx, ]
-    top <- head(reordered, n = label)
-    bottom <- tail(reordered, n = label)
+    ## I am now taking 1/2 of the number of desired labeled genes on each side.
+    ## I think this more accurately fits the spirit of this idea.
+    top <- head(reordered, n = (ceiling(label / 2)))
+    bottom <- tail(reordered, n = (ceiling(label / 2)))
     df_subset <- rbind(top, bottom)
     plt <- plt +
       ggrepel::geom_text_repel(
@@ -1170,9 +1183,22 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
   return(retlist)
 }
 
+#' Make a sankey plot showing how the number of genes deemed significant is constrained.
+#'
+#' Ideally, this should show how adding various Fc/p-value constraints
+#' on the definition of 'significant' decreases the number of genes
+#' one is likely to look at.
+#'
+#' @param de_table The result from combine_de_tables()
+#' @param lfc FC constraint.
+#' @param p P-value constraint.
+#' @param lfc_column Dataframe column from which to acquire the FC
+#'  values.
+#' @param p_column Dataframe column from which to acquire the
+#'  p-values.
+#' @return A fun sankey plot!
 plot_sankey_de <- function(de_table, lfc = 1.0, p = 0.05,
                            lfc_column = "deseq_logfc", p_column = "deseq_adjp") {
-  de_table <- t_cf_clinical_table_sva$data$outcome
   de_table[["start"]] <- "all"
   de_table[["lfc"]] <- "up"
   down_idx <- de_table[[lfc_column]] < 0
@@ -1425,6 +1451,7 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
 #' @param invert Flip the plot?
 #' @param label Label some points?
 #' @param label_column Using this column in the data.
+#' @param label_size Use this font size for the labels on the plot.
 #' @export
 plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
                                       fc_col = "logFC", fc_name = "log2 fold change",
@@ -1943,7 +1970,7 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
 #' and lightly modified to match my style and so I could more
 #' easily understand what it is doing.
 #'
-#' @param lst upset data structure.
+#' @param input upset data structure.
 #' @param sort Sort the result?
 #' @export
 overlap_groups <- function(input, sort = TRUE) {
@@ -2015,8 +2042,8 @@ overlap_geneids <- function(overlapping_groups, group) {
 #' @param according_to Choose the lfc column to use.
 #' @param lfc Choose the logFC
 #' @param adjp and the p-value.
-upsetr_all <- function(combined, according_to = "deseq",
-                       lfc = 1.0, adjp = 1.0) {
+upsetr_combined_de <- function(combined, according_to = "deseq",
+                               lfc = 1.0, adjp = 0.05) {
   ud_list <- list()
   for (t in names(combined[["data"]])) {
     t_data <- combined[["data"]][[t]]

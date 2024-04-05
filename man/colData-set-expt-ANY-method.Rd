@@ -9,6 +9,14 @@
 \arguments{
 \item{x}{One of my various expressionset analogs, expt,
 expressionSet, or summarizedExperiment.}
+
+\item{i}{Subset to replace.}
+
+\item{withDimnames}{indeed.}
+
+\item{...}{extra args.}
+
+\item{value}{New Sample data for the expt.}
 }
 \description{
 A setter to put the sample data into an expt.

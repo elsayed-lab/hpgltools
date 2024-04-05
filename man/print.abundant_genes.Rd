@@ -4,11 +4,13 @@
 \alias{print.abundant_genes}
 \title{Print a summary of a set of abundant genes.}
 \usage{
-\method{print}{abundant_genes}(x)
+\method{print}{abundant_genes}(x, ...)
 }
 \arguments{
 \item{x}{Abundant gene list comprising an element 'high' and 'low'
 for the most and least abundant genes observed.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print a summary of a set of abundant genes.

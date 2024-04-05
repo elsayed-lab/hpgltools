@@ -8,8 +8,8 @@
 #' @export
 `[.expt` <- function(expt, i, j, ...) {
   if (!missing(i)) {
-    message("Subsetting on genes.")
-    expt <- subset_genes(expt, ids = i, ...)
+    message("Subsetting on features.")
+    expt <- subset_genes(expt, ids = i, method = "keep", ...)
   }
   if (!missing(j)) {
     message("Subsetting on samples.")
@@ -20,3 +20,31 @@
   }
   return(expt)
 }
+
+#' Simplifying subset on metadata.
+#'
+#' @param x an expt
+#' @param i Column to extract
+#' @export
+setMethod(
+  "[[", signature = c(x = "expt", i = "character"),
+  definition = function(x, i, j, ...) {
+    pData(object)[[i]]
+  })
+setMethod(
+  "[[", signature = c(x = "expt", i = "ANY"),
+  definition = function(x, i) {
+    pData(x)[[i]]
+  })
+
+setMethod(
+  "[[", signature = c("expt", "ANY", "missing"),
+  definition = function(x, i, j, ...) {
+    pData(x)[[i]]
+  })
+setReplaceMethod(
+  "[[", c("expt", "ANY", "missing"),
+  function(x, i, j, ..., value) {
+    pData(x)[[i, ...]] <- value
+    x
+  })

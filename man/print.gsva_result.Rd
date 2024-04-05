@@ -4,11 +4,13 @@
 \alias{print.gsva_result}
 \title{Print a gsva category search.}
 \usage{
-\method{print}{gsva_result}(x)
+\method{print}{gsva_result}(x, ...)
 }
 \arguments{
 \item{x}{List containing signature annotations, the result from
 GSVA, a modified expressionset, the signatures used, and method.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print a gsva category search.

@@ -9,6 +9,14 @@
 \arguments{
 \item{x}{One of my various expressionset analogs, expt,
 expressionSet, or summarizedExperiment.}
+
+\item{i}{specific samples to replace the data.}
+
+\item{withDimnames}{I do not know.}
+
+\item{...}{Extra args, currently unused.}
+
+\item{value}{New assay values to fill in the data structure.}
 }
 \description{
 A setter to put the assay data into an expt.

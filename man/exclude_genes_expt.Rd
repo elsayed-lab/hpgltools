@@ -6,6 +6,9 @@
 \usage{
 exclude_genes_expt(...)
 }
+\arguments{
+\item{...}{Parameters passed to subset_genes().}
+}
 \description{
 A temporary alias to subset_genes
 }

@@ -8,7 +8,7 @@ create_partitions(
   full_df,
   interesting_meta,
   outcome_factor = "condition",
-  p = 0.6,
+  p = 0.4,
   list = FALSE,
   times = 5
 )

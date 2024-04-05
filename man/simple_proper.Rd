@@ -53,6 +53,16 @@ old, my version of this only accepts deseq or edger.}
 \item{filter}{Apply a filter?}
 
 \item{delta}{Not epsilon! (E.g. I forget what this does).}
+
+\item{add_coverage}{When plotting, add a line showing the actual coverage?}
+
+\item{target_power}{When creating boilerplate text for a grant, specify power goal.}
+
+\item{mean_gene_length}{When making text, specify the mean gene length expected.}
+
+\item{nt_per_read}{Specify how many reads are in each read(pair).}
+
+\item{describe_samples}{Add a guestimate of the number of samples required for the power goal.}
 }
 \value{
 List containin the various tables and plots returned by PROPER.

@@ -62,6 +62,8 @@ plot_volcano_condition_de(
 \item{label}{Label some points?}
 
 \item{label_column}{Using this column in the data.}
+
+\item{label_size}{Use this font size for the labels on the plot.}
 }
 \description{
 I therefore took a modified copy of her implementation and added it here.

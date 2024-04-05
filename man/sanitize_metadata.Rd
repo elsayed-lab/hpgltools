@@ -23,6 +23,8 @@ sanitize_metadata(
 \item{columns}{Set of columns to check, if left NULL, all columns
 will be molested.}
 
+\item{na_value}{Fill NA values with a string.}
+
 \item{lower}{Set everything to lowercase?}
 
 \item{punct}{Remove punctuation?}
@@ -39,7 +41,7 @@ the heuristic, when NULL it is the number of samples / 6}
 
 \item{numbers}{Sanitize numbers by adding a prefix character to them?}
 
-\item{na_string}{Fill NA values with a string.}
+\item{numeric}{Recast the values as numeric when possible?}
 }
 \description{
 I wrote this function after spending a couple of hours confused

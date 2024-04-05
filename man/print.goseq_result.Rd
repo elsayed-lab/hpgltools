@@ -4,11 +4,13 @@
 \alias{print.goseq_result}
 \title{Print a goseq over representation search.}
 \usage{
-\method{print}{goseq_result}(x)
+\method{print}{goseq_result}(x, ...)
 }
 \arguments{
 \item{x}{List containing the various goseq results, plots,
 significant subsets, enrichResult coercions, etc.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print a goseq over representation search.

@@ -14,6 +14,7 @@ simple_varpart(
   cpus = NULL,
   genes = 40,
   parallel = TRUE,
+  strict_filter = TRUE,
   mixed = FALSE,
   modify_expt = TRUE
 )
@@ -39,6 +40,9 @@ to the first gene.}
 \item{genes}{Number of genes to count.}
 
 \item{parallel}{Use doParallel?}
+
+\item{strict_filter}{Perform a strict filtering of the results via median_by_factor and dropping
+any genes with a 0.}
 
 \item{mixed}{Used a mixed model?}
 

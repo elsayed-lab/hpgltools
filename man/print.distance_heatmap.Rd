@@ -4,10 +4,12 @@
 \alias{print.distance_heatmap}
 \title{Print the result of plot_disheat().}
 \usage{
-\method{print}{distance_heatmap}(x)
+\method{print}{distance_heatmap}(x, ...)
 }
 \arguments{
 \item{x}{List containing the distances observed and a recorded heatmap.3().}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print the result of plot_disheat().

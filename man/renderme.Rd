@@ -11,6 +11,8 @@ renderme(file, format = "html_document", overwrite = TRUE)
 \item{file}{Rmd file to render.}
 
 \item{format}{Chosen file format.}
+
+\item{overwrite}{Overwrite an existing file?}
 }
 \value{
 Final filename including the prefix rundate.

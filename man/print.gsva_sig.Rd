@@ -4,11 +4,13 @@
 \alias{print.gsva_sig}
 \title{Print gsva categories deemed 'significant'.}
 \usage{
-\method{print}{gsva_sig}(x)
+\method{print}{gsva_sig}(x, ...)
 }
 \arguments{
 \item{x}{List of scored GSVA results, including some plots,
 likelihood tables, subsets of significant categories, etc.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print gsva categories deemed 'significant'.

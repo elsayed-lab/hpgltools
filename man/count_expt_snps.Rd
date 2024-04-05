@@ -8,7 +8,9 @@ count_expt_snps(
   expt,
   annot_column = "bcftable",
   tolower = TRUE,
-  snp_column = "diff_count"
+  snp_column = NULL,
+  numerator_column = "PAO",
+  denominator_column = "DP"
 )
 }
 \arguments{
@@ -19,6 +21,10 @@ count_expt_snps(
 \item{tolower}{Lowercase stuff like 'HPGL'?}
 
 \item{snp_column}{Which column of the parsed bcf table contains our interesting material?}
+
+\item{numerator_column}{When provided, use this column as the numerator of a proportion.}
+
+\item{denominator_column}{When provided, use this column as the denominator of a proportion.#'}
 }
 \value{
 A new expt object

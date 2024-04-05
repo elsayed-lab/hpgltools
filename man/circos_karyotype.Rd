@@ -9,7 +9,8 @@ circos_karyotype(
   segments = 6,
   color = "white",
   fasta = NULL,
-  lengths = NULL
+  lengths = NULL,
+  chromosomes = NULL
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ circos_karyotype(
 \item{fasta}{Fasta file to use to create the karyotype.}
 
 \item{lengths}{If no sequence file is provided, use a named numeric vector to provide them.}
+
+\item{chromosomes}{Force the chromosome names if the annotations are malformed for some reason.}
 }
 \value{
 The output filename.

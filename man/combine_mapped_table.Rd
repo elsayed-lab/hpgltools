@@ -6,12 +6,7 @@
 \usage{
 combine_mapped_table(
   entry,
-  include_basic = TRUE,
-  include_deseq = TRUE,
-  include_edger = TRUE,
-  include_ebseq = TRUE,
-  include_limma = TRUE,
-  include_noiseq = TRUE,
+  includes,
   adjp = TRUE,
   padj_type = "fdr",
   annot_df = NULL,
@@ -27,16 +22,7 @@ combine_mapped_table(
 orientation information about the table from all_pairwise(), along
 with the actual data.}
 
-\item{include_basic}{Include basic in the final output?  I want to
-get rid of all these include_ arguments.}
-
-\item{include_deseq}{Include deseq?}
-
-\item{include_edger}{Include edger?}
-
-\item{include_ebseq}{Include ebseq?}
-
-\item{include_limma}{Include limma?}
+\item{includes}{List of methods to include.}
 
 \item{adjp}{Used adjusted pvalues when defining 'significant.?}
 

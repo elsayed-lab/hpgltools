@@ -4,11 +4,13 @@
 \alias{print.aucc_info}
 \title{Print the result from calculate_aucc().}
 \usage{
-\method{print}{aucc_info}(x)
+\method{print}{aucc_info}(x, ...)
 }
 \arguments{
 \item{x}{List containing the AUCC, correlation, and a plot
 describing the AUCC.}
+
+\item{...}{Other args to match the generic.}
 }
 \description{
 Print the result from calculate_aucc().

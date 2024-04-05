@@ -1,6 +1,4 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
 context("311norm_convert.R")
 
 load("pasilla_df.rda")
@@ -23,8 +21,8 @@ test_that("cpm conversions are equivalent?", {
 ## Check that the different ways of calling rpkm() are identical
 pasilla_convert <- convert_counts(pasilla_expt, convert = "rpkm", column = "cds_length",
                                   start_column = "start_position", end_column = "end_position")
-pasilla_norm <- sm(normalize_expt(pasilla_expt, convert = "rpkm", column = "cds_length",
-                                  start_column = "start_position", end_column = "end_position"))
+pasilla_norm <- normalize_expt(pasilla_expt, convert = "rpkm", column = "cds_length",
+                               start_column = "start_position", end_column = "end_position")
 expected <- pasilla_convert[["count_table"]]
 actual <- exprs(pasilla_norm)
 test_that("calling convert_counts and normalize_expt are equivalent?", {
@@ -33,10 +31,12 @@ test_that("calling convert_counts and normalize_expt are equivalent?", {
 
 ## Similarly check that edgeR's rpkm() comes out the same
 ## Make sure that we remove undefined numbers from fdata(length)
-fData(pasilla_expt)[["start_position"]] <- as.numeric(fData(pasilla_expt)[["start_position"]])
-fData(pasilla_expt)[["end_position"]] <- as.numeric(fData(pasilla_expt)[["end_position"]])
-fData(pasilla_expt)[["cds_length"]] <- abs(fData(pasilla_expt)[["start_position"]] -
-                                             fData(pasilla_expt)[["end_position"]])
+## This subtraction logic is no longer needed, the pasilla annotations have
+## cds lengths already recorded; and they take into account the UTRs.
+#fData(pasilla_expt)[["start_position"]] <- as.numeric(fData(pasilla_expt)[["start_position"]])
+#fData(pasilla_expt)[["end_position"]] <- as.numeric(fData(pasilla_expt)[["end_position"]])
+#fData(pasilla_expt)[["cds_length"]] <- abs(fData(pasilla_expt)[["start_position"]] -
+#                                             fData(pasilla_expt)[["end_position"]])
 undef <- fData(pasilla_expt)[["cds_length"]] == "undefined"
 lengths <- fData(pasilla_expt)[["cds_length"]]
 lengths[undef] <- NA
@@ -75,8 +75,10 @@ pasilla_convert <- sm(normalize_expt(
   genome = BSgenome.Dmelanogaster.UCSC.dm6, pattern = "ATG"))
 ## That is interesting (202008) these values changed
 ## In 202212 they appear to have changed back.
-expected <- c(0.04536343, 0.51893853, 27.76677691, 46.94320722, 0.05237078)
+##expected <- c(0.04536343, 0.51893853, 27.76677691, 46.94320722, 0.05237078)
 ##expected <- c(0.04637150, 0.53047049, 28.38381640, 47.98638960, 0.05353458)
+## They changed back-back in 202401!
+expected <- c(0.04637150, 0.53047049, 28.38381640, 47.98638960, 0.05353458)
 actual <- as.numeric(exprs(pasilla_convert)[test_genes, c("untreated1")])
 test_that("cp_seq_m works for ATG?", {
     expect_equal(expected, actual)

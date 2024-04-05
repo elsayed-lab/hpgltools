@@ -28,10 +28,12 @@ calculate_aucc(
 
 \item{ly}{second set}
 
+\item{cor_method}{Method to pass to cor().}
+
 \item{topn}{Number of genes to consider (or percentage of the
 whole).}
 }
 \description{
 This is taken verbatim from a recent paper sent to me by Julie
-Cridland.  I will put the link in shortly, I need to go.
+Cridland.
 }

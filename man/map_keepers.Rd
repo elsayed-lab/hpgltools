@@ -4,14 +4,14 @@
 \alias{map_keepers}
 \title{Find the correct tables given a set of definitions of desired tables, numerators/denominators.}
 \usage{
-map_keepers(keepers, table_names, data)
+map_keepers(keepers, table_names, datum)
 }
 \arguments{
 \item{keepers}{List/scalar representation of desired tables.}
 
 \item{table_names}{The actual list of results produced by the various methods employed.}
 
-\item{data}{The full dataset.}
+\item{datum}{The full dataset.}
 }
 \description{
 This is responsible for hunting down tables which correspond to the various ways one may

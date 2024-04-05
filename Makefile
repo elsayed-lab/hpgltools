@@ -50,8 +50,10 @@ covr: install
 	@Rscript -e "x <- covr::package_coverage('.', quiet=FALSE); covr::report(x, file='hpgltools-report.html')"
 
 deps:
-	@echo "Invoking devtools::install_dev_deps()"
-	@Rscript -e "all = as.data.frame(devtools::dev_package_deps('.', dependencies=TRUE)); needed = all[['diff']] < 0; needed = all[needed, 'package']; BiocManager::install(needed)"
+	@echo "Invoking dev_package_deps() and BiocManager::install()."
+	@Rscript -e "all = as.data.frame(devtools::dev_package_deps('.', dependencies='Depends')); needed = all[['diff']] < 0; needed = all[needed, 'packagewww']; BiocManager::install(needed)"
+	@Rscript -e "all = as.data.frame(devtools::dev_package_deps('.', dependencies='Imports')); needed = all[['diff']] < 0; needed = all[needed, 'packagewww']; BiocManager::install(needed)"
+	@Rscript -e "all = as.data.frame(devtools::dev_package_deps('.', dependencies='Suggests')); needed = all[['diff']] < 0; needed = all[needed, 'packagewww']; BiocManager::install(needed)"
 
 document: roxygen vignette reference
 
@@ -85,7 +87,11 @@ test:
 	@echo "Running run_tests.R"
 	@Rscript -e "library(hpgltools); library(testthat); test_local(path = '.', reporter = 'summary', stop_on_failure = FALSE)"
 
-vignette:
+test_local:
+	@echo "Running run_tests.R with hpgltools loaded via devtools."
+	Rscript -e "devtools::load_all('.'); library(testthat); test_local(path = '.', reporter = 'summary', stop_on_failure = FALSE)"
+
+vigwnette:
 	@mkdir -p doc
 	@echo "Building vignettes with devtools::build_vignettes()"
 	R -e "devtools::build_vignettes(install=FALSE)"
