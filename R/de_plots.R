@@ -2042,10 +2042,29 @@ overlap_geneids <- function(overlapping_groups, group) {
 #' @param according_to Choose the lfc column to use.
 #' @param lfc Choose the logFC
 #' @param adjp and the p-value.
+#' @param desired_contrasts Use factors from a few contrasts.
 upsetr_combined_de <- function(combined, according_to = "deseq",
-                               lfc = 1.0, adjp = 0.05) {
+                               lfc = 1.0, adjp = 0.05, text_scale = 2,
+                               color_by = NULL,
+                               desired_contrasts = NULL) {
   ud_list <- list()
-  for (t in names(combined[["data"]])) {
+  wanted_tables <- names(combined[["data"]])
+  possible_colors <- get_expt_colors(combined[["input"]][["input"]])
+  upset_contrasts <- data.frame(row.names = wanted_tables)
+  upset_contrasts[["numerator"]] <- gsub(x = wanted_tables,
+                                         pattern = "^(.*)_vs_.*$", replacement = "\\1")
+  upset_contrasts[["denominator"]] <- gsub(x = wanted_tables,
+                                           pattern = "^(.*)_vs_(.*)$", replacement = "\\2")
+  if (!is.null(desired_contrasts)) {
+    wanted_idx <- wanted_tables %in% desired_contrasts
+    if (sum(wanted_idx) > 0) {
+      mesg("Found ", sum(wanted_idx), " tables.")
+    } else {
+      warning("No tables seem to have been found.")
+    }
+    wanted_tables <- wanted_tables[wanted_idx]
+  }
+  for (t in wanted_tables) {
     t_data <- combined[["data"]][[t]]
     fc_col <- paste0(according_to, "_logfc")
     p_col <- paste0(according_to, "_adjp")
@@ -2062,7 +2081,7 @@ upsetr_combined_de <- function(combined, according_to = "deseq",
   }
 
   upset_combined <- UpSetR::upset(data = UpSetR::fromList(ud_list),
-                                  nsets = length(ud_list))
+                                  text.scale = text_scale, nsets = length(ud_list))
   return(upset_combined)
 }
 
