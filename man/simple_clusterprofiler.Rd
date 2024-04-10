@@ -24,6 +24,7 @@ simple_clusterprofiler(
   categories = 12,
   excel = NULL,
   do_david = FALSE,
+  do_kegg = FALSE,
   david_id = "ENTREZ_GENE_ID",
   david_user = "unknown@unknown.org"
 )
@@ -70,6 +71,8 @@ should be tried the second time around?}
 \item{excel}{Print the results to an excel file?}
 
 \item{do_david}{Attempt to use the DAVID database for a search?}
+
+\item{do_kegg}{Perform kegg search?}
 
 \item{david_id}{Which column to use for cross-referencing to DAVID?}
 

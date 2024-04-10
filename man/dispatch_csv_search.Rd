@@ -10,6 +10,8 @@ dispatch_csv_search(
   input_file_spec,
   file_type = "csv",
   chosen_func = NULL,
+  species = "*",
+  type = "genome",
   basedir = "preprocessing",
   which = "first",
   verbose = FALSE,
@@ -27,6 +29,10 @@ file of interest.}
 \item{file_type}{csv or tsv?}
 
 \item{chosen_func}{If set, use this function to summarize the result.}
+
+\item{species}{Specify a species, or glob it.}
+
+\item{type}{Specify a type of search, usually genome and/or rRNA.}
 
 \item{basedir}{Root directory containing the files/logs of metadata.}
 

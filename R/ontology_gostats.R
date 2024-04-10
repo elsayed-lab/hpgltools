@@ -34,7 +34,7 @@ simple_gostats <- function(sig_genes, go_db = NULL, gff = NULL, gff_df = NULL, u
   ## for the rownames and because it (should) contain every gene in the
   ## 'universe' used by GOstats, as much it ought to be pretty much perfect.
   arglist <- list(...)
-  if (is.null(gff_df) & is.null(gff)) {
+  if (is.null(gff_df) && is.null(gff)) {
     warning("This requires a gff or gff database of gene IDs.")
     ## Perhaps I should make this a bit more flexible, I can integer index orgdbs etc.
   } else if (is.null(gff)) {
@@ -97,6 +97,11 @@ perhaps change gff_type to make the merge work.")
   colnames(universe) <- c("geneid", "width")
   universe[["id"]] <- rownames(universe)
   universe <- universe[complete.cases(universe), ]
+  ## Adding this removal in case the gff file used to extract the annotations
+  ## includes a prefix of the feature type.
+  remove_pattern <- glue("^{gff_type}.")
+  universe[["geneid"]] <- gsub(x = universe[["geneid"]], pattern = remove_pattern,
+                               replacement = "")
 
   if (is.null(sig_genes[["ID"]])) {
     sig_genes[["ID"]] <- rownames(sig_genes)
@@ -374,6 +379,15 @@ perhaps change gff_type to make the merge work.")
     message("Writing data to: ", excel, ".")
     excel_ret <- sm(try(write_gostats_data(retlist, excel = excel)))
   }
+
+  enrich_results <- list()
+  for (ont in c("bp", "mf", "cc")) {
+    message("Getting enrichResult for ontology: ", ont, ".")
+    enrich_results[[ont]] <- gostats2enrich(retlist, ontology = ont, cutoff = pcutoff,
+                                            cutoff_column = "Pvalue")
+  }
+  retlist[["enrich_results"]] <- enrich_results
+
   return(retlist)
 }
 

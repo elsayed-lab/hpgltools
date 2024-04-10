@@ -29,6 +29,7 @@ plot_corheat <- function(expt_data, expt_colors = NULL, expt_design = NULL,
   map_list <- plot_heatmap(expt_data, expt_colors = expt_colors, expt_design = expt_design,
                            method = method, expt_names = expt_names, type = "correlation",
                            batch_row = batch_row, plot_title = plot_title, label_chars = label_chars, ...)
+  class(map_list) <- "correlation_heatmap"
   return(map_list)
 }
 
@@ -61,6 +62,7 @@ plot_disheat <- function(expt_data, expt_colors = NULL, expt_design = NULL,
                            method = method, expt_names = expt_names, type = "distance",
                            batch_row = batch_row, plot_title = plot_title,
                            label_chars = label_chars, ...)
+  class(map_list) <- "distance_heatmap"
   return(map_list)
 }
 
@@ -89,6 +91,7 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
                          type = "correlation", batch_row = "batch", plot_title = NULL,
                          label_chars = 10, ...) {
   arglist <- list(...)
+
   margin_list <- c(12, 9)
   if (!is.null(arglist[["margin_list"]])) {
     margin_list <- arglist[["margin_list"]]
@@ -104,36 +107,6 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
   remove_equal <- FALSE
   if (!is.null(arglist[["remove_equal"]])) {
     remove_equal <- arglist[["remove_equal"]]
-  }
-
-  ## If plot_title is NULL, print nothing, if it is TRUE
-  ## Then give some information about what happened to the data to make the plot.
-  ## I tried foolishly to put this in plot_pcs(), but there is no way that receives
-  ## my expt containing the normalization state of the data.
-  if (isTRUE(plot_title)) {
-    plot_title <- what_happened(expt_data)
-  } else if (!is.null(plot_title)) {
-    data_title <- what_happened(expt_data)
-    plot_title <- glue("{plot_title}; {data_title}")
-  } else {
-    ## Leave the title blank.
-  }
-
-  data_class <- class(expt_data)[1]
-  if (data_class == "expt" || data_class == "SummarizedExperiment") {
-    expt_design <- pData(expt_data)
-    expt_colors <- expt_data[["colors"]]
-    if (is.null(expt_names)) {
-      expt_names <- expt_data[["expt_names"]]
-    }
-    expt_data <- exprs(expt_data)
-  } else if (data_class == "ExpressionSet") {
-    expt_data <- exprs(expt_data)
-  } else if (data_class == "matrix" || data_class == "data.frame") {
-    ## some functions prefer matrix, so I am keeping this explicit for the moment
-    expt_data <- as.data.frame(expt_data)
-  } else {
-    stop("This function understands types: expt, ExpressionSet, data.frame, and matrix.")
   }
 
   if (is.null(expt_colors)) {
@@ -177,12 +150,13 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
     heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "OrRd"))(100)
     if (method == "cordist") {
       heatmap_colors <- grDevices::colorRampPalette(
-                                       c("yellow2", "goldenrod", "darkred"),
-                                       bias = 0.5)(100)
+        c("yellow2", "goldenrod", "darkred"),
+        bias = 0.5)(100)
     }
   } else if (type == "distance") {
     heatmap_data <- as.matrix(dist(t(expt_data)), method = method)
-    heatmap_colors <- grDevices::colorRampPalette(RColorBrewer::brewer.pal(9, "GnBu"))(100)
+    heatmap_colors <- grDevices::colorRampPalette(
+      RColorBrewer::brewer.pal(9, "GnBu"))(100)
   } else {
     heatmap_colors <- gplots::redgreen(75)
     heatmap_data <- as.matrix(expt_data)
@@ -205,7 +179,7 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
   map <- NULL
   na_idx <- is.na(heatmap_data)
   heatmap_data[na_idx] <- 0
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   if (type == "correlation") {
@@ -224,12 +198,15 @@ plot_heatmap <- function(expt_data, expt_colors = NULL, expt_design = NULL,
   }
   recorded_heatmap_plot <- grDevices::recordPlot()
   dev.off()
-  removed <- file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
+
   retlist <- list("map" = map,
                   "plot" = recorded_heatmap_plot,
                   "data" = heatmap_data)
   return(retlist)
 }
+setGeneric("plot_heatmap")
 
 #' Potential replacement for heatmap.2 based plots.
 #'
@@ -310,13 +287,15 @@ plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_
     data, dendrogram = mydendro, annotation = myannot,
     cluster = myclust, labels = mylabs, scale = scale, col = heatmap_colors)
 
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   plot(final_map)
   rec_plot <- grDevices::recordPlot()
   dev.off()
-  removed <- file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
+
   retlist <- list(
     "annotations" = myannot,
     "clusters" = myclust,
@@ -338,6 +317,7 @@ plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_
 #' @param data Expt/expressionset/dataframe set of samples.
 #' @param colors Color scheme of the samples (not needed if input is an expt).
 #' @param design Design matrix describing the experiment (gotten for free if an expt).
+#' @param heatmap_colors Specify a colormap.
 #' @param expt_names Alternate samples names.
 #' @param dendrogram Where to put dendrograms?
 #' @param row_label Passed through to heatmap.2.
@@ -350,27 +330,14 @@ plot_heatplus <- function(expt, type = "correlation", method = "pearson", annot_
 #' @return a recordPlot() heatmap describing the samples.
 #' @seealso [gplots::heatmap.2()]
 #' @export
-plot_sample_heatmap <- function(data, colors = NULL, design = NULL,
+plot_sample_heatmap <- function(data, colors = NULL, design = NULL, heatmap_colors = NULL,
                                 expt_names = NULL, dendrogram = "column",
                                 row_label = NA, plot_title = NULL, Rowv = TRUE,
                                 Colv = TRUE, label_chars = 10, filter = TRUE, ...) {
-  data_class <- class(data)[1]
-  if (data_class == "expt" || data_class == "SummarizedExperiment") {
-    if (isTRUE(filter)) {
-      data <- sm(normalize_expt(data, filter = TRUE))
-    }
-    design <- pData(data)
-    colors <- colors(data)
-    data <- exprs(data)
-  } else if (data_class == "ExpressionSet") {
-    data <- exprs(data)
-  } else if (data_class == "matrix" || data_class == "data.frame") {
-    ## some functions prefer matrix, so I am keeping this explicit for the moment
-    data <- as.data.frame(data)
-  } else {
-    stop("This function understands types: expt, ExpressionSet, data.frame, and matrix.")
+  data <- as.data.frame(data)
+  if (is.null(heatmap_colors)) {
+    heatmap_colors <- gplots::redgreen(75)
   }
-  heatmap_colors <- gplots::redgreen(75)
   if (is.null(names)) {
     names <- colnames(data)
   }
@@ -391,7 +358,7 @@ plot_sample_heatmap <- function(data, colors = NULL, design = NULL,
   ## drop NAs to help hclust()
   na_idx <- is.na(data)
   data[na_idx] <- -20
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   heatmap.3(data, keysize = 0.8, labRow = row_label, col = heatmap_colors, dendrogram = dendrogram,
@@ -399,9 +366,12 @@ plot_sample_heatmap <- function(data, colors = NULL, design = NULL,
             linewidth = 0.5, main = plot_title, Rowv = Rowv, Colv = Colv)
   hpgl_heatmap_plot <- grDevices::recordPlot()
   dev.off()
-  removed <- file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
+
   return(hpgl_heatmap_plot)
 }
+setGeneric("plot_sample_heatmap")
 
 #' An experiment to see if I can visualize the genes with the highest variance.
 #'
@@ -461,7 +431,7 @@ plot_sample_cvheatmap <- function(expt, fun = "mean", fact = "condition",
     names <- colnames(data)
   }
 
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   heatmap.3(cvs, keysize = 0.8, labRow = rownames(cvs), col = heatmap_colors, dendrogram = dendrogram,
@@ -469,6 +439,8 @@ plot_sample_cvheatmap <- function(expt, fun = "mean", fact = "condition",
             linewidth = 0.5, main = plot_title, Rowv = Rowv, Colv = Colv)
   cv_heatmap_plot <- grDevices::recordPlot()
   dev.off()
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   point_df <- cvs[, c(x_factor, y_factor)]
 

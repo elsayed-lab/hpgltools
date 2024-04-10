@@ -17,12 +17,13 @@ plot_volcano_condition_de(
   p_name = "-log10 p-value",
   pval = 0.05,
   shapes_by_state = FALSE,
-  color_high = NULL,
-  color_low = NULL,
+  color_high = "darkred",
+  color_low = "darkblue",
   size = 2,
   invert = FALSE,
   label = NULL,
-  label_column = "hgncsymbol"
+  label_column = "hgncsymbol",
+  label_size = 6
 )
 }
 \arguments{
@@ -61,6 +62,8 @@ plot_volcano_condition_de(
 \item{label}{Label some points?}
 
 \item{label_column}{Using this column in the data.}
+
+\item{label_size}{Use this font size for the labels on the plot.}
 }
 \description{
 I therefore took a modified copy of her implementation and added it here.

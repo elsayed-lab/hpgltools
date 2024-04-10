@@ -146,7 +146,7 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 
   new_expt <- backup_expression_data(new_expt)
 
-  mesg("This function will replace the expt$expressionset slot with:")
+  mesg("This function will replace the expressionset with:")
   operations <- what_happened(transform = transform, batch = batch, convert = convert,
                               norm = norm, filter = filter)
   mesg(operations)
@@ -326,6 +326,9 @@ normalize_expt <- function(expt, ## The expt class passed to the normalizer
 }
 
 #' Normalize a SummarizedExperiment and think about how I want to reimplement some of this.
+#'
+#' @param se Summarized Experiment as input.
+#' @inheritParams normalize_expt
 #' @export
 normalize_se <- function(se, ## The expt class passed to the normalizer
                          ## choose the normalization strategy
@@ -350,7 +353,8 @@ normalize_se <- function(se, ## The expt class passed to the normalizer
   filter_performed <- "none"
   transform_performed <- "none"
 
-  meta <- metadata(se)
+  data <- assay(se)
+  meta <- S4Vectors::metadata(se)
   se_state <- meta[["state"]]
   current_state <- se_state
   original_libsize <- meta[["libsize"]]
@@ -360,7 +364,7 @@ normalize_se <- function(se, ## The expt class passed to the normalizer
   if (is.null(annotations)) {
     annotations <- fData(se)
   }
-  data <- exprs(se)
+
   design <- pData(se)
   original_counts <- data
 
@@ -442,6 +446,7 @@ normalize_se <- function(se, ## The expt class passed to the normalizer
   current_mtrx <- data
 
   batched_counts <- NULL
+  normalized_counts <- NULL
   sv_df <- NULL
   if (batch_step == 1) {
     batch_data <- do_batch(count_table, method = batch,
@@ -471,7 +476,7 @@ normalize_se <- function(se, ## The expt class passed to the normalizer
 
   if (batch_step == 2) {
     batch_data <- do_batch(count_table, method = batch,
-                           expt_design = expt_design,
+                           expt_design = meta,
                            current_state = current_state,
                            ...)
     count_table <- batch_data[["count_table"]]
@@ -482,6 +487,7 @@ normalize_se <- function(se, ## The expt class passed to the normalizer
   }
 
   normalized <- count_table
+  norm_performed <- norm
   if (norm == "raw") {
     mesg("Step 2: not normalizing the data.")
   } else {
@@ -490,7 +496,6 @@ normalize_se <- function(se, ## The expt class passed to the normalizer
                                           ...)
     current_libsize <- normalized_counts[["libsize"]]
     count_table <- normalized_counts[["count_table"]]
-    norm_performed <- norm
     current_state[["normalization"]] <- norm
   }
 
@@ -500,7 +505,7 @@ normalize_se <- function(se, ## The expt class passed to the normalizer
   ## They have nice ways of handling the log2 which I should consider
   if (batch_step == 3) {
     batch_data <- do_batch(count_table, method = batch,
-                           expt_design = expt_design,
+                           expt_design = meta,
                            current_state = current_state,
                            ...)
     current_libsize <- batch_data[["libsize"]]
@@ -528,7 +533,7 @@ normalize_se <- function(se, ## The expt class passed to the normalizer
   ## Finally, this considers whether to log2 the data or no
   if (batch_step == 4) {
     batch_data <- do_batch(count_table, method = batch,
-                           expt_design = expt_design,
+                           expt_design = meta,
                            current_state = current_state,
                            ...)
     current_libsize <- batch_data[["libsize"]]
@@ -562,7 +567,7 @@ normalize_se <- function(se, ## The expt class passed to the normalizer
 
   if (batch_step == 5) {
     batch_data <- do_batch(count_table, method = batch,
-                           expt_design = expt_design,
+                           expt_design = meta,
                            current_state = current_state,
                            ...)
     current_libsize <- batch_data[["libsize"]]
@@ -578,7 +583,7 @@ normalize_se <- function(se, ## The expt class passed to the normalizer
     impute <- arglist[["impute"]]
   }
   if (impute != "raw") {
-    imputed_counts <- impute_counts(count_table)
+    imputed_counts <- impute_expt(count_table)
     current_libsize <- imputed_counts[["libsize"]]
     count_table <- imputed_counts[["count_table"]]
     current_state[["impute"]] <- impute
@@ -954,7 +959,6 @@ normalize <- function(expt, todo = list()) {
     arglist <- list()
     arglist[["count_table"]] <- count_table
     arglist[["method"]] <- method
-    arglist[["design"]] <- design
     for (a in args) {
       name <- names(args)[a]
       arglist[[a]] <- args[[a]]
@@ -964,30 +968,5 @@ normalize <- function(expt, todo = list()) {
   }
   return(count_table)
 }
-
-## Put S4 dispatchers here
-
-setMethod("normalize_expt",
-          signature = signature(expt = "SummarizedExperiment"),
-          definition = function(expt, transform = "raw", norm = "raw", convert = "raw",
-                                batch = "raw", filter = FALSE,
-                                annotations = NULL, fasta = NULL, entry_type = "gene",
-                                use_original = FALSE, batch1 = "batch",
-                                batch2 = NULL, batch_step = 4,
-                                low_to_zero = TRUE, thresh = 2, min_samples = 2,
-                                p = 0.01, A = 1, k = 1, cv_min = 0.01, cv_max = 1000,
-                                na_to_zero = FALSE, adjust_method = "ruv", verbose = TRUE,
-                                ...) {
-            se <- expt
-            normalize_se(se, transform = transform, norm = norm,
-                         convert = convert, batch = batch, filter = filter,
-                         annotations = annotations, fasta = fasta, entry_type = entry_type,
-                         use_original = use_original, batch1 = batch1, batch2 = batch2,
-                         batch_step = batch_step, low_to_zero = low_to_zero, thresh = thresh,
-                         min_samples = min_samples, p = p, A = A, k = k, cv_min = cv_min,
-                         cv_max = cv_max, na_to_zero = na_to_zero,
-                         adjust_method = adjust_method, verbose = verbose, ...)
-          })
-
 
 ## EOF

@@ -15,6 +15,7 @@ default_proper(
   alpha = 0.1,
   stratify = "expr",
   target = "lfc",
+  add_coverage = TRUE,
   filter = "none",
   delta = 0.5
 )
@@ -42,6 +43,8 @@ old, my version of this only accepts deseq or edger.}
 
 \item{target}{Cutoff.}
 
+\item{add_coverage}{Add a line showing the actual coverage observed?}
+
 \item{filter}{Apply a filter?}
 
 \item{delta}{Not epsilon! (E.g. I forget what this does).}
@@ -59,5 +62,5 @@ and warrants further discussion/analysis.  This function invokes PROPER
 exactly as it was performed in their paper.
 }
 \seealso{
-[PROPER]
+[PROPER] DOI:10.1093/bioinformatics/btu640
 }

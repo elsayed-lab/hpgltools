@@ -63,7 +63,7 @@ set of all PCA plots with respect to one another. (PCx vs. PCy)
 
 \examples{
 \dontrun{
- pca_info = pca_information(exprs(some_expt$expressionset), some_design, "all")
+ pca_info = pca_information(exprs(some_expt), some_design, "all")
  pca_info
 }
 }

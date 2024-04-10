@@ -4,7 +4,13 @@
 \alias{all_gprofiler}
 \title{Run simple_gprofiler on every table from extract_significant_genes()}
 \usage{
-all_gprofiler(sig, according_to = "deseq", together = FALSE, ...)
+all_gprofiler(
+  sig,
+  according_to = "deseq",
+  together = FALSE,
+  plot_type = "dotplot",
+  ...
+)
 }
 \arguments{
 \item{sig}{Result from extract_significant_genes}
@@ -12,6 +18,8 @@ all_gprofiler(sig, according_to = "deseq", together = FALSE, ...)
 \item{according_to}{Use this result type for the gprofiler searches.}
 
 \item{together}{Concatenate the up/down genes into one set?}
+
+\item{plot_type}{Choose a plot method as the default.}
 
 \item{...}{Arguments to pass to simple_gprofiler().}
 }

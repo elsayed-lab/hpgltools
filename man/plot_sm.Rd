@@ -6,6 +6,7 @@
 \usage{
 plot_sm(
   data,
+  design = NULL,
   colors = NULL,
   method = "pearson",
   plot_legend = FALSE,
@@ -18,6 +19,8 @@ plot_sm(
 }
 \arguments{
 \item{data}{Expt, expressionset, or data frame.}
+
+\item{design}{Specify metadata if desired.}
 
 \item{colors}{Color scheme if data is not an expt.}
 

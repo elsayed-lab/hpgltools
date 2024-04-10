@@ -32,6 +32,9 @@ compare_de_tables(
 
 \item{second_table}{Ibid.}
 }
+\value{
+List result from plot_linear_scatter
+}
 \description{
 Use plot_linear_scatter to compare to de tables.
 }

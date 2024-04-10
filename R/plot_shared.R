@@ -119,6 +119,7 @@ ggplt <- function(gg, filename = "ggplot.html",
 #' @param title_suffix Text to add to the titles of the plots.
 #' @param qq Include qq plots?
 #' @param ma Include pairwise ma plots?
+#' @param cv Include coefficient of variance plots? (they are slow)
 #' @param gene_heat Include a heatmap of the gene expression data?
 #' @param ... Extra parameters optionally fed to the various plots
 #' @return a loooong list of plots including the following:
@@ -151,7 +152,7 @@ ggplt <- function(gg, filename = "ggplot.html",
 #' }
 #' @export
 graph_metrics <- function(expt, cormethod = "pearson", distmethod = "euclidean",
-                          title_suffix = NULL, qq = FALSE, ma = FALSE, gene_heat = FALSE,
+                          title_suffix = NULL, qq = NULL, ma = NULL, cv = NULL, gene_heat = NULL,
                           ...) {
   arglist <- list(...)
   if (!exists("expt", inherits = FALSE)) {
@@ -278,7 +279,7 @@ graph_metrics <- function(expt, cormethod = "pearson", distmethod = "euclidean",
   }
 
   mesg("Printing a color to condition legend.")
-  legend <- try(plot_legend(expt))
+  legend <- try(suppressWarnings(plot_legend(expt)))
   if ("try-error" %in% class(legend)) {
     legend <- list()
   }
@@ -347,6 +348,7 @@ graph_metrics <- function(expt, cormethod = "pearson", distmethod = "euclidean",
     "tsne_table" = tsne[["table"]]
   )
   new_options <- options(old_options)
+  class(ret_data) <- "graphed_metrics"
   return(ret_data)
 }
 
@@ -359,27 +361,33 @@ graph_metrics <- function(expt, cormethod = "pearson", distmethod = "euclidean",
 #' @export
 plot_legend <- function(stuff) {
   plot <- NULL
+  color_fact <- NULL
   if (class(stuff)[[1]] == "gg") {
     ## Then assume it is a pca plot
     plot <- stuff
   } else {
+    color_fact <- get_expt_colors(stuff)
     plot <- plot_pca(stuff)[["plot"]]
   }
 
   tmp <- ggplot2::ggplot_gtable(ggplot2::ggplot_build(plot))
   leg <- which(sapply(tmp[["grobs"]], function(x) x[["name"]]) == "guide-box")
   legend <- tmp[["grobs"]][[leg]]
-  tmp_file <- tempfile(pattern = "legend", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "legend", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   grid::grid.newpage()
   grid::grid.draw(legend)
   legend_plot <- grDevices::recordPlot()
   dev.off()
-  removed <- file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
+
   ret <- list(
-    colors = plot[["data"]][, c("condition", "batch", "colors")],
-    plot = legend_plot)
+    "color_fact" = color_fact,
+    "colors" = plot[["data"]][, c("condition", "batch", "colors")],
+    "plot" = legend_plot)
+  class(ret) <- "legend_plot"
   return(ret)
 }
 

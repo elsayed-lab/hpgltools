@@ -6,7 +6,7 @@
 various preprocessing tools.}
 \usage{
 gather_preprocessing_metadata(
-  starting_metadata,
+  starting_metadata = NULL,
   specification = NULL,
   basedir = "preprocessing",
   new_metadata = NULL,
@@ -17,11 +17,14 @@ gather_preprocessing_metadata(
 )
 }
 \arguments{
-\item{starting_metadata}{Already existing sample sheet.}
+\item{starting_metadata}{Existing sample sheet or NULL.  When NULL
+it will look in basedir for subdirectories not named 'test' and
+ontaining subdirectories named 'scripts' and use them to create an
+empty sample sheet.}
 
 \item{specification}{List containing one element for each new
- column to append to the sample sheet.  Each element in turn is a
- list containing column names and/or input filenames (and
+column to append to the sample sheet.  Each element in turn is a
+list containing column names and/or input filenames (and
 presumably other stuff as I think of it).}
 
 \item{basedir}{Root directory containing the files/logs of metadata.}

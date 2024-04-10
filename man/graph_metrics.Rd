@@ -9,9 +9,10 @@ graph_metrics(
   cormethod = "pearson",
   distmethod = "euclidean",
   title_suffix = NULL,
-  qq = FALSE,
-  ma = FALSE,
-  gene_heat = FALSE,
+  qq = NULL,
+  ma = NULL,
+  cv = NULL,
+  gene_heat = NULL,
   ...
 )
 }
@@ -27,6 +28,8 @@ graph_metrics(
 \item{qq}{Include qq plots?}
 
 \item{ma}{Include pairwise ma plots?}
+
+\item{cv}{Include coefficient of variance plots? (they are slow)}
 
 \item{gene_heat}{Include a heatmap of the gene expression data?}
 

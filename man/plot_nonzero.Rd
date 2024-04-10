@@ -8,8 +8,9 @@ plot_nonzero(
   data,
   design = NULL,
   colors = NULL,
-  plot_labels = NULL,
+  plot_labels = "repel",
   expt_names = NULL,
+  max_overlaps = 5,
   label_chars = 10,
   plot_legend = FALSE,
   plot_title = NULL,
@@ -30,6 +31,8 @@ overlapping anything else will just stick them on a 45' offset next to the
 graphed point.}
 
 \item{expt_names}{Column or character list of preferred sample names.}
+
+\item{max_overlaps}{Permit this many labels to overlap before dropping some.}
 
 \item{label_chars}{How many characters for sample names before abbreviation.}
 

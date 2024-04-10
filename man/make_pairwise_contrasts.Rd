@@ -10,6 +10,7 @@ make_pairwise_contrasts(
   do_identities = FALSE,
   do_extras = TRUE,
   do_pairwise = TRUE,
+  keepers = NULL,
   extra_contrasts = NULL,
   ...
 )
@@ -27,6 +28,8 @@ below, but there is a reason for it.}
 
 \item{do_pairwise}{Include all pairwise strings? This shouldn't
 need to be set to FALSE, but just in case.}
+
+\item{keepers}{Only extract this subset of all possible pairwise contrasts.}
 
 \item{extra_contrasts}{Optional string of extra contrasts to include.}
 

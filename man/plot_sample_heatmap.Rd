@@ -8,6 +8,7 @@ plot_sample_heatmap(
   data,
   colors = NULL,
   design = NULL,
+  heatmap_colors = NULL,
   expt_names = NULL,
   dendrogram = "column",
   row_label = NA,
@@ -25,6 +26,8 @@ plot_sample_heatmap(
 \item{colors}{Color scheme of the samples (not needed if input is an expt).}
 
 \item{design}{Design matrix describing the experiment (gotten for free if an expt).}
+
+\item{heatmap_colors}{Specify a colormap.}
 
 \item{expt_names}{Alternate samples names.}
 

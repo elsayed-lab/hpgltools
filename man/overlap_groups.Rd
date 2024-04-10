@@ -4,10 +4,10 @@
 \alias{overlap_groups}
 \title{Extract overlapping groups from an upset}
 \usage{
-overlap_groups(lst, sort = TRUE)
+overlap_groups(input, sort = TRUE)
 }
 \arguments{
-\item{lst}{upset data structure.}
+\item{input}{upset data structure.}
 
 \item{sort}{Sort the result?}
 }

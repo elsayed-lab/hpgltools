@@ -15,6 +15,7 @@ combine_extracted_plots(
   plot_edger = TRUE,
   plot_limma = TRUE,
   plot_ebseq = FALSE,
+  plot_noiseq = FALSE,
   loess = FALSE,
   logfc = 1,
   pval = 0.05,
@@ -22,6 +23,7 @@ combine_extracted_plots(
   p_type = "all",
   plot_colors = NULL,
   fancy = FALSE,
+  adjp = TRUE,
   do_inverse = FALSE,
   invert_colors = FALSE,
   z = 1.5,
@@ -52,6 +54,8 @@ combine_extracted_plots(
 
 \item{plot_ebseq}{Add ebseq data?}
 
+\item{plot_noiseq}{Add noiseq plots?}
+
 \item{loess}{Add a loess estimation?}
 
 \item{logfc}{For Volcano/MA plot lines.}
@@ -66,6 +70,8 @@ significance.}
 \item{plot_colors}{Use these colors for numerators/denominators.}
 
 \item{fancy}{Include fancy pdf/svg versions of plots for publication?}
+
+\item{adjp}{Use adjusted p-values?}
 
 \item{do_inverse}{Flip the numerator/denominator?}
 

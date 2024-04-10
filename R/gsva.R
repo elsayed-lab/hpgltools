@@ -187,6 +187,7 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
     gsva_limma[["all_tables"]][[t]] <- table
   }
 
+  ## FIXME: This is not likely needed anymore.
   gsva_eset <- gsva_scores[["expressionset"]]
   ## Go from highest to lowest score, using the first sample as a guide.
   values <- as.data.frame(exprs(gsva_eset))
@@ -210,7 +211,7 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
     subset_eset <- subset_eset[keep_idx, ]
     jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
                                                 "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
-    tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+    tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     if (is.null(label_size)) {
@@ -224,6 +225,7 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
     scored_ht_plot <- grDevices::recordPlot()
     dev.off()
     removed <- suppressWarnings(file.remove(tmp_file))
+    removed <- unlink(dirname(tmp_file))
     subset_order <- rev(scored_ht[["rowInd"]])
     subset_rownames <- rownames(exprs(subset_eset))[subset_order]
 
@@ -282,6 +284,7 @@ get_sig_gsva_categories <- function(gsva_result, cutoff = 0.95, excel = "excel/g
   if (!is.null(excel)) {
     retlist[["excel"]] <- write_gsva(retlist, excel)
   }
+  class(retlist) <- "gsva_sig"
   return(retlist)
 }
 
@@ -410,7 +413,7 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
                    "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000")
   jet_colors <- grDevices::colorRampPalette(color_range)
   starting_ht <- NULL
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   if (is.null(label_size)) {
@@ -424,6 +427,7 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
   starting_ht_plot <- grDevices::recordPlot()
   dev.off()
   removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
   tests <- test_values <- against_values <- NULL
   choice <- NULL
   if (is.null(score) & is.null(category) & is.null(sample) & is.null(factor)) {
@@ -501,7 +505,7 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
     } ## End iterating over every level in the chosen factor.
     colnames(result_df) <- fact_lvls
     heat_colors <- grDevices::colorRampPalette(c("white", "black"))
-    tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+    tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
     this_plot <- png(filename = tmp_file)
     controlled <- dev.control("enable")
     ht_result <- heatmap.3(as.matrix(result_df), trace = "none", col = heat_colors,
@@ -510,6 +514,7 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
     score_plot <- grDevices::recordPlot()
     dev.off()
     removed <- suppressWarnings(file.remove(tmp_file))
+    removed <- unlink(dirname(tmp_file))
     test_results <- result_df
   } else if (choice == "column") {
     test_results <- sapply(X = tests, FUN = cheesy_likelihood)
@@ -553,10 +558,11 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
 #'  because it was throwing segmentation faults.
 #' @param kcdf Options for the gsva methods.
 #' @param ranking another gsva option.
-#' @param msig_xml XML file contining msigdb annotations.
+#' @param msig_db File contining msigdb annotations.
 #' @param wanted_meta Desired metadata elements from the mxig_xml file.
 #' @param mx_diff Passed to gsva(), I do not remember what it does.
 #' @param verbose Print some information while running?
+#' @param id_type Specify the ID type when loading the signature database.
 #' @return List containing three elements: first a modified expressionset using
 #'  the result of gsva in place of the original expression data; second the
 #'  result from gsva, and third a data frame of the annotation data for the
@@ -567,9 +573,9 @@ score_gsva_likelihoods <- function(gsva_result, score = NULL, category = NULL,
 simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
                         signature_category = "c2", cores = NULL, current_id = "ENSEMBL",
                         required_id = "ENTREZID", min_catsize = 5, orgdb = "org.Hs.eg.db",
-                        method = "ssgsea", kcdf = NULL, ranking = FALSE, msig_xml = NULL,
+                        method = "ssgsea", kcdf = NULL, ranking = FALSE, msig_db = NULL,
                         ## wanted_meta = c("ORGANISM", "DESCRIPTION_BRIEF", "AUTHORS", "PMID"),
-                        wanted_meta = "all", mx_diff = TRUE, verbose = FALSE) {
+                        wanted_meta = "all", mx_diff = TRUE, verbose = FALSE, id_type = "entrez") {
   if (is.null(kcdf)) {
     if (expt[["state"]][["transform"]] == "raw") {
       kcdf <- "Poisson"
@@ -582,9 +588,9 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
     cores <- min(parallel::detectCores() - 1, 16)
   }
 
-  if (!is.null(msig_xml)) {
-    if (!file.exists(msig_xml)) {
-      stop("The msig_xml parameter was defined, but the file does not exist.")
+  if (!is.null(msig_db)) {
+    if (!file.exists(msig_db)) {
+      stop("The msig_db parameter was defined, but the file does not exist.")
     }
   }
 
@@ -598,80 +604,97 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
   if (is.null(signature_category)) {
     signature_category <- "c2"
   }
-  sig_data <- load_gmt_signatures(signatures = signatures, data_pkg = data_pkg,
-                                  signature_category = signature_category)
+  signature_data <- load_gmt_signatures(signatures = signatures, data_pkg = data_pkg,
+                                            signature_category = signature_category,
+                                            id_type = id_type)
 
   ## The expressionset must have the annotation field filled in for gsva to
   ## work.
-  eset <- expt[["expressionset"]]
-  eset_annotation <- annotation(eset)
-  eset_pattern <- grepl(pattern = "Fill me in", x = annotation(eset))
+  eset_annotation <- annotation(expt)
+  eset_pattern <- grepl(pattern = "Fill me in", x = annotation(expt))
   if (length(eset_annotation) == 0 | isTRUE(eset_pattern)) {
     message("gsva requires the annotation field to be filled in. Setting it to orgdb given.")
-    annotation(eset) <- orgdb
+    annotation(expt) <- orgdb
   }
 
+  eset <- expt
   ## The rownames() of the expressionset must be in ENTREZIDs for gsva to work.
-  if (current_id != required_id | !is.integer(grep("ENSG", rownames(exprs(eset))))) {
+  if (current_id != required_id | !is.integer(grep("ENSG", rownames(exprs(expt))))) {
     message("Converting the rownames() of the expressionset to ENTREZID.")
     ##tt <- sm(library(orgdb, character.only = TRUE))
     lib_result <- sm(requireNamespace(orgdb))
     att_result <- sm(try(attachNamespace(orgdb), silent = TRUE))
-    old_ids <- rownames(exprs(eset))
+    old_ids <- rownames(exprs(expt))
     new_ids <- sm(AnnotationDbi::select(x = get0(orgdb),
                                         keys = old_ids,
                                         keytype = current_id,
                                         columns = c(required_id)))
     new_idx <- complete.cases(new_ids)
-
     if (!all(new_idx)) {
       message(sum(new_idx == FALSE),
               " ENSEMBL ID's didn't have a matching ENTEREZ ID. Dropping them now.")
     }
-
-
-    new_ids <- new_ids[new_idx, ]
-    message("Before conversion, the expressionset has ", length(rownames(eset)),
+    duplicate_current <- duplicated(new_ids[[current_id]])
+    new_ids <- new_ids[!duplicate_current, ]
+    duplicate_required <- duplicated(new_ids[[required_id]])
+    new_ids <- new_ids[!duplicate_required, ]
+    rownames(new_ids) <- new_ids[[current_id]]
+    dropme <- is.na(new_ids[[current_id]])
+    new_ids <- new_ids[!dropme, ]
+    dropme <- is.na(new_ids[[required_id]])
+    new_ids <- new_ids[!dropme, ]
+    message("Before conversion, the expressionset has ", length(rownames(exprs(expt))),
             " entries.")
-    converted_eset <- eset[new_ids[[current_id]], ]
-    rownames(converted_eset) <- make.names(new_ids[[required_id]], unique = TRUE)
+    new_rownames <- new_ids[[required_id]]
+    old_rownames <- new_ids[[current_id]]
+    ## FIXME: My expt [] implementation has a bug.
+    exprs_subset <- expt[["expressionset"]][old_rownames, ]
+    sub_expt <- expt
+    sub_expt[["expressionset"]] <- exprs_subset
+    ## sub_expt <- subset_expt(expt, ids = old_rownames)
+    converted_expt <- set_expt_genenames(sub_expt, new_rownames)
     message("After conversion, the expressionset has ",
-            length(rownames(converted_eset)),
+            length(rownames(exprs(converted_expt))),
             " entries.")
-    rownames(converted_eset) <- gsub(pattern = "^X", replacement = "",
-                                     x = rownames(converted_eset))
-    eset <- converted_eset
+    rownames(exprs(converted_expt)) <- gsub(pattern = "^X", replacement = "",
+                                     x = rownames(exprs(converted_expt)))
+    eset <- converted_expt
     fData(eset)[[required_id]] <- rownames(fData(eset))
   }
 
   gsva_result <- NULL
   if (isTRUE(verbose)) {
-    gsva_result <- GSVA::gsva(eset, sig_data, verbose = TRUE, method = method,
-                              min.sz = min_catsize, kcdf = kcdf, abs.ranking = ranking,
-                              parallel.sz = cores, mx.diff = mx_diff)
+    gsva_result <- GSVA::gsva(eset[["expressionset"]], signature_data, verbose = TRUE,
+                              method = method, min.sz = min_catsize, kcdf = kcdf,
+                              abs.ranking = ranking, parallel.sz = cores, mx.diff = mx_diff)
   } else {
-    gsva_result <- sm(GSVA::gsva(eset, sig_data, verbose = TRUE, method = method,
-                                 min.sz = min_catsize, kcdf = kcdf, abs.ranking = ranking,
-                                 parallel.sz = cores, mx.diff = mx_diff))
+    gsva_result <- sm(GSVA::gsva(eset[["expressionset"]], signature_data, verbose = TRUE,
+                                 method = method, min.sz = min_catsize, kcdf = kcdf,
+                                 abs.ranking = ranking, parallel.sz = cores, mx.diff = mx_diff))
   }
   fdata_df <- data.frame(row.names = rownames(exprs(gsva_result)))
 
   fdata_df[["description"]] <- ""
   fdata_df[["ids"]] <- ""
-  for (i in seq_along(sig_data)) {
-    fdata_df[i, "description"] <- description(sig_data[[i]])
-    fdata_df[i, "ids"] <- toString(GSEABase::geneIds(sig_data[[i]]))
+  message("Adding descriptions and IDs to the gene set annotations.")
+  shared_sig_data <- signature_data[rownames(fdata_df)]
+  for (i in seq_along(names(shared_sig_data))) {
+    fdata_df[i, "description"] <- description(shared_sig_data[[i]])
+    fdata_df[i, "ids"] <- toString(GSEABase::geneIds(shared_sig_data[[i]]))
+  }
+
+  if (!is.null(msig_db)) {
+    message("Adding annotations from ", msig_db, ".")
+    improved <- get_msigdb_metadata(msig_db = msig_db, wanted_meta = wanted_meta)
+    ## Add improved to fData
+    fdata_df <- merge(fdata_df, improved, by = "row.names", all.x = TRUE)
+    rownames(fdata_df) <- fdata_df[["Row.names"]]
+    fdata_df[["Row.names"]] <- NULL
   }
 
   fData(gsva_result) <- fdata_df
   new_expt <- expt
   new_expt[["expressionset"]] <- gsva_result
-  if (!is.null(msig_xml)) {
-    message("Adding annotations from ", msig_xml, ".")
-    improved <- get_msigdb_metadata(msig_xml = msig_xml, wanted_meta = wanted_meta,
-                                    gsva_result = gsva_result)
-    new_expt[["expressionset"]] <- improved
-  }
 
   retlist <- list(
       "method" = method,
@@ -682,6 +705,7 @@ simple_gsva <- function(expt, signatures = "c2BroadSets", data_pkg = "GSVAdata",
       "expt" = new_expt,
       "gsva" = gsva_result,
       "fdata" = fdata_df)
+  class(retlist) <- "gsva_result"
   return(retlist)
 }
 
@@ -758,7 +782,7 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
 
   jet_colors <- grDevices::colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan",
                                               "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   if (is.null(label_size)) {
@@ -773,11 +797,12 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
   dev.off()
   ## sometimes the file does not get created.
   removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   sig_idx <- Biobase::rowMax(xcell_result) >= sig_cutoff
   sig_plot <- NULL
   sig_result <- NULL
-  tmp_file <- tempfile(pattern = "heat", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "heat", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   if (sum(sig_idx) > 1) {
@@ -794,6 +819,7 @@ simple_xcell <- function(expt, signatures = NULL, genes = NULL, spill = NULL,
   }
   dev.off()
   removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   retlist <- list(
       "xcell_input" = xcell_input,

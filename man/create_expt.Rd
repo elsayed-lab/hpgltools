@@ -8,12 +8,12 @@ create_expt(
   metadata = NULL,
   gene_info = NULL,
   count_dataframe = NULL,
-  sanitize_rownames = FALSE,
+  sanitize_rownames = TRUE,
   sample_colors = NULL,
   title = NULL,
   notes = NULL,
-  countdir = NULL,
   include_type = "all",
+  countdir = NULL,
   include_gff = NULL,
   file_column = "file",
   id_column = NULL,
@@ -22,8 +22,10 @@ create_expt(
   handle_na = "drop",
   researcher = "elsayed",
   study_name = NULL,
+  file_type = NULL,
   annotation_name = "org.Hs.eg.db",
   tx_gene_map = NULL,
+  feature_type = "gene",
   ...
 )
 }
@@ -46,11 +48,11 @@ generate its own colors using colorBrewer.}
 
 \item{notes}{Additional notes?}
 
-\item{countdir}{Directory containing count tables.}
-
 \item{include_type}{I have usually assumed that all gff annotations should be
 used, but that is not always true, this allows one to limit to a specific
 annotation type.}
+
+\item{countdir}{Directory containing count tables.}
 
 \item{include_gff}{Gff file to help in sorting which features to keep.}
 
@@ -70,9 +72,15 @@ filesystem?}
 
 \item{study_name}{Ibid, but set the study tag.}
 
+\item{file_type}{Explicitly state the type of files containing the
+count data.  I have code which autodetects the method used to
+import count data, this short-circuits it.}
+
 \item{annotation_name}{Ibid, but set the orgdb (or other annotation) instance.}
 
 \item{tx_gene_map}{Dataframe of transcripts to genes, primarily for tools like salmon.}
+
+\item{feature_type}{Make explicit the type of feature used so it may be printed later.}
 
 \item{...}{More parameters are fun!}
 }
@@ -80,6 +88,10 @@ filesystem?}
 experiment an expressionset
 }
 \description{
+Note: You should just be using create_se().  It does everything the
+expt does, but better.
+}
+\details{
 The primary innovation of this function is that it will check the metadata
 for columns containing filenames for the count tables, thus hopefully making
 the collation and care of metadata/counts easier.  For example, I have some

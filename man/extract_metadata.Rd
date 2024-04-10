@@ -4,7 +4,13 @@
 \alias{extract_metadata}
 \title{Pull metadata from a table (xlsx/xls/csv/whatever)}
 \usage{
-extract_metadata(metadata, id_column = "sampleid", fill = NULL, ...)
+extract_metadata(
+  metadata,
+  id_column = "sampleid",
+  fill = NULL,
+  sanitize = TRUE,
+  ...
+)
 }
 \arguments{
 \item{metadata}{file or df of metadata}
@@ -12,6 +18,8 @@ extract_metadata(metadata, id_column = "sampleid", fill = NULL, ...)
 \item{id_column}{Column in the metadat containing the sample names.}
 
 \item{fill}{Fill missing data with this.}
+
+\item{sanitize}{Perform my various sanitizers on the data?}
 
 \item{...}{Arguments to pass to the child functions (read_csv etc).}
 }

@@ -363,6 +363,7 @@ plot_linear_scatter <- function(df, cormethod = "pearson", size = 2, loess = FAL
     "first_mad" = first_mad,
     "second_median" = second_median,
     "second_mad" = second_mad)
+  class(plots) <- "linear_scatter"
   return(plots)
 }
 
@@ -405,6 +406,7 @@ recolor_points <- function(plot, df, ids, color = "red", ...) {
 #'  overlapping anything else will just stick them on a 45' offset next to the
 #'  graphed point.
 #' @param expt_names Column or character list of preferred sample names.
+#' @param max_overlaps Permit this many labels to overlap before dropping some.
 #' @param label_chars How many characters for sample names before abbreviation.
 #' @param plot_legend Print a legend for this plot?
 #' @param plot_title Add a title?
@@ -418,25 +420,10 @@ recolor_points <- function(plot, df, ids, color = "red", ...) {
 #'  nonzero_plot <- plot_nonzero(expt = expt)
 #' }
 #' @export
-plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
-                         expt_names = NULL, label_chars = 10, plot_legend = FALSE,
+plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = "repel",
+                         expt_names = NULL, max_overlaps = 5, label_chars = 10, plot_legend = FALSE,
                          plot_title = NULL, cutoff = 0.65, ...) {
   arglist <- list(...)
-  names <- NULL
-  data_class <- class(data)[1]
-  if (data_class == "expt" || data_class == "SummarizedExperiment") {
-    design <- pData(data)
-    colors <- data[["colors"]]
-    names <- data[["samplenames"]]
-    data <- exprs(data)
-  } else if (data_class == "ExpressionSet") {
-    data <- exprs(data)
-  } else if (data_class == "matrix" || data_class == "data.frame") {
-    ## some functions prefer matrix, so I am keeping this explicit for the moment
-    data <- as.data.frame(data)
-  } else {
-    stop("This function understands types: expt, ExpressionSet, data.frame, and matrix.")
-  }
 
   condition <- design[["condition"]]
   batch <- design[["batch"]]
@@ -517,10 +504,13 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
     ggplot2::scale_fill_manual(name = "Condition",
                                guide = "legend",
                                values = color_list) +
-    ggplot2::ylab("Number of non-zero genes observed.") +
-    ggplot2::xlab("Observed CPM") +
+    ggplot2::ylab("Number of non-zero genes observed") +
+    ggplot2::xlab("Number of reads mapped (millions)") +
     ggplot2::theme_bw(base_size = base_size)
 
+  if (isTRUE(plot_labels)) {
+    plot_labels <- "repel"
+  }
   if (is.null(plot_labels)) {
     plot_labels <- "repel"
   }
@@ -530,7 +520,7 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
     non_zero_plot <- non_zero_plot +
       ggplot2::geom_text(aes(x = .data[["cpm"]], y = .data[["nonzero_genes"]],
                              label = .data[["id"]], angle = 45, size = 4, vjust = 2))
-  } else if (plot_labels == "repel") {
+  } else if (plot_labels == "oldrepel") {
     non_zero_plot <- non_zero_plot +
       ggrepel::geom_text_repel(ggplot2::aes(label = .data[["id"]]),
                                size = 5, box.padding = ggplot2::unit(0.5, "lines"),
@@ -539,6 +529,9 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
   } else if (plot_labels == "dlsmart") {
     non_zero_plot <- non_zero_plot +
       directlabels::geom_dl(aes(label = .data[["id"]]), method = "smart.grid")
+  } else if (plot_labels == "repel") {
+    non_zero_plot <- non_zero_plot +
+      ggrepel::geom_text_repel(ggplot2::aes(label = .data[["id"]]), max.overlaps = max_overlaps)
   } else {
     non_zero_plot <- non_zero_plot +
       directlabels::geom_dl(ggplot2::aes(label = .data[["id"]]), method = "first.qp")
@@ -558,8 +551,10 @@ plot_nonzero <- function(data, design = NULL, colors = NULL, plot_labels = NULL,
   retlist <- list(
     "plot" = non_zero_plot,
     "table" = nz_df)
+  class(retlist) <- "nonzero_plot"
   return(retlist)
 }
+setGeneric("plot_nonzero")
 
 #' Plot all pairwise MA plots in an experiment.
 #'
@@ -621,7 +616,7 @@ plot_pairwise_ma <- function(data, log = NULL, ...) {
       m <- first - second
       a <- (first + second) / 2
 
-      tmp_file <- tempfile(pattern = "ma", fileext = ".png")
+      tmp_file <- tmpmd5file(pattern = "ma", fileext = ".png")
       this_plot <- png(filename = tmp_file)
       controlled <- dev.control("enable")
       affy::ma.plot(A = a, M = m, plot.method = "smoothScatter",
@@ -629,7 +624,9 @@ plot_pairwise_ma <- function(data, log = NULL, ...) {
       title(glue("MA of {firstname} vs {secondname}."))
       plot_list[[name]] <- grDevices::recordPlot()
       dev.off()
-      file.remove(tmp_file)
+      removed <- suppressWarnings(file.remove(tmp_file))
+      removed <- unlink(dirname(tmp_file))
+
     }
   }
   return(plot_list)

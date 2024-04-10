@@ -35,6 +35,7 @@
 #' @param categories How many categories should be plotted in bar/dot plots?
 #' @param excel Print the results to an excel file?
 #' @param do_david Attempt to use the DAVID database for a search?
+#' @param do_kegg Perform kegg search?
 #' @param david_id Which column to use for cross-referencing to DAVID?
 #' @param david_user Default registered username to use.
 #' @return a list
@@ -51,7 +52,7 @@ simple_clusterprofiler <- function(sig_genes, de_table = NULL, orgdb = "org.Dm.e
                                    second_fc_column = "deseq_logfc",
                                    updown = "up", permutations = 1000, min_groupsize = 5,
                                    kegg_prefix = NULL, kegg_organism = NULL, do_gsea = TRUE,
-                                   categories = 12, excel = NULL, do_david = FALSE,
+                                   categories = 12, excel = NULL, do_david = FALSE, do_kegg = FALSE,
                                    david_id = "ENTREZ_GENE_ID",
                                    david_user = "unknown@unknown.org") {
   sm(requireNamespace(package = "clusterProfiler", quietly = TRUE))
@@ -210,8 +211,8 @@ simple_clusterprofiler <- function(sig_genes, de_table = NULL, orgdb = "org.Dm.e
       "CC_all" = as.data.frame(ego_all_cc, stringsAsFactors = FALSE),
       "CC_sig" = as.data.frame(ego_sig_cc, stringsAsFactors = FALSE))
   mesg("Found ", nrow(enrich_go[["MF_sig"]]),
-          " MF, ", nrow(enrich_go[["BP_sig"]]),
-          " BP, and ", nrow(enrich_go[["CC_sig"]]), " CC enriched hits.")
+       " MF, ", nrow(enrich_go[["BP_sig"]]),
+       " BP, and ", nrow(enrich_go[["CC_sig"]]), " CC enriched hits.")
 
   gse_go <- list()
   de_table_merged <- NULL
@@ -235,9 +236,9 @@ simple_clusterprofiler <- function(sig_genes, de_table = NULL, orgdb = "org.Dm.e
     ## 2020 04: Adding a pvalue cutoff argument causes an error, I do not know why.
     ## Arguments used by gseGO of interest: exponent, minGSSize/maxGSSize, eps, by(fgsea)
     ## Also, apparently the nperm argument is deprecated.
-    gse <- clusterProfiler::gseGO(geneList = genelist, OrgDb = org,
+    gse <- suppressWarnings(clusterProfiler::gseGO(geneList = genelist, OrgDb = org,
                                   keyType = orgdb_to, ont = "ALL",
-                                  minGSSize = min_groupsize)
+                                  minGSSize = min_groupsize))
     gse_go <- as.data.frame(gse)
     mesg("Found ", nrow(gse_go), " enriched hits.")
   } else {
@@ -348,13 +349,13 @@ simple_clusterprofiler <- function(sig_genes, de_table = NULL, orgdb = "org.Dm.e
   map_sig_cc <- try(clusterProfiler::emapplot(ego_sig_cc), silent = TRUE)
   net_sig_mf <- try(
     clusterProfiler::cnetplot(ego_sig_mf, categorySize = "pvalue",
-                              foldChange = genelist), silent = TRUE)
+                              color.params = list(foldChange = genelist)), silent = TRUE)
   net_sig_bp <- try(
     clusterProfiler::cnetplot(ego_sig_bp, categorySize = "pvalue",
-                              foldChange = genelist), silent = TRUE)
+                              color.params = list(foldChange = genelist)), silent = TRUE)
   net_sig_cc <- try(
     clusterProfiler::cnetplot(ego_sig_cc, categorySize = "pvalue",
-                              foldChange = genelist), silent = TRUE)
+                              color.params = list(foldChange = genelist)), silent = TRUE)
 
   tree_sig_mf <- tree_sig_bp <- tree_sig_cc <- NULL
   tree_mf <- sm(try(clusterProfiler::plotGOgraph(ego_sig_mf), silent = TRUE))

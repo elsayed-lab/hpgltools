@@ -7,7 +7,7 @@
 #' @param root Species ID to place at the root of the tree.
 #' @return List containing the phylogeny and some other stuff.
 #' @export
-genomic_sequence_phylo <- function(directory, root = NULL) {
+genomic_kmer_dist <- function(directory = "tree", root = NULL) {
   files <- list.files(directory, pattern = "\\.fasta$|\\.fa$|\\.fsa$")
   sequence_vectors <- list()
   sequence_set <- c()
@@ -53,5 +53,6 @@ genomic_sequence_phylo <- function(directory, root = NULL) {
     "dnd" = test_dnd,
     "phylo" = test_phylo,
     "phy" = test_phy)
+  class(retlist) <- "kmer_dist"
   return(retlist)
 }

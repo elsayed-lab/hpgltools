@@ -165,7 +165,7 @@ plot_boxplot <- function(data, colors = NULL, plot_title = NULL, order = NULL,
 #' }
 #' @export
 plot_density <- function(data, colors = NULL, expt_names = NULL, position = "identity",
-                         direct = TRUE, fill = NULL, plot_title = NULL, scale = NULL,
+                         direct = NULL, fill = NULL, plot_title = NULL, scale = NULL,
                          colors_by = "condition", label_chars = 10, ...) {
   ## also position='stack'
   data_class <- class(data)[1]
@@ -182,6 +182,13 @@ plot_density <- function(data, colors = NULL, expt_names = NULL, position = "ide
     data <- as.matrix(data)
   } else {
     stop("This function understands types: expt, ExpressionSet, data.frame, and matrix.")
+  }
+
+  if (is.null(direct)) {
+    direct <- TRUE
+    if (ncol(data) > 30) {
+      direct <- FALSE
+    }
   }
 
   if (is.null(scale)) {
@@ -316,6 +323,7 @@ plot_density <- function(data, colors = NULL, expt_names = NULL, position = "ide
     "batch_summary" = batch_summary,
     "sample_summary" = sample_summary,
     "table" = melted)
+  class(retlist) <- "density_plot"
   return(retlist)
 }
 
@@ -374,21 +382,23 @@ plot_qq_all <- function(data, labels = "short", ...) {
     count <- count + 1
   }
 
-  tmp_file <- tempfile(pattern = "multi", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "multi", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   result <- plot_multiplot(logs)
   log_plots <- grDevices::recordPlot()
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
-  tmp_file <- tempfile(pattern = "multi", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "multi", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   plot_multiplot(ratios)
   ratio_plots <- grDevices::recordPlot()
   dev.off()
-  file.remove(tmp_file)
+  removed <- suppressWarnings(file.remove(tmp_file))
+  removed <- unlink(dirname(tmp_file))
 
   plots <- list(logs = log_plots, ratios = ratio_plots, medians = means)
   return(plots)
@@ -562,7 +572,7 @@ plot_single_qq <- function(data, x = 1, y = 2, labels = TRUE) {
 #' @return List containing the ggplot2
 #' @export
 plot_topn <- function(data, plot_title = NULL, num = 100, expt_names = NULL,
-                      plot_labels = "direct", label_chars = 10, plot_legend = FALSE, ...) {
+                      plot_labels = NULL, label_chars = 10, plot_legend = FALSE, ...) {
   arglist <- list(...)
   data_class <- class(data)
   if (data_class == "expt" || data_class == "SummarizedExperiment") {
@@ -576,6 +586,14 @@ plot_topn <- function(data, plot_title = NULL, num = 100, expt_names = NULL,
     data <- as.matrix(data)
   } else {
     stop("This understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
+  }
+
+  if (is.null(plot_labels)) {
+    if (ncol(data) < 30) {
+      plot_labels <- "direct"
+    } else {
+      plot_labels <- FALSE
+    }
   }
 
   columns <- colSums(data)
@@ -646,6 +664,7 @@ plot_topn <- function(data, plot_title = NULL, num = 100, expt_names = NULL,
   retlist <- list(
     "plot" = topn_plot,
     "table" = tmpdf)
+  class(retlist) <- "topn_plot"
   return(retlist)
 }
 
@@ -659,6 +678,7 @@ plot_topn <- function(data, plot_title = NULL, num = 100, expt_names = NULL,
 #' simpler and less appropriate CV(sd/mean) and QCD(q3-q1/q3+q1).
 #'
 #' @param data Expressionset/epxt to poke at.
+#' @param design Specify metadata if necessary.
 #' @param x_axis Factor in the experimental design we may use to group the data
 #'  and calculate the dispersion metrics.
 #' @param colors Set of colors to use when making the violins
@@ -666,28 +686,13 @@ plot_topn <- function(data, plot_title = NULL, num = 100, expt_names = NULL,
 #' @param ... Extra arguments to pass along.
 #' @return List of plots showing the coefficients vs. genes along with the data.
 #' @export
-plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL,
+plot_variance_coefficients <- function(data, design = NULL, x_axis = "condition", colors = NULL,
                                        plot_title = NULL, ...) {
   arglist <- list(...)
   plot_legend <- FALSE
   if (!is.null(arglist[["plot_legend"]])) {
     plot_legend <- arglist[["plot_legend"]]
   }
-
-  data_class <- class(data)
-  if (data_class == "expt" || data_class == "SummarizedExperiment") {
-    design <- pData(data)
-    colors <- data[["colors"]]
-    data <- exprs(data)
-  } else if (data_class == "ExpressionSet") {
-    data <- exprs(data)
-    design <- pData(data)
-  } else if (data_class == "matrix" || data_class == "data.frame") {
-    data <- as.matrix(data)
-  } else {
-    stop("This understands classes of type: expt, ExpressionSet, data.frame, and matrix.")
-  }
-  design <- as.data.frame(design)
 
   melted <- data.table::as.data.table(reshape2::melt(data))
   if (ncol(melted) == 3) {
@@ -800,7 +805,9 @@ plot_variance_coefficients <- function(data, x_axis = "condition", colors = NULL
   }
   retlst[["data"]] <- cv_data
   retlst[["plot"]] <- retlst[["cv"]]
+  class(retlst) <- "varcoef_plot"
   return(retlst)
 }
+setGeneric("plot_variance_coefficients")
 
 ## EOF

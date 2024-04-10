@@ -4,7 +4,15 @@
 \alias{set_expt_conditions}
 \title{Change the condition of an expt}
 \usage{
-set_expt_conditions(expt, fact = NULL, ids = NULL, null_cell = "null", ...)
+set_expt_conditions(
+  expt,
+  fact = NULL,
+  ids = NULL,
+  prefix = NULL,
+  null_cell = "null",
+  colors = TRUE,
+  ...
+)
 }
 \arguments{
 \item{expt}{Expt to modify}
@@ -13,7 +21,11 @@ set_expt_conditions(expt, fact = NULL, ids = NULL, null_cell = "null", ...)
 
 \item{ids}{Specific sample IDs to change.}
 
+\item{prefix}{Add a prefix to the samples?}
+
 \item{null_cell}{How to fill elements of the design which are null?}
+
+\item{colors}{While we are here, set the colors.}
 
 \item{...}{Extra arguments are given to arglist.}
 }

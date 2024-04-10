@@ -35,6 +35,7 @@
 #'  de_vs_cb = (E-D)-(C-B),"
 #' @param annot_df Annotation information to the data tables?
 #' @param force Force edgeR to accept inputs which it should not have to deal with.
+#' @param keepers Ask for a specific set of contrasts instead of all.
 #' @param edger_method  I found a couple/few ways of doing edger in the manual,
 #'  choose with this.
 #' @param ... The elipsis parameter is fed to write_edger() at the end.
@@ -45,6 +46,7 @@
 #'  I do this to avoid running into the limit on # of contrasts addressable by topTags()
 #'  all_tables = a list of tables for the contrasts performed.
 #' @seealso [edgeR] [deseq_pairwise()] [ebseq_pairwise()] [limma_pairwise()] [basic_pairwise()]
+#'  DOI:10.12688/f1000research.8987.2
 #' @examples
 #' \dontrun{
 #'  expt <- create_expt(metadata = "metadata.xlsx", gene_info = annotations)
@@ -55,7 +57,7 @@ edger_pairwise <- function(input = NULL, conditions = NULL,
                            batches = NULL, model_cond = TRUE,
                            model_batch = TRUE, model_intercept = FALSE,
                            alt_model = NULL, extra_contrasts = NULL,
-                           annot_df = NULL, force = FALSE,
+                           annot_df = NULL, force = FALSE, keepers = NULL,
                            edger_method = "long", ...) {
   arglist <- list(...)
 
@@ -169,7 +171,7 @@ edger_pairwise <- function(input = NULL, conditions = NULL,
   message("EdgeR step 8/9: Making pairwise contrasts.")
   apc <- make_pairwise_contrasts(model_data, conditions,
                                  extra_contrasts = extra_contrasts,
-                                 do_identities = FALSE, ...)
+                                 do_identities = FALSE, keepers = keepers, ...)
   contrast_string <- apc[["contrast_string"]]
 
   ## This section is convoluted because glmLRT only seems to take up to 7
@@ -242,10 +244,11 @@ edger_pairwise <- function(input = NULL, conditions = NULL,
       "method" = "edger",
       "model" = model_data,
       "model_string" = model_string)
-  class(retlist) <- c("edger_result", "list")
+  class(retlist) <- c("edger_pairwise", "list")
   if (!is.null(arglist[["edger_excel"]])) {
     retlist[["edger_excel"]] <- write_edger(retlist, excel = arglist[["edger_excel"]])
   }
+  class(retlist) <- c("edger_pairwise", "list")
   return(retlist)
 }
 

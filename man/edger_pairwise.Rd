@@ -15,6 +15,7 @@ edger_pairwise(
   extra_contrasts = NULL,
   annot_df = NULL,
   force = FALSE,
+  keepers = NULL,
   edger_method = "long",
   ...
 )
@@ -45,6 +46,8 @@ de_vs_cb = (E-D)-(C-B),"}
 \item{annot_df}{Annotation information to the data tables?}
 
 \item{force}{Force edgeR to accept inputs which it should not have to deal with.}
+
+\item{keepers}{Ask for a specific set of contrasts instead of all.}
 
 \item{edger_method}{I found a couple/few ways of doing edger in the manual,
 choose with this.}
@@ -85,4 +88,5 @@ the force argument will round the data and shoe-horn it into EdgeR.
 }
 \seealso{
 [edgeR] [deseq_pairwise()] [ebseq_pairwise()] [limma_pairwise()] [basic_pairwise()]
+ DOI:10.12688/f1000research.8987.2
 }

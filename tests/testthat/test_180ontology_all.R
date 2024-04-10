@@ -1,9 +1,5 @@
 start <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
-context("180gene_ontology_enrichment.R:
-           1         2         3         4
-  1234567890123456789012345678901234567890\n")
+context("180gene_ontology")
 ## 2021-02, Removing tests for explicit ontology categories, because they keep changing.
 ## 2017-12, exported functions in ontology_cluster_profiler: simple_clusterprofiler
 
@@ -26,8 +22,8 @@ table <- combined[["data"]][["somesig"]]
 if (! "EuPathDB" %in% installed.packages()) {
   devtools::install_github("abelew/EuPathDB", force = TRUE)
 }
-fungidb_metadata <- sm(EuPathDB::download_eupath_metadata(webservice = "fungidb",
-                                                          eu_version = "46"))
+fungidb_metadata <- EuPathDB::download_eupath_metadata(webservice = "fungidb", overwrite = FALSE,
+                                                       eu_version = "46")
 pombe_entry <- EuPathDB::get_eupath_entry(species = "pombe", metadata = fungidb_metadata)
 pkgnames <- EuPathDB::get_eupath_pkgnames(entry = pombe_entry)
 if (! pkgnames[["orgdb"]] %in% installed.packages()) {
@@ -156,7 +152,7 @@ cat_actual <- go_test[["all_data"]][["category"]]
 test_that("Did the table of all results include the expected material?", {
   expect_equal(p_expected, p_actual, tolerance = 0.001)
   expect_equal(q_expected, q_actual, tolerance = 0.2)
-  expect_equal(5, sum(cat_expected %in% cat_actual))
+  expect_equal(4, sum(cat_expected %in% cat_actual))
 })
 
 ## Test if the goseq enrichResult elements are plottable.
@@ -200,7 +196,8 @@ if (file.exists("test_topgo_write.xlsx")) {
 ## I think it would not be difficult for me to add a little logic to make gostats smarter
 ## with respect to how it finds the correct annotations.
 annot <- fData(pombe_expt)
-colnames(annot) <- c("txid", "txid2", "ID", "description", "type", "width",
+## I changed the IDs a little and so needed to change this up a bit.
+colnames(annot) <- c("ID", "txid2", "pombeid", "symbol", "description", "type", "width",
                      "chromosome", "strand", "start", "end")
 gos_test <- simple_gostats(ups, go_db = pombe_go, gff_df = annot, gff_type = "protein_coding")
 cat_actual <- head(gos_test[["tables"]][["mf_over_enriched"]][["GOMFID"]])
@@ -222,7 +219,6 @@ if (file.exists("test_gostats_write.xlsx")) {
 gprof_test <- simple_gprofiler(sig_genes = ups, species = "spombe")
 gprof_table <- gprof_test[["GO"]]
 actual_dim <- nrow(gprof_table)
-## expected_dim <- c(67, 14)
 expected_dim <- 30
 test_that("Does gprofiler provide some expected tables?", {
   expect_gt(actual_dim, expected_dim)

@@ -30,6 +30,7 @@ replot_varpart_percent <- function(varpart_output, n = 30, column = NULL, decrea
   retlist <- list(
       "resorted" = sorted,
       "plot" = new_plot)
+  class(retlist) <- "reordered_varpart"
   return(retlist)
 }
 
@@ -50,14 +51,16 @@ replot_varpart_percent <- function(varpart_output, n = 30, column = NULL, decrea
 #' @param cpus Number cpus to use
 #' @param genes Number of genes to count.
 #' @param parallel Use doParallel?
+#' @param strict_filter Perform a strict filtering of the results via median_by_factor and dropping
+#'  any genes with a 0.
 #' @param mixed Used a mixed model?
 #' @param modify_expt Add annotation columns with the variance/factor?
 #' @return List of plots and variance data frames
-#' @seealso [variancePartition]
+#' @seealso [variancePartition] DOI:10.1186/s12859-016-1323-z.
 #' @export
 simple_varpart <- function(expt, predictor = NULL, factors = c("condition", "batch"),
                            chosen_factor = "batch", do_fit = FALSE, cor_gene = 1,
-                           cpus = NULL, genes = 40, parallel = TRUE,
+                           cpus = NULL, genes = 40, parallel = TRUE, strict_filter = TRUE,
                            mixed = FALSE, modify_expt = TRUE) {
   cl <- NULL
   para <- NULL
@@ -83,35 +86,51 @@ simple_varpart <- function(expt, predictor = NULL, factors = c("condition", "bat
     ## multi <- BiocParallel::MulticoreParam()
   }
   design <- pData(expt)
+  #for (f in factors) {
+  #  design[[f]] <- as.factor(design[[f]])
+  #}
   num_batches <- length(levels(as.factor(design[[chosen_factor]])))
   if (num_batches == 1) {
     message("varpart sees only 1 batch, adjusting the model accordingly.")
     factors <- factors[!grepl(pattern = chosen_factor, x = factors)]
   }
+
   model_string <- "~ "
   if (isTRUE(mixed)) {
     if (!is.null(predictor)) {
-      model_string <- glue::glue("{model_string}{predictor} + ")
+      model_string <- glue("{model_string}{predictor} + ")
     }
     for (fact in factors) {
-      model_string <- glue::glue("{model_string}(1|{fact}) + ")
+      model_string <- glue("{model_string}(1|{fact}) + ")
     }
   } else {
     for (fact in factors) {
-      model_string <- glue::glue("{model_string}{fact} + ")
+      model_string <- glue("{model_string}{fact} + ")
     }
   }
   model_string <- gsub(pattern = "\\+ $", replacement = "", x = model_string)
-  mesg("Attempting mixed linear model with: ", model_string)
+  if (isTRUE(mixed)) {
+    mesg("Attempting mixed linear model with: ", model_string)
+  } else {
+    mesg("Attempting regular linear model with: ", model_string)
+  }
   my_model <- as.formula(model_string)
+  ## I think the simple filter is insufficient and I need there to be
+  ## no genes with 0 counts in any one condition.
   norm <- sm(normalize_expt(expt, filter = "simple"))
+  if (isTRUE(strict_filter)) {
+    test <- sm(median_by_factor(norm, fact = "condition", fun = "mean"))
+    all_condition_gt_zero_idx <- rowSums(test[["medians"]] == 0) == 0
+    kept_gt <- rownames(exprs(norm))[all_condition_gt_zero_idx]
+    norm <- norm[kept_gt, ]
+  }
   data <- exprs(norm)
 
   design_sub <- design[, factors]
   mesg("Fitting the expressionset to the model, this is slow.")
   my_extract <- try(variancePartition::fitExtractVarPartModel(data, my_model, design_sub))
   ## my_extract <- try(variancePartition::fitVarPartModel(data, my_model, design))
-  if (class(my_extract) == "try-error") {
+  if ("try-error" %in% class(my_extract)) {
     mesg("A couple of common errors:
 An error like 'vtv downdated' may be because there are too many 0s, filter the data and rerun.
 An error like 'number of levels of each grouping factor must be < number of observations' means
@@ -120,7 +139,7 @@ which are shared among multiple samples.")
     message("Retrying with only condition in the model.")
     my_model <- as.formula("~ condition")
     my_extract <- try(variancePartition::fitExtractVarPartModel(data, my_model, design))
-    if (class(my_extract) == "try-error") {
+    if ("try-error" %in% class(my_extract)) {
       message("Attempting again with only condition failed.")
       stop()
     }
@@ -129,6 +148,15 @@ which are shared among multiple samples.")
   if (is.null(predictor)) {
     chosen_column <- factors[[1]]
     mesg("Placing factor: ", chosen_column, " at the beginning of the model.")
+  }
+
+  ## A new dataset has some NAs!
+  na_idx <- is.na(my_extract)
+  if (sum(na_idx) > 0) {
+    warning("There are ", sum(na_idx), " NAs in this data, something may be wrong.")
+    message("There are ", sum(na_idx), " NAs in this data, something may be wrong.")
+    message("Converting NAs to 0.")
+    my_extract[na_idx] <- 0
   }
 
   my_sorted <- sortCols(my_extract)
@@ -167,32 +195,34 @@ which are shared among multiple samples.")
   }
 
   ret <- list(
-      "model_used" = my_model,
-      "percent_plot" = percent_plot,
-      "partition_plot" = partition_plot,
-      "sorted_df" = my_sorted,
-      "fitted_df" = my_extract,
-      "fitting" = fitting,
-      "stratify_batch_plot" = stratify_batch_plot,
-      "stratify_condition_plot" = stratify_condition_plot)
-  if (isTRUE(modify_expt)) {
+    "model_string" = model_string,
+    "model_used" = my_model,
+    "percent_plot" = percent_plot,
+    "partition_plot" = partition_plot,
+    "sorted_df" = my_sorted,
+    "fitted_df" = my_extract,
+    "fitting" = fitting,
+    "stratify_batch_plot" = stratify_batch_plot,
+    "stratify_condition_plot" = stratify_condition_plot)
+  if (isTRUE(modify_expt) && nrow(fData(expt)) > 0) {
     new_expt <- expt
     tmp_annot <- fData(new_expt)
     tmp_annot[["Row.names"]] <- NULL
     added_data <- my_sorted
     colnames(added_data) <- glue("variance_{colnames(added_data)}")
-    tmp_annot <- merge(tmp_annot, added_data, by = "row.names")
+    ## Note that we are getting these variance numbers from data which was filtered
+    ## thus we need all.x to get the IDs to match up.
+    tmp_annot <- merge(tmp_annot, added_data, by = "row.names", all.x = TRUE)
     rownames(tmp_annot) <- tmp_annot[["Row.names"]]
-    tmp_annot <- tmp_annot[, -1]
+    tmp_annot[["Row.names"]] <- NULL
+    annot_order <- rownames(exprs(new_expt))
+    tmp_annot <- tmp_annot[annot_order, ]
     ## Make it possible to use a generic expressionset, though maybe this is
     ## impossible for this function.
-    if (class(new_expt) == "ExpressionSet") {
-      Biobase::fData(new_expt) <- tmp_annot
-    } else {
-      Biobase::fData(new_expt[["expressionset"]]) <- tmp_annot
-    }
+    fData(new_expt) <- tmp_annot
     ret[["modified_expt"]] <- new_expt
   }
+  class(ret) <- "varpart"
   return(ret)
 }
 
@@ -218,7 +248,7 @@ varpart_summaries <- function(expt, factors = c("condition", "batch"), cpus = 6)
   my_model <- as.formula(model_string)
   norm <- sm(normalize_expt(expt, filter = TRUE))
   data <- exprs(norm)
-  design <- expt[["design"]]
+  design <- pData(expt)
   summaries <- variancePartition::fitVarPartModel(data, my_model, design, fxn = summary)
   return(summaries)
 }

@@ -257,16 +257,22 @@ hpgl_voom <- function(dataframe, model = NULL, libsize = NULL,
 #' @param model_intercept Perform a cell-means or intercept model? A little more
 #'  difficult for me to understand.  I have tested and get the same answer
 #'  either way.
+#' @param alt_model Separate model matrix instead of the normal condition/batch.
 #' @param extra_contrasts Some extra contrasts to add to the list.
 #'  This can be pretty neat, lets say one has conditions A,B,C,D,E
 #'  and wants to do (C/B)/A and (E/D)/A or (E/D)/(C/B) then use this
 #'  with a string like: "c_vs_b_ctrla = (C-B)-A, e_vs_d_ctrla = (E-D)-A,
 #'  de_vs_cb = (E-D)-(C-B),"
-#' @param alt_model Separate model matrix instead of the normal condition/batch.
 #' @param annot_df Data frame for annotations.
 #' @param libsize I've recently figured out that libsize is far more important
 #'  than I previously realized.  Play with it here.
+#' @param which_voom Try out different invocations of voom.
+#' @param limma_method And different invocations of limma itself.
+#' @param limma_robust Pass along the robust args for limma?
+#' @param voom_norm Use a specific normalization for voom?
+#' @param limma_trend Include a trendline in the limma plot?
 #' @param force Force data which may not be appropriate for limma into it?
+#' @param keepers Choose a set of contrasts instead of all.
 #' @param ... Use the elipsis parameter to feed options to write_limma().
 #' @return List including the following information:
 #'  macb = the mashing together of condition/batch so you can look at it
@@ -285,6 +291,7 @@ hpgl_voom <- function(dataframe, model = NULL, libsize = NULL,
 #'  pairwise_comparisons = The result from eBayes()
 #'  limma_result = The result from calling write_limma()
 #' @seealso [limma] [Biobase] [deseq_pairwise()] [edger_pairwise()] [basic_pairwise()]
+#'  DOI:10.1093/nar/gkv007
 #' @examples
 #' \dontrun{
 #'  pretend <- limma_pairwise(expt)
@@ -295,36 +302,13 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
                            model_batch = TRUE, model_intercept = FALSE,
                            alt_model = NULL, extra_contrasts = NULL,
                            annot_df = NULL, libsize = NULL,
-                           force = FALSE, ...) {
+                           which_voom = "limma", limma_method = "ls",
+                           limma_robust = FALSE, voom_norm = "quantile",
+                           limma_trend = FALSE, force = FALSE,
+                           keepers = NULL, ...) {
   arglist <- list(...)
-  print(summary(input))
   ## This is used in the invocation of a voom() implementation for normalization.
-  voom_norm <- "quantile"  ## a normalize.method supported by limma.
-  if (!is.null(arglist[["voom_norm"]])) {
-    voom_norm <- arglist[["voom_norm"]]
-  }
-  ## Which implementation of voom() to use?
-  which_voom <- "limma"  ## limma, limma_weighted, hpgl, or hpgl_weighted are possible
-  if (!is.null(arglist[["which_voom"]])) {
-    which_voom <- arglist[["which_voom"]]
-  }
-  ## This is for the lmFit() call.
-  limma_method <- "ls" ## or robust
-  if (!is.null(arglist[["limma_method"]])) {
-    limma_method <- arglist[["limma_method"]]
-  }
   ## This is for the eBayes() call.
-  limma_robust <- FALSE
-  if (!is.null(arglist[["limma_robust"]])) {
-    if (!identical(arglist[["limma_robus"]], FALSE)) {
-      limma_robust <- TRUE
-    }
-  }
-  ## This is also used in eBayes()
-  limma_trend <- FALSE
-  if (!is.null(arglist[["limma_trend"]])) {
-    limma_trend <- arglist[["limma_trend"]]
-  }
 
   message("Starting limma pairwise comparison.")
   san_input <- sanitize_expt(input)
@@ -389,7 +373,6 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
   ##                      alt_model = alt_model)
   chosen_model <- model[["chosen_model"]]
   model_string <- model[["chosen_string"]]
-
   fun_voom <- NULL
   ## voom() it, taking into account whether the data has been log2 transformed.
 
@@ -531,7 +514,7 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
   } else {
     message("Limma step 4/6: making and fitting contrasts with no intercept. (~ 0 + factors)")
     contrasts <- make_pairwise_contrasts(model = chosen_model, conditions = conditions,
-                                         extra_contrasts = extra_contrasts)
+                                         extra_contrasts = extra_contrasts, keepers = keepers)
     all_pairwise_contrasts <- contrasts[["all_pairwise_contrasts"]]
     contrast_string <- contrasts[["contrast_string"]]
     all_pairwise <- contrasts[["all_pairwise"]]
@@ -568,8 +551,6 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
     contrasts_performed <- names(limma_tables)
   }
 
-  print(summary(input))
-
   retlist <- list(
     "all_pairwise" = all_pairwise,
     "all_tables" = limma_tables,
@@ -592,7 +573,7 @@ limma_pairwise <- function(input = NULL, conditions = NULL,
     "single_table" = all_tables,
     "voom_design" = fun_design,
     "voom_result" = fun_voom)
-  class(retlist) <- c("limma_result", "list")
+  class(retlist) <- c("limma_pairwise", "list")
   if (!is.null(arglist[["limma_excel"]])) {
     retlist[["limma_excel"]] <- write_limma(retlist, excel = arglist[["limma_excel"]])
   }

@@ -3,14 +3,17 @@
 #' @param sig Result from extract_significant_genes
 #' @param according_to Use this result type for the gprofiler searches.
 #' @param together Concatenate the up/down genes into one set?
+#' @param plot_type Choose a plot method as the default.
 #' @param ... Arguments to pass to simple_gprofiler().
 #' @export
-all_gprofiler <- function(sig, according_to = "deseq", together = FALSE, ...) {
+all_gprofiler <- function(sig, according_to = "deseq", together = FALSE,
+                          plot_type = "dotplot", ...) {
   ret <- list()
   input_up <- list()
   input_down <- list()
   source <- "significant"
   ## Check if this came from extract_significant_genes or extract_abundant_genes.
+  fc_col <- paste0(according_to, "_logfc")
   if (!is.null(sig[[according_to]][["ups"]])) {
     input_up <- sig[[according_to]][["ups"]]
     input_down <- sig[[according_to]][["downs"]]
@@ -24,7 +27,7 @@ all_gprofiler <- function(sig, according_to = "deseq", together = FALSE, ...) {
 
   sig_names <- names(input_up)
   for (i in seq_along(sig_names)) {
-    slept <- Sys.sleep(1)
+    slept <- Sys.sleep(10)
     name <- sig_names[i]
     mesg("Starting ", name, ".")
     retname_up <- paste0(name, "_up")
@@ -56,16 +59,22 @@ all_gprofiler <- function(sig, according_to = "deseq", together = FALSE, ...) {
       }
     }
     if (up_elements > 0) {
-      ret[[retname_up]] <- sm(simple_gprofiler(up, ...))
+      ret[[retname_up]] <- sm(simple_gprofiler2(up, first_col = fc_col,
+                                                plot_type = plot_type, ...))
+      #ret[[retname_up]] <- sm(simple_gprofiler(up, first_col = fc_col))
     } else {
       ret[[retname_up]] <- NULL
     }
     if (down_elements > 0) {
-      ret[[retname_down]] <- sm(simple_gprofiler(down, ...))
+      slept <- Sys.sleep(10)
+      ret[[retname_down]] <- sm(simple_gprofiler2(down, first_col = fc_col,
+                                                  plot_type = plot_type, ...))
+      #ret[[retname_down]] <- sm(simple_gprofiler(down, first_col = fc_col))
     } else {
       ret[[retname_down]] <- NULL
     }
   }
+  class(ret) <- "all_gprofiler"
   return(ret)
 }
 
@@ -103,6 +112,7 @@ all_gprofiler <- function(sig, according_to = "deseq", together = FALSE, ...) {
 #' @param id_col Which column in the table should be used for gene ID
 #'  crossreferencing?  gProfiler uses Ensembl ids.  So if you have a table of
 #'  entrez or whatever, translate it!
+#' @param plot_type Use this plot type for images.
 #' @param excel Print the results to an excel file?
 #' @return a list of results for go, kegg, reactome, and a few more.
 #' @seealso [gProfiler]
@@ -118,11 +128,15 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
                               significant = TRUE, exclude_iea = FALSE, do_under = FALSE,
                               evcodes = TRUE, threshold = 0.05, adjp = "g_SCS",
                               domain_scope = "annotated", bg = NULL,
-                              pseudo_gsea = TRUE, id_col = "row.names", excel = NULL) {
+                              pseudo_gsea = TRUE, id_col = "row.names", plot_type = "dotplot",
+                              excel = NULL) {
   gene_list <- NULL
+  num_genes <- 0
   if ("character" %in% class(sig_genes)) {
     gene_ids <- sig_genes
+    num_genes <- length(gene_ids)
   } else {
+    num_genes <- nrow(sig_genes)
     if (!is.null(sig_genes[[first_col]])) {
       gene_list <- sig_genes[order(-sig_genes[[first_col]]), ]
       pseudo_gsea <- TRUE
@@ -194,16 +208,9 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
     ## the vector [1]"
     gene_ids <- as.vector(gene_ids)
     a_result <- try(gprofiler2::gost(
-                                    query = gene_ids,
-                                    organism = species,
-                                    evcodes = evcodes,
-                                    significant = significant,
-                                    ordered_query = pseudo_gsea,
-                                    user_threshold = threshold,
-                                    correction_method = adjp,
-                                    domain_scope = domain_scope,
-                                    custom_bg = bg,
-                                    sources = type))
+      query = gene_ids, organism = species, evcodes = evcodes, significant = significant,
+      ordered_query = pseudo_gsea, user_threshold = threshold, correction_method = adjp,
+      domain_scope = domain_scope, custom_bg = bg, sources = type))
     a_df <- data.frame(stringsAsFactors = FALSE)
     if ("try-error" %in% class(a_result)) {
       mesg("The ", type, " method failed for this organism.")
@@ -216,14 +223,10 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
       mesg(type, " search found ", nrow(sig_df), " hits.")
       num_hits[[type]] <- nrow(sig_df)
       sig_tables[[type]] <- sig_df
-      gost_links[[type]] <- gprofiler2::gost(query = gene_ids, organism = species,
-                                             evcodes = evcodes, significant = significant,
-                                             ordered_query = pseudo_gsea,
-                                             user_threshold = threshold,
-                                             correction_method = adjp,
-                                             domain_scope = domain_scope,
-                                             custom_bg = bg, sources = type,
-                                             as_short_link = TRUE)
+      gost_links[[type]] <- gprofiler2::gost(
+        query = gene_ids, organism = species, evcodes = evcodes, significant = significant,
+        ordered_query = pseudo_gsea, user_threshold = threshold, correction_method = adjp,
+        domain_scope = domain_scope, custom_bg = bg, sources = type, as_short_link = TRUE)
       interactive_plots[[type]] <- try(
           gprofiler2::gostplot(a_result, capped = TRUE, interactive = TRUE), silent = TRUE)
       gost_plots[[type]] <- try(
@@ -231,13 +234,13 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
     }
     retlst[[type]] <- a_df
   } ## End iterating over the set of default sources.
-
+  retlst[["num_genes"]] <- num_genes
   retlst[["interactive_plots"]] <- interactive_plots
   retlst[["num_hits"]] <- num_hits
   retlst[["gost_plots"]] <- gost_plots
   retlst[["gost_links"]] <- gost_links
   retlst[["significant"]] <- sig_tables
-  retlst[["pvalue_plots"]] <- try(plot_gprofiler2_pval(retlst))
+
   if (!is.null(excel)) {
     mesg("Writing data to: ", excel, ".")
     excel_ret <- sm(try(write_gprofiler_data(retlst, excel = excel)))
@@ -249,9 +252,20 @@ simple_gprofiler2 <- function(sig_genes, species = "hsapiens", convert = TRUE,
     type_name <- paste0(type, "_enrich")
     ## Note to self, now that I think about it I think gprofiler2 provides its own p-adjustment.
     retlst[[type_name]] <- gprofiler2enrich(retlst, ontology = type,
-                                             cutoff = threshold)
+                                            cutoff = threshold)
   }
 
+  if (plot_type == "barplot") {
+    retlst[["pvalue_plots"]] <- try(plot_gprofiler2_pval(retlst))
+  } else if (plot_type == "dotplot") {
+    retlst[["pvalue_plots"]] <- try(plot_gprofiler2_pval(retlst))
+    message("Add a little logic here to use enrichplot::dotplot().")
+  } else {
+    retlst[["pvalue_plots"]] <- list()
+  }
+
+  retlst[["species"]] <- species
+  retlst[["threshold"]] <- threshold
   class(retlst) <- c("gprofiler_result", "list")
   return(retlst)
 }
@@ -382,10 +396,11 @@ simple_gprofiler_old <- function(sig_genes, species = "hsapiens", convert = TRUE
 #'  categories?
 #' @param organism Set the orgdb organism name?
 #' @param padjust_method what it says on the tin.
+#' @return The same 'enrich' datastructure produced by clusterProfiler.
+#' @export
 gprofiler2enrich <- function(retlst, ontology = "MF", cutoff = 1,
                               organism = NULL, padjust_method = "BH") {
   interesting <- retlst[[ontology]]
-
   sig_genes <- c()
   sig_genes_input <- retlst[["input"]]
   if (class(sig_genes_input)[1] == "character") {

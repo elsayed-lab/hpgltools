@@ -18,9 +18,15 @@ load_biomart_annotations(
   drop_haplotypes = TRUE,
   trydataset = NULL,
   gene_requests = c("ensembl_gene_id", "version", "ensembl_transcript_id",
-    "transcript_version", "hgnc_symbol", "description", "gene_biotype"),
+    "transcript_version", "description", "gene_biotype"),
   length_requests = c("ensembl_transcript_id", "cds_length", "chromosome_name", "strand",
     "start_position", "end_position"),
+  gene_tx_map = TRUE,
+  gene_id_column = "ensembl_gene_id",
+  gene_version_column = "version",
+  tx_id_column = "ensembl_transcript_id",
+  tx_version_column = "transcript_version",
+  symbol_columns = NULL,
   include_lengths = TRUE,
   do_load = TRUE,
   savefile = NULL
@@ -56,6 +62,18 @@ false stops that.}
 \item{gene_requests}{Set of columns to query for description-ish annotations.}
 
 \item{length_requests}{Set of columns to query for location-ish annotations.}
+
+\item{gene_tx_map}{Provide a gene2tx map for things like salmon (perhaps rename this to tx_gene_map?)}
+
+\item{gene_id_column}{Column containing the gene ID.}
+
+\item{gene_version_column}{Column containing the ensembl gene version.}
+
+\item{tx_id_column}{Column containing the transcript ID.}
+
+\item{tx_version_column}{Columns containing the ensembl transcript version.}
+
+\item{symbol_columns}{Vector of columns containing the gene symbols.}
 
 \item{include_lengths}{Also perform a search on structural elements in the genome?}
 

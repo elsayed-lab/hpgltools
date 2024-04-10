@@ -5,6 +5,41 @@
 ## these functions are likely to be used along with another annotation source in
 ## order to get a more complete view of the genome/transcriptome of interest.
 
+#' Rewrite a gff file as a granges with full seqinfo if possible.
+#'
+#' @param gff Input gff file.
+#' @param type Feature type to extract.
+#' @param type_column Tag from the gff file to use when extracting the type.
+#' @export
+gff2gr <- function(gff, type = NULL, type_column = "type") {
+  chr_entries <- read.delim(file = gff, header = FALSE, sep = "")
+  contigs <- chr_entries[["V1"]] == "##sequence-region"
+  contigs <- chr_entries[contigs, c("V2", "V3", "V4")]
+  colnames(contigs) <- c("ID", "start", "end")
+  contig_info <- data.frame(
+    "chrom" = contigs[["ID"]],
+    "length" = as.numeric(contigs[["end"]]),
+    "is_circular" = NA,
+    stringsAsFactors = FALSE)
+  rownames(contig_info) <- make.names(contig_info[["chrom"]], unique = TRUE)
+
+  ## Dump a granges object and save it as an rda file.
+  granges_result <- rtracklayer::import.gff3(gff)
+  name_order <- names(Biostrings::seqinfo(granges_result))
+  contig_info <- contig_info[name_order, ]
+  length_vector <- contig_info[["length"]]
+  GenomeInfoDb::seqlengths(granges_result) <- length_vector
+  if (!is.null(type)) {
+    start <- length(granges_result)
+    type_idx <- mcols(granges_result)[[type_column]] == type
+    granges_result <- granges_result[type_idx]
+    end <- length(granges_result)
+    message("Subsetting for type ", type, " in column ", type_column,
+            " reduces the grange from: ", start, " to ", end, ".")
+  }
+  return(granges_result)
+}
+
 #' Extract annotation information from a gff file into an irange object.
 #'
 #' Try to make import.gff a little more robust; I acquire (hopefully) valid gff
@@ -102,55 +137,76 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
   }
 
   ret <- NULL
-  attempts <- c("rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo = TRUE)",
-                "rtracklayer::import.gff3(gff, sequenceRegionsAsSeqinfo = FALSE)",
-                "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo = TRUE)",
-                "rtracklayer::import.gff2(gff, sequenceRegionsAsSeqinfo = FALSE)",
-                "rtracklayer::import.gff(gff, format='gtf')",
-                "rtracklayer::import.gff(gff)")
-  if (!is.null(try)) {
-    ##  attempts <- c(paste0(try, "(gff)"), attempts)
-    attempts <- c(glue("{try}(gff)"), attempts)
-  }
 
-  annot <- NULL
-  for (att in seq_along(attempts)) {
-    annotations <- NULL
-    message("Trying attempt: ", attempts[[att]])
-    attempt <- attempts[[att]]
-    eval_string <- glue("annotations <- try({attempt}, silent = TRUE)")
-    eval(parse(text = eval_string))
-    if (class(annotations) == "try-error") {
-      rm(annotations)
-    } else if (is.null(GenomicRanges::as.data.frame(annotations)[[id_col]]) &
-               is.null(GenomicRanges::as.data.frame(annotations)[[second_id_col]])) {
-      rm(annotations)
+  attempts <- list(
+    "rtracklayer::import.gff3" = list(
+      "con" = gff,
+      "sequenceRegionsAsSeqinfo" = TRUE),
+    "rtracklayer::import.gff3" = list(
+      "con" = gff,
+      "sequenceRegionsAsSeqinfo" = FALSE),
+    "rtracklayer::import.gff2" = list(
+      "con" = gff,
+      "sequenceRegionsAsSeqinfo" = TRUE),
+    "rtracklayer::import.gff2" = list(
+      "con" = gff,
+      "sequenceRegionsAsSeqinfo" = FALSE),
+    "rtracklayer::import.gff" = list(
+      "con" = gff,
+      "format" = "gtf"),
+    "rtracklayer::import.gff" = list(
+      "con" = gff))
+
+  result <- NULL
+  for (a in seq_along(attempts)) {
+    attempt <- names(attempts)[a]
+    split_name <- strsplit(attempt, "::")[[1]]
+    fun_call <- get(split_name[[2]], asNamespace(split_name[[1]]))
+    args <- attempts[[a]]
+    result <- try(do.call(what = fun_call, args = args, quote = TRUE), silent = TRUE)
+    if ("try-error" %in% class(result)) {
+      result <- NULL
+      next
     } else {
-      annot <- annotations
-      rm(annotations)
-      message("Had a successful gff import with ", attempt)
       break
     }
   }
+  if (is.null(result)) {
+    mesg("No gff import methods were able to read this file.")
+    return(NULL)
+  }
+  annotations <- as.data.frame(result)[[id_col]]
+  if (is.null(annotations)) {
+    annotations <- as.data.frame(result)[[second_id_col]]
+    if (is.null(annotations)) {
+      warning("Attempting to create a dataframe with ", id_col, " and ",
+              second_id_col, " both failed.")
+      return(NULL)
+    } else {
+      annot <- annotations
+    }
+  } else {
+    annot <- annotations
+  }
+
   ret <- NULL
-  if (class(annot)[[1]] == "GRanges" & ret_type == "data.frame") {
-    ret <- GenomicRanges::as.data.frame(annot)
-    rm(annot)
+  if ("GRanges" %in% class(result) && ret_type == "data.frame") {
+    ret <- GenomicRanges::as.data.frame(result)
     if (!is.null(type)) {
       index <- ret[, "type"] == type
       ret <- ret[index, ]
     }
-    message("Returning a df with ", ncol(ret), " columns and ", nrow(ret), " rows.")
-  } else if (class(annot)[[1]] == "GRanges" & ret_type == "GRanges") {
-    ret <- annot
-    rm(annot)
-    message("Returning a GRanges with ", ncol(ret), " columns and ", nrow(ret), " rows.")
+    message("Returning a df with ", ncol(ret), " columns and ",
+            nrow(ret), " rows.")
   } else {
-    stop("Unable to load gff file.")
+    message("Returning a GRanges with ", ncol(ret), " columns and ",
+            nrow(ret), " rows.")
+    return(result)
   }
 
-  ## Sometimes we get some pretty weird data structures inside the gff data, the
-  ## following two blocks should theoretically simplify the resulting output.
+  ## Sometimes we get some pretty weird data structures inside the gff
+  ## data, the following two blocks should theoretically simplify the
+  ## resulting output.
   for (col in colnames(ret)) {
     ret[[col]] <- unAsIs(ret[[col]])
   }
@@ -167,13 +223,35 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
   if (!is.null(row.names)) {
     rownames(ret) <- ret[[row.names]]
   }
-
   if (isTRUE(compressed)) {
     removed <- file.remove(gff)
   }
 
   return(ret)
 }
+
+merge_gff_children <- function(gff, grandparent = "gene", parent = "mRNA",
+                               parent_tag = "Parent", id_tag = "ID",
+                               children = c("CDS", "exon", "three_prime_UTR", "five_prime_UTR")) {
+  grandparents <- load_gff_annotations(gff, type = grandparent, id_col = id_tag)
+  colnames(grandparents) <- paste0("toplevel_", colnames(grandparents))
+  parents <- load_gff_annotations(gff, type = parent, id_col = id_tag)
+  colnames(parents) <- paste0("secondlevel_", colnames(parents))
+  by_gp <- paste0("toplevel_", id_tag)
+  by_parent <- paste0("secondlevel_", parent_tag)
+  all <- merge(grandparents, parents, by.x = by_gp,
+               by.y = by_parent)
+  for (child in children) {
+    mesg("Merging in the data for the ", child, " type.")
+    child_annot <- load_gff_annotations(gff, type = child, id_col = id_tag)
+    colnames(child_annot) <- paste0(child, "_", colnames(child_annot))
+    by_parent <- paste0("secondlevel_", id_tag)
+    by_child <- paste0(child, "_", parent_tag)
+    all <- merge(all, child_annot, by.x = by_parent, by.y = by_child)
+  }
+  return(all)
+}
+
 
 #' Find how many times a given pattern occurs in every gene of a genome.
 #'
@@ -190,6 +268,7 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
 #' @param pattern What to search for? This was used for tnseq and TA is the
 #'  mariner insertion point.
 #' @param type Column to use in the gff file.
+#' @param id_col Column containing the gene IDs.
 #' @param key What type of entry of the gff file to key from?
 #' @return Data frame of gene names and number of times the pattern appears/gene.
 #' @seealso [Biostrings] [Rsamtools::FaFile()] [Biostrings::PDict()]
@@ -200,7 +279,8 @@ load_gff_annotations <- function(gff, type = NULL, id_col = "ID", ret_type = "da
 #'  ta_count <- pattern_count_genome(pa_fasta, pa_gff)
 #'  head(ta_count)
 #' @export
-pattern_count_genome <- function(fasta, gff = NULL, pattern = "TA", type = "gene", key = NULL) {
+pattern_count_genome <- function(fasta, gff = NULL, pattern = "TA",
+                                 type = "gene", id_col = "ID", key = NULL) {
   rawseq <- Rsamtools::FaFile(fasta)
   if (is.null(key)) {
     key <- c("ID", "locus_tag")
@@ -208,12 +288,15 @@ pattern_count_genome <- function(fasta, gff = NULL, pattern = "TA", type = "gene
   if (is.null(gff)) {
     entry_sequences <- Biostrings::getSeq(rawseq)
   } else {
-    ## entries <- rtracklayer::import.gff3(gff, asRangedData = FALSE)
+    ## Note, I use import.gff here instead of import.gff3 or one of
+    ## the other more sensible functions because import.gff sets the
+    ## seqnames to match the chromosome; I have not figured out how to
+    ## do that properly using import.gff3 without some annoying shenanigans.
     entries <- rtracklayer::import.gff(gff)
+    meta <- mcols(entries)
+    wanted <- meta[["type"]] == type
     ## keep only the ones of the type of interest (gene).
-    type_entries <- entries[entries$type == type, ]
-    ## Set some hopefully sensible names.
-    names(type_entries) <- rownames(type_entries)
+    type_entries <- entries[wanted, ]
     ## Get the sequence from the genome for them.
     entry_sequences <- Biostrings::getSeq(rawseq, type_entries)
     tmp_entries <- as.data.frame(type_entries)
@@ -231,14 +314,16 @@ pattern_count_genome <- function(fasta, gff = NULL, pattern = "TA", type = "gene
       "num" = as.data.frame(t(result)),
       stringsAsFactors = FALSE)
   colnames(num_pattern) <- c("name", "number")
+  class(num_pattern) <- "pattern_counted"
   return(num_pattern)
 }
 
 #' Given a data frame of exon counts and annotation information, sum the exons.
 #'
-#' This function will merge a count table to an annotation table by the child column.
-#' It will then sum all rows of exons by parent gene and sum the widths of the exons.
-#' Finally it will return a list containing a df of gene lengths and summed counts.
+#' This function will merge a count table to an annotation table by
+#' the child column. It will then sum all rows of exons by parent gene
+#' and sum the widths of the exons. Finally it will return a list
+#' containing a df of gene lengths and summed counts.
 #'
 #' @param data Count tables of exons.
 #' @param gff Gff filename.
@@ -265,14 +350,16 @@ sum_exon_widths <- function(data = NULL, gff = NULL, annotdf = NULL,
   rownames(tmp_data) <- tmp_data[["Row.names"]]
   tmp_data <- tmp_data[-1]
   ## Start out by summing the gene widths
-  column <- aggregate(tmp_data[, "width"], by = list(Parent = tmp_data[, parent]), FUN = sum)
+  column <- aggregate(tmp_data[, "width"],
+                      by = list(Parent = tmp_data[, parent]), FUN = sum)
   new_data <- data.frame(column[["x"]], stringsAsFactors = FALSE)
   rownames(new_data) <- column[["Parent"]]
   colnames(new_data) <- c("width")
 
   for (c in seq_along(colnames(data))) {
     column_name <- colnames(data)[[c]]
-    column <- aggregate(tmp_data[, column_name], by = list(Parent = tmp_data[, parent]), FUN = sum)
+    column <- aggregate(tmp_data[, column_name],
+                        by = list(Parent = tmp_data[, parent]), FUN = sum)
     rownames(column) <- column[["Parent"]]
     new_data <- cbind(new_data, column[["x"]])
   } ## End for loop

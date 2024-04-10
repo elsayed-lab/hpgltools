@@ -1,3 +1,178 @@
+#' Given a pile of variants from freebayes and friends, make a table of what changed.
+#'
+#' My post-processor of the results from mpileup/freebayes provides
+#' some hopefully fun output files.  This function seeks to leverage
+#' them into tables which might be fun to look at.
+#'
+#' @param metadata Usually the result of gather_preprocessing_metadata(), but
+#'  whatever it is, it should have a column containing the observed
+#'  coverage and observed variants as a table.
+#' @param coverage_column Metadata column name containing coverage information
+#'  from bedtools in a tabular format.
+#' @param variants_column Metadata column name containing the variants/gene.
+#' @param min_missing Bin size above which to call a region missing
+#'  from one or more samples when looking for large-scale deletions
+#' using coverage information.
+#' @return List containing some fun stuff.
+classify_variants <- function(metadata, coverage_column = "bedtoolscoveragefile",
+                              variants_column = "freebayesvariantsbygene", min_missing = 100) {
+  missing_coverage <- list()
+  mutations <- list()
+  mutation_rows <- c("from_a", "from_g", "from_c", "from_t",
+                     "to_a", "to_g", "to_c", "to_t",
+                     "to_strong", "to_weak",
+                     "to_amino", "to_ketone",
+                     "transition", "transversion",
+                     "sense", "missense", "nonsense", "suppressor")
+  mutations_by_sample <- data.frame(row.names = mutation_rows)
+  missing_name <- paste0("regions_missing_", min_missing, "nt")
+  missing_by_sample <- rep(0, nrow(metadata))
+  names(missing_by_sample) <- rownames(metadata)
+  for (s in seq_len(nrow(metadata))) {
+    sample <- rownames(metadata)[s]
+    mutations_by_sample[[sample]] <- 0
+    ## Get the coverage/nt, use it to make a catalog of regions missing from each sample.
+    coverage_file <- metadata[s, coverage_column]
+    missing_df <- readr::read_tsv(coverage_file, col_names = FALSE, show_col_types = FALSE)
+    colnames(missing_df) <- c("contig", "start", "end")
+    missing_df[["delta"]] <- missing_df[["end"]] - missing_df[["start"]]
+    wanted <- missing_df[["delta"]] >= min_missing
+    missing_regions[[sample]] <- missing_df[wanted, ]
+    missing_by_sample[sample] <- nrow(missing_df)
+
+    ## and catalog of mutations in exons, extract the encoded amino acid strings
+    variant_file <- metadata[s, variants_column]
+    mutation_df <- readr::read_tsv(variant_file, show_col_types = FALSE)
+    mutation_df[["aa_from"]] <- gsub(x = mutation_df[["aa_subst"]],
+                                     pattern = "^([[:alpha:]]|\\*){1}\\d+[[:alpha:]]|\\*$",
+                                     replacement = "\\1")
+    mutation_df[["aa_to"]] <- gsub(x = mutation_df[["aa_subst"]],
+                                   pattern = "^.*?([[:alpha:]]|\\*){1}$",
+                                   replacement = "\\1")
+    mutation_df[["nt_from"]] <- gsub(x = mutation_df[["from_to"]],
+                                     pattern = "^([[:alpha:]]|\\*){1}\\d+[[:alpha:]]|\\*$",
+                                     replacement = "\\1")
+    mutation_df[["nt_to"]] <- gsub(x = mutation_df[["from_to"]],
+                                   pattern = "^.*?([[:alpha:]]|\\*){1}$",
+                                   replacement = "\\1")
+
+    mutation_df <- mutation_df %>%
+      dplyr::mutate(
+        sense = dplyr::case_when(aa_to == aa_from ~ 1, TRUE ~ 0),
+        missense = dplyr::case_when(aa_to != aa_from ~ 1 & aa_to != "*" & aa_from != "*", TRUE ~ 0),
+        nonsense = dplyr::case_when(aa_to == "*" & aa_from != "*" ~ 1, TRUE ~ 0),
+        suppressor = dplyr::case_when(aa_to != "*" & aa_from == "*" ~ 1, TRUE ~ 0))
+
+    mutation_df <- mutation_df %>%
+      dplyr::mutate(
+        transition = dplyr::case_when(
+        (nt_to == "A" & nt_from == "G") | (nt_to == "G" & nt_from == "A") |
+          (nt_to == "C" & nt_from == "T") | (nt_to == "T" & nt_from == "C")  ~ 1,
+        TRUE ~ 0),
+        transversion = dplyr::case_when(
+        (nt_to == "A" & nt_from == "C") | (nt_to == "C" & nt_from == "A") |
+          (nt_to == "G" & nt_from == "T") | (nt_to == "T" & nt_from == "G") |
+          (nt_to == "C" & nt_from == "G") | (nt_to == "G" & nt_from == "C") ~ 1,
+        TRUE ~ 0),
+        to_weak = dplyr::case_when(nt_to == "A" | nt_to == "T" ~ 1, TRUE ~ 0),
+        to_strong = dplyr::case_when(nt_to == "G" | nt_to == "C" ~ 1, TRUE ~ 0),
+        to_ketone = dplyr::case_when(nt_to == "G" | nt_to == "T" ~ 1, TRUE ~ 0),
+        to_amino = dplyr::case_when(nt_to == "A" | nt_to == "C" ~ 1, TRUE ~ 0),
+        from_a = dplyr::case_when(nt_from == "A" ~ 1, TRUE ~ 0),
+        from_g = dplyr::case_when(nt_from == "G" ~ 1, TRUE ~ 0),
+        from_t = dplyr::case_when(nt_from == "T" ~ 1, TRUE ~ 0),
+        from_c = dplyr::case_when(nt_from == "C" ~ 1, TRUE ~ 0),
+        to_a = dplyr::case_when(nt_to == "A" ~ 1, TRUE ~ 0),
+        to_g = dplyr::case_when(nt_to == "G" ~ 1, TRUE ~ 0),
+        to_t = dplyr::case_when(nt_to == "T" ~ 1, TRUE ~ 0),
+        to_c = dplyr::case_when(nt_to == "C" ~ 1, TRUE ~ 0))
+    mutations[[s]] <- mutation_df
+
+    for (t in seq_along(mutation_rows)) {
+      type <- mutation_rows[t]
+      mutations_by_sample[type, sample] <- sum(mutation_df[[type]])
+    }
+  }
+  names(mutations) <- rownames(metadata)
+
+  sample_mutations_norm <- mutations_by_sample
+  for (s in colnames(sample_mutations_norm)) {
+
+    sample_mutations_norm["from_a", s] <- mutations_by_sample["from_a", s] /
+      (mutations_by_sample["from_a", s] + mutations_by_sample["from_c", s] +
+         mutations_by_sample["from_g", s] + mutations_by_sample["from_t", s])
+    sample_mutations_norm["from_t", s] <- mutations_by_sample["from_t", s] /
+      (mutations_by_sample["from_a", s] + mutations_by_sample["from_c", s] +
+         mutations_by_sample["from_g", s] + mutations_by_sample["from_t", s])
+    sample_mutations_norm["from_g", s] <- mutations_by_sample["from_g", s] /
+      (mutations_by_sample["from_a", s] + mutations_by_sample["from_c", s] +
+         mutations_by_sample["from_g", s] + mutations_by_sample["from_t", s])
+    sample_mutations_norm["from_c", s] <- mutations_by_sample["from_c", s] /
+      (mutations_by_sample["from_a", s] + mutations_by_sample["from_c", s] +
+         mutations_by_sample["from_g", s] + mutations_by_sample["from_t", s])
+
+    sample_mutations_norm["to_a", s] <- mutations_by_sample["to_a", s] /
+      (mutations_by_sample["to_a", s] + mutations_by_sample["to_c", s] +
+         mutations_by_sample["to_g", s] + mutations_by_sample["to_t", s])
+
+    sample_mutations_norm["to_c", s] <- mutations_by_sample["to_c", s] /
+      (mutations_by_sample["to_a", s] + mutations_by_sample["to_c", s] +
+         mutations_by_sample["to_g", s] + mutations_by_sample["to_t", s])
+
+    sample_mutations_norm["to_g", s] <- mutations_by_sample["to_g", s] /
+      (mutations_by_sample["to_a", s] + mutations_by_sample["to_c", s] +
+         mutations_by_sample["to_g", s] + mutations_by_sample["to_t", s])
+
+    sample_mutations_norm["to_t", s] <- mutations_by_sample["to_t", s] /
+      (mutations_by_sample["to_a", s] + mutations_by_sample["to_c", s] +
+         mutations_by_sample["to_g", s] + mutations_by_sample["to_t", s])
+
+    sample_mutations_norm["to_strong", s] <- mutations_by_sample["to_strong", s] /
+      (mutations_by_sample["to_strong", s] + mutations_by_sample["to_weak", s])
+
+    sample_mutations_norm["to_weak", s] <- mutations_by_sample["to_weak", s] /
+      (mutations_by_sample["to_strong", s] + mutations_by_sample["to_weak", s])
+
+    sample_mutations_norm["to_amino", s] <- mutations_by_sample["to_amino", s] /
+      (mutations_by_sample["to_amino", s] + mutations_by_sample["to_ketone", s])
+
+    sample_mutations_norm["to_ketone", s] <- mutations_by_sample["to_ketone", s] /
+      (mutations_by_sample["to_amino", s] + mutations_by_sample["to_keto", s])
+
+    sample_mutations_norm["transition", s] <- mutations_by_sample["transition", s] /
+      (mutations_by_sample["transition", s] + mutations_by_sample["transversion", s])
+
+    sample_mutations_norm["transversion", s] <- mutations_by_sample["transversion", s] /
+      (mutations_by_sample["transition", s] + mutations_by_sample["transversion", s])
+
+    sample_mutations_norm["sense", s] <- mutations_by_sample["sense", s] /
+      (mutations_by_sample["sense", s] + mutations_by_sample["missense", s] +
+         mutations_by_sample["nonsense", s] + mutations_by_sample["suppressor", s])
+
+    sample_mutations_norm["missense", s] <- mutations_by_sample["missense", s] /
+      (mutations_by_sample["sense", s] + mutations_by_sample["missense", s] +
+         mutations_by_sample["nonsense", s] + mutations_by_sample["suppressor", s])
+
+    sample_mutations_norm["nonsense", s] <- mutations_by_sample["nonsense", s] /
+      (mutations_by_sample["sense", s] + mutations_by_sample["missense", s] +
+         mutations_by_sample["nonsense", s] + mutations_by_sample["suppressor", s])
+
+    sample_mutations_norm["suppressor", s] <- mutations_by_sample["suppressor", s] /
+      (mutations_by_sample["sense", s] + mutations_by_sample["missense", s] +
+         mutations_by_sample["nonsense", s] + mutations_by_sample["suppressor", s])
+  }
+  sample_mutations_norm <- as.matrix(sample_mutations_norm)
+
+  retlist <- list(
+    "missing_coverage" = missing_coverage,
+    "mutations" = mutations,
+    "missing_by_sample" = missing_by_sample,
+    "mutations_by_sample" = mutations_by_sample,
+    "mutations_by_sample_norm" = sample_mutations_norm)
+  class(retlist) <- "classified_mutations"
+  return(retlist)
+}
+
 #' Gather snp information for an expt
 #'
 #' I made some pretty significant changes to the set of data which I
@@ -15,8 +190,11 @@
 #' @param annot_column Column in the metadata for getting the table of bcftools calls.
 #' @param tolower Lowercase stuff like 'HPGL'?
 #' @param snp_column Which column of the parsed bcf table contains our interesting material?
+#' @param numerator_column When provided, use this column as the numerator of a proportion.
+#' @param denominator_column When provided, use this column as the denominator of a proportion.#'
 #' @return A new expt object
-#' @seealso [Biobase]
+#' @seealso [Biobase] freebayes:DOI:10.48550/arXiv.1207.3907,
+#'  mpileup:DOI:10.1093/gigascience/giab008
 #' @examples
 #'   \dontrun{
 #'  expt <- create_expt(metadata, gene_information)
@@ -27,7 +205,8 @@
 #' }
 #' @export
 count_expt_snps <- function(expt, annot_column = "bcftable", tolower = TRUE,
-                            snp_column = "diff_count") {
+                            snp_column = NULL, numerator_column = "PAO",
+                            denominator_column = "DP", reader = "readr", verbose = FALSE) {
   samples <- rownames(pData(expt))
   if (isTRUE(tolower)) {
     samples <- tolower(samples)
@@ -37,7 +216,35 @@ count_expt_snps <- function(expt, annot_column = "bcftable", tolower = TRUE,
     stop("This requires a set of bcf filenames, the column: ", annot_column, " does not have any.")
   }
 
-  snp_dt <- read_snp_columns(samples, file_lst, column = snp_column)
+  snp_dt <- NULL
+  if (!is.null(snp_column)) {
+    snp_dt <- read_snp_columns(samples, file_lst, column = snp_column,
+                               reader = reader, verbose = verbose)
+  } else if (is.null(numerator_column) && is.null(denominator_column)) {
+    snp_dt <- read_snp_columns(samples, file_lst, column = snp_column,
+                               reader = reader, verbose = verbose)
+  } else if (is.null(denominator_column)) {
+    snp_dt <- read_snp_columns(samples, file_lst, column = numerator_column,
+                               reader = reader, verbose = verbose)
+  } else {
+    numerator_dt <- read_snp_columns(samples, file_lst, column = numerator_column,
+                                     reader = reader, verbose = verbose)
+    denominator_dt <- read_snp_columns(samples, file_lst, column = denominator_column,
+                                       reader = reader, verbose = verbose)
+    snp_dt <- numerator_dt
+    for (col in colnames(snp_dt)) {
+      if (col == "rownames") {
+        mesg("Skipping rownames")
+      } else {
+        snp_dt[[col]] <- numerator_dt[[col]] / denominator_dt[[col]]
+      }
+    }
+    nan_idx <- is.na(snp_dt)
+    snp_dt[nan_idx] <- 0
+
+    rm(list = c("numerator_dt", "denominator_dt"))
+  }
+
   test_names <- snp_dt[["rownames"]]
   test <- grep(pattern = "^chr", x = test_names)
   if (length(test) == 0) {
@@ -81,6 +288,7 @@ they probably came from an older version of this method.")
   new_expt <- expt
   new_expt[["expressionset"]] <- expressionset
   new_expt[["original_expressionset"]] <- expressionset
+  new_expt[["feature_type"]] <- "variants"
   ## Make a matrix where the existence of a variant is 1 vs. 0.
   mtrx <- exprs(expressionset)
   idx <- mtrx > 0
@@ -118,7 +326,8 @@ get_individual_snps <- function(retlist) {
 #' @param stringency Allow for some wiggle room in the calls.
 #' @param do_save Save the results to an rda fil.
 #' @param savefile This is redundant with do_save.
-#' @param proportion Used with stringency to finetune the calls.
+#' @param minmax_cutoff Cutoffs used to define homozygous vs. no-observation.
+#' @param hetero_cutoff Cutoff to define heterozygous vs. observed/homozygous
 #' @return A funky list by chromosome containing:  'medians', the median number
 #'   of hits / position by sample type; 'possibilities', the;
 #'  'intersections', the groupings as detected by Vennerable;
@@ -137,9 +346,428 @@ get_individual_snps <- function(retlist) {
 #'  ## This assumes a column in the metadata for the expt named 'condition'.
 #' }
 #' @export
+get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
+                                    stringency = NULL, do_save = FALSE,
+                                    savefile = "variants.rda",
+                                    minmax_cutoff = 0.05,
+                                    hetero_cutoff = 0.3) {
+  if (is.null(pData(snp_expt)[[factor]])) {
+    stop("The factor does not exist in the expt.")
+  } else {
+    message("The samples represent the following categories: ")
+    print(table(pData(snp_expt)[[factor]]))
+  }
+  if (isTRUE(do_save) && file.exists(glue("{savefile}_{factor}.rda"))) {
+    retlist <- new.env()
+    loaded <- load(savefile, envir = retlist)
+    retlist <- retlist[["retlist"]]
+    return(retlist)
+  }
+
+  ## Using a column which is a proportion of alternate/total reads.
+  ## Recasting all values >= proportion_cutoff to 2 and values < cutoff and > 0 to 1
+  ## and leaving 0 alone
+  message("Using a proportion column to recast each position as a categorical, 0 (ref), 1 (heter), 2 (homo)")
+  prop <- exprs(snp_expt)
+  categorical <- prop
+  zero_cutoff <- 0 + minmax_cutoff
+  homo_cutoff <- 1 - minmax_cutoff
+  zero_idx <- prop <= zero_cutoff
+  observed_idx <- prop > zero_cutoff & prop < hetero_cutoff
+  hetero_idx <- prop >= hetero_cutoff & prop < homo_cutoff
+  homo_idx <- prop >= homo_cutoff
+  categorical[zero_idx] <- 0  ## Variant not observed (+/- 5%)
+  categorical[observed_idx] <- 0.5 ## Observed a little
+  categorical[hetero_idx] <- 1 ## Observed ~ half of the time
+  categorical[homo_idx] <- 2 ## Observed observed always (+/- 5%)
+  categorical_expt <- snp_expt
+  exprs(categorical_expt) <- categorical
+
+  ## This function should be renamed to summarize_by_factor.
+  by_factor_data <- median_by_factor(categorical_expt, fact = factor)
+  ## So, the median_by_factor will be a range of values where the sum will be between 2x * number of samples
+  ## and 0
+  values <- by_factor_data[["sums"]]
+  min_values <- by_factor_data[["mins"]]
+  max_values <- by_factor_data[["maxs"]]
+  all_homo <- values
+  all_hetero <- values
+  observed <- values
+  not_observed <- values
+  observed_norm <- values
+  spc <- by_factor_data[["samples_per_condition"]]
+  for (f in 1:length(spc)) {
+    num <- spc[f]
+    fact <- names(spc)[f]
+    observed_norm[[fact]] <- observed[[fact]] / num  ## So, if every sample agrees
+    ## that this is 100% observed, the value will be 2.
+    ## If instead every sample thinks it is hetero, it will be 1
+    ## If some samples see it and some do not, then it will be
+    homo_idx <- observed_norm[[fact]] == 2 & min_values[[fact]] == 2
+    hetero_idx <- observed_norm[[fact]] == 1 & min_values[[fact]] == 1
+    all_homo[homo_idx, fact] <- 1
+    all_homo[!homo_idx, fact] <- 0
+    all_hetero[hetero_idx, fact] <- 1
+    all_hetero[!hetero_idx, fact] <- 0
+    observed_idx <- observed > 0
+    observed[observed_idx] <- 1
+    observed[!observed_idx] <- 0
+  }
+
+  ## Exclusive homozygous and heterozygous positions:
+  ## E.g. the positions where:
+  ##  1.  one condition is observed and homozygous
+  ##  2.  all other conditions are not observed at all
+  message("Gathering the set of exclusive homozygous and heterozygous positions.")
+  exclusive_homo <- all_homo
+  exclusive_hetero <- all_hetero
+  exclusive_not <- not_observed
+  for (col in colnames(exclusive_homo)) {
+    ## Thus rowSums(observed) should be 1, and the value at this row should be 1
+    ## and rowSums(exclusive) should be 1.
+    exclusive_homo_idx <- rowSums(observed) == 1 & all_homo[[col]] == 1 &
+      rowSums(all_homo) == 1
+    exclusive_homo[exclusive_homo_idx, col] <- 1
+    exclusive_homo[!exclusive_homo_idx, col] <- 0
+    exclusive_hetero_idx <- rowSums(observed) == 1 & all_hetero[[col]] == 1 &
+      rowSums(all_hetero) == 1
+    exclusive_homo[exclusive_homo_idx, col] <- 1
+    exclusive_homo[!exclusive_homo_idx, col] <- 0
+    exclusive_not_idx <- rowSums(observed) == ncol(observed) - 1 & observed[[col]] == 0
+    exclusive_not[exclusive_not_idx, col] <- 1
+    exclusive_not[!exclusive_not_idx, col] <- 0
+  }
+
+  exc_homo_keepers <- rowSums(exclusive_homo) > 0
+  exclusive_homo <- exclusive_homo[exc_homo_keepers, ]
+  exclusive_not_keepers <- rowSums(exclusive_not) > 0
+  exclusive_not <- exclusive_not[exclusive_not_keepers, ]
+
+  tt <- sm(requireNamespace("parallel"))
+  tt <- sm(requireNamespace("doParallel"))
+  tt <- sm(requireNamespace("iterators"))
+  tt <- sm(requireNamespace("foreach"))
+  tt <- sm(try(attachNamespace("foreach"), silent = TRUE))
+  cores <- parallel::detectCores()
+  cl <- parallel::makeCluster(cores)
+  doSNOW::registerDoSNOW(cl)
+
+  ## I am going to split this by chromosome, as a run of 10,000 took 2 seconds,
+  ## 100,000 took a minute, and 400,000 took an hour.
+  ##chr <- gsub(pattern = "^.+_(.+)_.+_.+_.+$", replacement = "\\1", x = rownames(values))
+  observed_chr_names <- gsub(pattern = "^chr_(.+)_pos_.+_ref_.+_alt_.+$",
+                             replacement = "\\1", x = rownames(observed))
+  observed[["chr"]] <- observed_chr_names
+  observed_individual_chromosomes <- levels(as.factor(observed_chr_names))
+  num_levels <- length(observed_individual_chromosomes)
+  message("Counting observed positions across ", num_levels, " chromosomes/contigs.")
+  observed_chr <- list()
+  i <- 1
+  res <- list()
+  res <- foreach(i = seq_len(num_levels),
+                 ## .combine = "c",
+                 ## .multicombine = TRUE,
+                 .packages = c("hpgltools", "doParallel"),
+                 .export = c("snp_by_chr")) %dopar% {
+    chromosome_name <- observed_individual_chromosomes[i]
+    observed_chr[[chromosome_name]] <- snp_by_chr(observed, chr_name = chromosome_name)
+  }
+  ## Unpack the res data structure (which probably can be simplified)
+  observed_by_chr <- list()
+  possibilities <- c()
+  set_names <- list()
+  invert_names <- list()
+  end <- length(res)
+  mesg("Iterating over ", end, " elements.")
+  for (element in seq_len(end)) {
+    datum <- res[[element]]
+    chromosome <- datum[["chromosome"]]
+    observed_by_chr[[chromosome]] <- datum
+    possibilities <- observed_by_chr[[chromosome]][["possibilities"]]
+    set_names <- observed_by_chr[[chromosome]][["set_names"]]
+    invert_names <- observed_by_chr[[chromosome]][["invert_names"]]
+  }
+
+  message("Counting homozygous positions by chromosome/contig.")
+  homo_chr_names <- gsub(pattern = "^chr_(.+)_pos_.+_ref_.+_alt_.+$",
+                         replacement = "\\1", x = rownames(all_homo))
+  all_homo[["chr"]] <- homo_chr_names
+  homo_individual_chromosomes <- levels(as.factor(homo_chr_names))
+  num_levels <- length(homo_individual_chromosomes)
+  homo_chr <- list()
+  i <- 1
+  res <- list()
+  res <- foreach(i = seq_len(num_levels),
+                 ## .combine = "c",
+                 ## .multicombine = TRUE,
+                 .packages = c("hpgltools", "doParallel"),
+                 .export = c("snp_by_chr")) %dopar% {
+    chromosome_name <- homo_individual_chromosomes[i]
+    homo_chr[[chromosome_name]] <- snp_by_chr(all_homo, chr_name = chromosome_name)
+  }
+  ## Unpack the res data structure (which probably can be simplified)
+
+  homo_by_chr <- list()
+  end <- length(res)
+  mesg("Iterating over ", end, " elements.")
+  for (element in seq_len(end)) {
+    datum <- res[[element]]
+    chromosome <- datum[["chromosome"]]
+    homo_by_chr[[chromosome]] <- datum
+  }
+
+  hetero_chr_names <- gsub(pattern = "^chr_(.+)_pos_.+_ref_.+_alt_.+$",
+                           replacement = "\\1", x = rownames(all_hetero))
+  all_hetero[["chr"]] <- hetero_chr_names
+  hetero_individual_chromosomes <- levels(as.factor(hetero_chr_names))
+  num_lvels <- length(hetero_individual_chromosomes)
+  message("Counting heterozygous positions by chromosome/contig.")
+  hetero_chr <- list()
+  i <- 1
+  res <- list()
+  res <- foreach(i = seq_len(num_levels),
+                 ## .combine = "c",
+                 ## .multicombine = TRUE,
+                 .packages = c("hpgltools", "doParallel"),
+                 .export = c("snp_by_chr")) %dopar% {
+    chromosome_name <- hetero_individual_chromosomes[i]
+    hetero_chr[[chromosome_name]] <- snp_by_chr(all_hetero, chr_name = chromosome_name)
+  }
+  ## Unpack the res data structure (which probably can be simplified)
+  hetero_by_chr <- list()
+  end <- length(res)
+  mesg("Iterating over ", end, " elements.")
+  for (element in seq_len(end)) {
+    datum <- res[[element]]
+    chromosome <- datum[["chromosome"]]
+    hetero_by_chr[[chromosome]] <- datum
+  }
+
+  exc_homo_chr_names <- gsub(pattern = "^chr_(.+)_pos_.+_ref_.+_alt_.+$",
+                               replacement = "\\1", x = rownames(exclusive_homo))
+  exclusive_homo[["chr"]] <- exc_homo_chr_names
+  exc_homo_individual_chromosomes <- levels(as.factor(exc_homo_chr_names))
+  num_levels <- length(exc_homo_individual_chromosomes)
+  message("Counting exclusive homozygous positions by chromosome/contig.")
+  exclusive_homo_chr <- list()
+  i <- 1
+  res <- list()
+  res <- foreach(i = seq_len(num_levels),
+                 ## .combine = "c",
+                 ## .multicombine = TRUE,
+                 .packages = c("hpgltools", "doParallel"),
+                 .export = c("snp_by_chr")) %dopar% {
+    chromosome_name <- exc_homo_individual_chromosomes[i]
+    exclusive_homo_chr[[chromosome_name]] <- snp_by_chr(exclusive_homo, chr_name = chromosome_name)
+  }
+  ## Unpack the res data structure (which probably can be simplified)
+  exclusive_homo_by_chr <- list()
+  end <- length(res)
+  mesg("Iterating over ", end, " elements.")
+  for (element in seq_len(end)) {
+    datum <- res[[element]]
+    chromosome <- datum[["chromosome"]]
+    exclusive_homo_by_chr[[chromosome]] <- datum
+  }
+
+  exc_hetero_chr_names <- gsub(pattern = "^chr_(.+)_pos_.+_ref_.+_alt_.+$",
+                               replacement = "\\1", x = rownames(exclusive_hetero))
+  exclusive_hetero[["chr"]] <- exc_hetero_chr_names
+  exc_hetero_individual_chromosomes <- levels(as.factor(exc_hetero_chr_names))
+  num_levels <- length(exc_hetero_individual_chromosomes)
+  message("Counting exclusive heterozygous positions by chromosome/contig.")
+  exclusive_hetero_chr <- list()
+  i <- 1
+  res <- list()
+  res <- foreach(i = seq_len(num_levels),
+                 ## .combine = "c",
+                 ## .multicombine = TRUE,
+                 .packages = c("hpgltools", "doParallel"),
+                 .export = c("snp_by_chr")) %dopar% {
+    chromosome_name <- exc_hetero_individual_chromosomes[i]
+    exclusive_hetero_chr[[chromosome_name]] <- snp_by_chr(exclusive_hetero, chr_name = chromosome_name)
+  }
+  ## Unpack the res data structure (which probably can be simplified)
+  exclusive_hetero_by_chr <- list()
+  end <- length(res)
+  mesg("Iterating over ", end, " elements.")
+  for (element in seq_len(end)) {
+    datum <- res[[element]]
+    chromosome <- datum[["chromosome"]]
+    exclusive_hetero_by_chr[[chromosome]] <- datum
+  }
+
+  exc_not_chr_names <- gsub(pattern = "^chr_(.+)_pos_.+_ref_.+_alt_.+$",
+                            replacement = "\\1", x = rownames(exclusive_not))
+  exclusive_not[["chr"]] <- exc_not_chr_names
+  exc_not_individual_chromosomes <- levels(as.factor(exc_not_chr_names))
+  num_levels <- length(exc_not_individual_chromosomes)
+  message("Counting exclusive notzygous positions by chromosome/contig.")
+  exclusive_not_chr <- list()
+  i <- 1
+  res <- list()
+  res <- foreach(i = seq_len(num_levels),
+                 ## .combine = "c",
+                 ## .multicombine = TRUE,
+                 .packages = c("hpgltools", "doParallel"),
+                 .export = c("snp_by_chr")) %dopar% {
+    chromosome_name <- exc_not_individual_chromosomes[i]
+    exclusive_not_chr[[chromosome_name]] <- snp_by_chr(exclusive_not, chr_name = chromosome_name)
+  }
+  ## Unpack the res data structure (which probably can be simplified)
+  exclusive_not_by_chr <- list()
+  end <- length(res)
+  mesg("Iterating over ", end, " elements.")
+  for (element in seq_len(end)) {
+    datum <- res[[element]]
+    chromosome <- datum[["chromosome"]]
+    exclusive_not_by_chr[[chromosome]] <- datum
+  }
+
+  parallel::stopCluster(cl)
+
+  ## Calculate approximate snp densities by chromosome
+  observed_intersections <- list()
+  homo_intersections <- list()
+  hetero_intersections <- list()
+  observed_density_by_chr <- list()
+  exclusive_homo_intersections <- list()
+  exclusive_hetero_intersections <- list()
+  exclusive_not_intersections <- list()
+  homo_density_by_chr <- list()
+  hetero_density_by_chr <- list()
+  exclusive_homo_density_by_chr <- list()
+  exclusive_hetero_density_by_chr <- list()
+  exclusive_not_density_by_chr <- list()
+  for (chr in names(observed_by_chr)) {
+    observed_snps <- rownames(observed_by_chr[[chr]][["observations"]])
+    homo_snps <- rownames(homo_by_chr[[chr]][["observations"]])
+    hetero_snps <- rownames(homo_by_chr[[chr]][["observations"]])
+    exclusive_homo_snps <- rownames(exclusive_homo_by_chr[[chr]][["observations"]])
+    exclusive_hetero_snps <- rownames(exclusive_hetero_by_chr[[chr]][["observations"]])
+    exclusive_not_snps <- rownames(exclusive_not_by_chr[[chr]][["observations"]])
+    num_observed <- length(observed_snps)
+    num_homo <- length(homo_snps)
+    num_exclusive_homo <- length(exclusive_homo_snps)
+    num_hetero <- length(hetero_snps)
+    num_exclusive_hetero <- length(exclusive_hetero_snps)
+    num_exclusive_not <- length(exclusive_not_snps)
+    last_position <- max(
+        as.numeric(gsub(pattern = "^chr_.+_pos_(.+)_ref_.+_alt_.+$",
+                        replacement = "\\1", x = observed_snps)))
+
+    homo_density <- num_homo / as.numeric(last_position)
+    exclusive_homo_density <- num_exclusive_homo / as.numeric(last_position)
+    hetero_density <- num_hetero / as.numeric(last_position)
+    exclusive_hetero_density <- num_exclusive_hetero / as.numeric(last_position)
+    exclusive_not_density <- num_exclusive_not / as.numeric(last_position)
+    observed_density <- num_observed / as.numeric(last_position)
+
+    homo_density_by_chr[[chr]] <- homo_density
+    exclusive_homo_density_by_chr[[chr]] <- exclusive_homo_density
+    hetero_density_by_chr[[chr]] <- hetero_density
+    exclusive_hetero_density_by_chr[[chr]] <- exclusive_hetero_density
+    exclusive_not_density_by_chr[[chr]] <- exclusive_not_density
+    observed_density_by_chr[[chr]] <- observed_density
+
+    for (inter in names(observed_by_chr[[chr]][["intersections"]])) {
+      if (is.null(homo_intersections[[inter]])) {
+        homo_intersections[[inter]] <- homo_by_chr[[chr]][["intersections"]][[inter]]
+      } else {
+        homo_intersections[[inter]] <- c(homo_intersections[[inter]],
+                                         homo_by_chr[[chr]][["intersections"]][[inter]])
+      }
+
+      if (is.null(exclusive_homo_intersections[[inter]])) {
+        exclusive_homo_intersections[[inter]] <- exclusive_homo_by_chr[[chr]][["intersections"]][[inter]]
+      } else {
+        exclusive_homo_intersections[[inter]] <- c(exclusive_homo_intersections[[inter]],
+                                                   exclusive_homo_by_chr[[chr]][["intersections"]][[inter]])
+      }
+
+      if (is.null(hetero_intersections[[inter]])) {
+        hetero_intersections[[inter]] <- hetero_by_chr[[chr]][["intersections"]][[inter]]
+      } else {
+        hetero_intersections[[inter]] <- c(hetero_intersections[[inter]],
+                                           hetero_by_chr[[chr]][["intersections"]][[inter]])
+      }
+
+      if (is.null(exclusive_hetero_intersections[[inter]])) {
+        exclusive_hetero_intersections[[inter]] <- exclusive_hetero_by_chr[[chr]][["intersections"]][[inter]]
+      } else {
+        exclusive_hetero_intersections[[inter]] <- c(exclusive_hetero_intersections[[inter]],
+                                                     exclusive_hetero_by_chr[[chr]][["intersections"]][[inter]])
+      }
+
+      if (is.null(exclusive_not_intersections[[inter]])) {
+        exclusive_not_intersections[[inter]] <- exclusive_not_by_chr[[chr]][["intersections"]][[inter]]
+      } else {
+        exclusive_not_intersections[[inter]] <- c(exclusive_not_intersections[[inter]],
+                                                     exclusive_not_by_chr[[chr]][["intersections"]][[inter]])
+      }
+
+      if (is.null(observed_intersections[[inter]])) {
+        observed_intersections[[inter]] <- observed_by_chr[[chr]][["intersections"]][[inter]]
+      } else {
+        observed_intersections[[inter]] <- c(observed_intersections[[inter]],
+                                             observed_by_chr[[chr]][["intersections"]][[inter]])
+      }
+
+    } ## End iterating over the sets
+  }
+  observed_density_by_chr <- unlist(observed_density_by_chr)
+  homo_density_by_chr <- unlist(homo_density_by_chr)
+  exclusive_homo_density_by_chr <- unlist(exclusive_homo_density_by_chr)
+  hetero_density_by_chr <- unlist(hetero_density_by_chr)
+  exclusive_hetero_density_by_chr <- unlist(exclusive_hetero_density_by_chr)
+  exclusive_not_density_by_chr <- unlist(exclusive_not_density_by_chr)
+
+  retlist <- list(
+    "max_notobserved_cutoff" = zero_cutoff,
+    "max_observed_cutoff" = hetero_cutoff,
+    "max_hetero_cutoff" = homo_cutoff,
+    "data_by_factor" = by_factor_data,
+    "values" = values,
+    "homozygous_boolean" = all_homo,
+    "exclusive_homozygous_boolean" = exclusive_homo,
+    "heterozygous_boolean" = all_hetero,
+    "exclusive_heterozygous_boolean" = exclusive_hetero,
+    "exclusive_not_boolean" = exclusive_not,
+    "observed_boolean" = observed,
+    "not_observed_boolean" = not_observed,
+    "possibilities" = possibilities,
+    "homozygous_intersections" = homo_intersections,
+    "exclusive_homozygous_intersections" = exclusive_homo_intersections,
+    "heterozygous_intersections" = hetero_intersections,
+    "exclusive_heterozygous_intersections" = exclusive_hetero_intersections,
+    "exclusive_not_intersections" = exclusive_not_intersections,
+    "observed_intersections" = observed_intersections,
+    "homozygous" = homo_by_chr,
+    "exclusive_homozygous" = exclusive_homo_by_chr,
+    "heterozygous" = hetero_by_chr,
+    "exclusive_heterozygous" = exclusive_hetero_by_chr,
+    "exclusive_not" = exclusive_not_by_chr,
+    "observed" = observed_by_chr,
+    "set_names" = set_names,
+    "invert_names" = invert_names,
+    "homozygous_density" = homo_density_by_chr,
+    "exclusive_homozygous_density" = exclusive_homo_density_by_chr,
+    "heterozygous_density" = hetero_density_by_chr,
+    "exclusive_heterozygous_density" = exclusive_hetero_density_by_chr,
+    "exclusive_not_density" = exclusive_not_density_by_chr,
+    "observed_density" = observed_density_by_chr)
+
+  if (isTRUE(do_save)) {
+    saved <- save(list = "retlist", file = savefile)
+  }
+  class(retlist) <- "categorized_snp_sets"
+  return(retlist)
+}
+
 get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
                          stringency = NULL, do_save = FALSE,
-                         savefile = "variants.rda", proportion = 0.9) {
+                         savefile = "variants.rda",
+                         proportion = 0.9) {
   if (is.null(pData(snp_expt)[[factor]])) {
     stop("The factor does not exist in the expt.")
   } else {
@@ -222,8 +850,11 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
   returns <- list()
   i <- 1
   res <- list()
-  res <- foreach(i = 1:num_levels, .packages = c("hpgltools", "doParallel"),
-                 .options.snow = pb_opts, .export = c("snp_by_chr")) %dopar% {
+  res <- foreach(i = seq_len(num_levels),
+                 ## .combine = "c",
+                 ## .multicombine = TRUE,
+                 .packages = c("hpgltools", "doParallel"),
+                 .export = c("snp_by_chr")) %dopar% {
 
     chromosome_name <- levels(as.factor(chr))[i]
     returns[[chromosome_name]] <- snp_by_chr(observed, chr_name = chromosome_name)
@@ -246,7 +877,7 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
   mesg("Iterating over ", end, " elements.")
   for (element in seq_len(end)) {
     if (isTRUE(show_progress)) {
-      pct_done <- element / length(res)
+      pct_done <- element / end
       utils::setTxtProgressBar(bar, pct_done)
     }
     datum <- res[[element]]
@@ -286,6 +917,7 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
   density_by_chr <- unlist(density_by_chr)
 
   retlist <- list(
+    "factor" = factor,
     "values" = values,
     "observations" = observed,
     "possibilities" = possibilities,
@@ -297,8 +929,38 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
   if (isTRUE(do_save)) {
     saved <- save(list = "retlist", file = savefile)
   }
+  class(retlist) <- "snp_sets"
   return(retlist)
 }
+
+#' Take a vector of my peculiarly named variants and turn them into a grange
+#'
+#' @param names A set of things which look like: chr_x_pos_y_ref_a_alt_b
+#' @param gr Extant GRanges to modify?
+snpnames2gr <- function(names, gr = NULL) {
+  pos_df <- data.frame(row.names = names)
+  pos_df[["chr"]] <- gsub(pattern = "^chr_(.+)_pos_.+_ref.+_alt.+$",
+                                 replacement = "\\1",
+                                 x = rownames(pos_df))
+  pos_df[["start"]] <- as.numeric(gsub(pattern = "^chr_.+_pos_(.+)_ref.+_alt.+$",
+                                          replacement = "\\1",
+                                       x = rownames(pos_df)))
+  pos_df[["end"]] <- pos_df[["start"]]
+  pos_df[["strand"]] <- "+"
+  pos_df[["reference"]] <- gsub(pattern = "^chr_.+_pos_.+_ref_(.+)_alt.+$",
+                                replacement = "\\1",
+                                x = rownames(pos_df))
+  pos_df[["alternate"]] <- gsub(pattern = "^chr_.+_pos_.+_ref_.+_alt_(.+)$",
+                                replacement = "\\1",
+                                x = rownames(pos_df))
+  if (is.null(gr)) {
+    variants_gr <- GenomicRanges::makeGRangesFromDataFrame(pos_df, keep.extra.columns = TRUE)
+  } else {
+    variants_gr <- GenomicRanges::makeGRangesFromDataFrame(pos_df, seqinfo = seqinfo(gr),
+                                                           keep.extra.columns = TRUE)
+  }
+  return(variants_gr)
+  }
 
 #' Read the output from bcfutils into a count-table-esque
 #'
@@ -317,17 +979,21 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
 #' @param verbose Print information about the input data.
 #' @seealso [readr]
 #' @return A big honking data table.
-read_snp_columns <- function(samples, file_lst, column = "diff_count", verbose = FALSE) {
+read_snp_columns <- function(samples, file_lst, column = "diff_count",
+                             verbose = FALSE, reader = "readr") {
   ## Read the first file
   first_sample <- samples[1]
   if (isTRUE(verbose)) {
     mesg("Reading sample: ", first_sample, ".")
   }
   first_file <- file_lst[1]
-  first_read <- readr::read_tsv(first_file, show_col_types = FALSE)
-  colnames(first_read) <- make.names(
-      gsub(x = colnames(first_read), pattern = "\\.+\\d+$", replacement = ""),
-      unique = TRUE)
+  first_read <- NULL
+  if (reader == "readr") {
+    first_read <- readr::read_tsv(first_file, show_col_types = FALSE)
+  } else {
+    first_read <- read.table(first_file, sep = "\t", header = 1, comment.char = "")
+  }
+
   if (is.null(first_read[[column]])) {
     stop("The column: ", column, " does not appear to exist in the variant summary file.")
   }
@@ -339,20 +1005,10 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count", verbose =
   ## Copy that dt to the final data structure.
   snp_columns <- first_column
 
-  show_progress <- interactive() && is.null(getOption("knitr.in.progress"))
-  if (isTRUE(show_progress)) {
-    bar <- utils::txtProgressBar(style = 3)
-  }
   ## Foreach sample, do the same read of the data and merge it onto the end of the
   ## final data table.
   for (sample_num in seq(from = 2, to = length(samples))) {
-    if (isTRUE(show_progress)) {
-      pct_done <- sample_num / length(samples)
-      setTxtProgressBar(bar, pct_done)
-    }
     sample <- samples[sample_num]
-    mesg("Reading sample: ", sample, ", number ", sample_num, " of ",
-         length(samples), ".")
     file <- file_lst[sample_num]
     if (is.na(file)) {
       mesg("There is no file listed for ", sample, ".")
@@ -362,10 +1018,11 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count", verbose =
       mesg("Unable to find file: ", file, " for ", sample, ", skipping it.")
       next
     }
-    new_table <- try(readr::read_tsv(file, show_col_types = FALSE))
-    colnames(new_table) <- make.names(
-        gsub(x = colnames(new_table), pattern = "\\.+\\d+$", replacement = ""),
-        unique = TRUE)
+    if (reader == "readr") {
+      new_table <- readr::read_tsv(file, show_col_types = FALSE)
+    } else {
+      new_table <- read.table(file, sep = "\t", header = 1, comment.char = "")
+    }
     if (class(new_table)[1] == "try-error") {
       next
     }
@@ -376,9 +1033,6 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count", verbose =
     new_column[["rownames"]] <- new_table[[1]]
     colnames(new_column) <- c(sample, "rownames")
     snp_columns <- merge(snp_columns, new_column, by = "rownames", all = TRUE)
-  }
-  if (isTRUE(show_progress)) {
-    close(bar)
   }
   na_positions <- is.na(snp_columns)
   snp_columns[na_positions] <- 0
@@ -540,6 +1194,7 @@ snps_intersections <- function(expt, snp_result,
       "inters" = inters,
       "chr_summaries" = chr_summaries,
       "gene_summaries" = gene_summaries)
+  class(retlist) <- "snp_intersections"
   return(retlist)
 }
 
@@ -624,6 +1279,7 @@ snp_subset_genes <- function(expt, snp_expt, start_col = "start", end_col = "end
 #' @param start_col Which column provides the start of each gene?
 #' @param end_col and the end column of each gene?
 #' @param snp_name_col Name of the column in the metadata with the sequence names.
+#' @param observed_in Minimum proportion of samples required before this is deemed real.
 #' @param expt_name_col Name of the metadata column with the chromosome names.
 #' @param ignore_strand Ignore strand information when returning?
 #' @return List with some information by gene.
@@ -770,6 +1426,7 @@ snps_vs_genes <- function(expt, snp_result, start_col = "start", end_col = "end"
       "count_by_gene" = count_by_gene_irange,
       "count_by_gene_dplyr" = count_by_gene_dplyr,
       "summary" = summarized_by_chr)
+  class(retlist) <- "snps_genes"
   return(retlist)
 }
 
@@ -985,6 +1642,10 @@ snps_vs_genes_padded <- function(expt, snp_result, start_col = "start", end_col 
   return(retlist)
 }
 
+#' Write a matrix of variants in an alignment-esque format.
+#'
+#' @param expt variant expressionset.
+#' @param output_file File to write, presumably to be passed to something like phyML.
 write_snps <- function(expt, output_file = "funky.aln") {
   start_mtrx <- exprs(expt)
   samples <- colnames(start_mtrx)
@@ -998,355 +1659,6 @@ write_snps <- function(expt, output_file = "funky.aln") {
   cat(aln_string, file = write_output, sep = "")
   close(write_output)
   return(output_file)
-}
-
-#' Create a density function given a variant output and some metadata
-#'
-#' It is hoped that this will point out regions of a genome which
-#' might prove useful when designing PCR primers for a specific
-#' condition in a dataset of variants.
-#'
-#' @param snp_count Result from count_expt_snps()
-#' @param pdata_column Metadata column containing the condition of
-#'  interest.
-#' @param condition Chosen condition to search for variants.
-#' @param cutoff Minimum number of variants in a region.
-#' @param bin_width Bin size/region of genome to consider.
-#' @param divide Normalize by bin width?
-#' @param topn Keep only this number of candidates.
-#' @param target_temp Try to get primers with this Tm.
-#' @param max_primer_length Keep primers at or less than this length.
-#' @param bsgenome Genome package containing the sequence of interest.
-#' @param gff GFF to define regions of interest.
-#' @param feature_type GFF feature type to search against.
-#' @param feature_start GFF column with the starts (needed?)
-#' @param feature_end GFF column with the ends (needed?)
-#' @param feature_strand GFF column with strand information (needed?)
-#' @param feature_chr GFF column with chromosome information.
-#' @param feature_type_column GFF column with type information.
-#' @param feature_id GFF tag with the ID information.
-#' @param feature_name GFF tag with the names.
-#' @param truncate Truncate the results to just the columns I think
-#'  are useful.
-#' @export
-snp_density_primers <- function(snp_count, pdata_column = "condition",
-                                condition = "z2.3", cutoff = 20, bin_width = 600,
-                                divide = FALSE, topn = 400,
-                                target_temp = 53, max_primer_length = 50,
-                                bsgenome = "BSGenome.Leishmania.panamensis.MHOMCOL81L13.v52",
-                                gff = "reference/lpanamensis_col_v46.gff",
-                                feature_type = "protein_coding_gene", feature_start = "start",
-                                feature_end = "end", feature_strand = "strand",
-                                feature_chr = "seqnames", feature_type_column = "type",
-                                feature_id = "ID", feature_name = "description",
-                                truncate = TRUE) {
-
-  ## Start out by loading the bsgenome data
-  genome <- NULL
-  if (!is.null(bsgenome)) {
-    library(bsgenome, character.only=TRUE)
-    genome <- get0(bsgenome)
-  }
-
-  samples_by_condition <- pData(snp_count)[[pdata_column]]
-  ## Keep only those samples of the condition of interest for now,
-  ## maybe make it a loop to iterate over conditions later.
-  interest_idx <- samples_by_condition == condition
-  snp_table <- exprs(snp_count)[, interest_idx]
-  start_rows <- nrow(snp_table)
-  interest_rows <- rowMeans(snp_table) >= cutoff
-  snp_table <- snp_table[interest_rows, ]
-  mesg("Started with ", start_rows, ", after cutoff there are ",
-          sum(interest_rows), " rows left.")
-  position_table <- data.frame(row.names = rownames(snp_table))
-  position_table[["chromosome"]] <- gsub(x = rownames(position_table),
-                                         pattern = "chr_(.*)_pos_.*",
-                                         replacement = "\\1")
-  position_table[["position"]] <- gsub(x = rownames(position_table),
-                                       pattern = ".*_pos_(\\d+)_.*",
-                                       replacement = "\\1")
-  ## In the case of lpanamensis at least, chromosomes have '-' in the name, this is not allowed.
-  position_table[["chromosome"]] <- gsub(pattern = "-", replacement = "_",
-                                         x = position_table[["chromosome"]])
-  position_table[["ref"]] <- gsub(x = rownames(position_table),
-                                  pattern = ".*_pos_\\d+_ref_(\\w).*",
-                                  replacement = "\\1")
-  position_table[["alt"]] <- gsub(x = rownames(position_table),
-                                  pattern = ".*_pos_\\d+_ref_.+_alt_(\\w)$",
-                                  replacement = "\\1")
-  ## Lets make a dataframe of chromosomes, their lengths, and number of variants/chromosome
-  chromosomes <- levels(as.factor(position_table[["chromosome"]]))
-
-  chromosome_df <- data.frame(row.names = chromosomes)
-  chromosome_df[["length"]] <- 0
-  chromosome_df[["variants"]] <- 0
-  density_lst <- list()
-  variant_lst <- list()
-  ## This was written in an attempt to make it work if one does or does not
-  ## have a BSgenome from which to get the actual chromosome lengths.
-  for (ch in seq_along(chromosomes)) {
-    chr <- chromosomes[ch]
-    mesg("Starting chromosome: ", chr, ".")
-    chr_idx <- position_table[["chromosome"]] == chr
-    chr_data <- position_table[chr_idx, ]
-    if (is.null(genome)) {
-      chromosome_df[chr, "length"] <- max(chr_data[["position"]])
-    } else {
-      this_length <- length(genome[[chr]])
-      chromosome_df[chr, "length"] <- this_length
-    }
-    chromosome_df[chr, "variants"] <- nrow(chr_data)
-
-    ## Stop scientific notation for this operation
-    current_options <- options(scipen = 999)
-    density_vector <- rep(0, ceiling(this_length / bin_width))
-    variant_vector <- rep('', ceiling(this_length / bin_width))
-    density_name <- 0
-    for (i in seq_along(density_vector)) {
-      range_min <- density_name
-      range_max <- (density_name + bin_width) - 1
-      ## We want to subtract the maximum primer length from the position
-      ## and have each extension reaction start near/at the bin.
-      chr_data[["position"]] <- as.numeric(chr_data[["position"]])
-      density_idx <- chr_data[["position"]] >= range_min &
-        chr_data[["position"]] <= range_max
-      ## Note that if I want to completely correct in how I do this
-      ## it should not be blindly bin_width, but should be the smaller of
-      ## bin_width or the remainder of the chromosome.  Leaving it at bin_width
-      ## will under-represent the end of each chromosome/contig, but I don't think
-      ## I mind that at all.
-      if (isTRUE(divide)) {
-        density_vector[i] <- sum(density_idx) / bin_width
-      } else {
-        density_vector[i] <- sum(density_idx)
-      }
-      names(density_vector)[i] <- as.character(density_name)
-      ## Add the observed variants to the variant_vector
-      ## variant_set <- chr_data[density_idx, "mutation"]
-      variant_relative_positions <- chr_data[density_idx, "position"] - range_min
-      variant_set <- paste0(chr_data[density_idx, "ref"],
-                            variant_relative_positions,
-                            chr_data[density_idx, "alt"])
-      variant_vector[i] <- toString(variant_set)
-      names(variant_vector)[i] <- as.character(density_name)
-
-      density_name <- density_name + bin_width
-    }
-    density_lst[[chr]] <- density_vector
-    variant_lst[[chr]] <- variant_vector
-  }
-  new_options <- options(current_options)
-
-  long_density_vector <- vector()
-  long_variant_vector <- vector()
-  for (ch in seq_along(density_lst)) {
-    chr <- names(density_lst)[ch]
-    density_vec <- density_lst[[chr]]
-    variant_vec <- variant_lst[[chr]]
-    vecnames <- paste0(chr, "_start_", names(density_vec))
-    names(density_vec) <- vecnames
-    names(variant_vec) <- vecnames
-    long_density_vector <- c(long_density_vector, density_vec)
-    long_variant_vector <- c(long_variant_vector, variant_vec)
-  }
-  most_idx <- order(long_density_vector, decreasing = TRUE)
-  long_density_vector <- long_density_vector[most_idx]
-  long_variant_vector <- long_variant_vector[most_idx]
-
-  mesg("Extracting primer regions.")
-  sequence_df <- choose_sequence_regions(long_variant_vector, topn = topn,
-                                         max_primer_length = max_primer_length,
-                                         bin_width = bin_width, genome = genome)
-  mesg("Searching for overlapping/closest genes.")
-  sequence_df <- xref_regions(sequence_df, gff, bin_width = bin_width,
-                              feature_type = feature_type, feature_start = feature_start,
-                              feature_end = feature_end, feature_strand = feature_strand,
-                              feature_chr = feature_chr, feature_type_column = feature_type_column,
-                              feature_id = feature_id, feature_name = feature_name)
-  ## Get rid of any regions with 'N' in them
-
-  dropme <- grepl(x = sequence_df[["fivep_superprimer"]], pattern = "N")
-  mesg("Dropped ", sum(dropme), " regions with Ns in the 5' region.")
-  sequence_df <- sequence_df[!dropme, ]
-  dropme <- grepl(x = sequence_df[["threep_superprimer"]], pattern = "N")
-  mesg("Dropped ", sum(dropme), " regions with Ns in the 3' region.")
-  sequence_df <- sequence_df[!dropme, ]
-
-  keepers <- c("variants", "threep_variants", "fivep_superprimer", "threep_superprimer",
-               "fivep_primer", "threep_primer", "overlap_gene_id", "overlap_gene_description",
-               "closest_gene_before_id", "closest_gene_before_description")
-  if (isTRUE(truncate)) {
-    sequence_df <- sequence_df[, keepers]
-  }
-
-  retlist <- list(
-      "density_vector" = long_density_vector,
-      "variant_vector" = long_variant_vector,
-      "favorites" = sequence_df)
-  return(retlist)
-
-  ## TODO:
-  ## 1. Reindex based on primer start
-  ## 2. Report closest CDS regions and be able to filter on multicopies
-  ## 3. Report if in CDS or not
-  ## 4. Extra credit: report polyN runs in the putative amplicon
-
-}
-
-#' Given a named vector of fun regions, make a dataframe which
-#' includes putative primers and the spec strings for expected
-#' variants.
-#'
-#' This function came out of our TMRC2 work and seeks to provide an
-#' initial set of potential PCR primers which are able to distinguish
-#' between different aspects of the data.  In the actual data, we were
-#' looking for differences between the zymodemes 2.2 and 2.3.
-#'
-#' @param vector variant-based set of putative regions with variants
-#'  between conditions of interest.
-#' @param max_primer_length given this length as a start, whittle down
-#'  to a hopefully usable primer size.
-#' @param topn Choose this number of variant regions from the rather
-#'  larger set of possibilities..
-#' @param bin_width Separate the genome into chunks of this size when
-#'  hunting for primers, this size will therefore be the approximate
-#'  PCR amplicon length.
-#' @param genome (BS)Genome to search.
-#' @param target_temp PCR temperature to attempt to match.
-choose_sequence_regions <- function(vector, max_primer_length = 45,
-                                    topn = 200, bin_width = 600,
-                                    genome = NULL, target_temp = 58) {
-  ## Now get the nucleotides of the first 30 nt of each window
-  sequence_df <- as.data.frame(head(vector, n = topn))
-  colnames(sequence_df) <- "variants"
-  ## At this point we have one column which contains variant specs which start
-  ## at the beginning of the region of interest.  So let us choose
-  ## primers which end 1 nt before that region.
-  sequence_df[["chr"]] <- gsub(x = rownames(sequence_df), pattern = "^(.*)_start_.*$",
-                               replacement = "\\1")
-  sequence_df[["bin_start"]] <- as.numeric(gsub(x = rownames(sequence_df), pattern = "^(.*)_start_(.*)$",
-                                                replacement = "\\2"))
-  ## I think it would be nice to have spec strings which count from right->left to make
-  ## reading off a 3' primer easier.
-  sequence_df[["fivep_references"]] <- gsub(x = sequence_df[["variants"]],
-                                            pattern = "([[:alpha:]])(\\d+)([[:alpha:]])",
-                                            replacement = "\\1")
-  sequence_df[["threep_references"]] <- chartr("ATGC", "TACG", sequence_df[["fivep_references"]])
-
-  sequence_df[["fivep_positions"]] <- gsub(x = sequence_df[["variants"]],
-                                           pattern = "([[:alpha:]])(\\d+)([[:alpha:]])",
-                                           replacement = "\\2")
-  ## Getting the relative 3' position cannot be done with a simple regex/tr operation.
-  ## but instead is binwidth - position
-  ## which therefore requires a little apply() shenanigans
-  recount_positions <- function(position_string, bin_width = 600) {
-    positions <- strsplit(position_string, ",")[[1]]
-    positions <- gsub(x = positions, pattern = " ", replacement = "")
-    positions <- as.numeric(positions)
-    new_positions <- toString(as.character(bin_width - positions))
-    return(new_positions)
-  }
-  sequence_df[["threep_positions"]] <- mapply(FUN = recount_positions,
-                                              sequence_df[["fivep_positions"]])
-
-  sequence_df[["fivep_alternates"]] <- gsub(x = sequence_df[["variants"]],
-                                            pattern = "([[:alpha:]])(\\d+)([[:alpha:]])",
-                                            replacement = "\\3")
-  sequence_df[["threep_alternates"]] <- chartr("ATGC", "TACG", sequence_df[["fivep_alternates"]])
-  ## Now lets rewrite the variants as the combinations of threep_reference/position/alternate
-  threep_variants <- function(ref_string, position_string, alt_string) {
-    refs <- gsub(pattern = " ", replacement = "", x = strsplit(ref_string, ",")[[1]])
-    pos <- gsub(pattern = " ", replacement = "", x = strsplit(position_string, ",")[[1]])
-    alts <- gsub(pattern = " ", replacement = "", x = strsplit(alt_string, ",")[[1]])
-    new <- toString(paste0(refs, pos, alts))
-    return(new)
-  }
-  sequence_df[["threep_variants"]] <- mapply(FUN = threep_variants,
-                                             sequence_df[["threep_references"]],
-                                             sequence_df[["threep_positions"]],
-                                             sequence_df[["threep_alternates"]])
-
-  ## I am making explicit columns for these so I can look manually
-  ## and make sure I am not trying to get sequences which run off the chromosome.
-  sequence_df[["fivep_superprimer_start"]] <- sequence_df[["bin_start"]] - max_primer_length - 1
-  sequence_df[["threep_superprimer_start"]] <- sequence_df[["bin_start"]] + bin_width + max_primer_length + 1
-  sequence_df[["fivep_superprimer_end"]] <- sequence_df[["bin_start"]] - 1
-  sequence_df[["threep_superprimer_end"]] <- sequence_df[["bin_start"]] + bin_width
-  ## The super_primers are the entire region of length == max_primer_length, I will
-  ## iteratively remove bases from the 5' until the target is reached.
-  sequence_df[["fivep_superprimer"]] <- ""
-  sequence_df[["threep_superprimer"]] <- ""
-  ## The fivep_primer threep_primer columns will hold the final primers.
-  sequence_df[["fivep_primer"]] <- ""
-  sequence_df[["threep_primer"]] <- ""
-
-  ## For me, this is a little too confusing to do in an apply.
-  ## I want to fill in the fivep/threep_superprimer columns with the longer
-  ## sequence/revcomp regions of interest.
-  ## Then I want to chip away at the beginning/end of them to get the actual fivep/threep primer.
-  for (i in seq_along(nrow(sequence_df))) {
-    chr <- sequence_df[i, "chr"]
-
-    silence = TRUE
-    fivep_superprimer <- Biostrings::subseq(genome[[chr]],
-                                            sequence_df[i, "fivep_superprimer_start"],
-                                            sequence_df[i, "fivep_superprimer_end"])
-    if ("try-error" %in% class(fivep_superprimer)) {
-      sequence_df[i, "fivep_superprimer"] <- "Ran over chromosome end"
-    } else if (sequence_df[i, "fivep_superprimer_start"] < 0) {
-      ## Added this because subseq will assume a negative value means a circular chromosome.
-      sequence_df[i, "fivep_superprimer"] <- "Ran over chromosome end"
-    } else {
-      fivep_superprimer <- as.character(fivep_superprimer)
-      sequence_df[i, "fivep_superprimer"] <- fivep_superprimer
-    }
-    threep_superprimer <- try(Biostrings::subseq(genome[[chr]],
-                                                 sequence_df[i, "threep_superprimer_end"],
-                                                 sequence_df[i, "threep_superprimer_start"]),
-                              silent = silence)
-    if ("try-error" %in% class(threep_superprimer)) {
-      sequence_df[i, "threep_superprimer"] <- "Ran over chromosome end"
-    } else {
-      threep_superprimer <- toupper(as.character(spgs::reverseComplement(threep_superprimer)))
-      sequence_df[i, "threep_superprimer"] <- threep_superprimer
-    }
-
-    fivep_primer <- try(find_subseq_target_temp(fivep_superprimer,
-                                                target = target_temp,
-                                                direction = "forward"),
-                        silent = silence)
-    if ("try-error" %in% class(fivep_primer)) {
-      fivep_primer <- "bad sequence for priming"
-    }
-    sequence_df[i, "fivep_primer"] <- fivep_primer
-
-    threep_primer <- try(find_subseq_target_temp(threep_superprimer,
-                                                 target = target_temp,
-                                                 direction = "reverse"),
-                         silent = silence)
-    if ("try-error" %in% class(threep_primer)) {
-      threep_primer <- "bad sequence for priming"
-    }
-    sequence_df[i, "threep_primer"] <- threep_primer
-  } ## End iterating over sequence_df
-
-  ## Drop anything which is definitely useless
-  dropme <- grepl(x = sequence_df[["fivep_superprimer"]], pattern = "Ran")
-  sequence_df <- sequence_df[!dropme, ]
-  dropme <- grepl(x = sequence_df[["threep_superprimer"]], pattern = "Ran")
-  sequence_df <- sequence_df[!dropme, ]
-
-  wanted_columns <- c("variants", "threep_variants", "fivep_superprimer", "threep_superprimer",
-                      "fivep_primer", "threep_primer", "overlap_gene_description",
-                      "overlap_gene_start", "overlap_gene_end", "closest_gene_before_description",
-                      "closest_gene_before_start", "closest_gene_before_end",
-                      "closest_gene_after_id", "closest_gene_after_description",
-                      "closest_gene_after_start", "closest_gene_after_end",
-                      "chr", "bin_start", "fivep_references", "fivep_positions",
-                      "fivep_alternates", "threep_references", "threep_positions",
-                      "threep_alternates")
-  ## sequence_df <- sequence_df[, wanted_columns]
-  return(sequence_df)
 }
 
 #' If I were smart I would use an I/GRanges for this.
@@ -1367,17 +1679,31 @@ choose_sequence_regions <- function(vector, max_primer_length = 45,
 #' @param feature_type_column Column containing the feature types.
 #' @param feature_id Column with the IDs (coming from the gff tags).
 #' @param feature_name Column with the descriptive name.
+#' @param name_type I dont remember, I think this allows one to limit the search to a feature type.
+#' @param desc_column Use this column to extract full-text gene descriptions.
 xref_regions <- function(sequence_df, gff, bin_width = 600,
                          feature_type = "protein_coding_gene", feature_start = "start",
                          feature_end = "end", feature_strand = "strand",
                          feature_chr = "seqnames", feature_type_column = "type",
-                         feature_id = "ID", feature_name = "description") {
-  annotation <- load_gff_annotations(gff)
-  wanted_columns <- c(feature_id, feature_name, feature_chr,
+                         feature_id = "ID", feature_name = "description",
+                         name_type = NULL, desc_column = "description") {
+  if (class(gff) == "data.frame") {
+    annotation <- gff
+  } else {
+    annotation <- load_gff_annotations(gff, type = feature_type)
+  }
+
+  wanted_columns <- c(feature_id, feature_name, desc_column, feature_chr,
                       feature_start, feature_end, feature_strand)
+  found_columns <- wanted_columns %in% colnames(annotation)
+  message("The annotations have ", sum(found_columns), " of the desired columns.")
+  if (sum(found_columns) < length(wanted_columns)) {
+    stop("Some columns were misnamed, try again.")
+  }
   wanted_rows <- annotation[[feature_type_column]] == feature_type
   annotation <- annotation[wanted_rows, wanted_columns]
-  colnames(annotation) <- c("id", "name", "chr", "start", "end", "strand")
+  colnames(annotation) <- c("id", "name", "description",  "chr",
+                            "start", "end", "strand")
   mesg("Now the annotation has ", nrow(annotation),  " rows.")
 
   sequence_df[["overlap_gene_id"]] <- ""
@@ -1392,16 +1718,17 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
   sequence_df[["closest_gene_after_description"]] <- ""
   sequence_df[["closest_gene_after_start"]] <- ""
   sequence_df[["closest_gene_after_end"]] <- ""
-  for (r in seq_along(nrow(sequence_df))) {
+  for (r in seq_len(nrow(sequence_df))) {
+    message("Starting entry: ", r, ".")
     entry <- sequence_df[r, ]
     amplicon_chr <- entry[["chr"]]
     amplicon_start <- as.numeric(entry[["bin_start"]])
     amplicon_end <- amplicon_start + bin_width
     annot_idx <- annotation[["chr"]] == amplicon_chr
     xref_features <- annotation[annot_idx, ]
-    if (nrow(xref_features) == 0) {
-      next
-    }
+    #if (nrow(xref_features) == 0) {
+    #  next
+    #}
 
     ## Amplicon:           ------->
     ##                  ############# fs < qs && fe > qe
@@ -1424,23 +1751,28 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
     hit_df <- data.frame()
     primer_inside_feature <- xref_features[["start"]] <= amplicon_start &
       xref_features[["end"]] >= amplicon_end
-    if (sum(primer_inside_feature) > 0) {
+    number_inside <- sum(primer_inside_feature)
+    if (number_inside > 0) {
+      message("Found ", number_inside, " features with the amplicon inside them.")
       hits <- hits + sum(primer_inside_feature)
-      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_inside_feature, "id"]
-      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_inside_feature, "name"]
-      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_inside_feature, "start"]
-      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_inside_feature, "end"]
+      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_inside_feature, "id"][1]
+      sequence_df[r, "overlap_gene_name"] <- xref_features[primer_inside_feature, "name"][1]
+      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_inside_feature, "description"][1]
+      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_inside_feature, "start"][1]
+      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_inside_feature, "end"][1]
     }
 
     ##     ### amplicon_start > feature_start &&
     primer_overlap_fivep <- xref_features[["start"]] <= amplicon_start &
       xref_features[["end"]] >= amplicon_start
     if (sum(primer_overlap_fivep) > 0) {
+      message("Found ", sum(primer_overlap_fivep), " overlapping the forward primer.")
       hits <- hits + sum(primer_overlap_fivep)
-      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_overlap_fivep, "id"]
-      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_overlap_fivep, "name"]
-      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_overlap_fivep, "start"]
-      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_overlap_fivep, "end"]
+      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_overlap_fivep, "id"][1]
+      sequence_df[r, "overlap_gene_name"] <- xref_features[primer_overlap_fivep, "name"][1]
+      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_overlap_fivep, "description"][1]
+      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_overlap_fivep, "start"][1]
+      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_overlap_fivep, "end"][1]
     }
 
     ##  Amplicon:           ------->
@@ -1448,11 +1780,13 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
     primer_overlap_threep <- xref_features[["start"]] <= amplicon_end &
       xref_features[["end"]] >= amplicon_end
     if (sum(primer_overlap_threep) > 0) {
+      message("Found ", sum(primer_overlap_threep), " overlapping the reverse primer.")
       hits <- hits + sum(primer_overlap_threep)
-      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_overlap_threep, "id"]
-      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_overlap_threep, "name"]
-      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_overlap_threep, "start"]
-      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_overlap_threep, "end"]
+      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_overlap_threep, "id"][1]
+      sequence_df[r, "overlap_gene_name"] <- xref_features[primer_overlap_threep, "name"][1]
+      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_overlap_threep, "description"][1]
+      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_overlap_threep, "start"][1]
+      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_overlap_threep, "end"][1]
     }
 
     ##  Amplicon:           ------->
@@ -1460,11 +1794,13 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
     primer_overlap_surround <- xref_features[["start"]] >= amplicon_end &
       xref_features[["end"]] <= amplicon_end
     if (sum(primer_overlap_surround) > 0) {
+      message("Found ", sum(primer_overlap_surround), " surrounded by the primers.")
       hits <- hits + sum(primer_overlap_surround)
-      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_overlap_surround, "id"]
-      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_overlap_surround, "name"]
-      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_overlap_surround, "start"]
-      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_overlap_surround, "end"]
+      sequence_df[r, "overlap_gene_id"] <- xref_features[primer_overlap_surround, "id"][1]
+            sequence_df[r, "overlap_gene_name"] <- xref_features[primer_overlap_surround, "name"][1]
+      sequence_df[r, "overlap_gene_description"] <- xref_features[primer_overlap_surround, "description"][1]
+      sequence_df[r, "overlap_gene_start"] <- xref_features[primer_overlap_surround, "start"][1]
+      sequence_df[r, "overlap_gene_end"] <- xref_features[primer_overlap_surround, "end"][1]
     }
 
     ## Now report the closest genes before/after the amplicon
@@ -1473,9 +1809,10 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
     if (sum(fivep_wanted_idx) > 0) {
       fivep_candidates <- xref_features[fivep_wanted_idx, ]
       fivep_min_idx <- fivep_candidates[["fivep_dist"]] == min(fivep_candidates[["fivep_dist"]])
-      fivep_candidate <- fivep_candidates[fivep_min_idx, ]
+      fivep_candidate <- fivep_candidates[fivep_min_idx, ][1, ]
       sequence_df[r, "closest_gene_before_id"] <- fivep_candidate["id"]
-      sequence_df[r, "closest_gene_before_description"] <- fivep_candidate["name"]
+      sequence_df[r, "closest_gene_before_name"] <- fivep_candidate["name"]
+      sequence_df[r, "closest_gene_before_description"] <- fivep_candidate["description"]
       sequence_df[r, "closest_gene_before_start"] <- fivep_candidate["start"]
       sequence_df[r, "closest_gene_before_end"] <- fivep_candidate["end"]
     }
@@ -1483,62 +1820,19 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
     xref_features[["threep_dist"]] <- xref_features[["start"]] - amplicon_end
     threep_wanted_idx <- xref_features[["threep_dist"]] > 0
     if (sum(threep_wanted_idx) > 0) {
-      threep_candidates <- xref_features[threep_wanted_idx, ]
+      threep_candidates <- xref_features[threep_wanted_idx, ][1, ]
       threep_min_idx <- threep_candidates[["threep_dist"]] == min(threep_candidates[["threep_dist"]])
       threep_candidate <- threep_candidates[threep_min_idx, ]
       sequence_df[r, "closest_gene_after_id"] <- threep_candidate["id"]
-      sequence_df[r, "closest_gene_after_description"] <- threep_candidate["name"]
+      sequence_df[r, "closest_gene_after_description"] <- threep_candidate["description"]
+      sequence_df[r, "closest_gene_after_name"] <- threep_candidate["name"]
       sequence_df[r, "closest_gene_after_start"] <- threep_candidate["start"]
       sequence_df[r, "closest_gene_after_end"] <- threep_candidate["end"]
     }
 
   } ## End iterating over every row of the sequence df.
+  sequence_df <- sequence_df %>% arrange(desc(overlap_gene_description))
   return(sequence_df)
-}
-
-find_subseq_target_temp <- function(sequence, target=53, direction="forward", verbose=FALSE) {
-  cheapo <- cheap_tm(sequence)
-  if (isTRUE(verbose)) {
-    mesg("Starting with ", sequence, " and ", cheapo)
-  }
-  if (nchar(sequence) < 1) {
-    stop("Never hit the target tm, something is wrong.")
-  }
-  if (cheapo[["tm"]] > target) {
-    if (direction == "forward") {
-      ## Then drop the first character
-      subseq <- stringr::str_sub(sequence, 2, nchar(sequence))
-    } else {
-      ## Then drop the last character
-      subseq <- stringr::str_sub(sequence, 1, nchar(sequence) - 1)
-    }
-    result <- find_subseq_target_temp(subseq, target=target, direction=direction)
-  } else {
-    mesg("Final tm is: ", cheapo[["tm"]], " from sequence: ", sequence, ".")
-    return(sequence)
-  }
-}
-
-
-cheap_tm <- function(sequence) {
-  ## Taken from: https://www.biostars.org/p/58437/
-  n <- nchar(sequence)
-  ng <- stringr::str_count(toupper(sequence), "G")
-  nc <- stringr::str_count(toupper(sequence), "C")
-  n_gc <- ng + nc
-  n_at <- n - n_gc
-  tm <- 0
-  if (n_gc < 18) {
-    method <- "2*AT + 4*GC"
-    tm <- ((2 * n_at) + (4 * n_gc)) - 7
-  } else {
-    method <- "64.9 + (41*(GC-16.4)/n)"
-    tm <- 64.9 + (41 * ((n_gc - 16.4) / n))
-  }
-  ret <- list(
-      "method" = method,
-      "tm" = tm)
-  return(ret)
 }
 
 ## EOF

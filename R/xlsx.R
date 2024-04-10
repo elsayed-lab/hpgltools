@@ -65,15 +65,21 @@ init_xlsx <- function(excel = "excel/something.xlsx") {
   if (!file.exists(excel_dir)) {
     created <- dir.create(excel_dir, recursive = TRUE)
   }
+  write_permission <- as.numeric(file.access(excel_dir, 2))
+  if (write_permission < 0) {
+    warning("The directory: ", excel_dir, " does not have write permission, this will fail.")
+  }
+
   if (file.exists(excel)) {
     message("Deleting the file ", excel, " before writing the tables.")
     removed <- file.remove(excel)
   }
   wb <- openxlsx::createWorkbook(creator = "hpgltools")
   retlist <- list(
-      "dirname" = excel_dir,
-      "basename" = excel_basename,
-      "wb" = wb)
+    "dirname" = excel_dir,
+    "basename" = excel_basename,
+    "wb" = wb)
+  class(retlist) <- "initialized_xlsx"
   return(retlist)
 }
 
@@ -88,6 +94,7 @@ init_xlsx <- function(excel = "excel/something.xlsx") {
 #' @param df When provided, a data frame from which to extract the
 #'  numbers.
 #' @return Either the numbers or dataframe with the sanitized information.
+#' @export
 sanitize_percent <- function(numbers, df = NULL) {
   number_column <- NULL
   if (!is.null(df)) {
@@ -201,6 +208,13 @@ sanitize_number_encoding <- function(numbers, df = NULL) {
 #' @param start_row First row of the sheet to write. Useful if writing multiple tables.
 #' @param start_col First column to write.
 #' @param title Title for this xlsx table.
+#' @param float_format Revisit this, but it hard-sets the number of decimal
+#'  points in floating point columns.
+#' @param data_table Write this as an excel data table instead of just a collection of cells.
+#' @param freeze_first_row Add a hint to make the first row always on screen?
+#' @param freeze_first_column Add a hint to make the first column always on screen?
+#' @param date_format Coerce date columns to this format.
+#' @param column_width Either a specific value, NULL, or 'heuristic' which guesses.
 #' @param ... Set of extra arguments given to openxlsx.
 #' @return List containing the sheet and workbook written as well as the
 #'  bottom-right coordinates of the last row/column written to the worksheet.
@@ -213,8 +227,12 @@ sanitize_number_encoding <- function(numbers, df = NULL) {
 #'                           sheet = "hpgl_data", start_row = xls_coords$end_col)
 #'  }
 #' @export
-write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, rownames = TRUE,
-                       start_row = 1, start_col = 1, title = NULL, ...) {
+write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL,
+                       rownames = TRUE, start_row = 1, start_col = 1,
+                       title = NULL, float_format = "0.000", data_table = TRUE,
+                       freeze_first_row = TRUE, freeze_first_column = TRUE,
+                       date_format = "yyyy-mm-dd",
+                       column_width = "heuristic", ...) {
   arglist <- list(...)
   if (is.null(data)) {
     return(NULL)
@@ -228,14 +246,28 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, ro
         wb <- written[["workbook"]]
         print(names(wb))
       }
-      written <- write_xlsx(data = one_df, wb = wb, sheet = sheet_name, excel = excel, rownames = rownames,
-                            start_row = start_row, start_col = start_col, title = title)
+      written <- write_xlsx(
+        data = one_df, wb = wb, sheet = sheet_name, excel = excel, rownames = rownames,
+        start_row = start_row, start_col = start_col,
+        freeze_first_column = freeze_first_column, title = title,
+        freeze_first_row = freeze_first_row)
       print(names(written[["workbook"]]))
     }
-
     return(written)
   }
-  if ("matrix" %in% class(data) | "character" %in% class(data)) {
+
+  old_options <- options(openxlsx.dateFormat = date_format)
+  ## Added to check if each column is comprised of whole numbers.
+  ## If this is TRUE for a column, do not use the float_format
+  ## parameter above.
+  is_numberp <- function(x) all(varhandle::check.numeric(x))
+  is_wholep <- function(x) all(floor(x) == x)
+  is_largep <- function(x) any(abs(as.numeric(x)) > 1e7)
+  ## One may want to change this for other date formats...
+  is_datep <- function(x) all(grepl(x = x, pattern = "\\d{4}\\-\\d{2}\\-\\d{2}"))
+  is_pctp <- function(x) all(grepl(x = x, pattern = "%$"))
+
+  if ("matrix" %in% class(data) || "character" %in% class(data)) {
     data <- as.data.frame(data, stringsAsFactors = FALSE)
   }
   if ("data.table" %in% class(data)) {
@@ -250,8 +282,14 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, ro
   }
 
   ## Heading style 1 (For titles)
-  hs1 <- openxlsx::createStyle(fontColour = "#000000", halign = "LEFT", textDecoration = "bold",
-                               border = "Bottom", fontSize = "30")
+  hs1_fmt <- openxlsx::createStyle(fontColour = "#000000", halign = "LEFT",
+                                      textDecoration = "bold", border = "Bottom",
+                                   fontSize = "30")
+  sig_fmt <- openxlsx::createStyle(numFmt = float_format)
+  whole_fmt <- openxlsx::createStyle(numFmt = "COMMA")
+  date_fmt <- openxlsx::createStyle(numFmt = "DATE")
+  pct_fmt <- openxlsx::createStyle(numFmt = "percentage")
+  sci_fmt <- openxlsx::createStyle(numFmt = "scientific")
 
   ## Create the new worksheet.
   wb_sheet <- check_xlsx_worksheet(wb, sheet)
@@ -261,15 +299,15 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, ro
   new_row <- start_row
   new_col <- start_col
   if (!is.null(title)) {
-    openxlsx::addStyle(wb = wb, sheet = sheet, style = hs1, rows = new_row,
+    openxlsx::addStyle(wb = wb, sheet = sheet, style = hs1_fmt, rows = new_row,
                        cols = new_col, gridExpand = FALSE, stack = FALSE)
     ## An important caveat:
     ## glue'd() strings are not just class character, but their own thing,
     ## which means that just dumping them in this situation leads to unexpected results.
     xl_result <- openxlsx::writeData(
-                               wb = wb, sheet = sheet,
-                               x = as.character(title),
-                               startCol = new_col, startRow = new_row)
+      wb = wb, sheet = sheet,
+      x = as.character(title),
+      startCol = new_col, startRow = new_row)
     new_row <- new_row + 1
   }
 
@@ -306,21 +344,48 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, ro
   ## apparently excel doesn't like that sometimes (but others it doesn't care)
   colnames(final_data) = gsub(x = colnames(final_data),
                               pattern = "\\.", replacement = "_")
-
-  written <- try(openxlsx::writeDataTable(wb = wb, sheet = sheet, x = final_data, startCol = new_col,
-                                          startRow = new_row, tableStyle = table_style,
-                                          rowNames = rownames, colNames = TRUE))
-  new_row <- new_row + nrow(final_data) + 2
-
+  written <- NULL
+  if (isTRUE(data_table)) {
+    written <- try(openxlsx::writeDataTable(
+      wb = wb, sheet = sheet, x = final_data,
+      startCol = new_col, startRow = new_row, tableStyle = table_style,
+      rowNames = rownames, colNames = TRUE))
+  } else {
+    written <- try(openxlsx::writeData(
+      wb = wb, sheet = sheet, x = final_data,
+      startCol = new_col, startRow = new_row,
+      rowNames = rownames, colNames = TRUE))
+  }
+  written_row <- new_row + nrow(final_data)
+  new_row <- written_row + 2
   ## Set the column lengths, hard set the first to 20,
   ## then try to set it to auto if the length is not too long.
   for (data_col in seq_len(ncol(final_data))) {
     ## Make an explicit check that the data is not null, which comes out here as character(0)
-    test_column <- as.character(final_data[[data_col]])
+    column_name <- colnames(final_data)[data_col]
+    style_set <- NULL
+    this_column <- final_data[[data_col]]
+    test_column <- as.character(this_column)
     test_column[is.na(test_column)] <- ""
     test_null <- identical(as.character(test_column), character(0))
-    test_max <- 4
+    test_numeric <- is_numberp(test_column)
+    test_date <- is_datep(test_column)
+    test_whole <- FALSE
+    test_float <- FALSE
+    test_large <- FALSE
+    test_pct <- is_pctp(test_column)
+    if (isTRUE(test_numeric)) {
+      test_whole <- is_wholep(as.numeric(test_column))
+      test_float <- !test_whole
+      test_large <- is_largep(test_column)
+      if (isTRUE(test_large)) {
+        test_whole <- FALSE
+        test_float <- FALSE
+        test_large <- TRUE
+      }
+    }
 
+    test_max <- 4
     if (isTRUE(test_null)) {
       test_max <- 1
       final_data[[data_col]] <- NULL  ## Drop the offending column.
@@ -330,29 +395,74 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, ro
 
     ## Keep in mind that if we are going to set the column widths
     ## and we set a start_col, then the actual column we will be changing is start_col + data_col.
+    row_range <- seq(from = start_row + 1, to = written_row)
     current_col <- start_col + data_col - 1  ## start_col is 1 indexed.
-    if (data_col == 1) {
-      openxlsx::setColWidths(wb, sheet, current_col, 20)
-    } else if (test_max > 30) {
-      openxlsx::setColWidths(wb, sheet, current_col, 30)
+    this_col_num <- start_col + data_col
+    if (is.null(column_width)) {
+      ## I am not sure if I want to do anything here yet.
+      ## mesg("Column widths already set, if you set them now there will be problems.")
+      funkytown <- NULL
+    } else if (column_width == "heuristic") {
+      if (data_col == 1) {
+        openxlsx::setColWidths(wb = wb, sheet = sheet, cols = this_col_num, widths = 20)
+      } else if (test_max > 30) {
+        openxlsx::setColWidths(wb = wb, sheet = sheet, cols = this_col_num, widths = 30)
+      } else {
+        openxlsx::setColWidths(wb = wb, sheet = sheet, cols = this_col_num, widths = "auto")
+      }
     } else {
-      openxlsx::setColWidths(wb, sheet, current_col, "auto")
+      mesg("Setting every column to 'auto'.")
+      openxlsx::setColWidths(wb = wb, sheet = sheet, cols = this_col_num, widths = "auto")
+    }
+
+    if (isTRUE(test_float)) {
+      style_set <- openxlsx::addStyle(wb = wb, sheet = sheet, style = sig_fmt,
+                                      rows = row_range, cols = this_col_num)
+    }
+    if (isTRUE(test_whole)) {
+      style_set <- openxlsx::addStyle(wb = wb, sheet = sheet, style = whole_fmt,
+                         rows = row_range, cols = this_col_num)
+    }
+    if (isTRUE(test_date)) {
+      style_set <- openxlsx::addStyle(wb = wb, sheet = sheet, style = date_fmt,
+                         rows = row_range, cols = this_col_num)
+    }
+    if (isTRUE(test_pct)) {
+      style_set <- openxlsx::addStyle(wb = wb, sheet = sheet, style = pct_fmt,
+                         rows = row_range, cols = this_col_num)
+    }
+    if (isTRUE(test_large)) {
+      style_set <- openxlsx::addStyle(wb = wb, sheet = sheet, style = sci_fmt,
+                                      rows = row_range, cols = this_col_num)
     }
   }
   end_col <- new_col + ncol(final_data) + 1
+  new_options <- options(old_options)
+  frozen <- NULL
+  if (isTRUE(freeze_first_row) && isTRUE(freeze_first_column)) {
+    frozen <- openxlsx::freezePane(wb, sheet, firstCol = TRUE, firstRow = TRUE)
+  } else if (isTRUE(freeze_first_column)) {
+    frozen <- openxlsx::freezePane(wb, sheet, firstCol = TRUE)
+  } else if (isTRUE(freeze_first_row)) {
+    frozen <- openxlsx::freezePane(wb, sheet, firstRow = TRUE)
+  }
 
   ret <- list(
-      "workbook" = wb,
-      "sheet" = sheet,
-      "end_row" = new_row,
-      "end_col" = end_col)
+    "workbook" = wb,
+    "sheet" = sheet,
+    "frozen" = frozen,
+    "end_row" = new_row,
+    "end_col" = end_col,
+    "file" = excel)
   if (!is.null(excel)) {
     mesg("Saving to: ", excel)
     save_result <- openxlsx::saveWorkbook(wb, excel, overwrite = TRUE)
     ret[["save_result"]] <- save_result
   }
+  class(ret) <- "written_xlsx"
   return(ret)
 }
+setGeneric("write_xlsx")
 
 #' An attempt to improve the behaivor of openxlsx's plot inserter.
 #'
@@ -387,9 +497,9 @@ write_xlsx <- function(data = NULL, wb = NULL, sheet = "first", excel = NULL, ro
 #' }
 #' @export
 xlsx_insert_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6, res = 90,
-                          plotname = "plot", savedir = "saved_plots", fancy = FALSE,
-                          fancy_type = "pdf", start_row = 1, start_col = 1,
-                          file_type = "png", units = "in", ...) {
+                            plotname = "plot", savedir = "saved_plots", fancy = FALSE,
+                            fancy_type = "pdf", start_row = 1, start_col = 1,
+                            file_type = "png", units = "in", ...) {
   arglist <- list(...)
   if (is.null(a_plot)) {
     return(NULL)
@@ -442,11 +552,11 @@ xlsx_insert_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6,
     }
     dev.off()
   }
-  png_name <- try(tempfile(pattern = "figureImage", fileext = glue(".{file_type}")))
+  png_name <- try(tmpmd5file(pattern = "figureImage", fileext = glue(".{file_type}")))
   if ("try-error" %in% class(png_name)) {
     warning("There are too many tmp files in your current Rtmp directory.")
     warning("You need to clean it out ASAP.")
-    png_name <- try(tempfile(pattern = "figureImage2", fileext = glue(".{file_type}")))
+    png_name <- try(tmpmd5file(pattern = "figureImage2", fileext = glue(".{file_type}")))
   }
   png_ret <- try(png(filename = png_name,
                      width = width,
@@ -481,10 +591,10 @@ xlsx_insert_png <- function(a_plot, wb = NULL, sheet = 1, width = 6, height = 6,
     message("The png file name did not exist: ", png_name)
   }
   ret <- list(
-      "filename" = png_name,
-      "png_fh" = png_ret,
-      "png_print" = print_ret,
-      "openxlsx" = insert_ret)
+    "filename" = png_name,
+    "png_fh" = png_ret,
+    "png_print" = print_ret,
+    "openxlsx" = insert_ret)
   if (isTRUE(fancy)) {
     ret[["fancy_print"]] <- fancy_ret
   }

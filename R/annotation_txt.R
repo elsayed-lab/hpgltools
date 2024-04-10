@@ -11,6 +11,7 @@
 #' them into a format usable in an expressionset.
 #'
 #' @param trinotate CSV of trinotate annotation data.
+#' @param collapse Collapse isoforms to genes?
 #' @return Dataframe of fun data.
 #' @seealso [tidyr] [readr]
 #' @examples
@@ -18,7 +19,7 @@
 #'  a_few_trinotate <- load_trinotate_annotations(trinotate = sb_annot)
 #'  dim(a_few_trinotate)
 #' @export
-load_trinotate_annotations <- function(trinotate = "reference/trinotate.csv") {
+load_trinotate_annotations <- function(trinotate = "reference/trinotate.csv", collapse = FALSE) {
   split_data <- sm(readr::read_tsv(trinotate))
   .data <- NULL  ## Shut up, R CMD check
 
@@ -151,6 +152,11 @@ load_trinotate_annotations <- function(trinotate = "reference/trinotate.csv") {
     split_data[, "length"] <- lengths
   }
 
+  if (isTRUE(collapse)) {
+    split_data[["collapsed_gid"]] <- gsub(x = rownames(split_data), pattern = "^(.*_c\\d+_g\\d+)_i\\d+$",
+                                          replacement = "\\1")
+  }
+
   return(split_data)
 }
 
@@ -161,6 +167,12 @@ load_trinotate_annotations <- function(trinotate = "reference/trinotate.csv") {
 #' from it.  Keep in mind that this data is primarily from Blast2GO.
 #'
 #' @param trinotate CSV of trinotate annotation data.
+#' @param blast2go_column Column name containing BLAST2GO data.
+#' @param pfam_column Column containing data from pfam searches.
+#' @param length_column Column containing the gene lengths.
+#' @param fill Cheat and fill in an arbitrary value for gene lengths if all else fails.
+#' @param collapse Collapse isforms to genes?
+#' @param id_column Column containing the gene IDs.
 #' @return List of the extracted GO data, a table of it, length data, and the
 #'  resulting length table.
 #' @seealso [load_trinotate_annotations()]
@@ -170,30 +182,55 @@ load_trinotate_annotations <- function(trinotate = "reference/trinotate.csv") {
 #'  dim(trinotate_go$go_data)
 #'  dim(trinotate_go$go_table)
 #' @export
-load_trinotate_go <- function(trinotate = "reference/trinotate.csv") {
+load_trinotate_go <- function(trinotate = "reference/trinotate.csv",
+                              blast2go_column = "gene_ontology_BLASTX",
+                              pfam_column = "gene_ontology_Pfam",
+                              length_column = "transcript", fill = 1500,
+                              collapse = TRUE, id_column = "#gene_id") {
   big_table <- data.table::as.data.table(sm(readr::read_tsv(trinotate)))
-  big_table[["length"]] <- stringr::str_length(as.factor(big_table[["transcript"]]))
 
-  go_data <- big_table[, c("#gene_id", "transcript_id", "gene_ontology_blast",
-                           "gene_ontology_pfam", "length")]
+  if (isTRUE(collapse)) {
+    big_table[[id_column]] <- gsub(x = big_table[[id_column]], pattern = "^(.*_c\\d+_g\\d+)_i\\d+$",
+                                   replacement = "\\1")
+    keepers <- !duplicated(big_table[[id_column]])
+    mesg("Dropped the table to ", sum(keepers), " rows.")
+    big_table <- big_table[keepers, ]
+  }
+
+  if (length_column == "transcript") {
+    big_table[["length"]] <- stringr::str_length(as.factor(big_table[["transcript"]]))
+  } else if (length_column == "prot_coords") {
+    v1 <- as.numeric(gsub(x = big_table[["prot_coords"]], pattern = "^(\\d+)\\-\\d+.+$",
+                          replacement = "\\1"))
+    v2 <- as.numeric(gsub(x = big_table[["prot_coords"]], pattern = "^\\d+\\-(\\d+).+$",
+                          replacement = "\\1"))
+    big_table[["length"]] <- abs(v1 - v2)
+    missing <- is.na(big_table[["length"]])
+    big_table[missing, "length"] <- fill
+  }
+
+  wanted <- c("#gene_id", "transcript_id", blast2go_column, pfam_column, "length")
+  go_data <- as.data.frame(big_table)
+  go_data <- go_data[, wanted]
   colnames(go_data) <- c("gene_id", "transcript_id", "go_blast", "go_pfam", "length")
   dots <- go_data == "."
   go_data[dots] <- ""
   .data <- NULL  ## Shush, R CMD check
 
+  mesg("Expanding encoded GO columns, this takes some time.")
   expanded <- go_data %>%
-    dplyr::mutate("GO"=as.list(strsplit(x = as.character(.data[["go_blast"]]), split = "`"))) %>%
+    dplyr::mutate("GO" = as.list(
+      strsplit(x = as.character(.data[["go_blast"]]), split = "`"))) %>%
     tidyr::unnest("GO") %>%
     tidyr::separate("GO",
                     c("GO", "GO_ont", "GO_name"),
                     "\\^",
                     extra = "drop", fill = "right")
-  ## extra = "drop", fill = "right")
   go_data <- expanded[, c("gene_id", "transcript_id", "GO", "GO_ont", "GO_name")]
 
   go_table <- data.table::setDT(go_data)
   go_table <- go_table[, c("gene_id", "GO")]
-  names(go_table) <- c("ID", "GO")
+  colnames(go_table) <- c("ID", "GO")
   keepers <- complete.cases(go_table)
   go_table <- go_table[keepers, ]
   ## Some stupid quotations are sneaking through.
@@ -207,7 +244,7 @@ load_trinotate_go <- function(trinotate = "reference/trinotate.csv") {
   ## length_table <- length_table[, .(mean_gene_length = mean(length)), by=.(gene_id)]
   length <- gene_id <- NULL
   length_table <- length_table[, list(mean_gene_length = mean(length)), by = list(gene_id)]
-  names(length_table) <- c("ID", "length")
+  colnames(length_table) <- c("ID", "length")
 
   retlist <- list(
       "go_data" = go_data,

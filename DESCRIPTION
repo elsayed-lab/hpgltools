@@ -18,51 +18,58 @@ Description: This is a set of functions I have been using in my various analyses
              flexibly handled by the packages this is based upon.
 License: GPL-2 | file LICENSE
 Suggests:
-  affy, AnnotationDbi, AnnotationForge, AnnotationHub,
+  affy, AnnotationDbi, AnnotationForge, AnnotationHub, ape,
   BiocGenerics, BiocManager, biomaRt, Biostrings, bluster, BRAIN, BSgenome,
   caret, Category, cleaver, clusterProfiler, corpcor, corrplot, curl,
-  DBI, DEGreport, desc, DESeq2, devEMF, devtools, directlabels, doParallel,
-  dorothea, DOSE, doSNOW, DSS,
+  DALEX, DBI, DEGreport, desc, DESeq2, devEMF, devtools, directlabels, doParallel,
+  digest, dorothea, doSNOW, DSS,
   EBSeq, EDASeq, edgeR, enrichplot, EuPathDB,
-  fastcluster, fastICA, ffpe, fission,
+  fastcluster, fastICA, ffpe, fission, flashClust,
   genbankr, genefilter, GenomicRanges, GenomeInfoDb, genoPlotR, ggdendro,
-  ggrepel, ggstatsplot, ggthemes, goseq, GO.db, GOstats,
+  ggrepel, ggsankey, ggstatsplot, ggthemes, goseq, GO.db, GOstats,
   graph, GSVA, GSVAdata, gtools, gplots, gProfileR, gprofiler2,
   Heatplus, Hmisc, Homo.sapiens, htmlwidgets, hpgldata, httr,
   iDA, igraph, IHW, inflection, IRanges, isva, iterators,
   jsonlite,
   KEGGREST, KEGGgraph, kmer,
   lattice, limma, locfit, lubridate,
-  MatrixGenerics, matrixStats, miscTools, MLSeq, motifRG, MSnbase, mygene, mzR,
+  MatrixGenerics, matrixStats, miscTools, motifRG, MSnbase, mygene, mzR,
+  networkD3, NOISeq, numform,
   openxlsx, OrganismDbi,
-  pander, parallel, pasilla, pathfindR, pathview, pcaMethods, Peptides, plyr, preprocessCore, PROPER,
+  pander, parallel, pasilla, pathfindR, pathview, pcaMethods, Peptides,
+  pheatmap, plyr, preprocessCore, pROC, PROPER, purrr,
   qvalue,
-  R.utils, RColorBrewer, RCurl, readr, reactome.db, readODS, readxl, reshape2, rGADEM, Rgraphviz,
-  rhdf5, rjson, rmarkdown, robust, robustbase, Rsamtools, RSQLite, Rtsne,
+  R.utils, RColorBrewer, RCurl, readr, reactome.db, readODS, readxl,
+  reshape2, rGADEM, Rgraphviz, rhdf5, Rhdf5lib, rjson, rmarkdown, robust,
+  robustbase, Rsamtools, Rtsne,
   rtracklayer, ruv, RUVSeq, rvest,
   scales, SeqTools, Seurat, seqLogo, skimr, SmartSVA, spgs, statmod, stringi,
   stringr, survJamda, SWATH2stats,
   taxize, testthat, tibble, tidyr, tidyselect, topGO, tximport,
   UniProt.ws, UpSetR, uwot, webp,
+  varhandle, variancePartition,
+  WGCNA,
   xCell, xml2,
   Vennerable, venneuler
 Imports:
-  data.table, dplyr,
-  foreach,
-  ggplot2, GenomicFeatures, glue, GSEABase,
+  data.table, DOSE, dplyr,
+  forcats, foreach,
+  GenomicFeatures, ggplot2, glue, GSEABase,
+  IRanges,
   knitr,
   magrittr, methods,
   plotly,
-  rlang,
+  rlang, RSQLite,
   shiny, sva,
-  variancePartition
+  tidyselect,
+  varhandle, variancePartition
 Depends:
-  Biobase, SummarizedExperiment, S4Vectors
+  Biobase, SummarizedExperiment, S4Vectors, glue, Matrix
 VignetteBuilder: knitr
 ByteCompile: true
 biocViews: DifferentialExpression
 Encoding: UTF-8
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 Collate:
   '01_hpgltools.R'
   'alt_splicing.R'
@@ -82,11 +89,12 @@ Collate:
   'de_deseq.R'
   'de_ebseq.R'
   'de_limma.R'
+  'de_noiseq.R'
   'de_plots.R'
   'de_xlsx.R'
+  'de_varpart.R'
   'dimension_reduction.R'
   'expt.R'
-  'expressionset.R'
   'gene_sets.R'
   'gsva.R'
   'helpers_misc.R'
@@ -110,6 +118,7 @@ Collate:
   'ontology_plots.R'
   'ontology_xlsx.R'
   'ontology_kegg.R'
+  'pcr.R'
   'peptides.R'
   'phylo.R'
   'plot_shared.R'
@@ -134,3 +143,6 @@ Collate:
   'tnseq.R'
   'variants.R'
   'xlsx.R'
+  'zzz_methods.R'
+  'zzz_print.R'
+  'zzz_subset.R'

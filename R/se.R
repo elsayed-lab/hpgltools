@@ -22,6 +22,7 @@
 #' @param tx_gene_map When using tximport, use this to convert from transcripts to genes.
 #' @param ... Extra options.
 #' @importFrom SummarizedExperiment SummarizedExperiment metadata<- assays
+#' @seealso [summarizedExperiment]
 #' @export
 create_se <- function(metadata = NULL, gene_info = NULL, count_dataframe = NULL,
                       sanitize_rownames = FALSE, sample_colors = NULL, title = NULL,
@@ -499,17 +500,23 @@ make_pombe_se <- function(annotation = TRUE) {
   annotations <- NULL
   if (isTRUE(annotation)) {
     ## Neat, it works, and even figures out that the default mart is incorrect by itself.
-    pombe_annotations <- load_biomart_annotations(
-        host = "fungi.ensembl.org", trymart = "fungi_mart",
-        trydataset = "spombe_eg_gene",
-        gene_requests = c("pombase_transcript", "ensembl_gene_id", "ensembl_transcript_id",
-                          "hgnc_symbol", "description", "gene_biotype"),
-        species = "spombe", overwrite = TRUE)
-    pombe_mart <- pombe_annotations[["mart"]]
-    annotations <- pombe_annotations[["annotation"]]
-    rownames(annotations) <- make.names(gsub(pattern = "\\.\\d+$",
-                                             replacement = "",
-                                             x = rownames(annotations)), unique = TRUE)
+    pombe_annotations <- try(load_biomart_annotations(
+      host = "fungi.ensembl.org", trymart = "fungi_mart",
+      trydataset = "spombe_eg_gene",
+      gene_requests = c("pombase_transcript", "ensembl_gene_id", "ensembl_transcript_id",
+        "hgnc_symbol", "description", "gene_biotype"),
+      species = "spombe", overwrite = TRUE))
+    if ("try-error" %in% class(pombe_annotations)) {
+      warning("There was an error downloading the pombe annotations, this will still return.")
+    } else {
+      pombe_mart <- pombe_annotations[["mart"]]
+      annotations <- pombe_annotations[["annotation"]]
+      ## As per create_pombe_expt:
+      ## I think ensembl changed the IDs to match and the following line is no longer needed.
+      ## rownames(annotations) <- make.names(gsub(pattern = "\\.\\d+$",
+      ##                                         replacement = "",
+      ##                                         x = rownames(annotations)), unique = TRUE)
+    }
   }
   pombe_se <- sm(create_se(metadata = meta,
                            count_dataframe = fission_data,
@@ -602,109 +609,22 @@ subset_se <- function(se, subset = NULL, ids = NULL,
   subset_batches <- starting_batches[subset_positions, drop = TRUE]
   current_libsize <- se[["libsize"]]
   subset_current_libsize <- current_libsize[subset_positions, drop = TRUE]
-  subset_expressionset <- starting_expressionset[, subset_positions]
+  subset_se <- starting_se[, subset_positions]
 
   notes <- se[["notes"]]
   if (!is.null(note_appended)) {
     notes <- glue("{notes}{note_appended}")
   }
 
-  current_pd <- pData(subset_expressionset)
+  current_pd <- pData(subset_se)
   for (col in seq_len(ncol(current_pd))) {
     if (class(current_pd[[col]]) == "factor") {
-      pData(subset_expressionset)[[col]] <- droplevels(
-        pData(subset_expressionset)[[col]])
+      pData(subset_se)[[col]] <- droplevels(
+        pData(subset_se)[[col]])
     }
   }
   ## pData(subset_expressionset) <- subset_design
-  return(new_se)
+  return(subset_se)
 }
 
-
-## Put S4 dispatchers here.
-setMethod("backup_expression_data",
-          signature = "SummarizedExperiment",
-          definition = function(expt) {
-            backup <- expt
-            metadata(expt)[["original_se"]] <- backup
-            return(expt)
-          })
-setMethod("colors",
-          signature = "SummarizedExperiment",
-          definition = function(expt) {
-            metadata(expt)[["colors"]]
-          })
-setMethod("colors<-",
-          signature = "SummarizedExperiment",
-          definition = function(expt, lst) {
-            metadata(expt)[["colors"]] <- lst
-            return(expt)
-          })
-setMethod("exprs",
-          signature = "SummarizedExperiment",
-          definition = function(object) {
-            SummarizedExperiment::assay(object)
-          })
-setMethod("exprs<-",
-          signature = "SummarizedExperiment",
-          definition = function(object, value) {
-            SummarizedExperiment::assay(object) <- value
-            return(object)
-          })
-setMethod("fData",
-          signature = "SummarizedExperiment",
-          definition = function(object) {
-            SummarizedExperiment::rowData(object)
-          })
-setMethod("fData<-",
-          signature = "SummarizedExperiment",
-          definition = function(object, value) {
-            SummarizedExperiment::rowData(object) <- value
-            return(object)
-          })
-setMethod("get_backup_expression_data",
-          signature = "SummarizedExperiment",
-          definition = function(expt) {
-            backup <- metadata(expt)[["original_se"]]
-            return(backup)
-          })
-setMethod("pData",
-          signature = "SummarizedExperiment",
-          definition = function(object) {
-            SummarizedExperiment::colData(object)
-          })
-setMethod("pData<-",
-          signature = "SummarizedExperiment",
-          definition = function(object, value) {
-            SummarizedExperiment::colData(object) <- value
-            return(object)
-          })
-setMethod("sampleNames",
-          signature = "SummarizedExperiment",
-          definition = function(object) {
-            BiocGenerics::colnames(object)
-          })
-setMethod("sampleNames<-",
-          signature = "SummarizedExperiment",
-          definition = function(object, value) {
-            BiocGenerics::colnames(object) <- value
-          })
-
-setMethod("state",
-          signature = signature(expt = "SummarizedExperiment"),
-          definition = function(expt) {
-            metadata(expt)[["state"]]
-          })
-setMethod("state<-",
-          signature = signature(expt = "SummarizedExperiment"),
-          definition = function(expt, value) {
-            metadata(expt)[["state"]] <- value
-            return(expt)
-          })
-setMethod("subset_expt",
-          signature = signature(expt = "SummarizedExperiment"),
-          definition = function(expt, subset = NULL, ids = NULL,
-                                nonzero = NULL, coverage = NULL) {
-            subset_se(expt, subset = subset, ids = ids,
-                      nonzero = nonzero, coverage = coverage)
-          })
+## EOF

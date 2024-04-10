@@ -235,6 +235,46 @@ get_git_commit <- function(gitdir = "~/hpgltools") {
   return(result)
 }
 
+#' Find the git commit closest to the given yyyymmdd.
+#'
+#' @param gitdir Location of the git repository, I assume hpgltools.
+#' @param version String containing all yyyymmdd.
+#' @param year Chosen year which will be coerced to yyyy.
+#' @param month Chosen month coerced to mm.
+#' @param day Chosen day coerced to dd.
+#' @export
+get_yyyymm_commit <- function(gitdir = "~/hpgltools", version = NULL,
+                              year = NULL, month = NULL, day = NULL) {
+  if (is.null(version) && is.null(year) && is.null(month) && is.null(day)) {
+    version <- as.Date(lubridate::now())
+    year <- format(version, "%Y")
+    month <- format(version, "%m")
+    day <- format(version, "%d")
+  } else {
+    version <- as.Date(version, format = "%Y%m%d")
+  }
+  closest_commit <- glue("git log --since {version} | grep commit | tail -n 1 | awk '{{print $2}}'")
+  wanted_commit <- system(closest_commit, intern = TRUE)
+  message("Looking for the commit closest to ", version, ".")
+  pulled <- pull_git_commit(gitdir, commit = wanted_commit)
+  return(pulled)
+}
+
+#' Reset the chosen git repository to a chosen commit.
+#'
+#' @param gitdir Desired repository, defaulting to my hpgltools copy.
+#' @param commit commit ID to which to reset.
+#' @export
+pull_git_commit <- function(gitdir = "~/hpgltools", commit = NULL) {
+  if (is.null(commit)) {
+    cmdline <- glue("cd {gitdir} && git log | head -n 3 | grep commit | awk '{{print $2}}'")
+    commit <- system(cmdline, intern = TRUE)
+  }
+  cmdline <- glue("cd {gitdir} && git pull && git reset {commit_result}")
+  result <- system(cmdline, intern = TRUE)
+  return(result)
+}
+
 #' Create a contrast matrix suitable for MSstats and similar tools.
 #'
 #' I rather like makeContrasts() from limma.  I troubled me to have to manually
@@ -560,6 +600,31 @@ please_install <- function(lib, update = FALSE) {
   return(count)
 }
 
+#' Append rows containing summary() information.
+#'
+#' @param df Starter df
+#' @return the original df with a couple of new rows at the bottom.
+rbind_summary_rows <- function(df) {
+  new_rows <- c("minimum", "first_quart", "median", "mean",
+                "third_quart", "max", "standard_deviation", "cv")
+  new_stuff <- data.frame(row.names = colnames(df))
+  for (col in colnames(df)) {
+    if (class(df[[col]])[1] == "numeric") {
+      column_summary <- as.numeric(summary(df[[col]]))
+      column_sd <- sd(df[[col]])
+      cv <- column_sd / column_summary[4]
+      column_summary <- c(column_summary, column_sd, cv)
+    } else {
+      column_summary <- c(NA, NA, NA, NA, NA, NA, NA, NA)
+    }
+    new_stuff <- rbind(new_stuff, col = column_summary, make.row.names = TRUE)
+  }
+  rownames(new_stuff) <- colnames(df)
+  colnames(new_stuff) <- new_rows
+  new_df <- rbind(df, t(new_stuff))
+  return(new_df)
+}
+
 #' Send the R plotter to the computer of your choice!
 #'
 #' Resets the display and xauthority variables to the new computer I am using so
@@ -591,11 +656,26 @@ rex <- function(display = ":0") {
 #'
 #' @param file Rmd file to render.
 #' @param format Chosen file format.
+#' @param overwrite Overwrite an existing file?
 #' @return Final filename including the prefix rundate.
 #' @seealso [rmarkdown]
 #' @export
-renderme <- function(file, format = "html_document") {
+renderme <- function(file, format = "html_document", overwrite = TRUE) {
+  original <- Sys.getenv("TMPDIR")
+  new_tmpdir <- paste0("render_tmp_", file)
+  if (file.exists(new_tmpdir)) {
+    if (isTRUE(overwrite)) {
+      message("The TMPDIR: ", new_tmpdir, " exists, removing and recreating it.")
+      removed <- unlink(new_tmpdir, recursive = TRUE)
+      recreated <- dir.create(new_tmpdir)
+    } else {
+      message("The TMPDIR: ", new_tmpdir, " exists, leaving it alone.")
+    }
+  }
+  Sys.setenv("TMPDIR" = new_tmpdir)
   ret <- rmarkdown::render(file, output_format = format, envir = globalenv())
+  removed <- unlink(new_tmpdir, recursive = TRUE)
+  Sys.setenv("TMPDIR" = original)
   rundate <- format(Sys.Date(), format = "%Y%m%d")
   outdir <- dirname(ret)
   base <- basename(ret)
@@ -695,38 +775,59 @@ sillydist <- function(firstterm, secondterm, firstaxis = 0, secondaxis = 0) {
 #' This is a simpler silence peasant.
 #'
 #' @param ... Some code to shut up.
-#' @param wrap  Wrap the invocation and try again if it failed?
 #' @return Whatever the code would have returned.
 #' @export
-sm <- function(..., wrap = TRUE) {
+sm <- function(...) {
   ret <- NULL
   output <- capture.output(type = "output", {
-    if (isTRUE(wrap)) {
-      ret <- try(suppressWarnings(suppressMessages(...)), silent = TRUE)
-      if (class(ret)[1] == "try-error") {
-        if (grepl(pattern = " there is no package called", x = ret)) {
-          uninstalled <- trimws(gsub(pattern = "^.* there is no package called '(.*)'.*$",
-                                     replacement = "\\1",
-                                     x = ret, perl = TRUE))
-          message("Going to attempt to install: ", uninstalled)
-          tt <- please_install(uninstalled)
-        }
-        ret <- sm(..., wrap = FALSE)
-      }
-    } else {
-      ret <- suppressWarnings(suppressMessages(...))
-    }
+    ret <- suppressWarnings(suppressMessages(...))
   })
   return(ret)
 }
 
-#' Some ggplot2 stats functions have not yet implemented the new dropped_aes
-#' flag, and it is driving me nuts.  Hopefully this will make it less frustrating for me.
+#' A hopefully more robust version of tempfile().
 #'
-#' @param ... The set of functions to silence.
+#' @param pattern Filename prefix.
+#' @param suffix Filename suffix.
+#' @param digits Currently I use Sys.time() with this number of digits.
+#' @param body No implemented, intended to use other sources of digest()
+#' @param fileext Filename extension as per tempfile().
+#' @return md5 based tempfilename.
 #' @export
-sp <- function(...) {
-  suppressWarnings(print(...))
+tmpmd5file <- function(pattern = "", suffix = "", digits = 6,
+                       body = NULL, fileext = "") {
+  if (!grepl(pattern = "^\\.", x = fileext)) {
+    pattern <- paste0(".", pattern)
+  }
+  op <- options(digits.secs = digits)
+  body_string <- digest::digest(Sys.time())
+  new <- options(op)
+  outdir <- tempdir()
+  if (!file.exists(outdir)) {
+    created <- dir.create(outdir, recursive = TRUE)
+  }
+  file_string <- paste0(pattern, body_string, suffix, fileext)
+  file_path <- file.path(outdir, file_string)
+  return(file_path)
+}
+
+#' A cheater redefinition of tempfile.
+#'
+#' I found this at:
+#' https://stackoverflow.com/questions/5262332/parallel-processing-and-temporary-files
+#' and was intrigued.  I did not think to overwrite the tempfile definition.
+#' Something in me says this is a terrible idea.
+#' The same page suggests creating all the tempfile names _before_
+#' beginning the parallel operations.  I think this might be the way
+#' to go; however I do not know how that will affect the tempfile
+#' names produced by knitr when it is making its images.
+#'
+#' @param pattern starting string of each tempfile.
+#' @param tmpdir Location to put the file.
+#' @param fileext suffix.
+#' @export
+tempfile <- function(pattern = "file", tmpdir = tempdir(), fileext = "") {
+  .Internal(tempfile(paste0("pid", Sys.getpid(), pattern), tmpdir, fileext))
 }
 
 #' Remove the AsIs attribute from some data structure.

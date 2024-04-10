@@ -9,16 +9,14 @@ write_combined_legend(
   excel_basename,
   plot_dim,
   apr,
-  limma,
-  include_limma,
-  deseq,
-  include_deseq,
-  edger,
-  include_edger,
-  ebseq,
-  include_ebseq,
   basic,
-  include_basic,
+  deseq,
+  dream,
+  ebseq,
+  edger,
+  limma,
+  noiseq,
+  includes,
   padj_type,
   fancy = FALSE
 )
@@ -32,25 +30,21 @@ write_combined_legend(
 
 \item{apr}{The all_pairwise() result.}
 
-\item{limma}{The limma result, which is redundant.}
-
-\item{include_limma}{Include the limma result?}
+\item{basic}{Basic data}
 
 \item{deseq}{The deseq result, which is redundant.}
 
-\item{include_deseq}{Include the deseq result?}
-
-\item{edger}{The edger result, which is redundant.}
-
-\item{include_edger}{Include the edger result?}
+\item{dream}{The result from varpart::dream}
 
 \item{ebseq}{The ebseq result, which is redundant.}
 
-\item{include_ebseq}{Include the ebseq result?}
+\item{edger}{The edger result, which is redundant.}
 
-\item{basic}{Basic data}
+\item{limma}{The limma result, which is redundant.}
 
-\item{include_basic}{Include the basic result?}
+\item{noiseq}{Noiseq results.}
+
+\item{includes}{List of booleans defining which methods to examine.}
 
 \item{padj_type}{P-adjustment employed.}
 

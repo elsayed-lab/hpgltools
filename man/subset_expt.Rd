@@ -5,7 +5,14 @@
 \title{Extract a subset of samples following some rule(s) from an
 experiment class.}
 \usage{
-subset_expt(expt, subset = NULL, ids = NULL, nonzero = NULL, coverage = NULL)
+subset_expt(
+  expt,
+  subset = NULL,
+  ids = NULL,
+  nonzero = NULL,
+  coverage = NULL,
+  print_excluded = TRUE
+)
 }
 \arguments{
 \item{expt}{Expt chosen to extract a subset of data.}
@@ -17,6 +24,8 @@ subset_expt(expt, subset = NULL, ids = NULL, nonzero = NULL, coverage = NULL)
 \item{nonzero}{Look for a minimal number of nonzero genes.}
 
 \item{coverage}{Request a minimum coverage/sample rather than text-based subset.}
+
+\item{print_excluded}{Print out the samples which are removed via this filter?}
 }
 \value{
 metadata Expt class which contains the smaller set of data.

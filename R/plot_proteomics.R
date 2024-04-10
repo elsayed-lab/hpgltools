@@ -160,7 +160,7 @@ plot_mzxml_boxplot <- function(mzxml_data, table = "precursors", column = "precu
   plot_df[["color"]] <- as.factor(plot_df[["color"]])
 
   boxplot <- ggplot(
-    data = plot_df, ggplot2::aes(x = .data[["sample"]], y = .data[[column]]))
+    data = plot_df, aes(x = .data[["sample"]], y = .data[[column]]))
   if (isTRUE(violin)) {
     boxplot <- boxplot +
       ggplot2::geom_violin(aes(fill = .data[["sample"]]),
@@ -474,12 +474,12 @@ plot_pyprophet_distribution <- function(pyprophet_data, column = "delta_rt", kee
   }
   plot_df[[column]] <- scale_data[["data"]]
 
-  if (!is.null(label_chars) & is.numeric(label_chars)) {
+  if (!is.null(label_chars) && is.numeric(label_chars)) {
     plot_df[["sample"]] <- abbreviate(plot_df[["sample"]], minlength = label_chars)
   }
   boxplot <- ggplot(data = plot_df, aes(x = .data[["sample"]], y = .data[[column]])) +
     sm(ggplot2::geom_boxplot(na.rm = TRUE,
-                             ggplot2::aes(fill = .data[["sample"]]),
+                             aes(fill = .data[["sample"]]),
                              fill = colors,
                              size = 0.5,
                              outlier.size = 1.5,

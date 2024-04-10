@@ -24,6 +24,9 @@ all_pairwise(
   do_ebseq = NULL,
   do_edger = TRUE,
   do_limma = TRUE,
+  do_noiseq = TRUE,
+  do_dream = FALSE,
+  keepers = NULL,
   convert = "cpm",
   norm = "quant",
   verbose = TRUE,
@@ -80,6 +83,12 @@ so it can choose).}
 
 \item{do_limma}{Perform limma?}
 
+\item{do_noiseq}{Perform noiseq?}
+
+\item{do_dream}{Perform dream?}
+
+\item{keepers}{Limit the pairwise search to a set of specific contrasts.}
+
 \item{convert}{Modify the data with a 'conversion' method for PCA?}
 
 \item{norm}{Modify the data with a 'normalization' method for PCA?}
@@ -88,8 +97,7 @@ so it can choose).}
 
 \item{surrogates}{Either a number of surrogates or method to estimate it.}
 
-\item{...}{Picks up extra arguments into arglist, currently only passed to
-write_limma().}
+\item{...}{Picks up extra arguments into arglist.}
 }
 \value{
 A list of limma, deseq, edger results.

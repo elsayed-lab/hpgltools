@@ -1,8 +1,5 @@
 start_time <- as.POSIXlt(Sys.time())
-library(testthat)
-library(hpgltools)
-context("040annotation_orgdb.R
-  12345678\n")
+context("040annotation_orgdb.R")
 ## 2017-12, exported functions in annotation_orgdb:
 ## load_host_annotations()(likely deprecated)
 ## load_orgdb_annotations(), load_orgdb_go(),
@@ -55,11 +52,12 @@ actual <- length(AnnotationDbi::keytypes(testing))
 test_that("Do we get the expected keytypes from an ah orgdb?", {
   expect_equal(expected, actual)
 })
+
 ## map_orgdb_ids()
 testing <- map_orgdb_ids(orgdb = testing, keytype = "entrezid")
-expected <- c("ENSG00000121410", "ENSG00000175899", "ENSG00000256069",
-              "ENSG00000171428", "ENSG00000156006", NA)
-actual <- head(testing[["ensembl"]])
+expected <- c("ENSG00000000003", "ENSG00000000005", "ENSG00000000419",
+              "ENSG00000000457", "ENSG00000000460", "ENSG00000000938")
+actual <- head(sort(testing[["ensembl"]]))
 ## 08
 test_that("Do we get the expected ensembl IDs from entrez IDs?", {
   expect_equal(expected, actual)

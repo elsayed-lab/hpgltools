@@ -29,6 +29,11 @@ only KNN/SNN}
 
 \item{merge_to}{Use the neighborhood collapse function to set a
 hard ceiling on the number of clusters in the final result.}
+
+\item{...}{Extra args for bluster.}
+}
+\value{
+List containing the resulting groups and some information about them.
 }
 \description{
 I want some functions to help me understand clustering.  This is a

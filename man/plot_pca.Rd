@@ -11,7 +11,7 @@ plot_pca(
   plot_title = TRUE,
   plot_size = 5,
   plot_alpha = NULL,
-  plot_labels = NULL,
+  plot_labels = FALSE,
   size_column = NULL,
   pc_method = "fast_svd",
   x_pc = 1,
@@ -20,6 +20,8 @@ plot_pca(
   num_pc = NULL,
   expt_names = NULL,
   label_chars = 10,
+  cond_column = "condition",
+  batch_column = "batch",
   ...
 )
 }
@@ -54,6 +56,10 @@ rows in the metadata.}
 \item{expt_names}{Column or character list of preferred sample names.}
 
 \item{label_chars}{Maximum number of characters before abbreviating sample names.}
+
+\item{cond_column}{Column containing the color information.}
+
+\item{batch_column}{Column containing the shape information.}
 
 \item{...}{Arguments passed through to the pca implementations and plotter.}
 }

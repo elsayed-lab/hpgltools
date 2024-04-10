@@ -9,6 +9,7 @@ pattern_count_genome(
   gff = NULL,
   pattern = "TA",
   type = "gene",
+  id_col = "ID",
   key = NULL
 )
 }
@@ -22,6 +23,8 @@ provided it will just query the entire genome).}
 mariner insertion point.}
 
 \item{type}{Column to use in the gff file.}
+
+\item{id_col}{Column containing the gene IDs.}
 
 \item{key}{What type of entry of the gff file to key from?}
 }

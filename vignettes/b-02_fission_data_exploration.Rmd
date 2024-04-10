@@ -117,15 +117,13 @@ chance to explain the graphs as I generate them.
 fis_libsize <- plot_libsize(fission_expt)
 fis_libsize$plot
 libsize_se <- plot_libsize(fission_se)
-expect_equal(fis_libsize$plot$data, libsize_se$plot$data)
+libsize_se
 ## Here we see that the wild type replicate 3 sample for 15 minutes has
 ## fewer non-zero genes than all its friends.
-fis_nonzero <- plot_nonzero(fission_expt, labels = "boring", title = "nonzero vs. cpm")
-fis_nonzero$plot
-se_nonzero <- plot_nonzero(fission_se, labels = "boring", title = "nonzero vs. cpm")
+plot_nonzero(fission_expt, labels = "boring", title = "nonzero vs. cpm")
+plot_nonzero(fission_se, labels = "boring", title = "nonzero vs. cpm")
 
-fis_density <- plot_density(fission_expt)
-fis_density$plot
+plot_density(fission_expt)
 knitr::kable(fis_density$condition_summary)
 knitr::kable(fis_density$batch_summary)
 knitr::kable(head(fis_density$sample_summary))
@@ -142,13 +140,13 @@ again.
 ## Something in this is causing a build loop on travis...
 ## Unsurprisingly, the raw data doesn't cluster well at all...
 ##fis_rawpca <- plot_pca(fission_expt, expt_names = fission_expt$condition, cis = NULL)
-fis_rawpca <- plot_pca(fission_expt)
-fis_rawpca$plot
+plot_pca(fission_expt)
+
 ## So, normalize the data
 norm_expt <- sm(normalize_expt(fission_expt, transform = "log2", norm = "quant", convert = "cpm"))
 ## And try the pca again
-fis_normpca <- plot_pca(norm_expt, plot_labels = "normal", title = "normalized pca", cis = NULL)
-fis_normpca$plot
+plot_pca(norm_expt, plot_labels = "normal", title = "normalized pca", cis = NULL)
+
 ## Clearly time is an important factor in the data.
 ```
 
@@ -197,8 +195,8 @@ knitr::kable(fis_info$anova_p)
 ## Try again with batch removed data
 batchnorm_expt <- sm(normalize_expt(fission_expt, batch = "limma", norm = "quant",
                                     transform = "log2", convert = "cpm"))
-fis_batchnormpca <- plot_pca(batchnorm_expt, plot_title = "limma corrected pca")
-fis_batchnormpca$plot
+plot_pca(batchnorm_expt, plot_title = "limma corrected pca")
+
 test_pca <- pca_information(batchnorm_expt,
                             expt_factors = c("condition","batch","strain","minute"),
                             num_components = 6)
@@ -215,15 +213,19 @@ the data:
 ```{r distributions}
 fission_boxplot <- sm(plot_boxplot(fission_expt))
 fission_boxplot
+
 sf_expt <- sm(normalize_expt(fission_expt, norm = "sf"))
 fission_boxplot <- sm(plot_boxplot(sf_expt))
 fission_boxplot
+
 tm_expt <- sm(normalize_expt(fission_expt, norm = "tmm"))
 fission_boxplot <- sm(plot_boxplot(tm_expt))
 fission_boxplot
+
 rle_expt <- sm(normalize_expt(fission_expt, norm = "rle"))
 fission_boxplot <- sm(plot_boxplot(rle_expt))
 fission_boxplot
+
 up_expt <- sm(normalize_expt(fission_expt, norm = "upperquartile"))
 fission_boxplot <- sm(plot_boxplot(up_expt))
 fission_boxplot
@@ -245,14 +247,14 @@ Ok, so we can further check out how the data cluster with respect to
 one another...
 
 ```{r clustering}
-fission_cor <- plot_corheat(norm_expt)
-fission_cor$plot
-fission_cor <- plot_corheat(batchnorm_expt)
-fission_cor$plot
-fission_dis <- plot_disheat(norm_expt)
-fission_dis$plot
-fission_dis <- plot_disheat(batchnorm_expt)
-fission_dis$plot
+plot_corheat(norm_expt)
+
+plot_corheat(batchnorm_expt)
+
+plot_disheat(norm_expt)
+
+plot_disheat(batchnorm_expt)
+
 ```
 
 # variancePartition

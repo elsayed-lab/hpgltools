@@ -6,7 +6,7 @@
 are wanted to plot a MA/Volcano from any one of a diverse set of possible
 input types.}
 \usage{
-get_plot_columns(data, type, p_type = "adj")
+get_plot_columns(data, type, p_type = "adj", adjp = TRUE)
 }
 \arguments{
 \item{data}{Data structure in which to hunt columns/data.}
@@ -14,6 +14,8 @@ get_plot_columns(data, type, p_type = "adj")
 \item{type}{Type of method used to make the data.}
 
 \item{p_type}{Use adjusted p-values?}
+
+\item{adjp}{I think this is reundant.}
 }
 \description{
 I split this function away from the main body of extract_de_plots()

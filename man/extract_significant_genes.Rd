@@ -29,6 +29,7 @@ extract_significant_genes(
   phenotype_name = "phenotype",
   set_name = "set",
   current_id = "ENSEMBL",
+  comparison = "orequal",
   required_id = "ENTREZID",
   min_gmt_genes = 10,
   ...
@@ -82,6 +83,8 @@ genes via logfc/p-value.}
 \item{set_name}{When writing gmt files, assign the set here.}
 
 \item{current_id}{Choose the current ID type for an output gmt file.}
+
+\item{comparison}{The cutoff may be '>|<' or '<=|>='.}
 
 \item{required_id}{Choose the desired ID type for an output gmt file.}
 

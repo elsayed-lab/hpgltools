@@ -41,12 +41,14 @@
 #'  so it can choose).
 #' @param do_edger Perform EdgeR?
 #' @param do_limma Perform limma?
+#' @param do_noiseq Perform noiseq?
+#' @param do_dream Perform dream?
+#' @param keepers Limit the pairwise search to a set of specific contrasts.
 #' @param convert Modify the data with a 'conversion' method for PCA?
 #' @param norm Modify the data with a 'normalization' method for PCA?
 #' @param verbose Print extra information while running?
 #' @param surrogates Either a number of surrogates or method to estimate it.
-#' @param ...  Picks up extra arguments into arglist, currently only passed to
-#'  write_limma().
+#' @param ...  Picks up extra arguments into arglist.
 #' @return A list of limma, deseq, edger results.
 #' @seealso [limma_pairwise()] [edger_pairwise()] [deseq_pairwise()] [ebseq_pairwise()]
 #'  [basic_pairwise()]
@@ -64,7 +66,8 @@ all_pairwise <- function(input = NULL, conditions = NULL,
                          alt_model = NULL, libsize = NULL, test_pca = TRUE,
                          annot_df = NULL, parallel = TRUE,
                          do_basic = TRUE, do_deseq = TRUE, do_ebseq = NULL,
-                         do_edger = TRUE, do_limma = TRUE,
+                         do_edger = TRUE, do_limma = TRUE, do_noiseq = TRUE,
+                         do_dream = FALSE, keepers = NULL,
                          convert = "cpm", norm = "quant", verbose = TRUE,
                          surrogates = "be", ...) {
   arglist <- list(...)
@@ -79,7 +82,11 @@ all_pairwise <- function(input = NULL, conditions = NULL,
   }
 
   if (isTRUE(model_cond)) {
-    mesg("This DE analysis will perform all pairwise comparisons among:")
+    if (is.null(keepers)) {
+      mesg("This DE analysis will perform all pairwise comparisons among:")
+    } else {
+      mesg("This DE analysis will perform the subset of comparisons provided.")
+    }
     print(table(pData(input)[["condition"]]))
     if (isTRUE(model_batch)) {
       mesg("This analysis will include a batch factor in the model comprised of:")
@@ -130,7 +137,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     } else if (class(model_type)[1] == "character") {
       mesg("Using ", model_type, " to visualize before/after batch inclusion.")
       test_norm <- "quant"
-      if (model_type != "TRUE" & model_type != FALSE) {
+      if (model_type != "TRUE" && model_type != FALSE) {
         ## Then it is probably some sort of sva which will have a hard time with quantile.
         test_norm <- "raw"
       }
@@ -194,6 +201,14 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     num_cpus_needed <- num_cpus_needed + 1
     results[["limma"]] <- list()
   }
+  if (isTRUE(do_noiseq)) {
+    num_cpus_needed <- num_cpus_needed + 1
+    results[["noiseq"]] <- list()
+  }
+  if (isTRUE(do_dream)) {
+    num_cpus_needed <- num_cpus_needed + 1
+    results[["dream"]] <- list()
+  }
 
   res <- NULL
   if (isTRUE(parallel)) {
@@ -204,14 +219,14 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     tt <- sm(requireNamespace("doParallel"))
     tt <- sm(requireNamespace("iterators"))
     tt <- sm(requireNamespace("foreach"))
-    res <- foreach(c = 1:length(names(results)), .packages = c("hpgltools")) %dopar% {
+    res <- foreach(c = seq_along(results),
+                   .packages = c("hpgltools")) %dopar% {
       type <- names(results)[c]
       results[[type]] <- do_pairwise(
         type, input = input, conditions = conditions, batches = batches,
         model_cond = model_cond, model_batch = model_batch, model_intercept = model_intercept,
         extra_contrasts = extra_contrasts, alt_model = alt_model, libsize = libsize,
-        annot_df = annot_df, surrogates = surrogates,
-        ...)
+        annot_df = annot_df, surrogates = surrogates, keepers = keepers, ...)
     } ## End foreach() %dopar% { }
     parallel::stopCluster(cl)
     if (isTRUE(verbose)) {
@@ -235,7 +250,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
         type, input = input, conditions = conditions, batches = batches,
         model_cond = model_cond, model_batch = model_batch, model_intercept = model_intercept,
         extra_contrasts = extra_contrasts, alt_model = alt_model, libsize = libsize,
-        annot_df = annot_df, surrogates = surrogates,
+        annot_df = annot_df, surrogates = surrogates, keepers = keepers,
         ...)
     }
   } ## End performing a serial comparison
@@ -248,7 +263,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
   ## function.
   ## Thus we will use modified_data to note the data was modified by sva.
   modified_data <- FALSE
-  if (is.null(sv_model) & isTRUE(modified_data)) {
+  if (is.null(sv_model) && isTRUE(modified_data)) {
     ret <- sva_modify_pvalues(results)
     results <- ret[["results"]]
     original_pvalues <- ret[["original_pvalues"]]
@@ -265,6 +280,7 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     "ebseq" = results[["ebseq"]],
     "edger" = results[["edger"]],
     "limma" = results[["limma"]],
+    "noiseq" = results[["noiseq"]],
     "batch_type" = model_type,
     "comparison" = result_comparison,
     "extra_contrasts" = extra_contrasts,
@@ -286,10 +302,26 @@ all_pairwise <- function(input = NULL, conditions = NULL,
   return(ret)
 }
 
+#' Perform all_pairwise only using deseq/edger.
+#'
+#' The thing I want to do which I presume will be of use to Zhezhen is
+#' to have a variant of this which takes the list of interesting
+#' contrasts and only performs them rather than my default of doing
+#' all possible pairwise contrasts.  I think that will only require a
+#' little logic in make_contrasts to skip contrasts not in the list of
+#' interest.
+#'
+#' @param ... Args usually passed to all_pairwise()
+#' @export
+binary_pairwise <- function(...) {
+  all_pairwise(..., do_limma = FALSE, do_edger = TRUE, do_basic = FALSE,
+               do_deseq = TRUE, do_ebseq = FALSE, do_noiseq = FALSE, do_dream = FALSE)
+}
+
 #' Calculate the Area under the Concordance Curve.
 #'
 #' This is taken verbatim from a recent paper sent to me by Julie
-#' Cridland.  I will put the link in shortly, I need to go.
+#' Cridland.
 #'
 #' @param tbl DE table
 #' @param tbl2 Second table
@@ -297,18 +329,19 @@ all_pairwise <- function(input = NULL, conditions = NULL,
 #' @param py second set
 #' @param lx first set of logFCs column
 #' @param ly second set
+#' @param cor_method Method to pass to cor().
 #' @param topn Number of genes to consider (or percentage of the
 #'  whole).
 #' @export
 calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp",
-                           lx = "deseq_logfc", ly = "edger_logfc",
+                           lx = "deseq_logfc", ly = "edger_logfc", cor_method = "pearson",
                            topn = 0.1) {
   ## If the topn argument is an integer, the just ask for that number.
   ## If it is a floating point 0<x<1, then set topn to that proportion
   ## of the number of genes.
   if (topn <= 0) {
     stop("topn need to be either a float from 0-1 or an interger bigger than 100.")
-  } else if (topn > 1 & topn <= 100) {
+  } else if (topn > 1 && topn <= 100) {
     stop("topn need to be either a float from 0-1 or an interger bigger than 100.")
   } else if (topn < 1) {
     topn <- ceiling(nrow(tbl) * topn)
@@ -337,7 +370,7 @@ calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp
   y_df <- tbl[x_order, c(py, ly)]
 
   ## Do a simple correlation test just to have it as a comparison point
-  simple_cor <- cor.test(tbl[[lx]], tbl[[ly]])
+  simple_cor <- cor.test(tbl[[lx]], tbl[[ly]], method = cor_method)
 
   ## curve (AUCC), we ranked genes in both the single-cell and bulk datasets in
   ## descending order by the statistical significance of their differential expression.
@@ -395,6 +428,7 @@ calculate_aucc <- function(tbl, tbl2 = NULL, px = "deseq_adjp", py = "edger_adjp
     "aucc" = aucc,
     "cor" = simple_cor,
     "plot" = intersection_plot)
+  class(retlist) <- "aucc_info"
   return(retlist)
 }
 
@@ -627,8 +661,8 @@ choose_binom_dataset <- function(input, verbose = TRUE, force = FALSE, ...) {
       }
     } else {
       if (isTRUE(verbose)) {
-        message("The data should be suitable for EdgeR/DESeq/EBSeq. ",
-                "If they freak out, check the state of the count table ",
+        message("The data should be suitable for EdgeR/DESeq/EBSeq.\n",
+                "If they freak out, check the state of the count table\n",
                 "and ensure that it is in integer counts.")
       }
     }
@@ -833,7 +867,7 @@ choose_model <- function(input, conditions = NULL, batches = NULL, model_batch =
                          surrogates = "be", verbose = TRUE, ...) {
   arglist <- list(...)
   design <- NULL
-  if (class(input)[1] != "matrix" & class(input)[1] != "data.frame") {
+  if (class(input)[1] != "matrix" && class(input)[1] != "data.frame") {
     design <- pData(input)
   }
   if (is.null(design)) {
@@ -860,7 +894,7 @@ choose_model <- function(input, conditions = NULL, batches = NULL, model_batch =
   blist <- list("batch" = "contr.treatment")
   cblist <- list("condition" = "contr.treatment", "batch" = "contr.treatment")
   if (!is.null(contr)) {
-    if (!is.null(contr[["condition"]]) & !is.null(contr[["batch"]])) {
+    if (!is.null(contr[["condition"]]) && !is.null(contr[["batch"]])) {
       cblist <- list("condition" = contr[["condition"]], "batch" = contr[["batch"]])
     } else if (!is.null(contr[["condition"]])) {
       clist <- list("condition" = contr[["condition"]])
@@ -943,7 +977,7 @@ choose_model <- function(input, conditions = NULL, batches = NULL, model_batch =
     int_string <- cond_int_string
     noint_string <- cond_noint_string
     including <- "condition"
-  } else if (isTRUE(model_cond) & isTRUE(model_batch)) {
+  } else if (isTRUE(model_cond) && isTRUE(model_batch)) {
     if (class(condbatch_int_model)[1] == "try-error") {
       if (isTRUE(verbose)) {
         message("The condition+batch model failed. ",
@@ -996,7 +1030,7 @@ choose_model <- function(input, conditions = NULL, batches = NULL, model_batch =
     int_string <- glue("{int_string}{sv_string}")
     rownames(model_batch) <- rownames(int_model)
     including <- glue("condition{sv_string}")
-  } else if (class(model_batch)[1] == "numeric" | class(model_batch)[1] == "matrix") {
+  } else if (class(model_batch)[1] == "numeric" || class(model_batch)[1] == "matrix") {
     if (isTRUE(verbose)) {
       mesg("Including batch estimates from sva/ruv/pca in the model.")
     }
@@ -1153,7 +1187,7 @@ compare_de_results <- function(first, second, cor_method = "pearson",
         column_name <- glue("{method}_{comparison}")
         f_column <- as.vector(as.numeric(first[["data"]][[table]][[column_name]]))
         s_column <- as.vector(as.numeric(second[["data"]][[table]][[column_name]]))
-        if (length(f_column) == 0 | length(s_column) == 0) {
+        if (length(f_column) == 0 || length(s_column) == 0) {
           ## The column of data does not exist.
           break
         }
@@ -1272,6 +1306,8 @@ compare_de_results <- function(first, second, cor_method = "pearson",
 #' @param py Column containing the y-axis p-value.
 #' @param first_table If the input data are actually of type de_table, then find the table(s) inside them.
 #' @param second_table Ibid.
+#' @return List result from plot_linear_scatter
+#' @export
 compare_de_tables <- function(first, second, fcx = "deseq_logfc", px = "deseq_adjp",
                               fcy = "deseq_logfc", py = "deseq_adjp",
                               first_table = NULL, second_table = NULL) {
@@ -1293,6 +1329,11 @@ compare_de_tables <- function(first, second, fcx = "deseq_logfc", px = "deseq_ad
   merged <- merged[, kept_columns]
   colnames(merged) <- c("first_lfc", "first_p", "second_lfc", "second_p")
   scatter <- plot_linear_scatter(merged[, c("first_lfc", "second_lfc")])
+  class(scatter) <- "cross_table_comparison"
+  scatter[["first_table"]] <- first_table
+  scatter[["fcx_column"]] <- fcx
+  scatter[["fcy_column"]] <- fcy
+  scatter[["second_table"]] <- second_table
   return(scatter)
 }
 
@@ -1324,25 +1365,33 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
   ## contrast performed
   retlst <- list()
   methods <- c()
-  if (class(results[["limma"]])[1] == "limma_result") {
+  if (class(results[["limma"]])[1] == "limma_pairwise") {
     retlst[["limma"]] <- results[["limma"]][["all_tables"]]
     methods <- c(methods, "limma")
   }
-  if (class(results[["deseq"]])[1] == "deseq_result") {
+  if (class(results[["deseq"]])[1] == "deseq_pairwise") {
     retlst[["deseq"]] <- results[["deseq"]][["all_tables"]]
     methods <- c(methods, "deseq")
   }
-  if (class(results[["edger"]])[1] == "edger_result") {
+  if (class(results[["edger"]])[1] == "edger_pairwise") {
     retlst[["edger"]] <- results[["edger"]][["all_tables"]]
     methods <- c(methods, "edger")
   }
-  if (class(results[["ebseq"]])[1] == "ebseq_result") {
+  if (class(results[["ebseq"]])[1] == "ebseq_pairwise") {
     retlst[["ebseq"]] <- results[["ebseq"]][["all_tables"]]
     methods <- c(methods, "ebseq")
   }
-  if (class(results[["basic"]])[1] == "basic_result") {
+  if (class(results[["basic"]])[1] == "basic_pairwise") {
     retlst[["basic"]] <- results[["basic"]][["all_tables"]]
     methods <- c(methods, "basic")
+  }
+  if (class(results[["noiseq"]])[1] == "noiseq_pairwise") {
+    retlst[["noiseq"]] <- results[["noiseq"]][["all_tables"]]
+    methods <- c(methods, "noiseq")
+  }
+  if (class(results[["dream"]])[1] == "dream_pairwise") {
+    retlst[["dream"]] <- results[["dream"]][["all_tables"]]
+    methods <- c(methods, "dream")
   }
 
   extra_eval_names <- NULL
@@ -1354,6 +1403,12 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
     extra_eval_names <- gsub(pattern = "^\\s+", replacement = "", x = extra_eval_names, perl = TRUE)
   }
 
+  ## The recorded heatmap comparing the methods/contrasts if there are sufficient methods employed.
+  heat <- NULL
+  ## What it says on the tin, this will provide a shorter version of the contrast names
+  ## so that the heatmap labels are not annoying.
+  contrast_name_list <- c()
+  ## These are the lists of the results of comparisons/plots comparing each set of FC values.
   complst <- list()
   plotlst <- list()
   comparison_df <- data.frame()
@@ -1362,25 +1417,15 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
   meth <- methods[1]
   len <- length(names(retlst[[meth]]))
   ## FIXME: This is wrong.
-  total_comparisons <- (length(methods) - 1) * len
-  progress_count <- 0
-  if (isTRUE(verbose)) {
-    bar <- utils::txtProgressBar(style = 3)
-  }
   for (c in seq_len(lenminus)) {
     c_name <- methods[c]
     nextc <- c + 1
     for (d in seq(from = nextc, to = length(methods))) {
       d_name <- methods[d]
       method_comp_name <- glue("{c_name}_vs_{d_name}")
-      contrast_name_list <- c()
       for (l in seq_len(len)) {
-        progress_count <- progress_count + 1
-        if (isTRUE(verbose)) {
-          pct_done <- progress_count / total_comparisons
-          utils::setTxtProgressBar(bar, pct_done)
-        }
         contr <- names(retlst[[c_name]])[l]
+        mesg(glue("Comparing {contr} of {c_name} vs. {d_name}."))
         if (contr %in% extra_eval_names) {
           next
         }
@@ -1429,30 +1474,31 @@ correlate_de_tables <- function(results, annot_df = NULL, extra_contrasts = NULL
       } ## End iterating through the contrasts
     } ## End the second method loop
   } ## End the first method loop
-  if (isTRUE(verbose)) {
-    close(bar)
-  }
-
   comparison_df <- as.matrix(comparison_df)
   ## I think this next line is a likely source of errors because
   ## of differences when using extra_contrasts.
+  ## I am sure there is a reason, but I cannot see why I have either of these right now.
   ## colnames(comparison_df) <- names(retlst[["deseq"]])
-  colnames(comparison_df) <- contrast_name_list
-
-  heat_colors <- grDevices::colorRampPalette(c("white", "black"))
-  original <- par(mar = c(7, 4, 4, 2) + 0.1)
-  comparison_heatmap <- try(heatmap.3(comparison_df, scale = "none",
-                                      trace = "none", keysize = 1.5,
-                                      cexCol = 1.0, cexRow = 1.0,
-                                      linewidth = 0.5, margins = c(12, 8),
-                                      col = heat_colors, dendrogram = "none",
-                                      Rowv = FALSE, Colv = FALSE,
-                                      main = "Compare DE tools"), silent = TRUE)
-  new <- par(original)
-  heat <- NULL
-  if (! "try-error" %in% class(comparison_heatmap)) {
-    heat <- recordPlot()
+  ## colnames(comparison_df) <- contrast_name_list
+  new_colnames <- abbreviate(colnames(comparison_df), minlength = 10)
+  colnames(comparison_df) <- new_colnames
+  if (len > 2) {
+    heat_colors <- grDevices::colorRampPalette(c("white", "black"))
+    original <- par(mar = c(7, 4, 4, 2) + 0.1)
+    comparison_heatmap <- try(heatmap.3(comparison_df, scale = "none",
+                                        trace = "none", keysize = 1.5,
+                                        cexCol = 1.0, cexRow = 1.0,
+                                        linewidth = 0.5, margins = c(12, 8),
+                                        col = heat_colors, dendrogram = "none",
+                                        Rowv = FALSE, Colv = FALSE,
+                                        main = "Compare DE tools"), silent = TRUE)
+    new <- par(original)
+    if (! "try-error" %in% class(comparison_heatmap)) {
+      heat <- recordPlot()
+    }
+    ## End checking if there is more than 1 method to compare.
   }
+
   ret <- append(complst, plotlst)
   ret[["comp"]] <- comparison_df
   ret[["heat"]] <- heat
@@ -1488,37 +1534,37 @@ compare_logfc_plots <- function(combined_tables) {
   for (c in seq_along(tnames)) {
     tname <- tnames[c]
     tab <- data[[tname]]
-    if (!is.null(tab[["limma_logfc"]]) & !is.null(tab[["edger_logfc"]])) {
+    if (!is.null(tab[["limma_logfc"]]) && !is.null(tab[["edger_logfc"]])) {
       le_data <- tab[, c("limma_logfc", "edger_logfc", "limma_adjp", "edger_adjp")]
       le <- sm(plot_linear_scatter(le_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       le <- NULL
     }
-    if (!is.null(tab[["limma_logfc"]]) & !is.null(tab[["deseq_logfc"]])) {
+    if (!is.null(tab[["limma_logfc"]]) && !is.null(tab[["deseq_logfc"]])) {
       ld_data <- tab[, c("limma_logfc", "deseq_logfc", "limma_adjp", "deseq_adjp")]
       ld <- sm(plot_linear_scatter(ld_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       ld <- NULL
     }
-    if (!is.null(tab[["deseq_logfc"]]) & !is.null(tab[["edger_logfc"]])) {
+    if (!is.null(tab[["deseq_logfc"]]) && !is.null(tab[["edger_logfc"]])) {
       de_data <- tab[, c("deseq_logfc", "edger_logfc", "deseq_adjp", "edger_adjp")]
       de <- sm(plot_linear_scatter(de_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       de <- NULL
     }
-    if (!is.null(tab[["limma_logfc"]]) & !is.null(tab[["basic_logfc"]])) {
+    if (!is.null(tab[["limma_logfc"]]) && !is.null(tab[["basic_logfc"]])) {
       lb_data <- tab[, c("limma_logfc", "basic_logfc", "limma_adjp", "basic_p")]
       lb <- sm(plot_linear_scatter(lb_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       lb <- NULL
     }
-    if (!is.null(tab[["deseq_logfc"]]) & !is.null(tab[["basic_logfc"]])) {
+    if (!is.null(tab[["deseq_logfc"]]) && !is.null(tab[["basic_logfc"]])) {
       db_data <- tab[, c("deseq_logfc", "basic_logfc", "deseq_adjp", "basic_p")]
       db <- sm(plot_linear_scatter(db_data, pretty_colors = FALSE)[["scatter"]])
     } else {
       db <- NULL
     }
-    if (!is.null(tab[["edger_logfc"]]) & !is.null(tab[["basic_logfc"]])) {
+    if (!is.null(tab[["edger_logfc"]]) && !is.null(tab[["basic_logfc"]])) {
       eb_data <- tab[, c("edger_logfc", "basic_logfc", "edger_adjp", "basic_p")]
       eb <- sm(plot_linear_scatter(eb_data, pretty_colors = FALSE)[["scatter"]])
     } else {
@@ -1674,17 +1720,34 @@ disjunct_pvalues <- function(contrast_fit, cellmeans_fit, conj_contrasts, disj_c
 #' @export
 do_pairwise <- function(type, ...) {
   res <- NULL
-  if (type == "limma") {
-    res <- try(limma_pairwise(...))
-  } else if (type == "ebseq") {
-    res <- try(ebseq_pairwise(...))
-  } else if (type == "edger") {
-    res <- try(edger_pairwise(...))
-  } else if (type == "deseq") {
-    res <- try(deseq2_pairwise(...))
-  } else if (type == "basic") {
-    res <- try(basic_pairwise(...))
-  }
+
+  switchret <- switch(
+    type,
+    "basic" = {
+      res <- try(basic_pairwise(...))
+    },
+    "limma" = {
+      res <- try(limma_pairwise(...))
+    },
+    "ebseq" = {
+      res <- try(ebseq_pairwise(...))
+    },
+    "edger" = {
+      res <- try(edger_pairwise(...))
+    },
+    "deseq" = {
+      res <- try(deseq2_pairwise(...))
+    },
+    "noiseq" = {
+      res <- try(noiseq_pairwise(...))
+    },
+    "dream" = {
+      res <- try(dream_pairwise(...))
+    },
+    {
+      message("I do not understand this argument, running DESeq2.")
+      res <- try(deseq2_pairwise(...))
+    })
   res[["type"]] <- type
   return(res)
 }
@@ -1716,7 +1779,7 @@ do_pairwise <- function(type, ...) {
 #' @export
 get_abundant_genes <- function(datum, type = "limma", n = NULL, z = NULL,
                                fx = "mean", unique = FALSE) {
-  if (is.null(z) & is.null(n)) {
+  if (is.null(z) && is.null(n)) {
     n <- 100
   }
   if (!is.null(datum[["limma"]])) {
@@ -1919,6 +1982,7 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
   ## We need to know the method used, because the values returned are not
   ## necessarily in the scale expected by IHW.
   if (is.null(type)) {
+    ## This little if statement is dumb.  FIXME.
     if (grepl(pattern = "^limma", x = pvalue_column)) {
       type <- "limma"
     } else if (grepl(pattern = "^deseq", x = pvalue_column)) {
@@ -1929,6 +1993,8 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
       type <- "basic"
     } else if (grepl(pattern = "^ebseq", x = pvalue_column)) {
       type <- "ebseq"
+    } else if (grepl(pattern = "^noiseq", x = pvalue_column)) {
+      type <- "noiseq"
     } else {
       stop("Unable to determine the type of pvalues in this data.")
     }
@@ -1946,6 +2012,9 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
   } else if (type == "basic") {
     tmp_table[["base10_median"]] <- 2 ^ ((tmp_table[["basic_num"]] + tmp_table[["basic_den"]]) / 2)
     mean_column <- "base10_median"
+  } else if (type == "noiseq") {
+    tmp_table[["base10_mean"]] <- 2 ^ ((tmp_table[["noiseq_num"]] + tmp_table[["noiseq_den"]]) / 2)
+    mean_column <- "base10_mean"
   }
 
   ## Add a hopefully unneccessary check that everything is numeric (which is currently not true
@@ -1973,15 +2042,15 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
 #' @param z Number of z-scores >/< the median to take.
 #' @param lfc Fold-change cutoff.
 #' @param p P-value cutoff.
+#' @param min_mean_exprs Exclude genes with less than this mean expression.
+#' @param exprs_column Use this column for filtering by expression.
+#' @param column Table's column used to distinguish top vs. bottom.
 #' @param fold Identifier reminding how to get the bottom portion of a
 #'  fold-change (plusminus says to get the negative of the
 #'  positive, otherwise 1/positive is taken).  This effectively
 #'  tells me if this is a log fold change or not.
-#' @param min_mean_exprs Subset the genes deemed significant with an
-#'  minimum expression cutoff.
-#' @param exprs_column Use this column for filtering by expression.
-#' @param column Table's column used to distinguish top vs. bottom.
 #' @param p_column Table's column containing (adjusted or not)p-values.
+#' @param comparison When set to orequal, use >=/<= instead of jsut >/<.
 #' @return Subset of the up/down genes given the provided criteria.
 #' @seealso [extract_significant_genes()] [get_abundant_genes()]
 #' @examples
@@ -1991,9 +2060,10 @@ ihw_adjust <- function(de_result, pvalue_column = "pvalue", type = NULL,
 #' @export
 get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
                           min_mean_exprs = NULL, exprs_column = "deseq_basemean",
-                          column = "logFC", fold = "plusminus", p_column = "adj.P.Val") {
+                          column = "logFC", fold = "plusminus", p_column = "adj.P.Val",
+                          comparison = "orequal") {
   if (is.null(z) && is.null(n) && is.null(lfc) && is.null(p)) {
-    message("No n, z, p, nor lfc provided, setting p to 0.05 and lfc to 1.0.")
+    mesg("No n, z, p, nor lfc provided, setting p to 0.05 and lfc to 1.0.")
     p <- 0.05
     lfc <- 1.0
   }
@@ -2008,9 +2078,15 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
 
   if (!is.null(p)) {
     up_idx <- as.numeric(up_genes[[p_column]]) <= p
+    if (comparison != "orequal") {
+      up_idx <- as.numeric(up_genes[[p_column]]) < p
+    }
     ## Remember we have these reformatted as scientific
     up_genes <- up_genes[up_idx, ]
     down_idx <- as.numeric(down_genes[[p_column]]) <= p
+    if (comparison != "orequal") {
+      down_idx <- as.numeric(down_genes[[p_column]]) < p
+    }
     down_genes <- down_genes[down_idx, ]
     ## Going to add logic in case one does not ask for fold change
     ## In that case, a p-value assertion should still know the difference
@@ -2026,23 +2102,38 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
       ## plusminus refers to a positive/negative number of logfold changes from
       ## a logFC(1) = 0
       up_idx <- as.numeric(up_genes[[column]]) >= 1.0
+      if (comparison != "orequal") {
+        up_idx <- as.numeric(up_genes[[column]]) > 1.0
+      }
       up_genes <- up_genes[up_idx, ]
       down_idx <- as.numeric(down_genes[[column]]) <= -1.0
+      if (comparison != "orequal") {
+        down_idx <- as.numeric(down_genes[[column]]) < -1.0
+      }
       down_genes <- down_genes[down_idx, ]
     }
   }
 
   if (!is.null(lfc)) {
     up_idx <- as.numeric(up_genes[[column]]) >= lfc
+    if (comparison != "orequal") {
+      up_idx <- as.numeric(up_genes[[column]]) > lfc
+    }
     up_genes <- up_genes[up_idx, ]
     if (fold == "plusminus" || fold == "log") {
       ## plusminus refers to a positive/negative number of logfold changes from
       ## a logFC(1) = 0
       down_idx <- as.numeric(down_genes[[column]]) <= (lfc * -1.0)
+      if (comparison != "orequal") {
+        down_idx <- as.numeric(down_genes[[column]]) < (lfc * -1.0)
+      }
       down_genes <- down_genes[down_idx, ]
     } else {
       ## If it isn't log fold change, then values go from 0..x where 1 is unchanged
       down_idx <- as.numeric(down_genes[[column]]) <= (1.0 / lfc)
+      if (comparison != "orequal") {
+        down_idx <- as.numeric(down_genes[[column]]) < (1.0 / lfc)
+      }
       down_genes <- down_genes[down_idx, ]
     }
   }
@@ -2050,7 +2141,6 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
   if (!is.null(z)) {
     ## Take an arbitrary number which are >= and <= a value which is z zscores
     ## from the median.
-    mesg("Getting the genes >= ", z, " stdevs away from the mean of all.")
     ## Use the entire table for the summary
     out_summary <- summary(as.numeric(table[[column]]))
     out_mad <- stats::mad(as.numeric(table[[column]]), na.rm = TRUE)
@@ -2058,8 +2148,14 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
     down_median_dist <- out_summary["Median"] - (out_mad * z)
     ## But use the (potentially already trimmed) up/down tables for indexing
     up_idx <- as.numeric(up_genes[[column]]) >= up_median_dist
+    if (comparison != "orequal") {
+      up_idx <- as.numeric(up_genes[[column]]) > up_median_dist
+    }
     up_genes <- up_genes[up_idx, ]
     down_idx <- as.numeric(down_genes[[column]]) <= down_median_dist
+    if (comparison != "orequal") {
+      down_idx <- as.numeric(down_genes[[column]]) < down_median_dist
+    }
     down_genes <- down_genes[down_idx, ]
   }
 
@@ -2109,6 +2205,7 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
 #'  below, but there is a reason for it.
 #' @param do_pairwise Include all pairwise strings? This shouldn't
 #'  need to be set to FALSE, but just in case.
+#' @param keepers Only extract this subset of all possible pairwise contrasts.
 #' @param extra_contrasts Optional string of extra contrasts to include.
 #' @param ... Extra arguments passed here are caught by arglist.
 #' @return List including the following information:
@@ -2126,7 +2223,8 @@ get_sig_genes <- function(table, n = NULL, z = NULL, lfc = NULL, p = NULL,
 #' }
 #' @export
 make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
-                                    do_extras = TRUE, do_pairwise = TRUE, extra_contrasts = NULL, ...) {
+                                    do_extras = TRUE, do_pairwise = TRUE,
+                                    keepers = NULL, extra_contrasts = NULL, ...) {
   arglist <- list(...)
   tmpnames <- colnames(model)
   tmpnames <- gsub(pattern = "data[[:punct:]]", replacement = "", x = tmpnames)
@@ -2155,21 +2253,40 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
   all_pairwise <- list()
   identity_names <- names(identities)
   lenminus <- length(identities) - 1
-  for (c in seq_len(lenminus)) {
-    c_name <- names(identities[c])
-    nextc <- c + 1
-    for (d in seq(from = nextc, to = length(identities))) {
-      d_name <- names(identities[d])
-      minus_string <- paste(d_name, "_vs_", c_name, sep = "")
-      exprs_string <- paste(minus_string, "=", d_name, "-", c_name, ",", sep = "")
+  numerators <- c()
+  denominators <- c()
+
+  if (is.null(keepers)) {
+    for (c in seq_len(lenminus)) {
+      c_name <- names(identities[c])
+      nextc <- c + 1
+      for (d in seq(from = nextc, to = length(identities))) {
+        d_name <- names(identities[d])
+        minus_string <- paste0(d_name, "_vs_", c_name)
+        exprs_string <- paste0(minus_string, "=", d_name, "-", c_name, ",")
+        all_pairwise[minus_string] <- exprs_string
+        numerators <- c(numerators, d_name)
+        denominators <- c(denominators, c_name)
+      }
+    }
+  } else {
+    for (keeper in keepers) {
+      c_name <- keeper[1]
+      d_name <- keeper[2]
+      minus_string <- paste0(d_name, "_vs_", c_name)
+      exprs_string <- paste0(minus_string, "=", d_name, "-", c_name, ",")
       all_pairwise[minus_string] <- exprs_string
+      numerators <- c(numerators, d_name)
+      denominators <- c(denominators, c_name)
     }
   }
+
   ## At this point, I have strings which represent the definition of every
   ## sample condition as well as strings which represent every possible
   ## B-A where B comes somewhere after A in the model matrix.
   ## The goal now is to create the variables in the R environment
   ## and add them to makeContrasts()
+
   if (isTRUE(do_identities)) {
     eval_strings <- append(eval_strings, identities)
   }
@@ -2178,30 +2295,36 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
   }
   eval_names <- names(eval_strings)
 
-  if (!is.null(extra_contrasts) & isTRUE(do_extras)) {
+  if (!is.null(extra_contrasts) && isTRUE(do_extras)) {
     extra_eval_strings <- strsplit(extra_contrasts, ",")[[1]]
     extra_eval_names <- extra_eval_strings
     extra_eval_names <- stringi::stri_replace_all_regex(extra_eval_strings,
                                                         "^(\\s*)(\\w+)\\s*=\\s*.*$", "$2")
-    extra_eval_names <- gsub(pattern = "^\\s+", replacement = "", x = extra_eval_names, perl = TRUE)
+    extra_eval_names <- gsub(pattern = "^\\s+", replacement = "",
+                             x = extra_eval_names, perl = TRUE)
     for (i in seq_along(extra_eval_strings)) {
       new_name <- extra_eval_names[[i]]
       extra_eval_string <- extra_eval_strings[[i]]
-      extra_eval_string <- gsub(pattern = "^\\s+", replacement = "", x = extra_eval_string, perl = TRUE)
+      extra_eval_string <- gsub(pattern = "^\\s+", replacement = "",
+                                x = extra_eval_string, perl = TRUE)
       extra_contrast <- glue("{extra_eval_string}, ")
       eval_strings <- append(eval_strings, extra_contrast)
       eval_names <- append(eval_names, new_name)
       all_pairwise[new_name] <- extra_contrast
+      extra_numerator <- gsub(x = new_name, pattern = "(.*)_vs_.*", replacement = "\\1")
+      extra_denominator <- gsub(x = new_name, pattern = ".*_vs_(.*)", replacement = "\\1")
+      numerators <- c(numerators, extra_numerator)
+      denominators <- c(denominators, extra_denominator)
     }
     names(eval_strings) <- eval_names
   }
   ## Add them to makeContrasts()
   contrast_string <- "all_pairwise_contrasts = mymakeContrasts("
   for (f in seq_along(eval_strings)) {
-    eval_name = names(eval_strings[f])
+    eval_name <- names(eval_strings[f])
     ## Get a little defensive to make sure I do not have contrasts which start with
     ## silly things like numbers of punctuation.
-    if (grepl(x=eval_name, pattern="^([[:digit:]]|[[:punct:]])")) {
+    if (grepl(x = eval_name, pattern = "^([[:digit:]]|[[:punct:]])")) {
       stop("This function requires contrast names to start with a letter.")
     }
     eval_string <- eval_strings[f]
@@ -2214,6 +2337,10 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
   ## I like to change the column names of the contrasts because by default
   ## they are kind of obnoxious and too long to type
 
+  pairwise_name_idx <- grepl(x = eval_names, pattern = "_vs_")
+  pairwise_names <- eval_names[pairwise_name_idx]
+  names(numerators) <- pairwise_names
+  names(denominators) <- pairwise_names
   colnames(all_pairwise_contrasts) <- eval_names
   result <- list(
     "all_pairwise_contrasts" = all_pairwise_contrasts,
@@ -2221,7 +2348,9 @@ make_pairwise_contrasts <- function(model, conditions, do_identities = FALSE,
     "identity_names" = identity_names,
     "all_pairwise" = all_pairwise,
     "contrast_string" = contrast_string,
-    "names" = eval_names)
+    "names" = eval_names,
+    "numerators" = numerators,
+    "denominators" = denominators)
   return(result)
 }
 

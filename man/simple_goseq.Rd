@@ -10,7 +10,7 @@ simple_goseq(
   length_db = NULL,
   doplot = TRUE,
   adjust = 0.1,
-  pvalue = 0.1,
+  threshold = 0.1,
   plot_title = NULL,
   length_keytype = "transcripts",
   go_keytype = "entrezid",
@@ -19,6 +19,8 @@ simple_goseq(
   expand_categories = TRUE,
   excel = NULL,
   enrich = TRUE,
+  minimum_interesting = 2,
+  min_xref = 40,
   ...
 )
 }
@@ -33,7 +35,7 @@ simple_goseq(
 
 \item{adjust}{Minimum adjusted pvalue for 'significant.'}
 
-\item{pvalue}{Minimum pvalue for 'significant.'}
+\item{threshold}{Look at sets with this signficance or better.}
 
 \item{plot_title}{Set a title for the pvalue plots.}
 
@@ -50,6 +52,10 @@ simple_goseq(
 \item{excel}{Print the results to an excel file?}
 
 \item{enrich}{Convert the goseq result to the clusterProfiler format?}
+
+\item{minimum_interesting}{Exclude categories with less than this number of genes.}
+
+\item{min_xref}{Stop everything if we get less than this intersection of genes/GO/lengths.}
 
 \item{...}{Extra parameters which I do not recall}
 }

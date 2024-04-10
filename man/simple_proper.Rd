@@ -17,7 +17,12 @@ simple_proper(
   target = "lfc",
   mean_or_median = "mean",
   filter = "none",
-  delta = 0.5
+  delta = 1,
+  add_coverage = TRUE,
+  target_power = 0.8,
+  mean_gene_length = 2000,
+  nt_per_read = 200,
+  describe_samples = 5
 )
 }
 \arguments{
@@ -48,6 +53,16 @@ old, my version of this only accepts deseq or edger.}
 \item{filter}{Apply a filter?}
 
 \item{delta}{Not epsilon! (E.g. I forget what this does).}
+
+\item{add_coverage}{When plotting, add a line showing the actual coverage?}
+
+\item{target_power}{When creating boilerplate text for a grant, specify power goal.}
+
+\item{mean_gene_length}{When making text, specify the mean gene length expected.}
+
+\item{nt_per_read}{Specify how many reads are in each read(pair).}
+
+\item{describe_samples}{Add a guestimate of the number of samples required for the power goal.}
 }
 \value{
 List containin the various tables and plots returned by PROPER.
@@ -63,5 +78,5 @@ version of 'default_proper()' above and invokes PROPER after re-formatting a
 given dataset in the way expected by PROPER.
 }
 \seealso{
-[PROPER]
+[PROPER] DOI:10.1093/bioinformatics/btu640
 }

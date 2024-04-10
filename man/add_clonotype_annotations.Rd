@@ -7,11 +7,11 @@
 add_clonotype_annotations(scd, start_path, type = "t")
 }
 \arguments{
+\item{scd}{Seurat object to which we will add some information.}
+
 \item{start_path}{root of the 10x data in which the vdj information should reside.}
 
 \item{type}{The type of VDJ we expect, heavy(B) or light(T).}
-
-\item{obj}{Seurat object to which we will add some information.}
 }
 \value{
 The Seurat object with some new information.
@@ -19,4 +19,10 @@ The Seurat object with some new information.
 \description{
 The original implementation of this idea resides at:
 https://ucdavis-bioinformatics-training.github.io/2020-Advanced_Single_Cell_RNA_Seq/data_analysis/VDJ_Analysis_fixed
+}
+\details{
+The seurat documentation always uses 'obj' for their
+datastructures; I chose to use 'scd' to signify that I am
+explicitly adding a couple pieces of information to them.  They
+remain the datastructures returned by seurat.
 }

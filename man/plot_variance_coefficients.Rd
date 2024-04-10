@@ -7,6 +7,7 @@ with respect to an experimental factor.}
 \usage{
 plot_variance_coefficients(
   data,
+  design = NULL,
   x_axis = "condition",
   colors = NULL,
   plot_title = NULL,
@@ -15,6 +16,8 @@ plot_variance_coefficients(
 }
 \arguments{
 \item{data}{Expressionset/epxt to poke at.}
+
+\item{design}{Specify metadata if necessary.}
 
 \item{x_axis}{Factor in the experimental design we may use to group the data
 and calculate the dispersion metrics.}

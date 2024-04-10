@@ -1,5 +1,7 @@
 ## de_plots.r: A series of plots which are in theory DE method agnostic.
 
+
+## FIXME: This has both p_type and adjp parameters, which is redundantredundant.
 #' Make a MA plot of some limma output with pretty colors and shapes.
 #'
 #' Yay pretty colors and shapes!
@@ -16,8 +18,10 @@
 #' @param denominator Use this factor as the denominator.
 #' @param alpha Use this transparency.
 #' @param z z-score cutoff for coefficient significance.
+#' @param n Choose the top/bottom-n by logFC.
 #' @param logfc What logFC to use for the MA plot horizontal lines.
 #' @param pval Cutoff to define 'significant' by p-value.
+#' @param adjp Use adjusted p-value?
 #' @param found_table Result from edger to use, left alone it chooses the first.
 #' @param p_type Adjusted or raw pvalues?
 #' @param color_high Color to use for the 'high' genes.
@@ -25,7 +29,7 @@
 #' @param loess Add a loess estimator to the coefficient plot?
 #' @param z_lines Add the z-score lines?
 #' @param label Label this number of top-diff genes.
-#' @param label_columns Use this column for labelling genes.
+#' @param label_column Use this column for labelling genes.
 #' @return a plot!
 #' @seealso [plot_ma_de()] [plot_volcano_de()]
 #' @examples
@@ -33,14 +37,32 @@
 #'  prettyplot <- edger_ma(all_aprwise) ## [sic, I'm witty! and can speel]
 #' }
 #' @export
-extract_de_plots <- function(pairwise, combined, type = "edger",
+extract_de_plots <- function(pairwise, combined = NULL, type = NULL,
                              invert = FALSE, invert_colors = c(),
-                             numerator = NULL, denominator = NULL, alpha = 0.4, z = 1.5,
-                             logfc = 1, pval = 0.05, found_table = NULL, p_type = "adj",
-                             color_high = NULL, color_low = NULL, loess = FALSE,
+                             numerator = NULL, denominator = NULL, alpha = 0.4, z = 1.5, n = NULL,
+                             logfc = 1.0, pval = 0.05, adjp = TRUE, found_table = NULL,
+                             p_type = "adj", color_high = NULL, color_low = NULL, loess = FALSE,
                              z_lines = FALSE, label = 10, label_column = "hgncsymbol") {
 
-  source_info <- get_plot_columns(combined, type, p_type = p_type)
+  if (is.null(type)) {
+    if (grepl(pattern = "pairwise", x = class(pairwise)[1])) {
+      type <- gsub(x = class(pairwise)[1], pattern = "_pairwise$", replacement = "")
+    }
+    if (is.null(found_table)) {
+      message("No table was provided, choosing the first.")
+      found_table <- names(pairwise[["all_tables"]])[1]
+    }
+  }
+  if (is.null(combined)) {
+    combined = pairwise
+  }
+  if (is.null(numerator) && is.null(denominator)) {
+    message("No numerator nor denominator was provided, arbitrarily choosing the first.")
+    num_den_names <- get_num_den(names(pairwise[["all_tables"]])[1])
+    numerator <- num_den_names[["numerator"]]
+    denominator <- num_den_names[["denominator"]]
+  }
+  source_info <- get_plot_columns(combined, type, p_type = p_type, adjp = adjp)
   input <- source_info[["the_table"]]
   expr_col <- source_info[["expr_col"]]
   fc_col <- source_info[["fc_col"]]
@@ -72,10 +94,10 @@ extract_de_plots <- function(pairwise, combined, type = "edger",
       label = label, label_column = label_column)
   }
 
-retlist <- list(
-  "coef" = coef_result,
-  "ma" = ma_material,
-  "volcano" = vol_material)
+  retlist <- list(
+    "coef" = coef_result,
+    "ma" = ma_material,
+    "volcano" = vol_material)
   return(retlist)
 }
 
@@ -178,8 +200,8 @@ extract_coefficient_scatter <- function(output, toptable = NULL, type = "limma",
     coefficient_df <- coefficients[, c(xname, yname)]
   } else if (type == "ebseq") {
     tables <- names(output[["all_tables"]])
-    verted <- glue::glue("{xname}_vs_{yname}")
-    inverted <- glue::glue("{yname}_vs_{xname}")
+    verted <- glue("{xname}_vs_{yname}")
+    inverted <- glue("{yname}_vs_{xname}")
     coefficient_df <- data.frame()
     if (verted %in% tables) {
       table_idx <- verted == tables
@@ -281,7 +303,7 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
 
   up_venn <- Vennerable::Venn(Sets = up_venn_lst)
   down_venn <- Vennerable::Venn(Sets = down_venn_lst)
-  tmp_file <- tempfile(pattern = "venn", fileext = ".png")
+  tmp_file <- tmpmd5file(pattern = "venn", fileext = ".png")
   this_plot <- png(filename = tmp_file)
   controlled <- dev.control("enable")
   up_res <- Vennerable::plot(up_venn, doWeights = FALSE)
@@ -293,6 +315,7 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
   down_venn_noweight <- grDevices::recordPlot()
   dev.off()
   removed <- file.remove(tmp_file)
+  removed <- unlink(dirname(tmp_file))
 
   retlist <- list(
     "up_venn" = up_venn,
@@ -316,7 +339,8 @@ de_venn <- function(table, adjp = FALSE, p = 0.05, lfc = 0, ...) {
 #' @param data Data structure in which to hunt columns/data.
 #' @param type Type of method used to make the data.
 #' @param p_type Use adjusted p-values?
-get_plot_columns <- function(data, type, p_type = "adj") {
+#' @param adjp I think this is reundant.
+get_plot_columns <- function(data, type, p_type = "adj", adjp = TRUE) {
   ret <- list(
     "p_col" = "P.Val",
     "fc_col" = "logFC",
@@ -354,7 +378,6 @@ get_plot_columns <- function(data, type, p_type = "adj") {
     }
     wanted_table <- wanted_tablename
     input <- data[["input"]]
-    print(wanted_table)
   } else if ("combined_table" %in% class(data)) {
     table_source <- "combined_table"
   } else if (class(data)[1] == "all_pairwise") {
@@ -390,8 +413,10 @@ get_plot_columns <- function(data, type, p_type = "adj") {
       expr_col <- "ebseq_mean"
     }
     fc_col <- glue("{type}_logfc")
-    if (p_type == "adj") {
+    if (p_type == "adj" || isTRUE(adjp)) {
       p_col <- glue("{type}_adjp")
+    } else if (p_type == "ihw" || p_type == "all") {
+      p_col <- glue("{type}_adjp_ihw")
     } else {
       p_col <- glue("{type}_p")
     }
@@ -468,6 +493,9 @@ get_plot_columns <- function(data, type, p_type = "adj") {
   } else {
     stop("Something went wrong, we should have only _pairwise and combined here.")
   }
+  mesg("  Using logFC column: ", fc_col, ".")
+  mesg("  Using adjusted p-value column: ", p_col, ".")
+  mesg("  Using expression column: ", expr_col, ".")
 
   possible_tables <- names(all_tables)
   the_table <- NULL
@@ -486,7 +514,7 @@ get_plot_columns <- function(data, type, p_type = "adj") {
     ## Figure that out here and return the appropriate table.
     the_table <- wanted_table
     revname <- strsplit(x = the_table, split = "_vs_")
-    revname <- glue::glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
+    revname <- glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
     if (!(the_table %in% possible_tables) && revname %in% possible_tables) {
       mesg("Trey you doofus, you reversed the name of the table.")
       the_table <- all_tables[[revname]]
@@ -509,9 +537,9 @@ get_plot_columns <- function(data, type, p_type = "adj") {
     the_table <- all_tables[[table]]
   } else if (length(wanted_table) == 2) {
     ## Perhaps one will ask for c(numerator, denominator)
-    the_table <- glue::glue("{wanted_table[[1]]}_vs_{wanted_table[[2]]}")
+    the_table <- glue("{wanted_table[[1]]}_vs_{wanted_table[[2]]}")
     revname <- strsplit(x = the_table, split = "_vs_")
-    revname <- glue::glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
+    revname <- glue("{revname[[1]][2]}_vs_{revname[[1]][1]}")
     possible_tables <- names(data[["data"]])
     if (!(the_table %in% possible_tables) && revname %in% possible_tables) {
       mesg("Trey you doofus, you reversed the name of the table.")
@@ -621,10 +649,10 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
   p_columns <- c()
   kept_methods <- c()
   for (m in methods) {
-    colname <- glue::glue("{m}_logfc")
+    colname <- glue("{m}_logfc")
     if (!is.null(table[[colname]])) {
       lfc_columns <- c(lfc_columns, colname)
-      pcol <- glue::glue("{m}_adjp")
+      pcol <- glue("{m}_adjp")
       kept_methods <- c(kept_methods, m)
       p_columns <- c(p_columns, pcol)
       test_fc <- min(table[[colname]])
@@ -767,6 +795,7 @@ plot_num_siggenes <- function(table, methods = c("limma", "edger", "deseq", "ebs
 #' @param shapes Provide different shapes for up/down/etc?
 #' @param invert Invert the ma plot?
 #' @param label Label the top/bottom n logFC values?
+#' @param label_column gene annotation column from which to extract labels.
 #' @param ... More options for you
 #' @return ggplot2 MA scatter plot.  This is defined as the rowmeans of the
 #'  normalized counts by type across all sample types on the x axis, and the
@@ -964,7 +993,6 @@ plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qv
   return(retlist)
 }
 
-
 plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
                                  fc_col = "logFC", p_col = "qvalue",
                                  color_high = "red", color_low = "blue",
@@ -1013,9 +1041,12 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
   newdf <- data.frame("avg" = input[[expr_col]],
                       "logfc" = input[[fc_col]],
                       "pval" = input[[p_col]])
-  if (!is.null(label_column)) {
+  if (is.null(label_column)) {
+    newdf[["label"]] <- rownames(input)
+  } else if (label_column %in% colnames(input)) {
     newdf[["label"]] <- input[[label_column]]
   } else {
+    message("The column: ", label_column, " is not in the data, using rownames.")
     newdf[["label"]] <- rownames(input)
   }
   rownames(newdf) <- rownames(input)
@@ -1033,6 +1064,7 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
   ## Set up the state of significant/insiginificant vs. p-value and/or fold-change.
   newdf[["pval"]] <- as.numeric(format(newdf[["pval"]], scientific = FALSE))
   newdf[["pcut"]] <- newdf[["pval"]] <= pval
+  newdf[["state"]] <- "c_insig"
   newdf[["state"]] <- ifelse(newdf[["pval"]] > pval, "c_insig",
                              ifelse(newdf[["pval"]] <= pval &
                                       newdf[["logfc"]] >= logfc, "a_upsig",
@@ -1067,6 +1099,13 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
     names(state_shapes) <- c("a_upsig", "b_downsig", "c_insig")
   }
 
+  ## I am not sure why something is setting color high/low to NULL.
+  if (is.null(color_high)) {
+    color_high <- "red"
+  }
+  if (is.null(color_low)) {
+    color_low <- "blue"
+  }
   plot_colors <- c("#555555", color_high, color_low)
   names(plot_colors) <- c("c_insig", "a_upsig", "b_downsig")
 
@@ -1119,8 +1158,10 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
   if (!is.null(label)) {
     reordered_idx <- order(df[["logfc"]])
     reordered <- df[reordered_idx, ]
-    top <- head(reordered, n = label)
-    bottom <- tail(reordered, n = label)
+    ## I am now taking 1/2 of the number of desired labeled genes on each side.
+    ## I think this more accurately fits the spirit of this idea.
+    top <- head(reordered, n = (ceiling(label / 2)))
+    bottom <- tail(reordered, n = (ceiling(label / 2)))
     df_subset <- rbind(top, bottom)
     plt <- plt +
       ggrepel::geom_text_repel(
@@ -1140,6 +1181,44 @@ plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
     "plot" = plt,
     "df" = df)
   return(retlist)
+}
+
+#' Make a sankey plot showing how the number of genes deemed significant is constrained.
+#'
+#' Ideally, this should show how adding various Fc/p-value constraints
+#' on the definition of 'significant' decreases the number of genes
+#' one is likely to look at.
+#'
+#' @param de_table The result from combine_de_tables()
+#' @param lfc FC constraint.
+#' @param p P-value constraint.
+#' @param lfc_column Dataframe column from which to acquire the FC
+#'  values.
+#' @param p_column Dataframe column from which to acquire the
+#'  p-values.
+#' @return A fun sankey plot!
+plot_sankey_de <- function(de_table, lfc = 1.0, p = 0.05,
+                           lfc_column = "deseq_logfc", p_column = "deseq_adjp") {
+  de_table[["start"]] <- "all"
+  de_table[["lfc"]] <- "up"
+  down_idx <- de_table[[lfc_column]] < 0
+  de_table[down_idx, "lfc"] <- "down"
+  up_idx <- de_table[[lfc_column]] > lfc
+  de_table[up_idx, "lfc"] <- "sigup"
+  down_idx <- de_table[[lfc_column]] < -1.0 * lfc
+  de_table[down_idx, "lfc"] <- "sigdown"
+
+  de_table[["adjusted_p"]] <- "insignificant"
+  sig_idx <- de_table[[p_column]] <= p
+  de_table[sig_idx, "adjusted_p"] <- "significant"
+
+  meta <- de_table[, c("start", "lfc", "adjusted_p")]
+  meta[["lfc"]] <- factor(meta[["lfc"]], levels = c("sigup", "up", "down", "sigdown"))
+  meta[["adjusted_p"]] <- factor(meta[["adjusted_p"]], levels = c("significant", "insignificant"))
+
+  #  color_choices <-
+  test <- plot_meta_sankey(meta, drill_down = FALSE, factors = c("lfc", "adjusted_p"))
+  return(test[["ggplot"]])
 }
 
 #' Make a pretty Volcano plot!
@@ -1372,15 +1451,16 @@ plot_volcano_de <- function(table, alpha = 0.5, color_by = "p",
 #' @param invert Flip the plot?
 #' @param label Label some points?
 #' @param label_column Using this column in the data.
+#' @param label_size Use this font size for the labels on the plot.
 #' @export
 plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
                                       fc_col = "logFC", fc_name = "log2 fold change",
                                       line_color = "black", line_position = "bottom", logfc = 1.0,
                                       p_col = "adj.P.Val", p_name = "-log10 p-value", pval = 0.05,
                                       shapes_by_state = FALSE,
-                                      color_high = NULL, color_low = NULL,
+                                      color_high = "darkred", color_low = "darkblue",
                                       size = 2, invert = FALSE, label = NULL,
-                                      label_column = "hgncsymbol") {
+                                      label_column = "hgncsymbol", label_size = 6) {
 
   low_vert_line <- 0.0 - logfc
   horiz_line <- -1 * log10(pval)
@@ -1417,6 +1497,13 @@ plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
   df[denominator_sig, "state"] <- "down"
   df[["state"]] <- as.factor(df[["state"]])
 
+  ## I am not sure why something is setting color high/low to NULL.
+  if (is.null(color_high)) {
+    color_high <- "red"
+  }
+  if (is.null(color_low)) {
+    color_low <- "blue"
+  }
   plot_colors <- c("#555555", color_high, color_low)
   names(plot_colors) <- c("insignificant", "up", "down")
 
@@ -1426,20 +1513,28 @@ plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
                     colour = .data[["state"]]))
 
   ## Now define when to put lines vs. points
-  if (line_position == "bottom") {
+  if (is.null(line_position)) {
+    plt <- plt +
+      ggplot2::geom_point(stat = "identity", size = size, alpha = alpha)
+  } else if (line_position == "bottom") {
     ## lines, then points.
     plt <- plt +
       ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size = (size / 2)) +
       ggplot2::geom_vline(xintercept = logfc, color = line_color, size = (size / 2)) +
       ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size = (size / 2)) +
       ggplot2::geom_point(stat = "identity", size = size, alpha = alpha)
-  } else {
+
+  } else if (line_position == "top") {
     ## points, then lines
     plt <- plt +
       ggplot2::geom_point(stat = "identity", size = size, alpha = alpha) +
       ggplot2::geom_hline(yintercept = horiz_line, color = line_color, size = (size / 2)) +
       ggplot2::geom_vline(xintercept = logfc, color = line_color, size = (size / 2)) +
       ggplot2::geom_vline(xintercept = low_vert_line, color = line_color, size = (size / 2))
+  } else {
+    mesg("Not printing volcano demarcation lines.")
+    plt <- plt +
+      ggplot2::geom_point(stat = "identity", size = size, alpha = alpha)
   }
 
   ## Now set the colors and axis labels
@@ -1465,7 +1560,8 @@ plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
       bottom <- tail(reordered, n = label)
       df_subset <- rbind(top, bottom)
     } else if (is.character(label)) {
-      sig_idx <- rownames(df) %in% label
+      sig_idx <- df[["label"]] %in% label
+      mesg("Found ", sum(sig_idx), " of the labeled genes.")
       df_subset <- df[sig_idx, ]
     } else {
       stop("I do not understand this set of IDs to label.")
@@ -1476,6 +1572,7 @@ plot_volcano_condition_de <- function(input, table_name, alpha = 0.5,
                                    x = .data[["xaxis"]]),
                                colour = "black", box.padding = ggplot2::unit(0.5, "lines"),
                                point.padding = ggplot2::unit(1.6, "lines"),
+                               size = label_size,
                                arrow = ggplot2::arrow(length = ggplot2::unit(0.01, "npc")))
   }
 
@@ -1556,8 +1653,8 @@ rank_order_scatter <- function(first, second = NULL, first_type = "limma",
   merged <- merged[, -1]
 
   if (first_column == second_column) {
-    c1 <- glue::glue("{first_column}.x")
-    c2 <- glue::glue("{first_column}.y")
+    c1 <- glue("{first_column}.x")
+    c2 <- glue("{first_column}.y")
   } else {
     c1 <- first_column
     c2 <- second_column
@@ -1572,8 +1669,8 @@ rank_order_scatter <- function(first, second = NULL, first_type = "limma",
 
   merged[["state"]] <- "neither"
   if (first_p_col == second_p_col) {
-    p1 <- glue::glue("{first_p_col}.x")
-    p2 <- glue::glue("{first_p_col}.y")
+    p1 <- glue("{first_p_col}.x")
+    p2 <- glue("{first_p_col}.y")
   } else {
     p1 <- first_p_col
     p2 <- second_p_col
@@ -1586,9 +1683,9 @@ rank_order_scatter <- function(first, second = NULL, first_type = "limma",
   merged[p2_idx, "state"] <- "second"
   merged[["state"]] <- as.factor(merged[["state"]])
 
-  first_table_colname <- glue::glue(
+  first_table_colname <- glue(
     "Table: {first_table}, Type: {first_type}, column: {first_column}")
-  second_table_colname <- glue::glue(
+  second_table_colname <- glue(
     "Table: {second_table}, Type: {second_type}, column: {second_column}")
 
   plt <- ggplot(data = merged,
@@ -1601,8 +1698,8 @@ rank_order_scatter <- function(first, second = NULL, first_type = "limma",
                                            "second"=second_color,
                                            "neither"=no_color)) +
     ggplot2::geom_smooth(method = "loess", color = "lightblue") +
-    ggplot2::ylab(glue::glue("Rank order of {second_table_colname}")) +
-    ggplot2::xlab(glue::glue("Rank order of {first_table_colname}")) +
+    ggplot2::ylab(glue("Rank order of {second_table_colname}")) +
+    ggplot2::xlab(glue("Rank order of {first_table_colname}")) +
     ggplot2::theme_bw(base_size = base_size) +
     ggplot2::theme(legend.position = "none",
                    axis.text = ggplot2::element_text(size = base_size, colour = "black"))
@@ -1698,7 +1795,7 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
   ##}
 
   for (type in types) {
-    test_column <- glue::glue("{type}_logfc")
+    test_column <- glue("{type}_logfc")
     if (! test_column %in% colnames(combined[["data"]][[1]])) {
       message("We do not have the ", test_column, " in the data, skipping ", type, ".")
       next
@@ -1710,7 +1807,7 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
                                              p = p, z = z, n = NULL, excel = FALSE,
                                              p_type = p_type, sig_bar = FALSE, ma = FALSE))
       table_length <- length(fc_sig[[type]][["ups"]])
-      fc_name <- glue::glue("fc_{fc}")
+      fc_name <- glue("fc_{fc}")
       fc_names <- append(fc_names, fc_name)
 
       for (tab in seq_len(table_length)) {
@@ -1873,10 +1970,20 @@ significant_barplots <- function(combined, lfc_cutoffs = c(0, 1, 2), invert = FA
 #' and lightly modified to match my style and so I could more
 #' easily understand what it is doing.
 #'
-#' @param lst upset data structure.
+#' @param input upset data structure.
 #' @param sort Sort the result?
 #' @export
-overlap_groups <- function (lst, sort = TRUE) {
+overlap_groups <- function(input, sort = TRUE) {
+  ## FIXME: Make use of S4 here
+  input_mtrx <- NULL
+  element_names <- NULL
+  if ("list" %in% class(input)) {
+    input_mtrx <- UpSetR::fromList(input) == 1
+    element_names <- unlist(input)
+  } else if ("upset" %in% class(input)) {
+    stop("The upsetR fromList seems to strip out the gene names, don't use it until I figure out what is up.")
+  }
+
   ## lst could look like this:
   ## $one
   ## [1] "a" "b" "c" "e" "g" "h" "k" "l" "m"
@@ -1884,21 +1991,22 @@ overlap_groups <- function (lst, sort = TRUE) {
   ## [1] "a" "b" "d" "e" "j"
   ## $three
   ## [1] "a" "e" "f" "g" "h" "i" "j" "l" "m"
-  input_mtrx <- UpSetR::fromList(lst) == 1
+
   ##     one   two three
   ## a  TRUE  TRUE  TRUE
   ## b  TRUE  TRUE FALSE
   ##...
   ## condensing matrix to unique combinations elements
-  unique_lst <- unique(input_mtrx)
+  combination_mtrx <- unique(input_mtrx)
   groups <- list()
+  num_combinations <- nrow(combination_mtrx)
   ## going through all unique combinations and collect elements for each in a list
-  for (i in 1:nrow(unique_lst)) {
-    current_row <- unique_lst[i,]
-    my_elements <- which(apply(input_mtrx, 1, function(x) all(x == current_row)))
-    attr(my_elements, "groups") <- current_row
-    groups[[paste(colnames(unique_lst)[current_row], collapse = ":")]] <- my_elements
-    my_elements
+  for (i in seq_len(num_combinations)) {
+    combination <- combination_mtrx[i, ]
+    my_elements <- which(apply(input_mtrx, 1, function(x) all(x == combination)))
+    attr(my_elements, "groups") <- combination
+    groups[[paste(colnames(combination_mtrx)[combination], collapse = ":")]] <- my_elements
+    #my_elements
     ## attr(,"groups")
     ##   one   two three
     ## FALSE FALSE  TRUE
@@ -1908,7 +2016,7 @@ overlap_groups <- function (lst, sort = TRUE) {
   if (sort) {
     groups <- groups[order(sapply(groups, function(x) length(x)), decreasing = TRUE)]
   }
-  attr(groups, "elements") <- unique(unlist(lst))
+  attr(groups, "elements") <- element_names
   return(groups)
   ## save element list to facilitate access using an index in case rownames are not named
 }
@@ -1925,6 +2033,39 @@ overlap_geneids <- function(overlapping_groups, group) {
   return(gene_ids)
 }
 
+#' Make an upset plot of all up/down genes in a set of contrasts.
+#'
+#' This is intended to give a quick and dirty view of the genes
+#' observed in a series of de comparisons.
+#'
+#' @param combined Result from combine_de_tables.
+#' @param according_to Choose the lfc column to use.
+#' @param lfc Choose the logFC
+#' @param adjp and the p-value.
+upsetr_combined_de <- function(combined, according_to = "deseq",
+                               lfc = 1.0, adjp = 0.05) {
+  ud_list <- list()
+  for (t in names(combined[["data"]])) {
+    t_data <- combined[["data"]][[t]]
+    fc_col <- paste0(according_to, "_logfc")
+    p_col <- paste0(according_to, "_adjp")
+    up_name <- glue("{t}_up")
+    up_idx <- t_data[[fc_col]] >= lfc &
+      t_data[[p_col]] <= adjp
+    up_ids <- rownames(t_data)[up_idx]
+    ud_list[[up_name]] <- up_ids
+    down_name <- glue("{t}_down")
+    down_idx <- t_data[[fc_col]] <= (-1.0 * lfc) &
+      t_data[[p_col]] <= adjp
+    down_ids <- rownames(t_data)[down_idx]
+    ud_list[[down_name]] <- down_ids
+  }
+
+  upset_combined <- UpSetR::upset(data = UpSetR::fromList(ud_list),
+                                  nsets = length(ud_list))
+  return(upset_combined)
+}
+
 #' Use UpSetR to compare significant gene lists.
 #'
 #' @param sig datastructure of significantly DE genes.
@@ -1936,8 +2077,8 @@ overlap_geneids <- function(overlapping_groups, group) {
 #' @param scale Make the numbers larger and easier to read?
 #' @param ... Other parameters to pass to upset().
 #' @export
-upsetr_sig <- function(sig, according_to="deseq", contrasts=NULL, up=TRUE,
-                       down=TRUE, both=FALSE, scale = 2, ...) {
+upsetr_sig <- function(sig, according_to = "deseq", contrasts = NULL, up = TRUE,
+                       down = TRUE, both = FALSE, scale = 2, ...) {
 
   ## Start by pulling the gene lists from the significant gene sets.
   start <- sig[[according_to]]

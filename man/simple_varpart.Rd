@@ -14,6 +14,7 @@ simple_varpart(
   cpus = NULL,
   genes = 40,
   parallel = TRUE,
+  strict_filter = TRUE,
   mixed = FALSE,
   modify_expt = TRUE
 )
@@ -40,6 +41,9 @@ to the first gene.}
 
 \item{parallel}{Use doParallel?}
 
+\item{strict_filter}{Perform a strict filtering of the results via median_by_factor and dropping
+any genes with a 0.}
+
 \item{mixed}{Used a mixed model?}
 
 \item{modify_expt}{Add annotation columns with the variance/factor?}
@@ -52,5 +56,5 @@ The arguments and usage of variancePartition are a bit opaque.  This function
 attempts to fill in reasonable values and simplify its invocation.
 }
 \seealso{
-[variancePartition]
+[variancePartition] DOI:10.1186/s12859-016-1323-z.
 }

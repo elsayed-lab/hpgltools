@@ -8,6 +8,7 @@
 #'
 #' @param scd Seurat single cell dataset.
 #' @param column Get identities from this metadata column.
+#' @return The scd with some new identities set with predicates.
 add_binary_states <- function(scd, column = NULL) {
   identity_levels <- levels(as.factor(Seurat::Idents(object = scd)))
   if (!is.null(column)) {
@@ -38,7 +39,12 @@ add_binary_states <- function(scd, column = NULL) {
 #' The original implementation of this idea resides at:
 #' https://ucdavis-bioinformatics-training.github.io/2020-Advanced_Single_Cell_RNA_Seq/data_analysis/VDJ_Analysis_fixed
 #'
-#' @param obj Seurat object to which we will add some information.
+#' The seurat documentation always uses 'obj' for their
+#' datastructures; I chose to use 'scd' to signify that I am
+#' explicitly adding a couple pieces of information to them.  They
+#' remain the datastructures returned by seurat.
+#'
+#' @param scd Seurat object to which we will add some information.
 #' @param start_path root of the 10x data in which the vdj information should reside.
 #' @param type The type of VDJ we expect, heavy(B) or light(T).
 #' @return The Seurat object with some new information.
@@ -147,15 +153,28 @@ create_scd <- function(metadata, expression_column = "gexfile",
   for (dirname in metadata[[expression_column]]) {
     path_name <- basename(dirname)
     start_path <- file.path(dirname, "outs", "per_sample_outs", path_name)
+    ## Added to match older cellranger versions, I need to look and see if there
+    ## is a smarter way of doing this.
+    if (!file.exists(start_path)) {
+      start_path <- file.path(dirname, "outs")
+    }
     mesg("Loading sample ", path_name, " from: ", start_path, ".")
     ## This should perhaps instead use the ID column from the metadata.
     if (!is.null(prefix)) {
       start_path <- file.path(prefix, dirname, "outs", "per_sample_outs", path_name)
+      if (!file.exists(start_path)) {
+        start_path <- file.path(prefix, dirname, "outs")
+      }
     }
     full_path <- file.path(start_path, "count", "sample_filtered_feature_bc_matrix")
+    ## Ibid for older cellranger.
+    if (!file.exists(full_path)) {
+      full_path <- file.path(start_path, "filtered_feature_bc_matrix")
+    }
     if (length(types) == 1) {
-      obj <- suppressWarnings(Seurat::Read10X(full_path)) %>%
-        suppressWarnings(Seurat::CreateSeuratObject(project = path_name))
+      ## I am not sure why, but doing a pipe (%>%) here fails.
+      obj <- suppressWarnings(Seurat::Read10X(full_path))
+      obj <- suppressWarnings(Seurat::CreateSeuratObject(obj, project = path_name))
     } else {
       ## If there are more than 1 type, then obj should be a list.
       obj <- suppressWarnings(Seurat::Read10X(full_path))
@@ -191,12 +210,14 @@ create_scd <- function(metadata, expression_column = "gexfile",
     for (elem in seq(2, length(initial_data))) {
       other_elements <- c(other_elements, initial_data[[elem]])
     }
-    merged <- merge(x = first_element, y = other_elements, add.cell.ids = names(initial_data))
+    merged <- merge(x = first_element, y = other_elements,
+                    add.cell.ids = names(initial_data))
   }
 
   merged@misc[["sample_metadata"]] <- metadata
   ## Store the identities in a column 'sampleid' in case we change the Identities
   ## later and forget to store the old ones.
+  message("Adding cell identities and percent mito/ribo.")
   merged[["sampleid"]] <- Seurat::Idents(merged)
   merged[["pct_mito"]] <- Seurat::PercentageFeatureSet(merged, pattern = mito_pattern)
   merged[["pct_ribo"]] <- Seurat::PercentageFeatureSet(merged, pattern = ribo_pattern)
@@ -238,7 +259,7 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
                        ribo_pattern = "^Rp[sl]", min_gene_counts = 3, verbose = FALSE) {
   current_cells <- ncol(scd)
   current_genes <- nrow(scd)
-  current_counts <- sum(BiocGenerics::colSums(scd))
+  current_counts <- sum(MatrixGenerics::colSums(scd))
   start_cells <- current_cells
   start_genes <- current_genes
   start_counts <- current_counts
@@ -286,7 +307,7 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
     filt_scd <- filt_scd[, sufficient_rna]
     new_cells <- ncol(filt_scd)
     new_genes <- nrow(filt_scd)
-    new_counts <- sum(BiocGenerics::colSums(filt_scd))
+    new_counts <- sum(MatrixGenerics::colSums(filt_scd))
     delta_cells <- current_cells - new_cells
     delta_genes <- current_genes - new_genes
     delta_counts <- current_counts - new_counts
@@ -301,7 +322,7 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
   if (is.null(min_gene_counts)) {
     mesg("Not filtering based on the minimum number of counts across cells observed.")
   } else {
-    sufficiently_observed <- as.logical(BiocGenerics::rowSums(filt_scd) >= min_gene_counts)
+    sufficiently_observed <- as.logical(MatrixGenerics::rowSums(filt_scd) >= min_gene_counts)
     if (current_genes == sum(sufficiently_observed)) {
       mesg("The minimum number of counts/gene across cells filter did not remove any genes.")
     } else {
@@ -314,7 +335,7 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
       }
       new_cells <- ncol(filt_scd)
       new_genes <- nrow(filt_scd)
-      new_counts <- sum(BiocGenerics::colSums(filt_scd))
+      new_counts <- sum(MatrixGenerics::colSums(filt_scd))
       delta_cells <- current_cells - new_cells
       delta_genes <- current_genes - new_genes
       delta_counts <- current_counts - new_counts
@@ -345,7 +366,7 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
     filt_scd <- filt_scd[, sufficient_ribo]
     new_cells <- ncol(filt_scd)
     new_genes <- nrow(filt_scd)
-    new_counts <- sum(BiocGenerics::colSums(filt_scd))
+    new_counts <- sum(MatrixGenerics::colSums(filt_scd))
     delta_cells <- current_cells - new_cells
     delta_genes <- current_genes - new_genes
     delta_counts <- current_counts - new_counts
@@ -374,7 +395,7 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
     filt_scd <- filt_scd[, sufficient_mito]
     new_cells <- ncol(filt_scd)
     new_genes <- nrow(filt_scd)
-    new_counts <- sum(BiocGenerics::colSums(filt_scd))
+    new_counts <- sum(MatrixGenerics::colSums(filt_scd))
     delta_cells <- current_cells - new_cells
     delta_genes <- current_genes - new_genes
     delta_counts <- current_counts - new_counts
@@ -394,9 +415,9 @@ filter_scd <- function(scd, min_num_rna = 200, max_num_rna = NULL,
     record_seurat_samples(type = "nCount_RNA", column_name = "filt_ncount",
                           verbose = verbose) %>%
     record_seurat_samples(type = "pct_mito", column_name = "filt_pct_mito",
-                          pattern = "^mt-", verbose = verbose) %>%
+                          pattern = mito_pattern, verbose = verbose) %>%
     record_seurat_samples(type = "pct_ribo", column_name = "filt_pct_ribo",
-                          pattern = "^Rp[sl]", verbose = verbose)
+                          pattern = ribo_pattern, verbose = verbose)
 
   post_plots <- plot_seurat_scatter(filt_scd)
 
@@ -719,7 +740,7 @@ skim_seurat_metadata <- function(sample_meta, obj_meta, meta_query = "nCount_RNA
   } else {
     sample_meta[[column_name]] <- obj_meta %>%
       group_by(!!rlang::sym(group_column)) %>%
-      skim(meta_query) %>%
+      skimr::skim(meta_query) %>%
       dplyr::select(tidyselect::all_of(summary_query)) %>%
       unlist()
   }
