@@ -81,6 +81,14 @@ all_pairwise <- function(input = NULL, conditions = NULL,
     model_intercept <- FALSE
   }
 
+  ## EBSeq made an incompatible change in its most recent release.
+  ## I unthinkingly changed my code to match it without considering the old
+  ## bioconductor release.
+  if (BiocManager::version < 3.18) {
+    warning("I changed ebseq_pairwise for the new bioc release, it needs >= 3.18.")
+    do_ebseq <- FALSE
+  }
+
   if (isTRUE(model_cond)) {
     if (is.null(keepers)) {
       mesg("This DE analysis will perform all pairwise comparisons among:")

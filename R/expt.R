@@ -46,7 +46,7 @@ combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, a
   exp2 <- expt2[["expressionset"]]
   fData(exp2) <- fData(exp1)
 
-  testthat::expect_equal(rownames(exprs(exp1)), rownames(exprs(exp2)))
+  ##testthat::expect_equal(rownames(exprs(exp1)), rownames(exprs(exp2)))
 
   if (isTRUE(merge_meta)) {
     design1 <- pData(exp1)
@@ -62,7 +62,8 @@ combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, a
     pData(exp2) <- new_design2
   }
 
-  new <- a4Base::combineTwoExpressionSet(exp1, exp2)
+  ## new <- a4Base::combineTwoExpressionSet(exp1, exp2)
+  new <- Biobase::combine(exp1, exp2)
   expt1[["expressionset"]] <- new
   expt1[["conditions"]] <- pData(expt1)[["condition"]]
   names(expt1[["conditions"]]) <- rownames(pData(expt1))

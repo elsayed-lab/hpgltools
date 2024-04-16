@@ -1630,6 +1630,22 @@ dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv"
   return(output_entries)
 }
 
+plot_metadata_factors <- function(expt, column = 'hisatsinglemapped', second_column = NULL,
+                                  norm_column = NULL, type = NULL, scale = "base10") {
+  design <- as.data.frame(pData(expt))
+  color_choices <- get_expt_colors(expt)
+  meta_plot <- ggplot(design, aes(x = .data[["condition"]], y = .data[[column]])) +
+    ggplot2::geom_violin(aes(fill = factor(.data[["condition"]])), scale = "width") +
+    geom_jitter(height = 0, width = 0.1) +
+    ggplot2::scale_fill_manual(values = as.character(color_choices), guide = "none") +
+    ggplot2::theme_bw(base_size = base_size)
+  if (scale == "log2") {
+    meta_plot <- meta_plot +
+      ggplot2::coord_trans(y = "log2")
+  }
+  return(meta_plot)
+}
+
 #' Given a table of meta data, read it in for use by create_expt().
 #'
 #' Reads an experimental design in a few different formats in preparation for

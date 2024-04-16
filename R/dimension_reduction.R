@@ -955,8 +955,8 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
         message("Trying again with 1/2 the PCs.")
         num_pc <- floor(num_pc / 2)
         pca_result <- pcaMethods::pca(ready, method = pc_method, nPcs = num_pc, scale = scale,
-                                      center = center, completeObs = completeObs,
-                                      subset = subset, cv = cv)
+          center = center, completeObs = completeObs,
+          subset = subset, cv = cv)
       }
       ## This is mostly guessing on my part.
       svd_result <- list(

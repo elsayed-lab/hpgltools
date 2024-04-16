@@ -2848,7 +2848,7 @@ write_combined_summary <- function(wb, excel_basename, apr, extracted, compare_p
     sheetname <- "pairwise_summary"
     xls_result <- write_xlsx(
       wb, data = extracted[["summaries"]], sheet = sheetname,
-      title = "Summary of contrasts (lfc cutoff:{lfc_cutoff} p cutoff: {p_cutoff}).")
+      title = glue("Summary of contrasts (lfc cutoff:{lfc_cutoff} p cutoff: {p_cutoff})."))
     xl_results <- c(xl_results, xls_result)
     new_row <- xls_result[["end_row"]] + 2
     xls_result <- write_xlsx(
