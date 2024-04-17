@@ -1,6 +1,5 @@
 ## de_plots.r: A series of plots which are in theory DE method agnostic.
 
-
 ## FIXME: This has both p_type and adjp parameters, which is redundantredundant.
 #' Make a MA plot of some limma output with pretty colors and shapes.
 #'
@@ -993,6 +992,28 @@ plot_ma_de <- function(table, expr_col = "logCPM", fc_col = "logFC", p_col = "qv
   return(retlist)
 }
 
+#' Create a MA plot with colors from the original expressionset.
+#'
+#' The logic for this is directly from its volcano plot sister, but I think that function
+#' is more complete.
+#'
+#' @param input Result from all_pairwise() and friends.
+#' @param table_name Name the table!
+#' @param expr_col Column name from the input containing expression data.
+#' @param fc_col Ibid but the fold change column.
+#' @param p_col Ibid but the p-value.
+#' @param color_high Color for the values above the identity line.
+#' @param color_low and the low side.
+#' @param pval Significance cutoff.
+#' @param alpha Degree of see-through-ness.
+#' @param logfc Fold-change cutoff.
+#' @param label_numbers Add a legend containing counts by significance.
+#' @param size Relative size of the dots.
+#' @param shapes Use fun shapes for categories?
+#' @param invert Invert the plot?
+#' @param label Add labels for this number of genes.
+#' @param label_column Use this column for the labels.
+#' @param ... Arbitrary passthrough.
 plot_ma_condition_de <- function(input, table_name, expr_col = "logCPM",
                                  fc_col = "logFC", p_col = "qvalue",
                                  color_high = "red", color_low = "blue",
@@ -2043,6 +2064,7 @@ overlap_geneids <- function(overlapping_groups, group) {
 #' @param lfc Choose the logFC
 #' @param adjp and the p-value.
 #' @param desired_contrasts Use factors from a few contrasts.
+#' @export
 upsetr_combined_de <- function(combined, according_to = "deseq",
                                lfc = 1.0, adjp = 0.05, text_scale = 2,
                                color_by = NULL,

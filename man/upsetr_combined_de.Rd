@@ -4,7 +4,15 @@
 \alias{upsetr_combined_de}
 \title{Make an upset plot of all up/down genes in a set of contrasts.}
 \usage{
-upsetr_combined_de(combined, according_to = "deseq", lfc = 1, adjp = 0.05)
+upsetr_combined_de(
+  combined,
+  according_to = "deseq",
+  lfc = 1,
+  adjp = 0.05,
+  text_scale = 2,
+  color_by = NULL,
+  desired_contrasts = NULL
+)
 }
 \arguments{
 \item{combined}{Result from combine_de_tables.}
@@ -14,6 +22,8 @@ upsetr_combined_de(combined, according_to = "deseq", lfc = 1, adjp = 0.05)
 \item{lfc}{Choose the logFC}
 
 \item{adjp}{and the p-value.}
+
+\item{desired_contrasts}{Use factors from a few contrasts.}
 }
 \description{
 This is intended to give a quick and dirty view of the genes
