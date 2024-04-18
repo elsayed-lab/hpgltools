@@ -1630,18 +1630,39 @@ dispatch_csv_search <- function(meta, column, input_file_spec, file_type = "csv"
   return(output_entries)
 }
 
-plot_metadata_factors <- function(expt, column = 'hisatsinglemapped', second_column = NULL,
+#' Produce plots of metadata factor(s) of interest.
+#'
+#' @param expt Input expressionset.
+#' @param column Currently a single, but soon multiple column(s) of metadata.
+#' @param second_column Or perhaps put other columns here.
+#' @param norm_column Normalize the data?
+#' @param type Assume a vioiln unless otherwise specified.
+#' @param scale Rescale the data?
+#' @return ggplot and maybe some form of useful table.
+#' @export
+plot_metadata_factors <- function(expt, column = "hisatsinglemapped", second_column = NULL,
                                   norm_column = NULL, type = NULL, scale = "base10") {
   design <- as.data.frame(pData(expt))
   color_choices <- get_expt_colors(expt)
-  meta_plot <- ggplot(design, aes(x = .data[["condition"]], y = .data[[column]])) +
-    ggplot2::geom_violin(aes(fill = factor(.data[["condition"]])), scale = "width") +
-    geom_jitter(height = 0, width = 0.1) +
-    ggplot2::scale_fill_manual(values = as.character(color_choices), guide = "none") +
-    ggplot2::theme_bw(base_size = base_size)
-  if (scale == "log2") {
-    meta_plot <- meta_plot +
-      ggplot2::coord_trans(y = "log2")
+  meta_plot <- NULL
+  if (is.null(type)) {
+    meta_plot <- ggplot(design, aes(x = .data[["condition"]], y = .data[[column]])) +
+      ggplot2::geom_violin(aes(fill = factor(.data[["condition"]])), scale = "width") +
+      ggplot2::geom_boxplot(aes(fill = factor(.data[["condition"]])), width = 0.2, size = 0.2, outlier.size = 1.5) +
+      geom_jitter(height = 0, width = 0.1) +
+      ggplot2::scale_fill_manual(values = as.character(color_choices), guide = "none") +
+      ggplot2::theme_bw(base_size = base_size)
+    if (scale == "log2") {
+      meta_plot <- meta_plot +
+        ggplot2::coord_trans(y = "log2")
+    }
+  } else if (type == "ggstats") {
+    if (scale == "log2") {
+      design[["plotted"]] <- log2(design[[column]])
+    } else {
+      design[["plotted"]] <- design[[column]]
+    }
+    meta_plot <- ggstatsplot::ggbetweenstats(data = design, x = condition, y = plotted)
   }
   return(meta_plot)
 }
