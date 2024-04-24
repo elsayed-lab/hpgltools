@@ -364,7 +364,6 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
   message("Reading the sample metadata.")
   sample_definitions <- extract_metadata(metadata, id_column = id_column,
                                          ...)
-  ## sample_definitions <- extract_metadata(metadata)
   ## Add an explicit removal of the file column if the option file_column is NULL.
   ## This is a just in case measure to avoid conflicts.
   if (is.null(file_column)) {
@@ -1632,15 +1631,15 @@ If this is not correctly performed, very few genes will be observed")
       ## put the actual sampleIDs as the colnames of its return.
       ## And, since I use the count table columns as the primary arbiter of the sample IDs
       ## when merging the sample annotations (metadata) and the counts, this does not end well.
-      colnames(import[["abundance"]]) <- sample_ids
-      colnames(import[["counts"]]) <- sample_ids
-      colnames(import[["length"]]) <- sample_ids
+      colnames(import[["abundance"]]) <- ids
+      colnames(import[["counts"]]) <- ids
+      colnames(import[["length"]]) <- ids
       import_scaled <- sm(tximport::tximport(
         files = files, type = "salmon", tx2gene = tx_gene_map,
         txOut = txout, countsFromAbundance = "lengthScaledTPM"))
-      colnames(import_scaled[["abundance"]]) <- sample_ids
-      colnames(import_scaled[["counts"]]) <- sample_ids
-      colnames(import_scaled[["length"]]) <- sample_ids
+      colnames(import_scaled[["abundance"]]) <- ids
+      colnames(import_scaled[["counts"]]) <- ids
+      colnames(import_scaled[["length"]]) <- ids
     }
     retlist[["count_table"]] <- data.table::as.data.table(
       import[["counts"]], keep.rownames = "rownames")
