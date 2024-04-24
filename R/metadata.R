@@ -52,6 +52,8 @@ check_metadata_year <- function(metadata = NULL, column = NULL) {
 #' @param metadata file or df of metadata
 #' @param id_column Column in the metadat containing the sample names.
 #' @param fill Fill missing data with this.
+#' @param fill_condition Add a condition column if there is not one?
+#' @param fill_batch Add a batch column if there is not one?
 #' @param sanitize Perform my various sanitizers on the data?
 #' @param ... Arguments to pass to the child functions (read_csv etc).
 #' @return Metadata dataframe hopefully cleaned up to not be obnoxious.
@@ -62,6 +64,7 @@ check_metadata_year <- function(metadata = NULL, column = NULL) {
 #' }
 #' @export
 extract_metadata <- function(metadata, id_column = "sampleid", fill = NULL,
+                             fill_condition = TRUE, fill_batch = TRUE,
                              sanitize = TRUE, ...) {
   ## FIXME: Now that this has been yanked into its own function,
   ## Make sure it sets good, standard rownames.
@@ -86,7 +89,8 @@ extract_metadata <- function(metadata, id_column = "sampleid", fill = NULL,
     ## punctuation is the devil
     sample_definitions <- meta_dataframe
   }  else {
-    sample_definitions <- read_metadata(meta_file,
+    sample_definitions <- read_metadata(meta_file, fill_condition = fill_condition,
+                                        fill_batch = fill_batch,
                                         ...)
     ## sample_definitions <- read_metadata(meta_file)
   }
@@ -175,40 +179,43 @@ extract_metadata <- function(metadata, id_column = "sampleid", fill = NULL,
     sample_definitions <- sample_definitions[-sample_columns_to_remove]
   }
 
+  sample_columns <- colnames(sample_definitions)
   ## Now check for columns named condition and batch
-  found_condition <- "condition" %in% sample_columns
-  if (!isTRUE(found_condition)) {
-    message("Did not find the condition column in the sample sheet.")
-    message("Filling it in as undefined.")
-    sample_definitions[["condition"]] <- "undefined"
-  } else {
-    ## Make sure there are no NAs in this column.
-    na_idx <- is.na(sample_definitions[["condition"]])
-    sample_definitions[na_idx, "condition"] <- "undefined"
+  if (isTRUE(fill_condition)) {
+    found_condition <- "condition" %in% sample_columns
+    if (!isTRUE(found_condition)) {
+      message("Did not find the condition column in the sample sheet.")
+      message("Filling it in as undefined.")
+      sample_definitions[["condition"]] <- "undefined"
+    }
   }
-  found_batch <- "batch" %in% sample_columns
-  if (!isTRUE(found_batch)) {
-    message("Did not find the batch column in the sample sheet.")
-    message("Filling it in as undefined.")
-    sample_definitions[["batch"]] <- "undefined"
-  } else {
-    ## Make sure there are no NAs in this column.
+
+  if (isTRUE(fill_batch)) {
+    found_batch <- "batch" %in% sample_columns
+    if (!isTRUE(found_batch)) {
+      message("Did not find the batch column in the sample sheet.")
+      message("Filling it in as undefined.")
+      sample_definitions[["batch"]] <- "undefined"
+    }
+  }
+
+  ## Check the condition/batch columns (if they exist) for NA values.
+  if (!is.null(sample_definitions[["condition"]])) {
+    na_idx <- is.na(sample_definitions[["condition"]])
+    if (sum(na_idx) > 0) {
+      warning("There were NA values in the condition column, setting them to 'undefined'.")
+      sample_definitions[na_idx, "condition"] <- "undefined"
+    }
+  }
+
+  if (!is.null(sample_definitions[["batch"]])) {
     na_idx <- is.na(sample_definitions[["batch"]])
+    if (sum(na_idx) > 0) {
+      warning("There were NA values in the condition column, setting them to 'undefined'.")
+    }
     sample_definitions[na_idx, "batch"] <- "undefined"
   }
 
-  ## Double-check that there is a usable condition column
-  ## This is also an instance of simplifying subsetting, identical to
-  ## sample_definitions[["condition"]] I don't think I care one way or the other which I use in
-  ## this case, just so long as I am consistent -- I think because I have trouble remembering the
-  ## difference between the concept of 'row' and 'column' I should probably use the [, column] or
-  ## [row, ] method to reinforce my weak neurons.
-  if (is.null(sample_definitions[["condition"]])) {
-    ## type and stage are commonly used, and before I was consistent about always having
-    ## condition, they were a proxy for it.
-    sample_definitions[["condition"]] <- tolower(paste(sample_definitions[["type"]],
-                                                       sample_definitions[["stage"]], sep = "_"))
-  }
   ## Extract out the condition names as a factor
   condition_names <- unique(sample_definitions[["condition"]])
   if (is.null(condition_names)) {
@@ -1673,12 +1680,12 @@ plot_metadata_factors <- function(expt, column = "hisatsinglemapped", second_col
 #' creating an expt.
 #'
 #' @param file Csv/xls file to read.
-#' @param ... Arguments for arglist, used by sep, header and similar
-#'  read_csv/read.table parameters.
 #' @param sep Used by read.csv, the separator
 #' @param header Used by read.csv, is there a header?
 #' @param sheet Used for excel/etc, which sheet to read?
 #' @param comment Skip rows starting with this (in the first cell of the row if not a text file).
+#' @param ... Arguments for arglist, used by sep, header and similar
+#'  read_csv/read.table parameters.
 #' @return Df of metadata.
 #' @seealso [openxlsx] [readODS]
 #' @export
