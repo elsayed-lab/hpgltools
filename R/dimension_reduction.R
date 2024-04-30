@@ -576,7 +576,7 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
                      plot_size = 5, plot_alpha = NULL, plot_labels = FALSE, size_column = NULL,
                      pc_method = "fast_svd", x_pc = 1, y_pc = 2, max_overlaps = 20,
                      num_pc = NULL, expt_names = NULL, label_chars = 10,
-                     cond_column = "condition", batch_column = "batch",
+                     cond_column = "condition", batch_column = "batch", hex = TRUE,
                      ...) {
   arglist <- list(...)
   ## Set default columns in the experimental design for condition and batch
@@ -1034,6 +1034,9 @@ plot_pca <- function(data, design = NULL, plot_colors = NULL, plot_title = TRUE,
   } else {
     ## Leave the title blank.
   }
+	
+  ## If want a hexagonal heatmap
+  #if(hexagonal) comp_plot + geom_hex()
 
   ## Finally, return a list of the interesting bits of what happened.
   pca_return <- list(
@@ -1800,7 +1803,7 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
       ggplot2::scale_size_manual(name = size_column,
         labels = levels(pca_data[[size_column]]),
         values = as.numeric(levels(pca_data[["size"]])))
-  } else if (!is.null(size_column) && num_batches > 5) {
+  } else if (!is.null(size_column) && num_batches > 5 && num_batches<19) {
     pca_plot <- pca_plot +
       ggplot2::geom_point(alpha = plot_alpha,
                           aes(shape = .data[["batch"]],
@@ -1810,6 +1813,31 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
                                   labels = levels(as.factor(pca_data[["batch"]])),
                                   guide = ggplot2::guide_legend(overwrite.aes = list(size = plot_size)),
                                   values = 1:num_batches) +
+      ggplot2::scale_color_manual(name = "Condition",
+                                  guide = "legend",
+                                  values = color_list) +
+      ggplot2::scale_size_manual(name = size_column,
+                                 labels = levels(pca_data[[size_column]]),
+                                 values = as.numeric(levels(pca_data[["size"]])))
+  } else if (!is.null(size_column) && num_batches>19) {
+	symbols = c(0:18,20,'+','-','o','O','*','|','%','#')
+  	if(num_batches<length(symbols)){
+		values = symbols[1:num_batches]
+	}else{
+		## wrap around the shapes and give a warning message
+		warning('')
+		idx = c(1:lenght(symbols),1:num_batches %% length(sumbols))
+		values = symbols[idx]
+	}
+    pca_plot <- pca_plot +
+      ggplot2::geom_point(alpha = plot_alpha,
+                          aes(shape = .data[["batch"]],
+                              colour = .data[["condition"]],
+                              size = .data[["size"]])) +
+      ggplot2::scale_shape_manual(name = "Batch",
+                                  labels = levels(as.factor(pca_data[["batch"]])),
+                                  guide = ggplot2::guide_legend(overwrite.aes = list(size = plot_size)),
+                                  values = symbols[1:]) +
       ggplot2::scale_color_manual(name = "Condition",
                                   guide = "legend",
                                   values = color_list) +
