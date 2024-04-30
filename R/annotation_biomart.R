@@ -67,14 +67,14 @@ find_working_mart <- function(default_hosts = c("useast.ensembl.org", "uswest.en
     if (is.null(month)) {
       ## Then assume this month
       month_numeric <- lubridate::month(lubridate::date(lubridate::now()))
-      month_nums <- c(month_numeric, month_numeric - 1, month_numeric - 2)
+      month_nums <- c(month_numeric, month_numeric - 1, month_numeric - 2, month_numeric - 3)
       for (m in seq_along(month_nums)) {
         if (month_nums[m] < 1) {
           month_nums[m] <- month_nums[m] + 12
         }
       }
       month_strings <- as.character(lubridate::month(month_nums, label = TRUE, abbr = TRUE))
-    } else if (is.na(suppressWarnings(as.numeric(month))) &
+    } else if (is.na(suppressWarnings(as.numeric(month))) &&
                  month %in% month_strings) {
       ## Then it is pretty much guaranteed to be 'jan'
       month_strings <- month
@@ -231,7 +231,7 @@ load_biomart_annotations <- function(
   trymart = "ENSEMBL_MART_ENSEMBL", archive = TRUE,
   default_hosts = c("useast.ensembl.org", "uswest.ensembl.org",
                     "www.ensembl.org", "asia.ensembl.org"),
-  year = NULL, month = NULL, drop_haplotypes = TRUE, trydataset = NULL,
+  year = NULL, month = NULL, drop_haplotypes = FALSE, trydataset = NULL,
   gene_requests = c("ensembl_gene_id", "version", "ensembl_transcript_id",
                     "transcript_version", "description", "gene_biotype"),
   length_requests = c("ensembl_transcript_id", "cds_length", "chromosome_name",

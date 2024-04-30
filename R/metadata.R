@@ -95,6 +95,7 @@ extract_metadata <- function(metadata, id_column = "sampleid", fill = NULL,
     ## sample_definitions <- read_metadata(meta_file)
   }
 
+  sample_definitions <- as.data.frame(sample_definitions)
   ## Try to ensure that we have a useful ID column by:
   ## 1. Look for data in the id_column column.
   ##  a.  If it is null, look at the rownames

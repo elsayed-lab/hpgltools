@@ -218,15 +218,20 @@ count_expt_snps <- function(expt, annot_column = "bcftable", tolower = TRUE,
 
   snp_dt <- NULL
   if (!is.null(snp_column)) {
+    message("Using the snp column: ", snp_column, " from the sample annotations.")
     snp_dt <- read_snp_columns(samples, file_lst, column = snp_column,
                                reader = reader, verbose = verbose)
   } else if (is.null(numerator_column) && is.null(denominator_column)) {
+    message("Using the snp column: ", snp_column, " from the sample_annotations.")
     snp_dt <- read_snp_columns(samples, file_lst, column = snp_column,
                                reader = reader, verbose = verbose)
   } else if (is.null(denominator_column)) {
+    message("Using only the numerator column: ", numerator_column, " from the sample_annotations.")
     snp_dt <- read_snp_columns(samples, file_lst, column = numerator_column,
                                reader = reader, verbose = verbose)
   } else {
+    message("Using columns: ", numerator_column, " and ", denominator_column,
+            " from the sample_annotations.")
     numerator_dt <- read_snp_columns(samples, file_lst, column = numerator_column,
                                      reader = reader, verbose = verbose)
     denominator_dt <- read_snp_columns(samples, file_lst, column = denominator_column,
@@ -990,6 +995,11 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count",
   first_read <- NULL
   if (reader == "readr") {
     first_read <- readr::read_tsv(first_file, show_col_types = FALSE)
+    ## Note, readr does wacky things if column names are repeated, which definitely happens
+    ## in the case of data produced by freebayes.
+    colnames(first_read) <- make.names(
+      gsub(x = colnames(first_read), pattern = "\\.+\\d+$", replacement = ""),
+      unique = TRUE)
   } else {
     first_read <- read.table(first_file, sep = "\t", header = 1, comment.char = "")
   }
@@ -1021,6 +1031,9 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count",
     }
     if (reader == "readr") {
       new_table <- readr::read_tsv(file, show_col_types = FALSE)
+      colnames(new_table) <- make.names(
+        gsub(x = colnames(new_table), pattern = "\\.+\\d+$", replacement = ""),
+        unique = TRUE)
     } else {
       new_table <- read.table(file, sep = "\t", header = 1, comment.char = "")
     }

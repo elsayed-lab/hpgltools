@@ -305,7 +305,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
                         savefile = NULL, low_files = FALSE, handle_na = "drop",
                         researcher = "elsayed", study_name = NULL, file_type = NULL,
                         annotation_name = "org.Hs.eg.db", tx_gene_map = NULL,
-                        feature_type = "gene", ...) {
+                        feature_type = "gene", ignore_tx_version = TRUE, ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
 
   if ("gene_tx_map" %in% names(arglist)) {
@@ -418,7 +418,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
     sample_ids <- rownames(sample_definitions)
     count_data <- read_counts_expt(sample_ids, filenames, countdir = countdir,
                                    tx_gene_map = tx_gene_map, file_type = file_type,
-                                   ...)
+                                   ignore_tx_version = ignore_tx_version, ...)
     if (count_data[["source"]] == "tximport") {
       tximport_data <- list("raw" = count_data[["tximport"]],
                             "scaled" = count_data[["tximport_scaled"]])
@@ -1480,6 +1480,9 @@ make_pombe_expt <- function(annotation = TRUE) {
 #' @param tx_gene_map Dataframe which provides a mapping between
 #'  transcript IDs and gene IDs.
 #' @param file_type Short circuit the file format autodetection.
+#' @param ignore_tx_version Pass along TRUE to tximport's parameter
+#'  ignoreTxIds to alleviate the headaches associated with salmon's
+#'  stupid transcript ID .x suffix.
 #' @param ... More options for happy time!
 #' @return Data frame of count tables.
 #' @seealso [data.table] [create_expt()] [tximport]
@@ -1491,7 +1494,7 @@ make_pombe_expt <- function(annotation = TRUE) {
 read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = FALSE,
                              all.x = TRUE, all.y = FALSE, merge_type = "merge",
                              suffix = NULL, countdir = NULL, tx_gene_map = NULL,
-                             file_type = NULL, ...) {
+                             file_type = NULL, ignore_tx_version = TRUE, ...) {
   ## load first sample
   arglist <- list(...)
   retlist <- list()
@@ -1618,15 +1621,19 @@ If this is not correctly performed, very few genes will be observed")
     import <- NULL
     import_scaled <- NULL
     if (is.null(tx_gene_map)) {
-      import <- sm(tximport::tximport(files = files, type = "salmon", txOut = txout))
+      import <- sm(tximport::tximport(files = files, type = "salmon",
+                                      txOut = txout, ignoreTxVersion = ignore_tx_version))
       import_scaled <- sm(tximport::tximport(
         files = files, type = "salmon",
-        txOut = txout, countsFromAbundance = "lengthScaledTPM"))
+        txOut = txout, countsFromAbundance = "lengthScaledTPM",
+        ignoreTxVersion = ignore_tx_version))
     } else {
       ## Add a little test to see how well the tx_gene_map versions
       ## match those in the results from salmon.
       import <- tximport::tximport(
-        files = as.character(files), type = "salmon", tx2gene = tx_gene_map, txOut = txout)
+        files = as.character(files), type = "salmon",
+        tx2gene = tx_gene_map, txOut = txout,
+        ignoreTxVersion = ignore_tx_version)
       ## It appears that something in tximport recently changed which causes it to no longer
       ## put the actual sampleIDs as the colnames of its return.
       ## And, since I use the count table columns as the primary arbiter of the sample IDs
@@ -1636,7 +1643,8 @@ If this is not correctly performed, very few genes will be observed")
       colnames(import[["length"]]) <- ids
       import_scaled <- sm(tximport::tximport(
         files = files, type = "salmon", tx2gene = tx_gene_map,
-        txOut = txout, countsFromAbundance = "lengthScaledTPM"))
+        txOut = txout, countsFromAbundance = "lengthScaledTPM",
+        ignoreTxVersion = ignore_tx_version))
       colnames(import_scaled[["abundance"]]) <- ids
       colnames(import_scaled[["counts"]]) <- ids
       colnames(import_scaled[["length"]]) <- ids
