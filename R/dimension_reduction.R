@@ -1749,11 +1749,33 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
         guide = ggplot2::guide_legend(override.aes = list(size = plot_size, fill = "grey")),
         values = 21:25)
   } else if (is.null(size_column) && num_batches > 5) {
+	### cannot mix integer with characters even using list
+	### 19 removed because it looks like 16, which might not be needed since shapes are reused for batches more than 25
+	symbols = c(0:18,20:25)
+	if(length(symbols) < num_batches){
+		idx = c(rep(1:length(symbols),
+			    num_batches %/% length(symbols)),
+			    1:(num_batches %% length(symbols)))
+		values = symbols[idx]
+	}else{
+		values = symbols[1:num_batches]
+	}
+	
+	## change outline color to black for batches 21+
+	if(num_batches > 20){
+		cond20 = unique(pca_data[['condition']])[1:20]
+		idx = which(pca_data[['condition']] %in% cond20)
+		othern = nrow(pca_data) - length(idx)
+	  	outline_col = c(pca_data[['condition']][idx],rep('black',othern))
+	}else{
+	  	outline_col = pca_data[['condition']]
+	}
+
     pca_plot <- pca_plot +
       ggplot2::geom_point(size = plot_size, alpha = plot_alpha,
                           aes(shape = .data[["batch"]],
                               fill = .data[["condition"]],
-                              colour = .data[["condition"]])) +
+                              colour = outline_col)) +
       ggplot2::scale_color_manual(name = "Condition",
                                   ##guide = ggplot2::guide_legend(override.aes = list(size = plot_size)),
                                   guide = "legend",
@@ -1765,7 +1787,7 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
       ggplot2::scale_shape_manual(name = "Batch",
                                   labels = levels(as.factor(pca_data[["batch"]])),
                                   guide = ggplot2::guide_legend(overwrite.aes = list(size = plot_size)),
-                                  values = 1:num_batches)
+                                  values = values)
   } else if (!is.null(size_column) && num_batches <= 5) {
     ## This will require the 6 steps above and one more
     pca_plot <- ggplot(data = as.data.frame(pca_data),
@@ -1803,41 +1825,16 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
       ggplot2::scale_size_manual(name = size_column,
         labels = levels(pca_data[[size_column]]),
         values = as.numeric(levels(pca_data[["size"]])))
-  } else if (!is.null(size_column) && num_batches > 5 && num_batches<19) {
+  } else if (!is.null(size_column) && num_batches > 5) {
     pca_plot <- pca_plot +
-      ggplot2::geom_point(alpha = plot_alpha,
+      ggplot2::geom_point(alpha = plot_alpha, 
                           aes(shape = .data[["batch"]],
                               colour = .data[["condition"]],
                               size = .data[["size"]])) +
       ggplot2::scale_shape_manual(name = "Batch",
                                   labels = levels(as.factor(pca_data[["batch"]])),
                                   guide = ggplot2::guide_legend(overwrite.aes = list(size = plot_size)),
-                                  values = 1:num_batches) +
-      ggplot2::scale_color_manual(name = "Condition",
-                                  guide = "legend",
-                                  values = color_list) +
-      ggplot2::scale_size_manual(name = size_column,
-                                 labels = levels(pca_data[[size_column]]),
-                                 values = as.numeric(levels(pca_data[["size"]])))
-  } else if (!is.null(size_column) && num_batches>19) {
-	symbols = c(0:18,20,'+','-','o','O','*','|','%','#')
-  	if(num_batches<length(symbols)){
-		values = symbols[1:num_batches]
-	}else{
-		## wrap around the shapes and give a warning message
-		warning('')
-		idx = c(1:lenght(symbols),1:num_batches %% length(sumbols))
-		values = symbols[idx]
-	}
-    pca_plot <- pca_plot +
-      ggplot2::geom_point(alpha = plot_alpha,
-                          aes(shape = .data[["batch"]],
-                              colour = .data[["condition"]],
-                              size = .data[["size"]])) +
-      ggplot2::scale_shape_manual(name = "Batch",
-                                  labels = levels(as.factor(pca_data[["batch"]])),
-                                  guide = ggplot2::guide_legend(overwrite.aes = list(size = plot_size)),
-                                  values = symbols[1:]) +
+                                  values = values) +
       ggplot2::scale_color_manual(name = "Condition",
                                   guide = "legend",
                                   values = color_list) +
