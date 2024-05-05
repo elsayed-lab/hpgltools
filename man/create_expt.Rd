@@ -26,6 +26,7 @@ create_expt(
   annotation_name = "org.Hs.eg.db",
   tx_gene_map = NULL,
   feature_type = "gene",
+  ignore_tx_version = TRUE,
   ...
 )
 }

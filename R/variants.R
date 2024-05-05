@@ -769,6 +769,15 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
   return(retlist)
 }
 
+#' Collect variants associated with specific conditions.
+#'
+#' @param snp_expt variant collection.
+#' @param factor metadata factor
+#' @param stringency method to determin 'real' variants.
+#' @param do_save Save the result?
+#' @param savefile outptu savefile.
+#' @param proportion Used with stringency.
+#' @export
 get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
                          stringency = NULL, do_save = FALSE,
                          savefile = "variants.rda",

@@ -460,7 +460,7 @@ load_biomart_annotations <- function(
 
   retlist <- list(
     "annotation" = biomart_annotations,
-    "gene_annotation" = gene_annotations,
+    "gene_annotations" = gene_annotations,
     "gene_tx_map" = gene_tx_map,
     "mart" = ensembl,
     "host" = host,
