@@ -1753,7 +1753,8 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
   } else if (is.null(size_column) && num_batches > 5) {
 	### cannot mix integer with characters even using list
 	### 19 removed because it looks like 16, which might not be needed since shapes are reused for batches more than 25
-	symbols = c(0:18,20:25)
+	#symbols = c(0:18,20:25)
+	symbols = c(0:25)
 	if(length(symbols) < num_batches){
 		idx = c(rep(1:length(symbols),
 			    num_batches %/% length(symbols)),
@@ -1764,14 +1765,14 @@ plot_pcs <- function(pca_data, first = "PC1", second = "PC2", variances = NULL,
 	}
 	
 	## change outline color to black for batches 21+
-	if(num_batches > 20){
-		cond20 = unique(pca_data[['condition']])[1:20]
-		idx = which(pca_data[['condition']] %in% cond20)
-		othern = nrow(pca_data) - length(idx)
-	  	outline_col = c(pca_data[['condition']][idx],rep('black',othern))
-	}else{
-	  	outline_col = pca_data[['condition']]
-	}
+	#if(num_batches > 20){
+#		cond20 = unique(pca_data[['condition']])[1:20]
+#		idx = which(pca_data[['condition']] %in% cond20)
+#		othern = nrow(pca_data) - length(idx)
+##	  	outline_col = c(pca_data[['condition']][idx],rep('black',othern))
+#	}else{
+#	  	outline_col = pca_data[['condition']]
+#	}
 
     pca_plot <- pca_plot +
       ggplot2::geom_point(size = plot_size, alpha = plot_alpha,
