@@ -19,7 +19,7 @@ score_amino_acids <- function(file, sanitize_names = TRUE) {
   } else {
     message("This appears to be a DNA fasta file.")
     sequences <- Biostrings::readDNAStringSet(file, "fasta")
-    amino_acids <- Biostrings::translate(sequences, if.fuzzy.codon="solve")
+    amino_acids <- Biostrings::translate(sequences, if.fuzzy.codon = "solve")
   }
 
   aa_names <- names(amino_acids)

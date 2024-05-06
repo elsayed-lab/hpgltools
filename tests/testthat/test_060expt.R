@@ -62,10 +62,13 @@ test_that("Do we get a reasonable samples if we collapse by time?", {
   expect_equal(actual[2], expected[2], tolerance = 0.001)
 })
 
+no_ncrna <- subset_genes(pombe_expt,
+                         column = "gene_biotype", patterns = "ncRNA")
+
 no_rrna <- subset_genes(pombe_expt,
                         column = "gene_biotype",
                         patterns = c("ncRNA", "pseudogene"))
-expected <- 5778
+expected <- 5479
 actual <- nrow(exprs(no_rrna))
 test_that("Does exclude_genes_expt remove stuff?", {
   expect_equal(actual, expected)

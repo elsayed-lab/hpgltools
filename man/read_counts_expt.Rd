@@ -16,6 +16,7 @@ read_counts_expt(
   countdir = NULL,
   tx_gene_map = NULL,
   file_type = NULL,
+  ignore_tx_version = TRUE,
   ...
 )
 }
@@ -42,6 +43,10 @@ read_counts_expt(
 transcript IDs and gene IDs.}
 
 \item{file_type}{Short circuit the file format autodetection.}
+
+\item{ignore_tx_version}{Pass along TRUE to tximport's parameter
+ignoreTxIds to alleviate the headaches associated with salmon's
+stupid transcript ID .x suffix.}
 
 \item{...}{More options for happy time!}
 }

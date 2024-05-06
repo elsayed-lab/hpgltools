@@ -1315,7 +1315,7 @@ cbcb_combat <- function(dat, batch, mod, noscale = TRUE, prior.plots = FALSE, ..
   var.pooled <- NULL
   mesg("Standardizing data across genes\n")
   if (NAs) {
-    warning(glue("Found {sum(is.na(dat)} missing data values."))
+    warning(glue("Found {sum(is.na(dat))} missing data values."))
     warning("The original combatMod uses an undefined variable Beta.NA here,
 I set it to 1 not knowing what its purpose is.")
     B.hat <- apply(dat, 1, Beta.NA)

@@ -10,7 +10,9 @@ count_expt_snps(
   tolower = TRUE,
   snp_column = NULL,
   numerator_column = "PAO",
-  denominator_column = "DP"
+  denominator_column = "DP",
+  reader = "table",
+  verbose = FALSE
 )
 }
 \arguments{

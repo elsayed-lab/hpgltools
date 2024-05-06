@@ -4,7 +4,13 @@
 \alias{read_snp_columns}
 \title{Read the output from bcfutils into a count-table-esque}
 \usage{
-read_snp_columns(samples, file_lst, column = "diff_count", verbose = FALSE)
+read_snp_columns(
+  samples,
+  file_lst,
+  column = "diff_count",
+  verbose = FALSE,
+  reader = "readr"
+)
 }
 \arguments{
 \item{samples}{Sample names to read.}

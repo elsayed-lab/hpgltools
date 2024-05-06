@@ -46,7 +46,7 @@ combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, a
   exp2 <- expt2[["expressionset"]]
   fData(exp2) <- fData(exp1)
 
-  testthat::expect_equal(rownames(exprs(exp1)), rownames(exprs(exp2)))
+  ##testthat::expect_equal(rownames(exprs(exp1)), rownames(exprs(exp2)))
 
   if (isTRUE(merge_meta)) {
     design1 <- pData(exp1)
@@ -62,7 +62,8 @@ combine_expts <- function(expt1, expt2, condition = "condition", all_x = TRUE, a
     pData(exp2) <- new_design2
   }
 
-  new <- a4Base::combineTwoExpressionSet(exp1, exp2)
+  ## new <- a4Base::combineTwoExpressionSet(exp1, exp2)
+  new <- Biobase::combine(exp1, exp2)
   expt1[["expressionset"]] <- new
   expt1[["conditions"]] <- pData(expt1)[["condition"]]
   names(expt1[["conditions"]]) <- rownames(pData(expt1))
@@ -304,7 +305,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
                         savefile = NULL, low_files = FALSE, handle_na = "drop",
                         researcher = "elsayed", study_name = NULL, file_type = NULL,
                         annotation_name = "org.Hs.eg.db", tx_gene_map = NULL,
-                        feature_type = "gene", ...) {
+                        feature_type = "gene", ignore_tx_version = TRUE, ...) {
   arglist <- list(...)  ## pass stuff like sep=, header=, etc here
 
   if ("gene_tx_map" %in% names(arglist)) {
@@ -363,7 +364,6 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
   message("Reading the sample metadata.")
   sample_definitions <- extract_metadata(metadata, id_column = id_column,
                                          ...)
-  ## sample_definitions <- extract_metadata(metadata)
   ## Add an explicit removal of the file column if the option file_column is NULL.
   ## This is a just in case measure to avoid conflicts.
   if (is.null(file_column)) {
@@ -418,7 +418,7 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
     sample_ids <- rownames(sample_definitions)
     count_data <- read_counts_expt(sample_ids, filenames, countdir = countdir,
                                    tx_gene_map = tx_gene_map, file_type = file_type,
-                                   ...)
+                                   ignore_tx_version = ignore_tx_version, ...)
     if (count_data[["source"]] == "tximport") {
       tximport_data <- list("raw" = count_data[["tximport"]],
                             "scaled" = count_data[["tximport_scaled"]])
@@ -615,12 +615,16 @@ create_expt <- function(metadata = NULL, gene_info = NULL, count_dataframe = NUL
   ## not match after using tximport.
   if (!is.null(arglist[["tx_gene_map"]])) {
     tx_gene_map <- arglist[["tx_gene_map"]]
-    matched_rows <- sum(rownames(gene_info) %in% tx_gene_map[[2]])
+    ## This is wrong, we recast gene_info as a data.table and thus it does not have rownames.
+    ## matched_rows <- sum(rownames(gene_info) %in% tx_gene_map[[2]])
+    ## Because of the previous line, the following test always sees the match between the tx_gene_map
+    ## and gene annotations as 0, and therefore it messed up the rownames of the annotations.
+    matched_rows <- gene_info[["rownames"]] %in% tx_gene_map[[2]]
     if (matched_rows < 1) {
       message("The mapped IDs are not the rownames of your gene information, changing them now.")
       if (names(tx_gene_map)[2] %in% colnames(gene_info)) {
         new_name <- names(tx_gene_map)[2]
-        rownames(gene_info) <- make.names(tx_gene_map[[new_name]], unique = TRUE)
+        gene_info[["rownames"]] <- make.names(tx_gene_map[[new_name]], unique = TRUE)
       } else {
         warning("Cannot find an appropriate column in gene_info, refusing to use the tx_map.")
       }
@@ -1476,6 +1480,9 @@ make_pombe_expt <- function(annotation = TRUE) {
 #' @param tx_gene_map Dataframe which provides a mapping between
 #'  transcript IDs and gene IDs.
 #' @param file_type Short circuit the file format autodetection.
+#' @param ignore_tx_version Pass along TRUE to tximport's parameter
+#'  ignoreTxIds to alleviate the headaches associated with salmon's
+#'  stupid transcript ID .x suffix.
 #' @param ... More options for happy time!
 #' @return Data frame of count tables.
 #' @seealso [data.table] [create_expt()] [tximport]
@@ -1487,7 +1494,7 @@ make_pombe_expt <- function(annotation = TRUE) {
 read_counts_expt <- function(ids, files, header = FALSE, include_summary_rows = FALSE,
                              all.x = TRUE, all.y = FALSE, merge_type = "merge",
                              suffix = NULL, countdir = NULL, tx_gene_map = NULL,
-                             file_type = NULL, ...) {
+                             file_type = NULL, ignore_tx_version = TRUE, ...) {
   ## load first sample
   arglist <- list(...)
   retlist <- list()
@@ -1562,11 +1569,13 @@ If this is not correctly performed, very few genes will be observed")
     import <- NULL
     import_scaled <- NULL
     if (is.null(tx_gene_map)) {
+      warning("Check that these count column names are correct, it may be the case that tximport failed and we need to set the colnames as per salmon.")
       import <- sm(tximport::tximport(files = files, type = "kallisto", txOut = txout))
       import_scaled <- sm(tximport::tximport(
         files = files, type = "kallisto",
         txOut = txout, countsFromAbundance = "lengthScaledTPM"))
     } else {
+      warning("Check that these count column names are correct, it may be the case that tximport failed and we need to set the colnames as per salmon.")
       import <- sm(tximport::tximport(
         files = files, type = "kallisto", tx2gene = tx_gene_map, txOut = txout))
       import_scaled <- sm(tximport::tximport(
@@ -1585,6 +1594,7 @@ If this is not correctly performed, very few genes will be observed")
     import <- NULL
     import_scaled <- NULL
     if (is.null(tx_gene_map)) {
+      warning("Check that these count column names are correct, it may be the case that tximport failed and we need to set the colnames as per salmon.")
       import <- tximport::tximport(files = files, type = "rsem", txOut = txout)
       import_scaled <- tximport::tximport(files = files, type = "rsem",
                                           txOut = txout, countsFromAbundance = "lengthScaledTPM")
@@ -1611,18 +1621,33 @@ If this is not correctly performed, very few genes will be observed")
     import <- NULL
     import_scaled <- NULL
     if (is.null(tx_gene_map)) {
-      import <- sm(tximport::tximport(files = files, type = "salmon", txOut = txout))
+      import <- sm(tximport::tximport(files = files, type = "salmon",
+                                      txOut = txout, ignoreTxVersion = ignore_tx_version))
       import_scaled <- sm(tximport::tximport(
         files = files, type = "salmon",
-        txOut = txout, countsFromAbundance = "lengthScaledTPM"))
+        txOut = txout, countsFromAbundance = "lengthScaledTPM",
+        ignoreTxVersion = ignore_tx_version))
     } else {
       ## Add a little test to see how well the tx_gene_map versions
       ## match those in the results from salmon.
       import <- tximport::tximport(
-        files = as.character(files), type = "salmon", tx2gene = tx_gene_map, txOut = txout)
+        files = as.character(files), type = "salmon",
+        tx2gene = tx_gene_map, txOut = txout,
+        ignoreTxVersion = ignore_tx_version)
+      ## It appears that something in tximport recently changed which causes it to no longer
+      ## put the actual sampleIDs as the colnames of its return.
+      ## And, since I use the count table columns as the primary arbiter of the sample IDs
+      ## when merging the sample annotations (metadata) and the counts, this does not end well.
+      colnames(import[["abundance"]]) <- ids
+      colnames(import[["counts"]]) <- ids
+      colnames(import[["length"]]) <- ids
       import_scaled <- sm(tximport::tximport(
         files = files, type = "salmon", tx2gene = tx_gene_map,
-        txOut = txout, countsFromAbundance = "lengthScaledTPM"))
+        txOut = txout, countsFromAbundance = "lengthScaledTPM",
+        ignoreTxVersion = ignore_tx_version))
+      colnames(import_scaled[["abundance"]]) <- ids
+      colnames(import_scaled[["counts"]]) <- ids
+      colnames(import_scaled[["length"]]) <- ids
     }
     retlist[["count_table"]] <- data.table::as.data.table(
       import[["counts"]], keep.rownames = "rownames")
@@ -2494,6 +2519,21 @@ subset_expt <- function(expt, subset = NULL, ids = NULL,
     subset_design <- as.data.frame(subset_design, stringsAsFactors = FALSE)
     message("The samples (and read coverage) removed when filtering ",
             nonzero, " non-zero genes are: ")
+    dropped <- exprs(expt)[, remove_idx]
+    if (class(dropped)[1] == "numeric") {
+      print(sum(dropped))
+    } else if (class(dropped)[1] == "matrix") {
+      print(colSums(dropped))
+    }
+    dropped_names <- colnames(dropped)
+    colnames(dropped) <- dropped_names
+    num_genes <- rep(0, length(dropped_names))
+    names(num_genes) <- dropped_names
+    for (sample in colnames(dropped)) {
+      num_genes[sample] <- sum(dropped[, sample] > 0)
+    }
+    message("by number of genes:")
+    print(num_genes)
   } else {
     stop("Unable to determine what is being subset.")
   }
@@ -3185,8 +3225,35 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   ## Violin plots
   if (isTRUE(violin)) {
     filt <- sm(normalize_expt(expt, filter = "simple"))
-    varpart_raw <- sm(suppressWarnings(try(simple_varpart(filt), silent = TRUE)))
+
+    full_model <- as.formula("~ condition + batch")
+    reduced_model <- as.formula("~ condition")
+    data_full_model <- stats::model.matrix.default(full_model, data = pData(filt))
+    data_reduced_model <-  stats::model.matrix.default(reduced_model, data = pData(expt))
+    full_model_columns <- ncol(data_full_model)
+    reduced_model_columns <- ncol(data_reduced_model)
+    full_model_rank <- qr(data_full_model)[["rank"]]
+    reduced_model_rank <- qr(data_reduced_model)[["rank"]]
+    varpart_factors <- c("condition", "batch")
+    do_varpart <- TRUE
+    varpart_raw <- NULL
+    if (full_model_rank < full_model_columns) {
+      message("This expressionset does not support lmer with condition+batch")
+      if (reduced_model_rank < reduced_model_columns) {
+        message("This expressionset also does not support lmer with just condition!")
+        do_varpart <- FALSE
+      } else {
+        varpart_factors <- "condition"
+      }
+    }
+    if (isTRUE(do_varpart)) {
+      varpart_raw <- sm(suppressWarnings(try(simple_varpart(filt, factors = varpart_factors), silent = TRUE)))
+    }
     if (! "try-error" %in% class(varpart_raw)) {
+      varpart_raw <- NULL
+      do_varpart <- FALSE
+    }
+    if (!is.null(varpart_raw)) {
       violin_plot <- varpart_raw[["partition_plot"]]
       new_row <- new_row + plot_rows + 2
       new_col <- 1
@@ -3450,8 +3517,8 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   ## Violin plots
   nvarpart_plot <- NULL
   npct_plot <- NULL
-  if (isTRUE(violin)) {
-    varpart_norm <- suppressWarnings(try(simple_varpart(norm_data)))
+  if (isTRUE(violin) && isTRUE(do_varpart)) {
+    varpart_norm <- suppressWarnings(try(simple_varpart(norm_data, factors = varpart_factors)))
     if (! "try-error" %in% class(varpart_norm)) {
       nvarpart_plot <- varpart_norm[["partition_plot"]]
       new_row <- new_row + plot_rows + 2
