@@ -8,6 +8,8 @@ extract_metadata(
   metadata,
   id_column = "sampleid",
   fill = NULL,
+  fill_condition = TRUE,
+  fill_batch = TRUE,
   sanitize = TRUE,
   ...
 )
@@ -18,6 +20,10 @@ extract_metadata(
 \item{id_column}{Column in the metadat containing the sample names.}
 
 \item{fill}{Fill missing data with this.}
+
+\item{fill_condition}{Add a condition column if there is not one?}
+
+\item{fill_batch}{Add a batch column if there is not one?}
 
 \item{sanitize}{Perform my various sanitizers on the data?}
 

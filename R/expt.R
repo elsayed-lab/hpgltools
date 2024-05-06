@@ -3225,8 +3225,35 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   ## Violin plots
   if (isTRUE(violin)) {
     filt <- sm(normalize_expt(expt, filter = "simple"))
-    varpart_raw <- sm(suppressWarnings(try(simple_varpart(filt), silent = TRUE)))
+
+    full_model <- as.formula("~ condition + batch")
+    reduced_model <- as.formula("~ condition")
+    data_full_model <- stats::model.matrix.default(full_model, data = pData(filt))
+    data_reduced_model <-  stats::model.matrix.default(reduced_model, data = pData(expt))
+    full_model_columns <- ncol(data_full_model)
+    reduced_model_columns <- ncol(data_reduced_model)
+    full_model_rank <- qr(data_full_model)[["rank"]]
+    reduced_model_rank <- qr(data_reduced_model)[["rank"]]
+    varpart_factors <- c("condition", "batch")
+    do_varpart <- TRUE
+    varpart_raw <- NULL
+    if (full_model_rank < full_model_columns) {
+      message("This expressionset does not support lmer with condition+batch")
+      if (reduced_model_rank < reduced_model_columns) {
+        message("This expressionset also does not support lmer with just condition!")
+        do_varpart <- FALSE
+      } else {
+        varpart_factors <- "condition"
+      }
+    }
+    if (isTRUE(do_varpart)) {
+      varpart_raw <- sm(suppressWarnings(try(simple_varpart(filt, factors = varpart_factors), silent = TRUE)))
+    }
     if (! "try-error" %in% class(varpart_raw)) {
+      varpart_raw <- NULL
+      do_varpart <- FALSE
+    }
+    if (!is.null(varpart_raw)) {
       violin_plot <- varpart_raw[["partition_plot"]]
       new_row <- new_row + plot_rows + 2
       new_col <- 1
@@ -3490,8 +3517,8 @@ write_expt <- function(expt, excel = "excel/pretty_counts.xlsx", norm = "quant",
   ## Violin plots
   nvarpart_plot <- NULL
   npct_plot <- NULL
-  if (isTRUE(violin)) {
-    varpart_norm <- suppressWarnings(try(simple_varpart(norm_data)))
+  if (isTRUE(violin) && isTRUE(do_varpart)) {
+    varpart_norm <- suppressWarnings(try(simple_varpart(norm_data, factors = varpart_factors)))
     if (! "try-error" %in% class(varpart_norm)) {
       nvarpart_plot <- varpart_norm[["partition_plot"]]
       new_row <- new_row + plot_rows + 2

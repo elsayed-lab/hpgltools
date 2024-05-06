@@ -15,7 +15,7 @@ load_biomart_annotations(
     "asia.ensembl.org"),
   year = NULL,
   month = NULL,
-  drop_haplotypes = TRUE,
+  drop_haplotypes = FALSE,
   trydataset = NULL,
   gene_requests = c("ensembl_gene_id", "version", "ensembl_transcript_id",
     "transcript_version", "description", "gene_biotype"),

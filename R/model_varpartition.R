@@ -126,7 +126,10 @@ simple_varpart <- function(expt, predictor = NULL, factors = c("condition", "bat
   }
   data <- exprs(norm)
 
-  design_sub <- design[, factors]
+  design_sub <- as.data.frame(design[, factors])
+  if (length(factors) == 1) {
+    colnames(design_sub) <- factors
+  }
   mesg("Fitting the expressionset to the model, this is slow.")
   my_extract <- try(variancePartition::fitExtractVarPartModel(data, my_model, design_sub))
   ## my_extract <- try(variancePartition::fitVarPartModel(data, my_model, design))

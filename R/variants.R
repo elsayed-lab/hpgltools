@@ -206,7 +206,7 @@ classify_variants <- function(metadata, coverage_column = "bedtoolscoveragefile"
 #' @export
 count_expt_snps <- function(expt, annot_column = "bcftable", tolower = TRUE,
                             snp_column = NULL, numerator_column = "PAO",
-                            denominator_column = "DP", reader = "readr", verbose = FALSE) {
+                            denominator_column = "DP", reader = "table", verbose = FALSE) {
   samples <- rownames(pData(expt))
   if (isTRUE(tolower)) {
     samples <- tolower(samples)
@@ -218,15 +218,20 @@ count_expt_snps <- function(expt, annot_column = "bcftable", tolower = TRUE,
 
   snp_dt <- NULL
   if (!is.null(snp_column)) {
+    message("Using the snp column: ", snp_column, " from the sample annotations.")
     snp_dt <- read_snp_columns(samples, file_lst, column = snp_column,
                                reader = reader, verbose = verbose)
   } else if (is.null(numerator_column) && is.null(denominator_column)) {
+    message("Using the snp column: ", snp_column, " from the sample_annotations.")
     snp_dt <- read_snp_columns(samples, file_lst, column = snp_column,
                                reader = reader, verbose = verbose)
   } else if (is.null(denominator_column)) {
+    message("Using only the numerator column: ", numerator_column, " from the sample_annotations.")
     snp_dt <- read_snp_columns(samples, file_lst, column = numerator_column,
                                reader = reader, verbose = verbose)
   } else {
+    message("Using columns: ", numerator_column, " and ", denominator_column,
+            " from the sample_annotations.")
     numerator_dt <- read_snp_columns(samples, file_lst, column = numerator_column,
                                      reader = reader, verbose = verbose)
     denominator_dt <- read_snp_columns(samples, file_lst, column = denominator_column,
@@ -469,9 +474,9 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
                  ## .multicombine = TRUE,
                  .packages = c("hpgltools", "doParallel"),
                  .export = c("snp_by_chr")) %dopar% {
-    chromosome_name <- observed_individual_chromosomes[i]
-    observed_chr[[chromosome_name]] <- snp_by_chr(observed, chr_name = chromosome_name)
-  }
+                   chromosome_name <- observed_individual_chromosomes[i]
+                   observed_chr[[chromosome_name]] <- snp_by_chr(observed, chr_name = chromosome_name)
+                 }
   ## Unpack the res data structure (which probably can be simplified)
   observed_by_chr <- list()
   possibilities <- c()
@@ -502,9 +507,9 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
                  ## .multicombine = TRUE,
                  .packages = c("hpgltools", "doParallel"),
                  .export = c("snp_by_chr")) %dopar% {
-    chromosome_name <- homo_individual_chromosomes[i]
-    homo_chr[[chromosome_name]] <- snp_by_chr(all_homo, chr_name = chromosome_name)
-  }
+                   chromosome_name <- homo_individual_chromosomes[i]
+                   homo_chr[[chromosome_name]] <- snp_by_chr(all_homo, chr_name = chromosome_name)
+                 }
   ## Unpack the res data structure (which probably can be simplified)
 
   homo_by_chr <- list()
@@ -530,9 +535,9 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
                  ## .multicombine = TRUE,
                  .packages = c("hpgltools", "doParallel"),
                  .export = c("snp_by_chr")) %dopar% {
-    chromosome_name <- hetero_individual_chromosomes[i]
-    hetero_chr[[chromosome_name]] <- snp_by_chr(all_hetero, chr_name = chromosome_name)
-  }
+                   chromosome_name <- hetero_individual_chromosomes[i]
+                   hetero_chr[[chromosome_name]] <- snp_by_chr(all_hetero, chr_name = chromosome_name)
+                 }
   ## Unpack the res data structure (which probably can be simplified)
   hetero_by_chr <- list()
   end <- length(res)
@@ -544,7 +549,7 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
   }
 
   exc_homo_chr_names <- gsub(pattern = "^chr_(.+)_pos_.+_ref_.+_alt_.+$",
-                               replacement = "\\1", x = rownames(exclusive_homo))
+                             replacement = "\\1", x = rownames(exclusive_homo))
   exclusive_homo[["chr"]] <- exc_homo_chr_names
   exc_homo_individual_chromosomes <- levels(as.factor(exc_homo_chr_names))
   num_levels <- length(exc_homo_individual_chromosomes)
@@ -557,9 +562,9 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
                  ## .multicombine = TRUE,
                  .packages = c("hpgltools", "doParallel"),
                  .export = c("snp_by_chr")) %dopar% {
-    chromosome_name <- exc_homo_individual_chromosomes[i]
-    exclusive_homo_chr[[chromosome_name]] <- snp_by_chr(exclusive_homo, chr_name = chromosome_name)
-  }
+                   chromosome_name <- exc_homo_individual_chromosomes[i]
+                   exclusive_homo_chr[[chromosome_name]] <- snp_by_chr(exclusive_homo, chr_name = chromosome_name)
+                 }
   ## Unpack the res data structure (which probably can be simplified)
   exclusive_homo_by_chr <- list()
   end <- length(res)
@@ -584,9 +589,9 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
                  ## .multicombine = TRUE,
                  .packages = c("hpgltools", "doParallel"),
                  .export = c("snp_by_chr")) %dopar% {
-    chromosome_name <- exc_hetero_individual_chromosomes[i]
-    exclusive_hetero_chr[[chromosome_name]] <- snp_by_chr(exclusive_hetero, chr_name = chromosome_name)
-  }
+                   chromosome_name <- exc_hetero_individual_chromosomes[i]
+                   exclusive_hetero_chr[[chromosome_name]] <- snp_by_chr(exclusive_hetero, chr_name = chromosome_name)
+                 }
   ## Unpack the res data structure (which probably can be simplified)
   exclusive_hetero_by_chr <- list()
   end <- length(res)
@@ -611,9 +616,9 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
                  ## .multicombine = TRUE,
                  .packages = c("hpgltools", "doParallel"),
                  .export = c("snp_by_chr")) %dopar% {
-    chromosome_name <- exc_not_individual_chromosomes[i]
-    exclusive_not_chr[[chromosome_name]] <- snp_by_chr(exclusive_not, chr_name = chromosome_name)
-  }
+                   chromosome_name <- exc_not_individual_chromosomes[i]
+                   exclusive_not_chr[[chromosome_name]] <- snp_by_chr(exclusive_not, chr_name = chromosome_name)
+                 }
   ## Unpack the res data structure (which probably can be simplified)
   exclusive_not_by_chr <- list()
   end <- length(res)
@@ -653,8 +658,8 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
     num_exclusive_hetero <- length(exclusive_hetero_snps)
     num_exclusive_not <- length(exclusive_not_snps)
     last_position <- max(
-        as.numeric(gsub(pattern = "^chr_.+_pos_(.+)_ref_.+_alt_.+$",
-                        replacement = "\\1", x = observed_snps)))
+      as.numeric(gsub(pattern = "^chr_.+_pos_(.+)_ref_.+_alt_.+$",
+                      replacement = "\\1", x = observed_snps)))
 
     homo_density <- num_homo / as.numeric(last_position)
     exclusive_homo_density <- num_exclusive_homo / as.numeric(last_position)
@@ -703,7 +708,7 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
         exclusive_not_intersections[[inter]] <- exclusive_not_by_chr[[chr]][["intersections"]][[inter]]
       } else {
         exclusive_not_intersections[[inter]] <- c(exclusive_not_intersections[[inter]],
-                                                     exclusive_not_by_chr[[chr]][["intersections"]][[inter]])
+                                                  exclusive_not_by_chr[[chr]][["intersections"]][[inter]])
       }
 
       if (is.null(observed_intersections[[inter]])) {
@@ -764,6 +769,15 @@ get_proportion_snp_sets <- function(snp_expt, factor = "pathogenstrain",
   return(retlist)
 }
 
+#' Collect variants associated with specific conditions.
+#'
+#' @param snp_expt variant collection.
+#' @param factor metadata factor
+#' @param stringency method to determin 'real' variants.
+#' @param do_save Save the result?
+#' @param savefile outptu savefile.
+#' @param proportion Used with stringency.
+#' @export
 get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
                          stringency = NULL, do_save = FALSE,
                          savefile = "variants.rda",
@@ -856,9 +870,9 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
                  .packages = c("hpgltools", "doParallel"),
                  .export = c("snp_by_chr")) %dopar% {
 
-    chromosome_name <- levels(as.factor(chr))[i]
-    returns[[chromosome_name]] <- snp_by_chr(observed, chr_name = chromosome_name)
-  }
+                   chromosome_name <- levels(as.factor(chr))[i]
+                   returns[[chromosome_name]] <- snp_by_chr(observed, chr_name = chromosome_name)
+                 }
   if (isTRUE(show_progress)) {
     close(bar)
   }
@@ -901,8 +915,8 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
     ##last_position <- max(as.numeric(gsub(pattern = "^.+_.+_(.+)_.+_.+$",
     ##                                     replacement = "\\1", x = snps)))
     last_position <- max(
-        as.numeric(gsub(pattern = "^chr_.+_pos_(.+)_ref_.+_alt_.+$",
-                        replacement = "\\1", x = snps)))
+      as.numeric(gsub(pattern = "^chr_.+_pos_(.+)_ref_.+_alt_.+$",
+                      replacement = "\\1", x = snps)))
     snp_density <- num_snps / as.numeric(last_position)
     density_by_chr[[chr]] <- snp_density
     for (inter in names(data_by_chr[[chr]][["intersections"]])) {
@@ -940,10 +954,10 @@ get_snp_sets <- function(snp_expt, factor = "pathogenstrain",
 snpnames2gr <- function(names, gr = NULL) {
   pos_df <- data.frame(row.names = names)
   pos_df[["chr"]] <- gsub(pattern = "^chr_(.+)_pos_.+_ref.+_alt.+$",
-                                 replacement = "\\1",
-                                 x = rownames(pos_df))
+                          replacement = "\\1",
+                          x = rownames(pos_df))
   pos_df[["start"]] <- as.numeric(gsub(pattern = "^chr_.+_pos_(.+)_ref.+_alt.+$",
-                                          replacement = "\\1",
+                                       replacement = "\\1",
                                        x = rownames(pos_df)))
   pos_df[["end"]] <- pos_df[["start"]]
   pos_df[["strand"]] <- "+"
@@ -960,7 +974,7 @@ snpnames2gr <- function(names, gr = NULL) {
                                                            keep.extra.columns = TRUE)
   }
   return(variants_gr)
-  }
+}
 
 #' Read the output from bcfutils into a count-table-esque
 #'
@@ -990,11 +1004,17 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count",
   first_read <- NULL
   if (reader == "readr") {
     first_read <- readr::read_tsv(first_file, show_col_types = FALSE)
+    ## Note, readr does wacky things if column names are repeated, which definitely happens
+    ## in the case of data produced by freebayes.
+    colnames(first_read) <- make.names(
+      gsub(x = colnames(first_read), pattern = "\\.+\\d+$", replacement = ""),
+      unique = TRUE)
   } else {
     first_read <- read.table(first_file, sep = "\t", header = 1, comment.char = "")
   }
 
   if (is.null(first_read[[column]])) {
+    message("The available columns are: ", toString(colnames(first_read)), ".")
     stop("The column: ", column, " does not appear to exist in the variant summary file.")
   }
   ## Create a simplified data table from it.
@@ -1020,6 +1040,9 @@ read_snp_columns <- function(samples, file_lst, column = "diff_count",
     }
     if (reader == "readr") {
       new_table <- readr::read_tsv(file, show_col_types = FALSE)
+      colnames(new_table) <- make.names(
+        gsub(x = colnames(new_table), pattern = "\\.+\\d+$", replacement = ""),
+        unique = TRUE)
     } else {
       new_table <- read.table(file, sep = "\t", header = 1, comment.char = "")
     }
@@ -1191,9 +1214,9 @@ snps_intersections <- function(expt, snp_result,
   }
 
   retlist <- list(
-      "inters" = inters,
-      "chr_summaries" = chr_summaries,
-      "gene_summaries" = gene_summaries)
+    "inters" = inters,
+    "chr_summaries" = chr_summaries,
+    "gene_summaries" = gene_summaries)
   class(retlist) <- "snp_intersections"
   return(retlist)
 }
@@ -1347,8 +1370,8 @@ snps_vs_genes <- function(expt, snp_result, start_col = "start", end_col = "end"
     pattern = "^chr_(.+)_pos_.+_ref.+_alt.+$",
     replacement = "\\1", x = rownames(snp_positions))
   snp_positions[[start_col]] <- as.numeric(
-      gsub(pattern = "^chr_.+_pos_(.+)_ref.+_alt.+$",
-           replacement = "\\1", x = rownames(snp_positions)))
+    gsub(pattern = "^chr_.+_pos_(.+)_ref.+_alt.+$",
+         replacement = "\\1", x = rownames(snp_positions)))
   snp_positions[[end_col]] <- snp_positions[[start_col]]
   snp_positions[["strand"]] <- "+"
   snp_positions <- snp_positions[, c(snp_name_col, start_col, end_col, "strand")]
@@ -1419,13 +1442,13 @@ snps_vs_genes <- function(expt, snp_result, start_col = "start", end_col = "end"
   summarized_idx <- order(count_by_gene_dplyr, decreasing = TRUE)
   count_by_gene_dplyr <- count_by_gene_dplyr[summarized_idx]
   retlist <- list(
-      "expt_granges" = expt_granges,
-      "snp_granges" = snp_granges,
-      "snps_by_chr" = snps_by_chr,
-      "merged_by_gene" = merged_grange,
-      "count_by_gene" = count_by_gene_irange,
-      "count_by_gene_dplyr" = count_by_gene_dplyr,
-      "summary" = summarized_by_chr)
+    "expt_granges" = expt_granges,
+    "snp_granges" = snp_granges,
+    "snps_by_chr" = snps_by_chr,
+    "merged_by_gene" = merged_grange,
+    "count_by_gene" = count_by_gene_irange,
+    "count_by_gene_dplyr" = count_by_gene_dplyr,
+    "summary" = summarized_by_chr)
   class(retlist) <- "snps_genes"
   return(retlist)
 }
@@ -1457,9 +1480,9 @@ snps_vs_genes <- function(expt, snp_result, start_col = "start", end_col = "end"
 #' @importFrom S4Vectors mcols mcols<-
 #' @importFrom IRanges %over%
 snps_vs_genes_padded <- function(expt, snp_result, start_col = "start", end_col = "end",
-                          strand_col = "strand", padding = 200, normalize = TRUE,
-                          snp_name_col = "seqnames", expt_name_col = "chromosome",
-                          observed_in = NULL, ignore_strand = TRUE) {
+                                 strand_col = "strand", padding = 200, normalize = TRUE,
+                                 snp_name_col = "seqnames", expt_name_col = "chromosome",
+                                 observed_in = NULL, ignore_strand = TRUE) {
   features <- fData(expt)
   if (is.null(features[[start_col]])) {
     stop("Unable to find the ", start_col, " column in the annotation data.")
@@ -1530,7 +1553,7 @@ snps_vs_genes_padded <- function(expt, snp_result, start_col = "start", end_col 
 
   snp_positions <- snp_result[["observations"]]
   observations <- data.frame()
-    if (!is.null(observed_in)) {
+  if (!is.null(observed_in)) {
     observed_idx <- snp_positions[[observed_in]] > 0
     message("variants were observed at ", sum(observed_idx),
             " positions in group ", observed_in, ".")
@@ -1539,13 +1562,13 @@ snps_vs_genes_padded <- function(expt, snp_result, start_col = "start", end_col 
     observations[observed_idx, observed_in] <- 1
   }
   snp_positions[[snp_name_col]] <- gsub(
-      pattern = "^chr_(.+)_pos_.+_ref.+_alt.+$",
-      replacement = "\\1",
-      x = rownames(snp_positions))
+    pattern = "^chr_(.+)_pos_.+_ref.+_alt.+$",
+    replacement = "\\1",
+    x = rownames(snp_positions))
   snp_positions[[start_col]] <- as.numeric(
-      gsub(pattern = "^chr_.+_pos_(.+)_ref.+_alt.+$",
-           replacement = "\\1",
-           x = rownames(snp_positions)))
+    gsub(pattern = "^chr_.+_pos_(.+)_ref.+_alt.+$",
+         replacement = "\\1",
+         x = rownames(snp_positions)))
   snp_positions[[end_col]] <- snp_positions[[start_col]]
   snp_positions[["strand"]] <- "+"
   snp_positions <- snp_positions[, c(snp_name_col, start_col, end_col, "strand")]
@@ -1797,7 +1820,7 @@ xref_regions <- function(sequence_df, gff, bin_width = 600,
       message("Found ", sum(primer_overlap_surround), " surrounded by the primers.")
       hits <- hits + sum(primer_overlap_surround)
       sequence_df[r, "overlap_gene_id"] <- xref_features[primer_overlap_surround, "id"][1]
-            sequence_df[r, "overlap_gene_name"] <- xref_features[primer_overlap_surround, "name"][1]
+      sequence_df[r, "overlap_gene_name"] <- xref_features[primer_overlap_surround, "name"][1]
       sequence_df[r, "overlap_gene_description"] <- xref_features[primer_overlap_surround, "description"][1]
       sequence_df[r, "overlap_gene_start"] <- xref_features[primer_overlap_surround, "start"][1]
       sequence_df[r, "overlap_gene_end"] <- xref_features[primer_overlap_surround, "end"][1]
