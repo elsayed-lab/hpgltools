@@ -310,11 +310,11 @@ all_adjusters <- function(input, design = NULL, estimate_type = "sva", batch1 = 
       mesg("Attempting fsva surrogate estimation with ",
            chosen_surrogates, " ", sword, ".")
       type_color <- "darkred"
-      sva_object <- sm(sva::sva(log2_mtrx, conditional_model,
-                                null_model, n.sv = chosen_surrogates))
-      surrogate_result <- sva::fsva(log2_mtrx, conditional_model,
+      sva_object <- sink(sm(sva::sva(log2_mtrx, conditional_model,
+                                null_model, n.sv = chosen_surrogates)))
+      surrogate_result <- sink(sva::fsva(log2_mtrx, conditional_model,
                                     sva_object, newdat = as.matrix(log2_mtrx),
-                                    method = "exact")
+                                    method = "exact"))
       model_adjust <- as.matrix(surrogate_result[["newsv"]])
       source_counts <- surrogate_result[["new"]]
     },
